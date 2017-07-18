@@ -6,9 +6,14 @@ Use it like this:
 
 ```js
 import { makeContext } from 'airbitz-core-js'
-import { coinbasePlugin } from 'airbitz-exchange-plugins'
+import { coinbasePlugin, shapeshiftPlugin } from 'airbitz-exchange-plugins'
 
 makeContext({
-  plugins: [coinbasePlugin]
+  plugins: [coinbasePlugin, shapeshiftPlugin]
 })
 ```
+
+The supported plugins are:
+
+* `coinbasePlugin` - Converts from BTC to most fiat currencies.
+* `shapeshiftPlugin` - Converts from BTC to most common altcoins.
