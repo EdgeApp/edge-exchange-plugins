@@ -1,9 +1,8 @@
 import { makeNodeIo } from 'airbitz-io-node-js'
 import assert from 'assert'
+const { coinbasePlugin, shapeshiftPlugin } = require('../lib')
 
 const io = makeNodeIo(__dirname)
-
-const { coinbasePlugin } = require('../lib')
 
 async function showRate (plugin, fromCurrency, toCurrency) {
   assert.equal(plugin.pluginType, 'exchange')
@@ -21,3 +20,4 @@ async function showRate (plugin, fromCurrency, toCurrency) {
 }
 
 showRate(coinbasePlugin, 'BTC', 'iso:USD')
+showRate(shapeshiftPlugin, 'BTC', 'ETH')
