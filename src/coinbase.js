@@ -15,7 +15,7 @@ function fixCurrency (currencyCode) {
 export const coinbasePlugin = {
   pluginType: 'exchange',
 
-  makePlugin (io) {
+  makePlugin ({ io }) {
     return Promise.resolve({
       exchangeInfo: {
         exchangeName: 'Coinbase'

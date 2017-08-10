@@ -1,7 +1,7 @@
 export const shapeshiftPlugin = {
   pluginType: 'exchange',
 
-  makePlugin (io) {
+  makePlugin ({ io }) {
     return Promise.resolve({
       exchangeInfo: {
         exchangeName: 'Shapeshift'
