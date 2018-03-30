@@ -1,12 +1,13 @@
 {
   "name": "edge-exchange-plugins",
-  "version": "0.1.1",
-  "description": "Exchange-rate sources for the Airbitz core",
+  "version": "0.2.0",
+  "description": "Exchange-rate sources for the Edge core",
   "license": "SEE LICENSE IN LICENSE",
-  "author": "Airbitz, Inc.",
+  "author": "Edge",
   "contributors": [
     "MrJLP <MrJLP@users.noreply.github.com>",
-    "William Swanson <william@airbitz.co>"
+    "William Swanson <william@edgesecure.co>",
+    "Paul Puey <paul@edgesecure.co>"
   ],
   "files": [
     "changelog.md",
@@ -29,7 +30,7 @@
     "iso4217": "^0.2.0"
   },
   "devDependencies": {
-    "airbitz-core-js": "^0.3.2",
+    "edge-core-js": "^0.6.7",
     "airbitz-io-node-js": "^0.3.0",
     "husky": "^0.14.3",
     "reify": "^0.12.0",
