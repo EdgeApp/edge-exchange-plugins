@@ -23,21 +23,22 @@ export const coinbasePlugin = {
 
       async fetchExchangeRates (pairsHint) {
         const reply = await io.fetch(
-          'https://coinbase.com/api/v1/currencies/exchange_rates'
+          'https://api.coinbase.com/v2/exchange-rates'
         )
         const json = await reply.json()
 
-        // Grab all the BTC pairs:
-        const pairs = []
-        const keys = Object.keys(json)
-        for (const key of keys) {
-          const currency = key.replace(/btc_to_/, '')
-          if (currency === key) continue
+        if (!json || !json.data || !json.data.rates) return []
 
+        // Grab all the USD pairs:
+        const pairs = []
+        const keys = Object.keys(json.data.rates)
+        for (const key of keys) {
+          const rate = Number(json.data.rates[key])
+          const toCurrency = fixCurrency(key)
           pairs.push({
-            fromCurrency: 'BTC',
-            toCurrency: fixCurrency(currency),
-            rate: json[key]
+            fromCurrency: 'iso:USD',
+            toCurrency,
+            rate
           })
         }
 
