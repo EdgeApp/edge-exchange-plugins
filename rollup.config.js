@@ -16,6 +16,7 @@ const nodentOpts = {
 export default [
   {
     entry: 'src/index.js',
+    external: Object.keys(packageJson.dependencies),
     plugins: [nodent(nodentOpts), buble(bubleOpts)],
     targets: [
       {
