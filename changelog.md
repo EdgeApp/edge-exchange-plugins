@@ -1,5 +1,9 @@
 # edge-exchange-plugins
 
+## 0.3.0
+
+* Add currencyconverterapi.com plugin for IMP and IRR support only
+
 ## 0.2.1
 
 * Switch to v2 of Coinbase API
