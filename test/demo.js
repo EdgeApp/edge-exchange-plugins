@@ -1,23 +1,21 @@
 // @flow
 
-import assert from 'assert'
+import { type EdgeRatePlugin, makeNodeIo } from 'edge-core-js'
 
-import { type EdgeExchangePluginFactory, makeNodeIo } from 'edge-core-js'
-
-import { coinbasePlugin, shapeshiftPlugin } from '../lib/index.js'
+import edgeCorePlugins from '../src/index.js'
 
 const io = makeNodeIo(__dirname)
 
-async function showRate (
-  plugin: EdgeExchangePluginFactory,
-  fromCurrency: string,
-  toCurrency: string
-) {
-  assert.strictEqual(plugin.pluginType, 'exchange')
-  const instance = await plugin.makePlugin({ io })
-  const pairs = await instance.fetchExchangeRates([])
+async function showRate (plugin, fromCurrency: string, toCurrency: string) {
+  const instance: EdgeRatePlugin = plugin({
+    initOptions: {},
+    io,
+    nativeIo: {},
+    pluginDisklet: io.disklet
+  })
+  const pairs = await instance.fetchRates([])
 
-  const name = instance.exchangeInfo.exchangeName
+  const name = instance.rateInfo.displayName
   for (const pair of pairs) {
     if (pair.fromCurrency === fromCurrency && pair.toCurrency === toCurrency) {
       const fromPretty = fromCurrency.replace(/iso:/, '')
@@ -27,5 +25,5 @@ async function showRate (
   }
 }
 
-showRate(coinbasePlugin, 'iso:USD', 'BTC')
-showRate(shapeshiftPlugin, 'BTC', 'ETH')
+showRate(edgeCorePlugins.coinbase, 'iso:USD', 'BTC')
+showRate(edgeCorePlugins['shapeshift-rate'], 'BTC', 'ETH')
