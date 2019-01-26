@@ -8,7 +8,7 @@ export const hercPlugin = {
       },
 
       async fetchExchangeRates (pairsHint) {
-        const reply = await io.fetch('https://chart.anthemgold.com/service-1.0-SNAPSHOT/PRICE?symbol=HERC&range=MINUTE_5')
+        const reply = await io.fetch('https://chart.anthemgold.com/service-1.0-SNAPSHOT/chart.jsp?symbol=HERCUSD&range=MINUTE_5')
         const json = await reply.json()
 
         // Grab all the pairs which are in USD:
