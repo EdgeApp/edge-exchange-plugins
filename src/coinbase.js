@@ -1,3 +1,6 @@
+// @flow
+
+import { type EdgeExchangePluginFactory } from 'edge-core-js/types'
 import currencies from 'iso4217'
 
 const codeTable = {}
@@ -12,7 +15,7 @@ function fixCurrency (currencyCode) {
   return codeTable[currencyCode] ? 'iso:' + currencyCode : currencyCode
 }
 
-export const coinbasePlugin = {
+export const coinbasePlugin: EdgeExchangePluginFactory = {
   pluginType: 'exchange',
 
   makePlugin ({ io }) {

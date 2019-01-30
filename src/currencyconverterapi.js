@@ -1,3 +1,7 @@
+// @flow
+
+import { type EdgeExchangePluginFactory } from 'edge-core-js/types'
+
 const checkAndPush = (isoCc, ccArray) => {
   if (isoCc !== 'iso:USD' && isoCc.slice(0, 4) === 'iso:') {
     const cc = isoCc.slice(4).toUpperCase()
@@ -7,7 +11,7 @@ const checkAndPush = (isoCc, ccArray) => {
   }
 }
 
-export const currencyconverterapiPlugin = {
+export const currencyconverterapiPlugin: EdgeExchangePluginFactory = {
   pluginType: 'exchange',
 
   makePlugin ({ io }) {

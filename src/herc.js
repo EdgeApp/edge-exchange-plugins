@@ -1,4 +1,8 @@
-export const hercPlugin = {
+// @flow
+
+import { type EdgeExchangePluginFactory } from 'edge-core-js/types'
+
+export const hercPlugin: EdgeExchangePluginFactory = {
   pluginType: 'exchange',
 
   makePlugin ({ io }) {

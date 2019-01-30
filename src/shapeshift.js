@@ -1,4 +1,8 @@
-export const shapeshiftPlugin = {
+// @flow
+
+import { type EdgeExchangePluginFactory } from 'edge-core-js/types'
+
+export const shapeshiftPlugin: EdgeExchangePluginFactory = {
   pluginType: 'exchange',
 
   makePlugin ({ io }) {

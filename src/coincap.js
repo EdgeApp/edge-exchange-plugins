@@ -1,4 +1,8 @@
-export const coincapPlugin = {
+// @flow
+
+import { type EdgeExchangePluginFactory } from 'edge-core-js/types'
+
+export const coincapPlugin: EdgeExchangePluginFactory = {
   pluginType: 'exchange',
 
   makePlugin ({ io }) {
