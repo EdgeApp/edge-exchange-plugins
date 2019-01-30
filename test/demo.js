@@ -1,11 +1,13 @@
-import { makeNodeIo } from 'edge-core-js'
 import assert from 'assert'
-const { coinbasePlugin, shapeshiftPlugin } = require('../lib')
+
+import { makeNodeIo } from 'edge-core-js'
+
+import { coinbasePlugin, shapeshiftPlugin } from '../lib/index.js'
 
 const io = makeNodeIo(__dirname)
 
 async function showRate (plugin, fromCurrency, toCurrency) {
-  assert.equal(plugin.pluginType, 'exchange')
+  assert.strictEqual(plugin.pluginType, 'exchange')
   const instance = await plugin.makePlugin({ io })
   const pairs = await instance.fetchExchangeRates([])
 

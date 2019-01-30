@@ -45,7 +45,10 @@ export const currencyconverterapiPlugin = {
               rate
             })
           } catch (e) {
-            console.log(`Failed to get ${isoCode} rate from currencyconverterapi.com`, e)
+            console.log(
+              `Failed to get ${isoCode} rate from currencyconverterapi.com`,
+              e
+            )
           }
         }
         return pairs
