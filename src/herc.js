@@ -12,14 +12,11 @@ export const hercPlugin = {
         const json = await reply.json()
 
         // Grab all the pairs which are in USD:
-        const pairs = []
-        pairs.push({
-          fromCurrency: 'iso:USD',
-          toCurrency: 'HERC',
+        return [{
+          fromCurrency: 'HERC',
+          toCurrency: 'iso:USD',
           rate: json.c
-        })
-
-        return pairs
+        }]
       }
     })
   }
