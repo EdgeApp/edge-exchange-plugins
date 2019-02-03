@@ -1,5 +1,9 @@
 # edge-exchange-plugins
 
+# 0.4.0
+
+Add HERC exchange reate support
+
 ## 0.3.0
 
 * Add currencyconverterapi.com plugin for IMP and IRR support only
