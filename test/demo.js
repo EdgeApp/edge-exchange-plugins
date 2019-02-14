@@ -1,12 +1,20 @@
-import { makeNodeIo } from 'airbitz-io-node-js'
+// @flow
+
 import assert from 'assert'
-const { coinbasePlugin, shapeshiftPlugin } = require('../lib')
+
+import { type EdgeExchangePluginFactory, makeNodeIo } from 'edge-core-js'
+
+import { coinbasePlugin, shapeshiftPlugin } from '../lib/index.js'
 
 const io = makeNodeIo(__dirname)
 
-async function showRate (plugin, fromCurrency, toCurrency) {
-  assert.equal(plugin.pluginType, 'exchange')
-  const instance = await plugin.makePlugin(io)
+async function showRate (
+  plugin: EdgeExchangePluginFactory,
+  fromCurrency: string,
+  toCurrency: string
+) {
+  assert.strictEqual(plugin.pluginType, 'exchange')
+  const instance = await plugin.makePlugin({ io })
   const pairs = await instance.fetchExchangeRates([])
 
   const name = instance.exchangeInfo.exchangeName
@@ -19,5 +27,5 @@ async function showRate (plugin, fromCurrency, toCurrency) {
   }
 }
 
-showRate(coinbasePlugin, 'BTC', 'iso:USD')
+showRate(coinbasePlugin, 'iso:USD', 'BTC')
 showRate(shapeshiftPlugin, 'BTC', 'ETH')
