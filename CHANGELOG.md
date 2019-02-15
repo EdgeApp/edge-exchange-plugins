@@ -1,5 +1,10 @@
 # edge-exchange-plugins
 
+# 0.4.1 (2019-02-15)
+
+- Upgrade to the edge-core-js v0.14.0 types
+- Modernize the build system
+
 # 0.4.0
 
 - Add HERC exchange rate support
