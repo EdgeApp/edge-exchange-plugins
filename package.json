@@ -15,12 +15,13 @@
   ],
   "files": [
     "CHANGELOG.md",
+    "index.js",
     "lib/*",
-    "package.json",
     "LICENSE",
+    "package.json",
     "README.md"
   ],
-  "main": "lib/index.cjs.js",
+  "main": "index.js",
   "module": "lib/index.js",
   "scripts": {
     "build": "rimraf lib && sucrase ./src -q -d ./lib -t flow",
@@ -44,6 +45,7 @@
     ]
   },
   "dependencies": {
+    "esm": "^3.2.4",
     "iso4217": "^0.2.0"
   },
   "devDependencies": {
@@ -71,5 +73,6 @@
       "parser": "babylon",
       "style": "module"
     }
-  }
+  },
+  "react-native": "lib/index.js"
 }
