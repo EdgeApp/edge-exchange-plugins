@@ -1,5 +1,9 @@
 # edge-exchange-plugins
 
+# 0.5.0 (2019-02-19)
+
+- Upgrade to the edge-core-js v0.15.0 and adapt to breaking changes.
+
 # 0.4.1 (2019-02-15)
 
 - Upgrade to the edge-core-js v0.14.0 types
