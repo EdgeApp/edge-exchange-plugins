@@ -1,7 +1,24 @@
 // @flow
 
-export { coinbasePlugin } from './coinbase.js'
-export { shapeshiftPlugin } from './shapeshift.js'
-export { coincapPlugin } from './coincap.js'
-export { hercPlugin } from './herc.js'
-export { currencyconverterapiPlugin } from './currencyconverterapi.js'
+import { makeCoinbasePlugin } from './coinbase.js'
+import { makeCoincapPlugin } from './coincap.js'
+import { makeCurrencyconverterapiPlugin } from './currencyconverterapi.js'
+import { makeHercPlugin } from './herc.js'
+import { makeShapeshiftPlugin } from './shapeshift.js'
+
+const edgeCorePlugins = {
+  'shapeshift-rate': makeShapeshiftPlugin,
+  coinbase: makeCoinbasePlugin,
+  coincap: makeCoincapPlugin,
+  currencyconverterapi: makeCurrencyconverterapiPlugin,
+  herc: makeHercPlugin
+}
+
+if (
+  typeof window !== 'undefined' &&
+  typeof window.addEdgeCorePlugins === 'function'
+) {
+  window.addEdgeCorePlugins(edgeCorePlugins)
+}
+
+export default edgeCorePlugins

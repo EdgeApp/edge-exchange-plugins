@@ -1,35 +1,38 @@
 // @flow
 
-import { type EdgeExchangePluginFactory } from 'edge-core-js/types'
+import {
+  type EdgeCorePluginOptions,
+  type EdgeRatePlugin
+} from 'edge-core-js/types'
 
-export const shapeshiftPlugin: EdgeExchangePluginFactory = {
-  pluginType: 'exchange',
+export function makeShapeshiftPlugin (
+  opts: EdgeCorePluginOptions
+): EdgeRatePlugin {
+  const { io } = opts
 
-  makePlugin ({ io }) {
-    return Promise.resolve({
-      exchangeInfo: {
-        exchangeName: 'Shapeshift'
-      },
+  return {
+    rateInfo: {
+      displayName: 'Shapeshift'
+    },
 
-      async fetchExchangeRates (pairsHint) {
-        const reply = await io.fetch('https://shapeshift.io/marketinfo/')
-        const json = await reply.json()
+    async fetchRates (pairsHint) {
+      const reply = await io.fetch('https://shapeshift.io/marketinfo/')
+      const json = await reply.json()
 
-        // Grab all the BTC pairs:
-        const pairs = []
-        for (const entry of json) {
-          const currency = entry.pair.replace(/BTC_/, '')
-          if (currency === entry.pair) continue
+      // Grab all the BTC pairs:
+      const pairs = []
+      for (const entry of json) {
+        const currency = entry.pair.replace(/BTC_/, '')
+        if (currency === entry.pair) continue
 
-          pairs.push({
-            fromCurrency: 'BTC',
-            toCurrency: currency,
-            rate: entry.rate
-          })
-        }
-
-        return pairs
+        pairs.push({
+          fromCurrency: 'BTC',
+          toCurrency: currency,
+          rate: entry.rate
+        })
       }
-    })
+
+      return pairs
+    }
   }
 }
