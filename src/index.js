@@ -1,10 +1,10 @@
 // @flow
 
-import { makeCoinbasePlugin } from './coinbase.js'
-import { makeCoincapPlugin } from './coincap.js'
-import { makeCurrencyconverterapiPlugin } from './currencyconverterapi.js'
-import { makeHercPlugin } from './herc.js'
-import { makeShapeshiftPlugin } from './shapeshift.js'
+import { makeCoinbasePlugin } from './plugins/coinbase.js'
+import { makeCoincapPlugin } from './plugins/coincap.js'
+import { makeCurrencyconverterapiPlugin } from './plugins/currencyconverterapi.js'
+import { makeHercPlugin } from './plugins/herc.js'
+import { makeShapeshiftPlugin } from './plugins/shapeshift.js'
 
 const edgeCorePlugins = {
   'shapeshift-rate': makeShapeshiftPlugin,
