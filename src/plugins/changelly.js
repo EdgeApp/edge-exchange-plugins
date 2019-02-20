@@ -14,6 +14,7 @@ import hashjs from 'hash.js'
 import { base16 } from 'rfc4648'
 import utf8Codec from 'utf8'
 
+import { getFetchJson } from '../react-native-io.js'
 import { makeSwapPluginQuote } from '../swap-helpers.js'
 
 function hmacSha512 (data: Uint8Array, key: Uint8Array): Uint8Array {
@@ -94,6 +95,7 @@ export function makeChangellyPlugin (
   opts: EdgeCorePluginOptions
 ): EdgeSwapPlugin {
   const { initOptions, io } = opts
+  const fetchJson = getFetchJson(opts)
 
   if (initOptions.apiKey == null || initOptions.secret == null) {
     throw new Error('No Changelly apiKey or secret provided.')
@@ -113,11 +115,7 @@ export function makeChangellyPlugin (
       'api-key': apiKey,
       sign
     }
-    const reply = await io.fetch(uri, { method: 'POST', body, headers })
-    if (!reply.ok) {
-      throw new Error(`Changelly returned error code ${reply.status}`)
-    }
-    const out = await reply.json()
+    const out = await fetchJson(uri, { method: 'POST', body, headers })
     io.console.info('changelly reply:', out)
     return out
   }

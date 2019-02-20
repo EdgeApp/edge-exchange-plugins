@@ -5,6 +5,8 @@ import {
   type EdgeRatePlugin
 } from 'edge-core-js/types'
 
+import { getFetchJson } from '../react-native-io.js'
+
 const checkAndPush = (isoCc, ccArray) => {
   if (isoCc !== 'iso:USD' && isoCc.slice(0, 4) === 'iso:') {
     const cc = isoCc.slice(4).toUpperCase()
@@ -17,7 +19,7 @@ const checkAndPush = (isoCc, ccArray) => {
 export function makeCurrencyconverterapiPlugin (
   opts: EdgeCorePluginOptions
 ): EdgeRatePlugin {
-  const { io } = opts
+  const fetchJson = getFetchJson(opts)
 
   return {
     rateInfo: {
@@ -41,10 +43,9 @@ export function makeCurrencyconverterapiPlugin (
       for (const isoCode of isoCodesWanted) {
         try {
           const key = `USD_${isoCode}`
-          const reply = await io.fetch(
+          const json = await fetchJson(
             `https://free.currencyconverterapi.com/api/v6/convert?q=${key}&compact=ultra`
           )
-          const json = await reply.json()
           if (!json || !json[key]) continue
           const rate = json[key]
           pairs.push({
