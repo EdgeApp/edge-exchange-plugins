@@ -46,7 +46,9 @@
   },
   "dependencies": {
     "esm": "^3.2.4",
-    "iso4217": "^0.2.0"
+    "hashjs": "^1.2.0",
+    "iso4217": "^0.2.0",
+    "utf8": "^3.0.0"
   },
   "devDependencies": {
     "@babel/core": "^7.0.0",
