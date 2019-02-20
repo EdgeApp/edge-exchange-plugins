@@ -2,7 +2,7 @@ const path = require('path')
 
 const babelOptions = {
   // For debugging, just remove "@babel/preset-env":
-  presets: [['@babel/preset-env', { debug: true }], '@babel/preset-flow'],
+  presets: ['@babel/preset-env', '@babel/preset-flow'],
   plugins: [
     ['@babel/plugin-transform-for-of', { assumeArray: true }],
     '@babel/plugin-transform-runtime'
