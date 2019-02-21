@@ -21,6 +21,11 @@ export function makeCurrencyconverterapiPlugin (
 ): EdgeRatePlugin {
   const fetchJson = getFetchJson(opts)
 
+  const { apiKey } = opts.initOptions
+  if (apiKey == null) {
+    throw new Error('No currencyconverterapi apiKey provided')
+  }
+
   return {
     rateInfo: {
       displayName: 'CurrencyConverterAPI'
@@ -42,12 +47,12 @@ export function makeCurrencyconverterapiPlugin (
       const pairs = []
       for (const isoCode of isoCodesWanted) {
         try {
-          const key = `USD_${isoCode}`
+          const query = `USD_${isoCode}`
           const json = await fetchJson(
-            `https://free.currencyconverterapi.com/api/v6/convert?q=${key}&compact=ultra`
+            `https://free.currencyconverterapi.com/api/v6/convert?q=${query}&compact=ultra&apiKey=${apiKey}`
           )
-          if (!json || !json[key]) continue
-          const rate = json[key]
+          if (json == null || json[query] == null) continue
+          const rate = json[query]
           pairs.push({
             fromCurrency: 'iso:USD',
             toCurrency: `iso:${isoCode}`,
