@@ -6,9 +6,14 @@ import edgeCorePlugins from '../src/index.js'
 
 const io = makeNodeIo(__dirname)
 
-async function showRate (plugin, fromCurrency: string, toCurrency: string) {
+async function showRate (
+  plugin,
+  fromCurrency: string,
+  toCurrency: string,
+  initOptions: Object = {}
+) {
   const instance: EdgeRatePlugin = plugin({
-    initOptions: {},
+    initOptions,
     io,
     nativeIo: {},
     pluginDisklet: io.disklet
@@ -27,3 +32,8 @@ async function showRate (plugin, fromCurrency: string, toCurrency: string) {
 
 showRate(edgeCorePlugins.coinbase, 'iso:USD', 'BTC')
 showRate(edgeCorePlugins['shapeshift-rate'], 'BTC', 'ETH')
+
+// Uncomment and insert key to test:
+// showRate(edgeCorePlugins['currencyconverterapi'], 'iso:USD', 'iso:IRR', {
+//   apiKey: 'xxxx'
+// })
