@@ -1,5 +1,9 @@
 # edge-exchange-plugins
 
+# 0.5.2 (2019-02-21)
+
+- Fix currencyconverterapi to use the production server, not the free server
+
 # 0.5.1 (2019-02-21)
 
 - Fix CORS issues with currencyconverterapi
