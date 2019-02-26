@@ -2,22 +2,35 @@
 
 import { type EdgeCorePluginOptions } from 'edge-core-js/types'
 
-type FetchJson = (uri: string, opts?: Object) => Object
+type FetchJsonReply = {
+  json: Object,
+  ok: boolean,
+  status: number,
+  url: string
+}
 
-function makeFetchJson (io): FetchJson {
-  return function fetchJson (uri, opts) {
-    return io.fetch(uri, opts).then(reply => {
-      if (!reply.ok) {
-        throw new Error(`Error ${reply.status} while fetching ${uri}`)
-      }
-      return reply.json()
+export type FetchJson = (uri: string, opts?: Object) => Promise<FetchJsonReply>
+
+/**
+ * Wraps the `fetch` API for transport over the yaob bridge.
+ * The reply object contains the status of the fetch,
+ * as well as the returned JSON, but no methods.
+ */
+function makeFetchJson (io: { +fetch: typeof fetch }): FetchJson {
+  return function fetchJson (url, opts) {
+    return io.fetch(url, opts).then(response => {
+      const { ok, status } = response
+      return response.json().then(json => {
+        return { json, ok, status, url }
+      })
     })
   }
 }
 
 export function getFetchJson (opts: EdgeCorePluginOptions): FetchJson {
   const nativeIo = opts.nativeIo['edge-exchange-plugins']
-  return nativeIo != null ? nativeIo.fetchJson : makeFetchJson(opts.io)
+  if (nativeIo != null) return nativeIo.fetchJson
+  return makeFetchJson(opts.io)
 }
 
 export default function makeExchangeIo () {

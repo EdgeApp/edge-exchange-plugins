@@ -48,10 +48,11 @@ export function makeCurrencyconverterapiPlugin (
       for (const isoCode of isoCodesWanted) {
         try {
           const query = `USD_${isoCode}`
-          const json = await fetchJson(
+          const reply = await fetchJson(
             `https://api.currencyconverterapi.com/api/v6/convert?q=${query}&compact=ultra&apiKey=${apiKey}`
           )
-          if (json == null || json[query] == null) continue
+          const { json } = reply
+          if (!reply.ok || json == null || json[query] == null) continue
           const rate = json[query]
           pairs.push({
             fromCurrency: 'iso:USD',

@@ -1,5 +1,6 @@
 // @flow
 
+import { makeChangeNowPlugin } from './plugins/changenow.js'
 import { makeChangellyPlugin } from './plugins/changelly.js'
 import { makeCoinbasePlugin } from './plugins/coinbase.js'
 import { makeCoincapPlugin } from './plugins/coincap.js'
@@ -10,6 +11,7 @@ import { makeShapeshiftPlugin } from './plugins/shapeshift.js'
 const edgeCorePlugins = {
   'shapeshift-rate': makeShapeshiftPlugin,
   changelly: makeChangellyPlugin,
+  changenow: makeChangeNowPlugin,
   coinbase: makeCoinbasePlugin,
   coincap: makeCoincapPlugin,
   currencyconverterapi: makeCurrencyconverterapiPlugin,
