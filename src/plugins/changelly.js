@@ -115,7 +115,11 @@ export function makeChangellyPlugin (
       'api-key': apiKey,
       sign
     }
-    const out = await fetchJson(uri, { method: 'POST', body, headers })
+    const reply = await fetchJson(uri, { method: 'POST', body, headers })
+    if (!reply.ok) {
+      throw new Error(`Changelly returned error code ${reply.status}`)
+    }
+    const out = reply.json
     io.console.info('changelly reply:', out)
     return out
   }
