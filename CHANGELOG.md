@@ -1,5 +1,9 @@
 # edge-exchange-plugins
 
+# 0.5.3 (2019-02-26)
+
+- Move ChangeNow into this repo for CORS reasons
+
 # 0.5.2 (2019-02-21)
 
 - Fix currencyconverterapi to use the production server, not the free server
