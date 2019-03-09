@@ -7,6 +7,7 @@ import { makeCoincapPlugin } from './plugins/coincap.js'
 import { makeCurrencyconverterapiPlugin } from './plugins/currencyconverterapi.js'
 import { makeHercPlugin } from './plugins/herc.js'
 import { makeShapeshiftPlugin } from './plugins/shapeshift.js'
+import { makeTotlePlugin } from './plugins/totle.js'
 
 const edgeCorePlugins = {
   'shapeshift-rate': makeShapeshiftPlugin,
@@ -15,7 +16,8 @@ const edgeCorePlugins = {
   coinbase: makeCoinbasePlugin,
   coincap: makeCoincapPlugin,
   currencyconverterapi: makeCurrencyconverterapiPlugin,
-  herc: makeHercPlugin
+  herc: makeHercPlugin,
+  totle: makeTotlePlugin
 }
 
 if (
