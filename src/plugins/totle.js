@@ -8,9 +8,10 @@ import {
   type EdgeSwapRequest,
   SwapCurrencyError
 } from 'edge-core-js/types'
+import Web3 from 'web3'
 
 import { getFetchJson } from '../react-native-io.js'
-import { makeSwapPluginQuote } from '../swap-helpers.js'
+import type { EdgeTransaction } from 'edge-core-js/src/types/types'
 
 const swapInfo = {
   pluginName: 'totle',
@@ -49,6 +50,13 @@ type QuoteInfo = {
     strict: boolean
   }
 }
+
+const ETH_ADDRESS = '0x0000000000000000000000000000000000000000'
+const ERC20_ABI = [ { constant: false, inputs: [ { name: '_spender', type: 'address' }, { name: '_value', type: 'uint256' } ], name: 'approve', outputs: [ { name: '', type: 'bool' } ], payable: false, type: 'function' }, { constant: true, inputs: [ { name: '_owner', type: 'address' }, { name: '_spender', type: 'address' } ], name: 'allowance', outputs: [ { name: '', type: 'uint256' } ], payable: false, type: 'function' } ]
+const totleTransferProxyAddress = '0x74758AcFcE059f503a7E6B0fC2c8737600f9F2c4'
+const provider = new Web3.providers.WebsocketProvider('wss://node.totlesystem.com')
+const web3 = new Web3(provider)
+const { toBN } = web3.utils
 
 async function getAddress (
   wallet: EdgeCurrencyWallet,
@@ -112,22 +120,28 @@ export function makeTotlePlugin (
     ): Promise<EdgeSwapPluginQuote> {
       const tokens = await fetchTokens()
 
+      let isFromToken = true
       let fromTokenAddress
       let toTokenAddress
       const fromToken = tokens.find((t) => t.symbol === request.fromCurrencyCode)
       const toToken = tokens.find((t) => t.symbol === request.toCurrencyCode)
-      if (request.fromCurrencyCode === 'ETH') {
-        fromTokenAddress = '0x0000000000000000000000000000000000000000'
-        toTokenAddress = toToken.address
-      } else if (request.toCurrencyCode === 'ETH') {
-        fromTokenAddress = fromToken.address
-        toTokenAddress = '0x0000000000000000000000000000000000000000'
-      } else if (!fromToken || !toToken) {
+
+      if ((!fromToken && request.fromCurrencyCode !== 'ETH') || (!toToken && request.toCurrencyCode !== 'ETH')) {
         throw new SwapCurrencyError(
           swapInfo,
           request.fromCurrencyCode,
           request.toCurrencyCode
         )
+      }
+
+      if (request.fromCurrencyCode === 'ETH') {
+        isFromToken = false
+
+        fromTokenAddress = ETH_ADDRESS
+        toTokenAddress = toToken.address
+      } else if (request.toCurrencyCode === 'ETH') {
+        fromTokenAddress = fromToken.address
+        toTokenAddress = ETH_ADDRESS
       } else {
         fromTokenAddress = fromToken.address
         toTokenAddress = toToken.address
@@ -167,18 +181,56 @@ export function makeTotlePlugin (
 
       const quoteInfo: QuoteInfo = reply.response
 
-      let fromNativeAmount = request.nativeAmount
-      let toNativeAmount = '0'
-      if (quoteInfo.summary.sells) {
-        let fromAmount = '0'
-        for (const { amount } of quoteInfo.summary.sells) {
-          fromAmount = (Number(fromAmount) + Number(amount)).toString()
+      let fromNativeAmount = toBN(request.nativeAmount)
+      let toNativeAmount = toBN('0')
+      if (request.toCurrencyCode === 'ETH') {
+        for (const { amount, price } of quoteInfo.summary.sells) {
+          const factor = 10 ** 18
+          const ethAmount = toBN(amount).mul(toBN(price * factor)).div(toBN(factor))
+          toNativeAmount.iadd(ethAmount)
         }
-        fromNativeAmount = fromAmount
+      } else {
+        if (quoteInfo.summary.sells) {
+          let fromAmount = '0'
+          for (const { amount } of quoteInfo.summary.sells) {
+            fromAmount = (Number(fromAmount) + Number(amount)).toString()
+          }
+          fromNativeAmount = fromAmount
+        }
+        if (quoteInfo.summary.buys) {
+          for (const { amount } of quoteInfo.summary.buys) {
+            toNativeAmount = (Number(toNativeAmount) + Number(amount)).toString()
+          }
+        }
       }
-      if (quoteInfo.summary.buys) {
-        for (const { amount } of quoteInfo.summary.buys) {
-          toNativeAmount = (Number(toNativeAmount) + Number(amount)).toString()
+
+      const txs = []
+
+      // Check if source is a token and then check it is approved to sell
+      if (isFromToken) {
+        const tokenContract = new web3.eth.Contract(ERC20_ABI, fromTokenAddress)
+        const allowance = toBN(await tokenContract.methods.allowance(fromAddress, totleTransferProxyAddress).call())
+        const zero = toBN(0)
+
+        if (allowance.eq(zero)) {
+          const uintMax = toBN(2).pow(toBN(256)).sub(toBN(1)).toString()
+          const approveData = tokenContract.methods.approve(totleTransferProxyAddress, uintMax).encodeABI()
+
+          const spendInfo = {
+            currencyCode: request.fromCurrencyCode,
+            spendTargets: [
+              {
+                nativeAmount: '0',
+                publicAddress: fromTokenAddress,
+                otherParams: {
+                  data: approveData
+                }
+              }
+            ]
+          }
+
+          const approveTx = await request.fromWallet.makeSpend(spendInfo)
+          txs.push(approveTx)
         }
       }
 
@@ -190,7 +242,6 @@ export function makeTotlePlugin (
             nativeAmount: quoteInfo.ethValue,
             publicAddress: quoteInfo.contractAddress,
             otherParams: {
-              pluginName: swapInfo.pluginName,
               uniqueIdentifier: quoteInfo.id,
               data: quoteInfo.payload.data
             }
@@ -199,27 +250,79 @@ export function makeTotlePlugin (
         networkFeeOption: 'custom',
         customNetworkFee: {
           gasLimit: quoteInfo.gas.limit,
-          gasPrice: quoteInfo.gas.price
+          gasPrice: String(quoteInfo.gas.price / 1000000000)
         }
       }
       io.console.info('Totle spendInfo', spendInfo)
-      const tx = await request.fromWallet.makeSpend(spendInfo)
-      tx.otherParams.payinAddress = spendInfo.spendTargets[0].publicAddress
-      tx.otherParams.uniqueIdentifier =
+      const rebalanceTx = await request.fromWallet.makeSpend(spendInfo)
+      rebalanceTx.otherParams.payinAddress = spendInfo.spendTargets[0].publicAddress
+      rebalanceTx.otherParams.uniqueIdentifier =
         spendInfo.spendTargets[0].otherParams.uniqueIdentifier
 
-      return makeSwapPluginQuote(
+      txs.push(rebalanceTx)
+
+      const quote = makeTotleSwapPluginQuote(
         request,
-        fromNativeAmount,
-        toNativeAmount,
-        tx,
+        fromNativeAmount.toString(),
+        toNativeAmount.toString(),
+        txs,
         toAddress,
         'totle',
         new Date(Date.now() + expirationMs),
-        quoteInfo.id
+        quoteInfo.id,
+        io
       )
+      io.console.info(quote)
+      return quote
     }
   }
 
+  return out
+}
+
+function makeTotleSwapPluginQuote (
+  request: EdgeSwapRequest,
+  fromNativeAmount: string,
+  toNativeAmount: string,
+  txs: Array<EdgeTransaction>,
+  destinationAddress: string,
+  pluginName: string,
+  expirationDate?: Date,
+  quoteId?: string,
+  io
+): EdgeSwapPluginQuote {
+  io.console.info(arguments)
+  const { fromWallet } = request
+  const swapTx = txs[txs.length - 1]
+
+  const out: EdgeSwapPluginQuote = {
+    fromNativeAmount,
+    toNativeAmount,
+    networkFee: {
+      currencyCode: fromWallet.currencyInfo.currencyCode,
+      nativeAmount: swapTx.networkFee
+    },
+    destinationAddress,
+    pluginName,
+    expirationDate,
+    quoteId,
+
+    async approve (): Promise<EdgeTransaction> {
+      let swapTx
+
+      for (const tx of txs) {
+        const signedTransaction = await fromWallet.signTx(tx)
+        // NOTE: The swap transaction will always be the last one
+        swapTx = await fromWallet.broadcastTx(
+          signedTransaction
+        )
+        await fromWallet.saveTx(signedTransaction)
+      }
+
+      return swapTx
+    },
+
+    async close () {}
+  }
   return out
 }
