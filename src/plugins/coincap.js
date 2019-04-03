@@ -14,20 +14,20 @@ export function makeCoincapPlugin (opts: EdgeCorePluginOptions): EdgeRatePlugin 
     },
 
     async fetchRates (pairsHint) {
-      const reply = await io.fetch('https://coincap.io/front')
+      const reply = await io.fetch('https://api.coincap.io/v2/assets')
       const json = await reply.json()
 
       // Grab all the pairs which are in USD:
       const pairs = []
-      for (const entry of json) {
-        if (typeof entry.short !== 'string') continue
-        if (typeof entry.price !== 'number') continue
-        const currency = entry.short
+      for (const entry of json.data) {
+        if (typeof entry.symbol !== 'string') continue
+        if (typeof entry.priceUsd !== 'string') continue
+        const currency = entry.symbol
 
         pairs.push({
           fromCurrency: currency,
           toCurrency: 'iso:USD',
-          rate: entry.price
+          rate: parseFloat(entry.priceUsd)
         })
       }
 
