@@ -1,8 +1,12 @@
 # edge-exchange-plugins
 
-# 0.5.4 (2019-04-09)
+# 0.5.5 (2019-04-09)
 
 - Add exchange rates from Coincap *legacy* API
+
+# 0.5.4 (2019-04-03)
+
+- Upgrade to the coincap.io v2 API.
 
 # 0.5.3 (2019-02-26)
 
