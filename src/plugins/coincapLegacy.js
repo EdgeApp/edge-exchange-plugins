@@ -5,6 +5,21 @@ import {
   type EdgeRatePlugin
 } from 'edge-core-js/types'
 
+const currencyCodesToInclude = [
+  'FTC',
+  'UFO',
+  'GRS',
+  'SMART',
+  'IND',
+  'HUR',
+  'STORJ',
+  'USDS',
+  'GNO',
+  'NEXO',
+  'FUN',
+  'KIN'
+]
+
 export function makeCoincapLegacyPlugin (
   opts: EdgeCorePluginOptions
 ): EdgeRatePlugin {
@@ -25,7 +40,7 @@ export function makeCoincapLegacyPlugin (
         if (typeof entry.short !== 'string') continue
         if (typeof entry.price !== 'number') continue
         const currency = entry.short
-
+        if (!currencyCodesToInclude.includes(currency)) continue
         pairs.push({
           fromCurrency: currency,
           toCurrency: 'iso:USD',
