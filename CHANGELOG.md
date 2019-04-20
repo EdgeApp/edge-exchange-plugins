@@ -1,5 +1,10 @@
 # edge-exchange-plugins
 
+# 0.5.6 (2019-04-19)
+
+- Add Nomics exchange rates
+- Add new HERC endpoint
+
 # 0.5.5 (2019-04-09)
 
 - Add exchange rates from Coincap *legacy* API
