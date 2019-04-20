@@ -7,6 +7,7 @@ import { makeCoincapPlugin } from './plugins/coincap.js'
 import { makeCoincapLegacyPlugin } from './plugins/coincapLegacy.js'
 import { makeCurrencyconverterapiPlugin } from './plugins/currencyconverterapi.js'
 import { makeHercPlugin } from './plugins/herc.js'
+import { makeNomicsPlugin } from './plugins/nomics.js'
 import { makeShapeshiftPlugin } from './plugins/shapeshift.js'
 
 const edgeCorePlugins = {
@@ -17,7 +18,8 @@ const edgeCorePlugins = {
   coincap: makeCoincapPlugin,
   coincapLegacy: makeCoincapLegacyPlugin,
   currencyconverterapi: makeCurrencyconverterapiPlugin,
-  herc: makeHercPlugin
+  herc: makeHercPlugin,
+  nomics: makeNomicsPlugin
 }
 
 if (
