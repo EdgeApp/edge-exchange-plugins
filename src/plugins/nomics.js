@@ -17,21 +17,14 @@ export function makeNomicsPlugin (opts: EdgeCorePluginOptions): EdgeRatePlugin {
       displayName: 'Nomics'
     },
 
-    async fetchRates (pairsHint) {
-      console.log(
-        'about to fetch nomics reates with apiKey: ',
-        apiKey,
-        ' opts is: ',
-        opts
-      )
+    async fetchRates () {
       const reply = await io.fetch(
         `https://api.nomics.com/v1/prices?key=${apiKey}`
       )
-      const json = await reply.json()
-
+      const jsonData = await reply.json()
       // Grab all the pairs which are in USD:
       const pairs = []
-      for (const entry of json.data) {
+      for (const entry of jsonData) {
         if (typeof entry.currency !== 'string') continue
         if (typeof entry.price !== 'string') continue
         const currency = entry.currency
