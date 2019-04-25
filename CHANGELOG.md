@@ -1,5 +1,9 @@
 # edge-exchange-plugins
 
+# 0.5.7 (2019-04-25)
+
+- Fix missing Nomics exchange rates issue
+
 # 0.5.6 (2019-04-19)
 
 - Add Nomics exchange rates
