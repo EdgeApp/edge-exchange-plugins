@@ -9,6 +9,8 @@ import { makeNomicsPlugin } from './rate/nomics.js'
 import { makeShapeshiftRatePlugin } from './rate/shapeshift-rate.js'
 import { makeChangellyPlugin } from './swap/changelly.js'
 import { makeChangeNowPlugin } from './swap/changenow.js'
+import { makeFaastPlugin } from './swap/faast.js'
+import { makeShapeshiftPlugin } from './swap/shapeshift.js'
 
 const edgeCorePlugins = {
   // Rate plugins:
@@ -22,7 +24,9 @@ const edgeCorePlugins = {
 
   // Swap plugins:
   changelly: makeChangellyPlugin,
-  changenow: makeChangeNowPlugin
+  changenow: makeChangeNowPlugin,
+  faast: makeFaastPlugin,
+  shapeshift: makeShapeshiftPlugin
 }
 
 if (
