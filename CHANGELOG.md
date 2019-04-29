@@ -1,5 +1,9 @@
 # edge-exchange-plugins
 
+# 0.6.0 (2019-04-29)
+
+- Add Shapeshift and Faa.st swap plugins.
+
 # 0.5.7 (2019-04-25)
 
 - Fix missing Nomics exchange rates issue
