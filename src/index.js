@@ -1,25 +1,28 @@
 // @flow
 
-import { makeChangellyPlugin } from './plugins/changelly.js'
-import { makeChangeNowPlugin } from './plugins/changenow.js'
-import { makeCoinbasePlugin } from './plugins/coinbase.js'
-import { makeCoincapPlugin } from './plugins/coincap.js'
-import { makeCoincapLegacyPlugin } from './plugins/coincapLegacy.js'
-import { makeCurrencyconverterapiPlugin } from './plugins/currencyconverterapi.js'
-import { makeHercPlugin } from './plugins/herc.js'
-import { makeNomicsPlugin } from './plugins/nomics.js'
-import { makeShapeshiftPlugin } from './plugins/shapeshift.js'
+import { makeCoinbasePlugin } from './rate/coinbase.js'
+import { makeCoincapPlugin } from './rate/coincap.js'
+import { makeCoincapLegacyPlugin } from './rate/coincapLegacy.js'
+import { makeCurrencyconverterapiPlugin } from './rate/currencyconverterapi.js'
+import { makeHercPlugin } from './rate/herc.js'
+import { makeNomicsPlugin } from './rate/nomics.js'
+import { makeShapeshiftRatePlugin } from './rate/shapeshift-rate.js'
+import { makeChangellyPlugin } from './swap/changelly.js'
+import { makeChangeNowPlugin } from './swap/changenow.js'
 
 const edgeCorePlugins = {
-  'shapeshift-rate': makeShapeshiftPlugin,
-  changelly: makeChangellyPlugin,
-  changenow: makeChangeNowPlugin,
+  // Rate plugins:
+  'shapeshift-rate': makeShapeshiftRatePlugin,
   coinbase: makeCoinbasePlugin,
   coincap: makeCoincapPlugin,
   coincapLegacy: makeCoincapLegacyPlugin,
   currencyconverterapi: makeCurrencyconverterapiPlugin,
   herc: makeHercPlugin,
-  nomics: makeNomicsPlugin
+  nomics: makeNomicsPlugin,
+
+  // Swap plugins:
+  changelly: makeChangellyPlugin,
+  changenow: makeChangeNowPlugin
 }
 
 if (

@@ -5,7 +5,7 @@ import {
   type EdgeRatePlugin
 } from 'edge-core-js/types'
 
-export function makeShapeshiftPlugin (
+export function makeShapeshiftRatePlugin (
   opts: EdgeCorePluginOptions
 ): EdgeRatePlugin {
   const { io } = opts
