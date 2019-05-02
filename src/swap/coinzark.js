@@ -73,17 +73,20 @@ export function makeCoinZarkPlugin (
         getAddress(toWallet, toCurrencyCode)
       ])
 
+      // Convert amount to CoinZark supported format
       const quoteAmount = await fromWallet.nativeToDenomination(
         nativeAmount,
         fromCurrencyCode
       )
 
+      // Convenience function to get JSON from the API
       async function get (path: string) {
         const api = `${uri}${path}`
         const reply = await fetchJson(api)
         return reply.json
       }
 
+      // Convenience function to post form values and get returned JSON from the API
       async function post (url, values: any) {
         const opts = {
           headers: {
@@ -104,16 +107,17 @@ export function makeCoinZarkPlugin (
         return out
       }
 
+      // Fetch the supported currencies
       const currencies = await get('swap/currencies')
       let fromCorrect = false
       let toCorrect = false
+
+      // Loop through the currencies and find the requested ones.
+      // CoinZark will return canDeposit / canReceive as status of the
+      // coins. The coin we want to exchange from should have canDeposit enabled
+      // and the coin we want to exchange to should have canReceive enabled.
       if (!(currencies === null || currencies.result === null)) {
         for (const curr of currencies.result) {
-          io.console.info(
-            `curr.id [${curr.id}] - curr.canDeposit [${
-              curr.canDeposit
-            }] - curr.canReceive [${curr.canReceive}]`
-          )
           if (curr.id === fromCurrencyCode && curr.canDeposit === 1) {
             fromCorrect = true
           }
@@ -124,10 +128,13 @@ export function makeCoinZarkPlugin (
         }
       }
 
+      // Check if we managed to match the requested coin types
+      // and that they are properly available. If not return an error.
       if (!fromCorrect || !toCorrect) {
         throw new SwapCurrencyError(swapInfo, fromCurrencyCode, toCurrencyCode)
       }
 
+      // Fetch the rate from CoinZark. This also includes the limits.
       const swapRate = await get(
         'swap/rate?from=' +
           fromCurrencyCode +
@@ -151,6 +158,7 @@ export function makeCoinZarkPlugin (
         fromCurrencyCode
       )
 
+      // If the final amount is 0, there is something wrong. Probably the limits.
       if (swapRate.result.finalAmount === 0) {
         if (
           parseFloat(swapRate.result.depositAmount) <
@@ -169,11 +177,13 @@ export function makeCoinZarkPlugin (
         throw new SwapCurrencyError(swapInfo, fromCurrencyCode, toCurrencyCode)
       }
 
+      // Convert the receive amount to native
       const receiveAmount = await fromWallet.denominationToNative(
         swapRate.result.finalAmount,
         fromCurrencyCode
       )
 
+      // Configure the form parameters for the Swap create call
       const swapParams = {
         destination: toAddress,
         refund: fromAddress,
@@ -184,8 +194,10 @@ export function makeCoinZarkPlugin (
         affiliateFee: initOptions.affiliateFee.toString()
       }
 
+      // Create the swap
       const swap = await post('swap/create', swapParams)
 
+      // Check if the creation was succesful, otherwise return an error
       if (!swap.success) {
         throw new SwapCurrencyError(swapInfo, fromCurrencyCode, toCurrencyCode)
       }
@@ -195,7 +207,9 @@ export function makeCoinZarkPlugin (
           deposit_addr_default: ''
         }
       }
-      // Poll until error or pending deposit
+
+      // Poll the status until there's an error or the swap is
+      // awaiting the deposit
       while (true) {
         swapStatus = await get('swap/status?uuid=' + swap.result.uuid)
 
@@ -231,12 +245,16 @@ export function makeCoinZarkPlugin (
         ]
       }
 
-      io.console.info('CoinZark spendInfo', spendInfo)
+      io.console.info('CoinZark spendinfo:', spendInfo)
+
+      // Build the transaction the user has to approve to
+      // initiate the swap
       const tx = await request.fromWallet.makeSpend(spendInfo)
       tx.otherParams.payinAddress = spendInfo.spendTargets[0].publicAddress
       tx.otherParams.uniqueIdentifier =
         spendInfo.spendTargets[0].otherParams.uniqueIdentifier
 
+      // Return the quote to the user for execution
       return makeSwapPluginQuote(
         request,
         request.nativeAmount,
