@@ -15,7 +15,7 @@ export function makeHercPlugin (opts: EdgeCorePluginOptions): EdgeRatePlugin {
 
     async fetchRates (pairsHint) {
       const reply = await io.fetch(
-        'https://chart.anthemgold.com/service-1.0-SNAPSHOT/PRICE?symbol=HERCUSDV&range=MINUTE'
+        'https://chart.anthemgold.com/service-1.0-SNAPSHOT/PRICE?symbol=HERCUSDVW&range=MINUTE'
       )
       const json = await reply.json()
 
