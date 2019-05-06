@@ -6,12 +6,12 @@ import {
   type EdgeSwapPlugin,
   type EdgeSwapPluginQuote,
   type EdgeSwapRequest,
+  type EdgeTransaction,
   SwapCurrencyError
 } from 'edge-core-js/types'
 import Web3 from 'web3'
 
 import { getFetchJson } from '../react-native-io.js'
-import type { EdgeTransaction } from 'edge-core-js/src/types/types'
 
 const swapInfo = {
   pluginName: 'totle',
@@ -57,16 +57,6 @@ const totleTransferProxyAddress = '0x74758AcFcE059f503a7E6B0fC2c8737600f9F2c4'
 const provider = new Web3.providers.WebsocketProvider('wss://node.totlesystem.com')
 const web3 = new Web3(provider)
 const { toBN } = web3.utils
-
-async function getAddress (
-  wallet: EdgeCurrencyWallet,
-  currencyCode: string
-): Promise<string> {
-  const addressInfo = await wallet.getReceiveAddress({ currencyCode })
-  return addressInfo.legacyAddress
-    ? addressInfo.legacyAddress
-    : addressInfo.publicAddress
-}
 
 function checkReply (reply: Object, request?: EdgeSwapRequest) {
   if (reply.success === false) {
@@ -148,10 +138,8 @@ export function makeTotlePlugin (
       }
 
       // Grab addresses:
-      const [fromAddress, toAddress] = await Promise.all([
-        getAddress(request.fromWallet, request.fromCurrencyCode),
-        getAddress(request.toWallet, request.toCurrencyCode)
-      ])
+      const { publicAddress: fromAddress } = await request.fromWallet.getReceiveAddress({ currencyCode })
+      const { publicAddress: toAddress } = await request.toWallet.getReceiveAddress({ currencyCode })
 
       // Swap the currencies if we need a reverse quote:
       const quoteParams =
