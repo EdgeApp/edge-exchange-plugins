@@ -116,7 +116,7 @@ export function makeCoinZarkPlugin (
       // CoinZark will return canDeposit / canReceive as status of the
       // coins. The coin we want to exchange from should have canDeposit enabled
       // and the coin we want to exchange to should have canReceive enabled.
-      if (!(currencies === null || currencies.result === null)) {
+      if (currencies != null && currencies.result != null) {
         for (const curr of currencies.result) {
           if (curr.id === fromCurrencyCode && curr.canDeposit === 1) {
             fromCorrect = true
