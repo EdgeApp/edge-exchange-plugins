@@ -18,14 +18,15 @@ import {
 import { makeSwapPluginQuote } from '../swap-helpers.js'
 
 const swapInfo = {
-  pluginName: 'faast',
-  displayName: 'Faa.st',
+  pluginName: 'godex',
+  displayName: 'Godex.io',
 
-  quoteUri: 'https://faa.st/app/orders/',
-  supportEmail: 'support@faa.st'
+// https://godex.io/exchange/waiting/5cd181de6381c
+  quoteUri: 'https://godex.io/exchange/status/#',
+  supportEmail: 'support@godex.io'
 }
 
-const API_PREFIX = 'https://api.faa.st/api/v2/public'
+const API_PREFIX = 'https://api.godex.io/api/v1/'
 
 type FaastQuoteJson = {
   swap_id: string,
@@ -56,12 +57,12 @@ async function getAddress (wallet: EdgeCurrencyWallet, currencyCode: string) {
     : addressInfo.publicAddress
 }
 
-export function makeFaastPlugin (opts: EdgeCorePluginOptions): EdgeSwapPlugin {
+export function makeGodexPlugin (opts: EdgeCorePluginOptions): EdgeSwapPlugin {
   const { io, initOptions } = opts
 
   let affiliateOptions = {}
   if (initOptions.affiliateId == null) {
-    io.console.info('No faast affiliateId provided.')
+    io.console.info('No Godex affiliateId provided.')
   } else {
     const { affiliateId, affiliateMargin } = initOptions
     affiliateOptions = {
@@ -79,7 +80,7 @@ export function makeFaastPlugin (opts: EdgeCorePluginOptions): EdgeSwapPlugin {
         `Faast ${uri} returned error code ${reply.status} (no JSON)`
       )
     }
-    io.console.info('faast reply', replyJson)
+    io.console.info('godex reply', replyJson)
 
     // Faast is not available in some parts of the world:
     if (
@@ -110,7 +111,7 @@ export function makeFaastPlugin (opts: EdgeCorePluginOptions): EdgeSwapPlugin {
 
   async function post (path, body): Object {
     const uri = `${API_PREFIX}${path}`
-    io.console.info('faast request', path, body)
+    io.console.info('godex request', path, body)
     const reply = await io.fetch(uri, {
       method: 'POST',
       headers: {
@@ -280,7 +281,7 @@ export function makeFaastPlugin (opts: EdgeCorePluginOptions): EdgeSwapPlugin {
         toNativeAmount,
         tx,
         toAddress,
-        'faast',
+        'godex',
         new Date(quoteData.price_locked_until),
         quoteData.swap_id
       )
