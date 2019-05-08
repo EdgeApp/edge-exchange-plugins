@@ -73,6 +73,10 @@ export function makeGodexPlugin (opts: EdgeCorePluginOptions): EdgeSwapPlugin {
       //     toCurrencyCode
       // )
 
+
+
+
+      // Convert the native amount to a denomination:
       const quoteAmount =
           request.quoteFor === 'from'
               ? await request.fromWallet.nativeToDenomination(
@@ -83,6 +87,41 @@ export function makeGodexPlugin (opts: EdgeCorePluginOptions): EdgeSwapPlugin {
               request.nativeAmount,
               request.toCurrencyCode
               )
+
+      // Swap the currencies if we need a reverse quote:
+      const quoteParams =
+          request.quoteFor === 'from'
+              ? {
+                from: request.fromCurrencyCode,
+                to: request.toCurrencyCode,
+                amount: quoteAmount
+              }
+              : {
+                from: request.toCurrencyCode,
+                to: request.fromCurrencyCode,
+                amount: quoteAmount
+              }
+
+      // Get the estimate from the server:
+      const quoteReplies = await Promise.all([
+        call({
+          jsonrpc: '2.0',
+          id: 'one',
+          method: 'getMinAmount',
+          params: {
+            from: request.fromCurrencyCode,
+            to: request.toCurrencyCode
+          }
+        }),
+        call({
+          jsonrpc: '2.0',
+          id: 'two',
+          method: 'getExchangeAmount',
+          params: quoteParams
+        })
+      ])
+      checkReply(quoteReplies[0])
+      checkReply(quoteReplies[1])
 
       // Calculate the amounts:
       let fromAmount, fromNativeAmount, toNativeAmount
