@@ -21,11 +21,11 @@ const swapInfo = {
   pluginName: 'godex',
   displayName: 'godex',
 
-  quoteUri: 'https://faa.st/app/orders/',
-  supportEmail: 'support@faa.st'
+  quoteUri: 'https://godex.io/exchange/status/#',
+  supportEmail: 'support@godex.io'
 }
 
-const API_PREFIX = 'https://api.faa.st/api/v2/public'
+const API_PREFIX = 'https://api.godex.io/api/v1'
 
 type GodexQuoteJson = {
   swap_id: string,
@@ -61,7 +61,7 @@ export function makeGodexPlugin (opts: EdgeCorePluginOptions): EdgeSwapPlugin {
 
   let affiliateOptions = {}
   if (initOptions.affiliateId == null) {
-    io.console.info('No faast affiliateId provided.')
+    io.console.info('No godex affiliateId provided.')
   } else {
     const { affiliateId, affiliateMargin } = initOptions
     affiliateOptions = {
@@ -76,12 +76,12 @@ export function makeGodexPlugin (opts: EdgeCorePluginOptions): EdgeSwapPlugin {
       replyJson = await reply.json()
     } catch (e) {
       throw new Error(
-        `Faast ${uri} returned error code ${reply.status} (no JSON)`
+        `godex ${uri} returned error code ${reply.status} (no JSON)`
       )
     }
-    io.console.info('faast reply', replyJson)
+    io.console.info('godex reply', replyJson)
 
-    // Faast is not available in some parts of the world:
+    // godex is not available in some parts of the world:
     if (
       reply.status === 403 &&
       replyJson != null &&
@@ -93,7 +93,7 @@ export function makeGodexPlugin (opts: EdgeCorePluginOptions): EdgeSwapPlugin {
     // Anything else:
     if (!reply.ok || (replyJson != null && replyJson.error != null)) {
       throw new Error(
-        `Faast ${uri} returned error code ${
+        `godex ${uri} returned error code ${
           reply.status
         } with JSON ${JSON.stringify(replyJson)}`
       )
@@ -110,7 +110,7 @@ export function makeGodexPlugin (opts: EdgeCorePluginOptions): EdgeSwapPlugin {
 
   async function post (path, body): Object {
     const uri = `${API_PREFIX}${path}`
-    io.console.info('faast request', path, body)
+    io.console.info('godex request', path, body)
     const reply = await io.fetch(uri, {
       method: 'POST',
       headers: {
@@ -269,7 +269,7 @@ export function makeGodexPlugin (opts: EdgeCorePluginOptions): EdgeSwapPlugin {
         currencyCode: fromCurrencyCode,
         spendTargets: [spendTarget]
       }
-      io.console.info('faast spendInfo', spendInfo)
+      io.console.info('godex spendInfo', spendInfo)
       const tx = await fromWallet.makeSpend(spendInfo)
       tx.otherParams.payinAddress = spendInfo.spendTargets[0].publicAddress
 
@@ -280,12 +280,13 @@ export function makeGodexPlugin (opts: EdgeCorePluginOptions): EdgeSwapPlugin {
         toNativeAmount,
         tx,
         toAddress,
-        'faast',
+        'godex',
         new Date(quoteData.price_locked_until),
         quoteData.swap_id
       )
     }
   }
 
+  io.console.info(out);
   return out
 }
