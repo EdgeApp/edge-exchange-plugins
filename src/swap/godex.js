@@ -14,6 +14,8 @@ import {
   SwapCurrencyError,
   SwapPermissionError
 } from 'edge-core-js/types'
+import { base16 } from 'rfc4648'
+
 
 import { makeSwapPluginQuote } from '../swap-helpers.js'
 
