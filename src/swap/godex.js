@@ -19,6 +19,11 @@ import { base16 } from 'rfc4648'
 
 import { makeSwapPluginQuote } from '../swap-helpers.js'
 
+
+function hmacSha512 (data: Uint8Array, key: Uint8Array): Uint8Array {
+  const hmac = hashjs.hmac(hashjs.sha512, key)
+  return hmac.update(data).digest()
+}
 const swapInfo = {
   pluginName: 'godex',
   displayName: 'godex',
