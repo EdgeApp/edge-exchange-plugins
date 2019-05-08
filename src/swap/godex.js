@@ -17,15 +17,25 @@ import {
 
 import { makeSwapPluginQuote } from '../swap-helpers.js'
 
+// const swapInfo = {
+//   pluginName: 'godex',
+//   displayName: 'godex',
+//
+//   quoteUri: 'https://godex.io/exchange/status/#',
+//   supportEmail: 'support@godex.io'
+// }
+//
+// const API_PREFIX = 'https://api.godex.io/api/v1'
+
 const swapInfo = {
   pluginName: 'godex',
   displayName: 'godex',
 
-  quoteUri: 'https://godex.io/exchange/status/#',
-  supportEmail: 'support@godex.io'
+  quoteUri: 'https://faa.st/app/orders/',
+  supportEmail: 'support@faa.st'
 }
 
-const API_PREFIX = 'https://api.godex.io/api/v1'
+const API_PREFIX = 'https://api.faa.st/api/v2/public'
 
 type GodexQuoteJson = {
   swap_id: string,
