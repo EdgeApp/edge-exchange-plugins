@@ -19,16 +19,15 @@ import { makeSwapPluginQuote } from '../swap-helpers.js'
 
 const swapInfo = {
   pluginName: 'godex',
-  displayName: 'Godex.io',
+  displayName: 'godex',
 
-// https://godex.io/exchange/waiting/5cd181de6381c
-  quoteUri: 'https://godex.io/exchange/status/#',
-  supportEmail: 'support@godex.io'
+  quoteUri: 'https://faa.st/app/orders/',
+  supportEmail: 'support@faa.st'
 }
 
-const API_PREFIX = 'https://api.godex.io/api/v1/'
+const API_PREFIX = 'https://api.faa.st/api/v2/public'
 
-type FaastQuoteJson = {
+type GodexQuoteJson = {
   swap_id: string,
   created_at: string,
   deposit_address: string,
@@ -62,12 +61,12 @@ export function makeGodexPlugin (opts: EdgeCorePluginOptions): EdgeSwapPlugin {
 
   let affiliateOptions = {}
   if (initOptions.affiliateId == null) {
-    io.console.info('No Godex affiliateId provided.')
+    io.console.info('No faast affiliateId provided.')
   } else {
     const { affiliateId, affiliateMargin } = initOptions
     affiliateOptions = {
-      affiliate_id: affiliateId
-      // affiliate_margin: affiliateMargin
+      affiliate_id: affiliateId,
+      affiliate_margin: affiliateMargin
     }
   }
 
@@ -80,7 +79,7 @@ export function makeGodexPlugin (opts: EdgeCorePluginOptions): EdgeSwapPlugin {
         `Faast ${uri} returned error code ${reply.status} (no JSON)`
       )
     }
-    io.console.info('godex reply', replyJson)
+    io.console.info('faast reply', replyJson)
 
     // Faast is not available in some parts of the world:
     if (
@@ -111,7 +110,7 @@ export function makeGodexPlugin (opts: EdgeCorePluginOptions): EdgeSwapPlugin {
 
   async function post (path, body): Object {
     const uri = `${API_PREFIX}${path}`
-    io.console.info('godex request', path, body)
+    io.console.info('faast request', path, body)
     const reply = await io.fetch(uri, {
       method: 'POST',
       headers: {
@@ -237,7 +236,7 @@ export function makeGodexPlugin (opts: EdgeCorePluginOptions): EdgeSwapPlugin {
         ...affiliateOptions
       }
 
-      let quoteData: FaastQuoteJson
+      let quoteData: GodexQuoteJson
       try {
         quoteData = await post('/swap', body)
       } catch (e) {
@@ -281,7 +280,7 @@ export function makeGodexPlugin (opts: EdgeCorePluginOptions): EdgeSwapPlugin {
         toNativeAmount,
         tx,
         toAddress,
-        'godex',
+        'faast',
         new Date(quoteData.price_locked_until),
         quoteData.swap_id
       )
