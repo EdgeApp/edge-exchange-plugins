@@ -58,22 +58,22 @@ export function makeGodexPlugin (opts: EdgeCorePluginOptions): EdgeSwapPlugin {
     swapInfo,
 
     async fetchSwapQuote (
-        request: EdgeSwapRequest,
-        userSettings: Object | void
+      request: EdgeSwapRequest,
+      userSettings: Object | void
     ): Promise<EdgeSwapPluginQuote> {
       io.console.info(request);
       io.console.info(userSettings);
 
       // Convert that to the output format:
       return makeSwapPluginQuote(
-          request,
-          fromNativeAmount,
-          toNativeAmount,
-          tx,
-          toAddress,
-          'godex',
-          new Date(quoteData.price_locked_until),
-          quoteData.swap_id
+        request,
+        fromNativeAmount,
+        toNativeAmount,
+        tx,
+        toAddress,
+        'godex',
+        new Date(quoteData.price_locked_until),
+        quoteData.swap_id
       )
     }
   }
