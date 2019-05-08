@@ -78,8 +78,11 @@ export function makeGodexPlugin (opts: EdgeCorePluginOptions): EdgeSwapPlugin {
 
   async function call (json: any) {
     const body = JSON.stringify(json)
+    // const sign = base16
+    //     .stringify(hmacSha512(parseUtf8(body), secret))
+    //     .toLowerCase()
     const sign = base16
-        .stringify(hmacSha512(parseUtf8(body), secret))
+        .stringify(hmacSha512(parseUtf8(body)))
         .toLowerCase()
 
     io.console.info('godex call:', json)
