@@ -66,8 +66,8 @@ export function makeGodexPlugin (opts: EdgeCorePluginOptions): EdgeSwapPlugin {
   } else {
     const { affiliateId, affiliateMargin } = initOptions
     affiliateOptions = {
-      affiliate_id: affiliateId,
-      affiliate_margin: affiliateMargin
+      affiliate_id: affiliateId
+      // affiliate_margin: affiliateMargin
     }
   }
 
