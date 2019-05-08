@@ -15,6 +15,7 @@ import {
   SwapPermissionError
 } from 'edge-core-js/types'
 import { base16 } from 'rfc4648'
+import utf8Codec from 'utf8'
 
 
 import { makeSwapPluginQuote } from '../swap-helpers.js'
@@ -30,6 +31,18 @@ const swapInfo = {
 
   quoteUri: 'https://godex.io/exchange/status/#',
   supportEmail: 'support@godex.io'
+}
+
+
+function parseUtf8 (text: string): Uint8Array {
+  const byteString: string = utf8Codec.encode(text)
+  const out = new Uint8Array(byteString.length)
+
+  for (let i = 0; i < byteString.length; ++i) {
+    out[i] = byteString.charCodeAt(i)
+  }
+
+  return out
 }
 
 const API_PREFIX = 'https://api.godex.io/api/v1'
