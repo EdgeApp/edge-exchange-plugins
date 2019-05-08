@@ -54,6 +54,28 @@ export function makeGodexPlugin (opts: EdgeCorePluginOptions): EdgeSwapPlugin {
 
   io.console.info(initOptions);
 
+
+  async function call (json: any) {
+    const body = JSON.stringify(json)
+    const sign = base16
+        .stringify(hmacSha512(parseUtf8(body), secret))
+        .toLowerCase()
+
+    io.console.info('godex call:', json)
+    const headers = {
+      'Content-Type': 'application/json',
+      // 'api-key': apiKey,
+      sign
+    }
+    const reply = await fetchJson(uri, { method: 'POST', body, headers })
+    if (!reply.ok) {
+      throw new Error(`Changelly returned error code ${reply.status}`)
+    }
+    const out = reply.json
+    io.console.info('changelly reply:', out)
+    return out
+  }
+
   const out: EdgeSwapPlugin = {
     swapInfo,
 
