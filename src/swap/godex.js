@@ -34,6 +34,7 @@ const swapInfo = {
 }
 
 
+
 function parseUtf8 (text: string): Uint8Array {
   const byteString: string = utf8Codec.encode(text)
   const out = new Uint8Array(byteString.length)
