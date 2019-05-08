@@ -64,14 +64,34 @@ export function makeGodexPlugin (opts: EdgeCorePluginOptions): EdgeSwapPlugin {
       io.console.info(request);
       io.console.info(userSettings);
 
-      const fromNativeAmount = await fromWallet.denominationToNative(
-          quoteData.deposit_amount.toString(),
-          fromCurrencyCode
-      )
-      const toNativeAmount = await toWallet.denominationToNative(
-          quoteData.withdrawal_amount.toString(),
-          toCurrencyCode
-      )
+      // const fromNativeAmount = await fromWallet.denominationToNative(
+      //     quoteData.deposit_amount.toString(),
+      //     fromCurrencyCode
+      // )
+      // const toNativeAmount = await toWallet.denominationToNative(
+      //     quoteData.withdrawal_amount.toString(),
+      //     toCurrencyCode
+      // )
+
+
+      // Calculate the amounts:
+      let fromAmount, fromNativeAmount, toNativeAmount
+      if (request.quoteFor === 'from') {
+        fromAmount = quoteAmount
+        fromNativeAmount = request.nativeAmount
+        toNativeAmount = await request.toWallet.denominationToNative(
+            quoteReplies[1].result,
+            request.toCurrencyCode
+        )
+      } else {
+        fromAmount = mul(quoteReplies[1].result, '1.02')
+        fromNativeAmount = await request.fromWallet.denominationToNative(
+            fromAmount,
+            request.fromCurrencyCode
+        )
+        toNativeAmount = request.nativeAmount
+      }
+
 
       io.console.info(fromNativeAmount);
 
