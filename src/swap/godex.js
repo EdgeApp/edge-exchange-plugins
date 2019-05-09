@@ -36,6 +36,7 @@ const swapInfo = {
 }
 
 const uri = 'https://api.godex.io/api/v1/'
+const expirationMs = 1000 * 60 * 20
 
 
 
@@ -109,7 +110,7 @@ export function makeGodexPlugin (opts: EdgeCorePluginOptions): EdgeSwapPlugin {
       throw new Error(`godex returned error code ${reply.status}`)
     }
     const out = reply.json
-    io.console.info('changelly reply:', out)
+    io.console.info('godex reply status ok:', out)
     return out
   }
 
@@ -181,7 +182,10 @@ export function makeGodexPlugin (opts: EdgeCorePluginOptions): EdgeSwapPlugin {
         // })
       ])
       io.console.info('godex info api');
-      io.console.info(quoteReplies);
+      checkReply(quoteReplies)
+      checkReply(quoteReplies.min_amount)
+      checkReply(quoteReplies.amount)
+      // io.console.info(quoteReplies);
       // checkReply(quoteReplies[0])
       // checkReply(quoteReplies[1])
 
@@ -214,7 +218,7 @@ export function makeGodexPlugin (opts: EdgeCorePluginOptions): EdgeSwapPlugin {
         tx,
         toAddress,
         'godex',
-        new Date(quoteData.price_locked_until),
+        new Date(Date.now() + expirationMs),
         quoteData.swap_id
       )
     }
