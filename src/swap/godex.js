@@ -84,8 +84,8 @@ export function makeGodexPlugin (opts: EdgeCorePluginOptions): EdgeSwapPlugin {
 
   async function call (url, data) {
     io.console.info('call data:', data.params)
-    const body = data.params;
-    // const body = JSON.stringify(data)
+    // const body = data.params;
+    const body = JSON.stringify(data.params)
     //   io.console.info(body);
     // const sign = base16
     //     .stringify(hmacSha512(parseUtf8(body), secret))
