@@ -100,7 +100,7 @@ export function makeGodexPlugin (opts: EdgeCorePluginOptions): EdgeSwapPlugin {
       sign
     }
     const reply = await fetchJson(url, { method: 'POST', body, headers })
-     io.console.log('changelly reply:', reply);
+     io.console.info('changelly reply:', reply);
     if (!reply.ok) {
       throw new Error(`Changelly returned error code ${reply.status}`)
     }
