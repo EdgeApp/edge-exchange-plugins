@@ -159,8 +159,9 @@ export function makeGodexPlugin (opts: EdgeCorePluginOptions): EdgeSwapPlugin {
         call({
           jsonrpc: '2.0',
           id: 'one',
-          method: 'getMinAmount',
+          method: 'info',
           params: {
+            amount: 1,
             from: request.fromCurrencyCode,
             to: request.toCurrencyCode
           }
