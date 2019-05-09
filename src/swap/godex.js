@@ -166,9 +166,10 @@ export function makeGodexPlugin (opts: EdgeCorePluginOptions): EdgeSwapPlugin {
       const quoteReplies = await Promise.all([
         call(uri+'info',{
           params: {
-            amount: quoteAmount,
-            from: request.fromCurrencyCode,
-            to: request.toCurrencyCode
+            quoteParams
+            // amount: quoteAmount,
+            // from: request.fromCurrencyCode,
+            // to: request.toCurrencyCode
           }
         })
         // ,
