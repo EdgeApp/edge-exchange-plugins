@@ -35,6 +35,9 @@ const swapInfo = {
   supportEmail: 'support@godex.io'
 }
 
+const uri = 'https://api.godex.io/api/v1/'
+
+
 
 
 function parseUtf8 (text: string): Uint8Array {
