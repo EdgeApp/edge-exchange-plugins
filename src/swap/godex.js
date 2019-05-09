@@ -92,6 +92,8 @@ export function makeGodexPlugin (opts: EdgeCorePluginOptions): EdgeSwapPlugin {
         .stringify(hmacSha512(parseUtf8(body)))
         .toLowerCase()
 
+    io.console.info('sign')
+    io.console.info(sign)
     io.console.info('godex call:', url)
     const headers = {
       'Content-Type': 'application/json',
@@ -100,9 +102,9 @@ export function makeGodexPlugin (opts: EdgeCorePluginOptions): EdgeSwapPlugin {
       sign
     }
     const reply = await fetchJson(url, { method: 'POST', body, headers })
-     io.console.info('changelly reply:', reply);
+     io.console.info('godex reply:', reply);
     if (!reply.ok) {
-      throw new Error(`Changelly returned error code ${reply.status}`)
+      throw new Error(`godex returned error code ${reply.status}`)
     }
     const out = reply.json
     io.console.info('changelly reply:', out)

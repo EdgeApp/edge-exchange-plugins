@@ -29,7 +29,7 @@ const edgeCorePlugins = {
   changenow: makeChangeNowPlugin,
   faast: makeFaastPlugin,
   shapeshift: makeShapeshiftPlugin,
-  godex: makeGodexPlugin,
+  godex: makeGodexPlugin
 }
 
 if (
