@@ -20,6 +20,7 @@ import utf8Codec from 'utf8'
 
 
 import { makeSwapPluginQuote } from '../swap-helpers.js'
+import {getFetchJson} from "../react-native-io";
 
 
 function hmacSha512 (data: Uint8Array, key: Uint8Array): Uint8Array {
@@ -73,6 +74,7 @@ const dontUseLegacy = {
 
 export function makeGodexPlugin (opts: EdgeCorePluginOptions): EdgeSwapPlugin {
   const { io, initOptions } = opts
+  const fetchJson = getFetchJson(opts)
 
   io.console.info(initOptions);
 
