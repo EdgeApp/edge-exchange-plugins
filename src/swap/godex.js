@@ -165,12 +165,12 @@ export function makeGodexPlugin (opts: EdgeCorePluginOptions): EdgeSwapPlugin {
       // Get the estimate from the server:
       const quoteReplies = await Promise.all([
         call(uri+'info',{
-          params: {
-            quoteParams
-            // amount: quoteAmount,
-            // from: request.fromCurrencyCode,
-            // to: request.toCurrencyCode
-          }
+          params: quoteParams
+          // params: {
+          //   amount: quoteAmount,
+          //   from: quoteParams.from,
+          //   to:  quoteParams.to
+          // }
         })
         // ,
         // call({
