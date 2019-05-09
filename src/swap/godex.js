@@ -83,14 +83,15 @@ export function makeGodexPlugin (opts: EdgeCorePluginOptions): EdgeSwapPlugin {
 
 
   async function call (url, data) {
-    const body = JSON.stringify(data)
-      io.console.info(body);
+    console.log(data);
+    // const body = JSON.stringify(data)
+    //   io.console.info(body);
     // const sign = base16
     //     .stringify(hmacSha512(parseUtf8(body), secret))
     //     .toLowerCase()
-    const sign = base16
-        .stringify(hmacSha512(parseUtf8(body)))
-        .toLowerCase()
+    // const sign = base16
+    //     .stringify(hmacSha512(parseUtf8(body)))
+    //     .toLowerCase()
 
     io.console.info('sign')
     io.console.info(sign)
@@ -99,7 +100,7 @@ export function makeGodexPlugin (opts: EdgeCorePluginOptions): EdgeSwapPlugin {
       'Content-Type': 'application/json',
       'Accept': 'application/json',
       // 'api-key': apiKey,
-      sign
+      // sign
     }
     const reply = await fetchJson(url, { method: 'POST', body, headers })
      io.console.info('godex reply:', reply);
