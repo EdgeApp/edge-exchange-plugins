@@ -182,10 +182,12 @@ export function makeGodexPlugin (opts: EdgeCorePluginOptions): EdgeSwapPlugin {
         // })
       ])
       io.console.info('godex info api');
-      checkReply(quoteReplies)
-      checkReply(quoteReplies.min_amount)
-      checkReply(quoteReplies.amount)
-      // io.console.info(quoteReplies);
+      // checkReply(quoteReplies)
+      // checkReply(quoteReplies.min_amount)
+      // checkReply(quoteReplies.amount)
+      io.console.info(quoteReplies);
+      io.console.info(quoteReplies.min_amount);
+      io.console.info(quoteReplies.amount);
       // checkReply(quoteReplies[0])
       // checkReply(quoteReplies[1])
 
