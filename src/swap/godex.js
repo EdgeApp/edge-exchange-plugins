@@ -93,8 +93,8 @@ export function makeGodexPlugin (opts: EdgeCorePluginOptions): EdgeSwapPlugin {
     //     .stringify(hmacSha512(parseUtf8(body)))
     //     .toLowerCase()
 
-    io.console.info('sign')
-    io.console.info(sign)
+    // io.console.info('sign')
+    // io.console.info(sign)
     io.console.info('godex call:', url)
     const headers = {
       'Content-Type': 'application/json',
