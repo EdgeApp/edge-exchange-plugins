@@ -146,6 +146,7 @@ export function makeGodexPlugin (opts: EdgeCorePluginOptions): EdgeSwapPlugin {
               request.nativeAmount,
               request.toCurrencyCode
               )
+      io.console.info('godex quoteAmount:', quoteAmount);
 
       // Swap the currencies if we need a reverse quote:
       const quoteParams =
@@ -165,7 +166,7 @@ export function makeGodexPlugin (opts: EdgeCorePluginOptions): EdgeSwapPlugin {
       const quoteReplies = await Promise.all([
         call(uri+'info',{
           params: {
-            amount: 1,
+            amount: quoteAmount,
             from: request.fromCurrencyCode,
             to: request.toCurrencyCode
           }
