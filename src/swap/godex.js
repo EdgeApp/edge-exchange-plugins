@@ -102,7 +102,7 @@ export function makeGodexPlugin (opts: EdgeCorePluginOptions): EdgeSwapPlugin {
       // 'api-key': apiKey,
       // sign
     }
-    const reply = await fetchJson(url, { method: 'POST', body, headers })
+    const reply = await fetchJson(url, { method: 'POST', data, headers })
      io.console.info('godex reply:', reply);
     if (!reply.ok) {
       throw new Error(`godex returned error code ${reply.status}`)
