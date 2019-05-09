@@ -82,7 +82,7 @@ export function makeGodexPlugin (opts: EdgeCorePluginOptions): EdgeSwapPlugin {
   io.console.info(initOptions);
 
 
-  async function call (json: any) {
+  async function call (url, data) {
     const body = JSON.stringify(json)
     // const sign = base16
     //     .stringify(hmacSha512(parseUtf8(body), secret))
@@ -156,10 +156,7 @@ export function makeGodexPlugin (opts: EdgeCorePluginOptions): EdgeSwapPlugin {
 
       // Get the estimate from the server:
       const quoteReplies = await Promise.all([
-        call({
-          jsonrpc: '2.0',
-          id: 'one',
-          method: 'info',
+        call(uri+'info',{
           params: {
             amount: 1,
             from: request.fromCurrencyCode,
@@ -174,6 +171,7 @@ export function makeGodexPlugin (opts: EdgeCorePluginOptions): EdgeSwapPlugin {
         //   params: quoteParams
         // })
       ])
+      io.console.info('godex info api');
       io.console.info(quoteReplies);
       // checkReply(quoteReplies[0])
       // checkReply(quoteReplies[1])
