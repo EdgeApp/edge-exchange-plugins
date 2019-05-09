@@ -165,16 +165,18 @@ export function makeGodexPlugin (opts: EdgeCorePluginOptions): EdgeSwapPlugin {
             from: request.fromCurrencyCode,
             to: request.toCurrencyCode
           }
-        }),
-        call({
-          jsonrpc: '2.0',
-          id: 'two',
-          method: 'getExchangeAmount',
-          params: quoteParams
         })
+        // ,
+        // call({
+        //   jsonrpc: '2.0',
+        //   id: 'two',
+        //   method: 'getExchangeAmount',
+        //   params: quoteParams
+        // })
       ])
-      checkReply(quoteReplies[0])
-      checkReply(quoteReplies[1])
+      io.console.info(quoteReplies);
+      // checkReply(quoteReplies[0])
+      // checkReply(quoteReplies[1])
 
       // Calculate the amounts:
       let fromAmount, fromNativeAmount, toNativeAmount
