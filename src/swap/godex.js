@@ -83,13 +83,14 @@ async function getAddress (wallet: EdgeCurrencyWallet, currencyCode: string) {
       : addressInfo.publicAddress
 }
 
-io.console.info('get adress'+getAddress);
+
 
 export function makeGodexPlugin (opts: EdgeCorePluginOptions): EdgeSwapPlugin {
   const { io, initOptions } = opts
   const fetchJson = getFetchJson(opts)
 
   io.console.info(initOptions);
+  io.console.info('get adress'+getAddress);
 
 
   async function call (url, data) {
