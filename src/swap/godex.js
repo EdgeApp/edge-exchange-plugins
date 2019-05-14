@@ -216,12 +216,12 @@ export function makeGodexPlugin (opts: EdgeCorePluginOptions): EdgeSwapPlugin {
         fromNativeAmount = request.nativeAmount
         toNativeAmount = await request.toWallet.denominationToNative(
             // quoteReplies[1].result,
-            quoteReplies.amount,
+            quoteReplies[0].amount,
             request.toCurrencyCode
         )
       } else {
         // fromAmount = mul(quoteReplies[1].result, '1.02')
-        fromAmount = quoteReplies.amount
+        fromAmount = quoteReplies[0].amount
         fromNativeAmount = await request.fromWallet.denominationToNative(
             fromAmount,
             request.fromCurrencyCodequoteAmount
