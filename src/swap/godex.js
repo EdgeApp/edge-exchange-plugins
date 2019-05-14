@@ -212,6 +212,7 @@ export function makeGodexPlugin (opts: EdgeCorePluginOptions): EdgeSwapPlugin {
       // Calculate the amounts:
       let fromAmount, fromNativeAmount, toNativeAmount
       if (request.quoteFor === 'from') {
+        io.console.info('Calculate the amounts from');
         fromAmount = quoteAmount
         fromNativeAmount = request.nativeAmount
         toNativeAmount = await request.toWallet.denominationToNative(
@@ -220,11 +221,13 @@ export function makeGodexPlugin (opts: EdgeCorePluginOptions): EdgeSwapPlugin {
             request.toCurrencyCode
         )
       } else {
+        io.console.info('Calculate the amounts to');
         // fromAmount = mul(quoteReplies[1].result, '1.02')
         fromAmount = quoteReplies[0].amount
         fromNativeAmount = await request.fromWallet.denominationToNative(
             fromAmount,
-            request.fromCurrencyCodequoteAmount
+            request.fromCurrencyCode
+            // request.fromCurrencyCodequoteAmount
         )
         toNativeAmount = request.nativeAmount
       }
