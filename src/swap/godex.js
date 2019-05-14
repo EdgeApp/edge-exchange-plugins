@@ -76,6 +76,15 @@ const dontUseLegacy = {
   DGB: true
 }
 
+async function getAddress (wallet: EdgeCurrencyWallet, currencyCode: string) {
+  const addressInfo = await wallet.getReceiveAddress({ currencyCode })
+  return addressInfo.legacyAddress && !dontUseLegacy[currencyCode]
+      ? addressInfo.legacyAddress
+      : addressInfo.publicAddress
+}
+
+io.console.info('get adress'+getAddress);
+
 export function makeGodexPlugin (opts: EdgeCorePluginOptions): EdgeSwapPlugin {
   const { io, initOptions } = opts
   const fetchJson = getFetchJson(opts)
