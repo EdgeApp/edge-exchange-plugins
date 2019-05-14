@@ -139,8 +139,8 @@ export function makeGodexPlugin (opts: EdgeCorePluginOptions): EdgeSwapPlugin {
         getAddress(request.fromWallet, request.fromCurrencyCode),
         getAddress(request.toWallet, request.toCurrencyCode)
       ]);
-      io.console.log('from address:'+fromAddress);
-      io.console.log('to address:'+toAddress);
+      io.console.info('from address:'+fromAddress);
+      io.console.info('to address:'+toAddress);
 
 
       // const fromNativeAmount = await fromWallet.denominationToNative(
