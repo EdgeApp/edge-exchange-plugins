@@ -124,6 +124,15 @@ export function makeGodexPlugin (opts: EdgeCorePluginOptions): EdgeSwapPlugin {
       io.console.info(request);
       io.console.info(userSettings);
 
+      // Grab addresses:
+      const [fromAddress, toAddress] = await Promise.all([
+        getAddress(request.fromWallet, request.fromCurrencyCode),
+        getAddress(request.toWallet, request.toCurrencyCode)
+      ]);
+      io.console.log('from address:'+fromAddress);
+      io.console.log('to address:'+toAddress);
+
+
       // const fromNativeAmount = await fromWallet.denominationToNative(
       //     quoteData.deposit_amount.toString(),
       //     fromCurrencyCode
@@ -186,8 +195,8 @@ export function makeGodexPlugin (opts: EdgeCorePluginOptions): EdgeSwapPlugin {
       // checkReply(quoteReplies.min_amount)
       // checkReply(quoteReplies.amount)
       io.console.info(quoteReplies);
-      io.console.info(quoteReplies.min_amount);
-      io.console.info(quoteReplies.amount);
+      io.console.info('min_amount:'+quoteReplies['min_amount']);
+      io.console.info('amount:'+quoteReplies.amount);
       // checkReply(quoteReplies[0])
       // checkReply(quoteReplies[1])
 
@@ -197,11 +206,13 @@ export function makeGodexPlugin (opts: EdgeCorePluginOptions): EdgeSwapPlugin {
         fromAmount = quoteAmount
         fromNativeAmount = request.nativeAmount
         toNativeAmount = await request.toWallet.denominationToNative(
-            quoteReplies[1].result,
+            // quoteReplies[1].result,
+            quoteReplies.amount,
             request.toCurrencyCode
         )
       } else {
-        fromAmount = mul(quoteReplies[1].result, '1.02')
+        // fromAmount = mul(quoteReplies[1].result, '1.02')
+        fromAmount = quoteReplies.amount
         fromNativeAmount = await request.fromWallet.denominationToNative(
             fromAmount,
             request.fromCurrencyCodequoteAmount
