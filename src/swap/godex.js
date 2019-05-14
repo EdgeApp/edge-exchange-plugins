@@ -90,7 +90,6 @@ export function makeGodexPlugin (opts: EdgeCorePluginOptions): EdgeSwapPlugin {
   const fetchJson = getFetchJson(opts)
 
   io.console.info(initOptions);
-  io.console.info('get adress'+getAddress);
 
 
   async function call (url, data) {
@@ -231,7 +230,9 @@ export function makeGodexPlugin (opts: EdgeCorePluginOptions): EdgeSwapPlugin {
       }
 
 
-      io.console.info(fromNativeAmount);
+      io.console.info('fromNativeAmount'+fromNativeAmount);
+      io.console.info('toNativeAmount'+toNativeAmount);
+
 
       // Convert that to the output format:
       return makeSwapPluginQuote(
