@@ -236,8 +236,9 @@ export function makeGodexPlugin (opts: EdgeCorePluginOptions): EdgeSwapPlugin {
       io.console.info('fromNativeAmount'+fromNativeAmount);
       io.console.info('toNativeAmount'+toNativeAmount);
 
-      const sendReply = await call({
-        route: uri+'transaction',
+      const sendReply = await call(uri+'transaction',
+          {
+        // route: uri+'transaction',
         body: {
           amount: fromAmount,
           coin_from: request.fromCurrencyCode,
@@ -247,7 +248,7 @@ export function makeGodexPlugin (opts: EdgeCorePluginOptions): EdgeSwapPlugin {
           // withdrawal
           // return
           extraId: null, // TODO: Do we need this for Monero?
-          refundAddress: fromAddress
+          return: fromAddress
         }
       })
       io.console.info('sendReply'+sendReply);
