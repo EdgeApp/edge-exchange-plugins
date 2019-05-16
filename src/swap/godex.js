@@ -35,7 +35,8 @@ const swapInfo = {
   supportEmail: 'support@godex.io'
 }
 
-const uri = 'https://api.godex.io/api/v1/'
+// const uri = 'https://api.godex.io/api/v1/'
+const uri = 'http://api.gdxapp.com:8082/api/v1/'
 const expirationMs = 1000 * 60 * 20
 
 
@@ -240,15 +241,16 @@ export function makeGodexPlugin (opts: EdgeCorePluginOptions): EdgeSwapPlugin {
           {
         // route: uri+'transaction',
       params: {
-          amount: fromAmount,
+          deposit_amount: fromAmount,
           coin_from: request.fromCurrencyCode,
           coin_to: request.toCurrencyCode,
           address: toAddress,
-          // deposit_amount
-          // withdrawal
-          // return
+          withdrawal: toAddress,
+          return: fromAddress,
           extraId: null, // TODO: Do we need this for Monero?
-          return: fromAddress
+          return_extra_id: 'empty',
+          withdrawal_extra_id: 'empty',
+          // return: fromAddress
         }
       })
       io.console.info('sendReply'+sendReply);
