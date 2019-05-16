@@ -53,7 +53,7 @@ function parseUtf8 (text: string): Uint8Array {
   return out
 }
 
-const API_PREFIX = 'https://api.godex.io/api/v1'
+// const API_PREFIX = 'https://api.godex.io/api/v1'
 
 type GodexQuoteJson = {
   swap_id: string,
@@ -247,9 +247,8 @@ export function makeGodexPlugin (opts: EdgeCorePluginOptions): EdgeSwapPlugin {
           address: toAddress,
           withdrawal: toAddress,
           return: fromAddress,
-          extraId: null, // TODO: Do we need this for Monero?
           return_extra_id: 'empty',
-          withdrawal_extra_id: 'empty',
+          withdrawal_extra_id: 'empty'
           // return: fromAddress
         }
       })
