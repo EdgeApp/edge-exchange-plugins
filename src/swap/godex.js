@@ -248,7 +248,7 @@ export function makeGodexPlugin (opts: EdgeCorePluginOptions): EdgeSwapPlugin {
           withdrawal: toAddress,
           return: fromAddress,
           return_extra_id: 'empty',
-          withdrawal_extra_id: 'empty'
+          // withdrawal_extra_id: 'empty'
           // return: fromAddress
         }
       })
