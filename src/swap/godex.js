@@ -237,7 +237,7 @@ export function makeGodexPlugin (opts: EdgeCorePluginOptions): EdgeSwapPlugin {
       io.console.info('toNativeAmount'+toNativeAmount);
 
       const sendReply = await call({
-        route: uri+'api/v1/transaction',
+        route: uri+'transaction',
         body: {
           amount: fromAmount,
           coin_from: request.fromCurrencyCode,
