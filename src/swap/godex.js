@@ -93,6 +93,7 @@ export function makeGodexPlugin (opts: EdgeCorePluginOptions): EdgeSwapPlugin {
 
 
   async function call (url, data) {
+    io.console.info('url:', url);
     io.console.info('call data:', data)
     io.console.info('call data:', data.params)
     // const body = data.params;
