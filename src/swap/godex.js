@@ -239,7 +239,7 @@ export function makeGodexPlugin (opts: EdgeCorePluginOptions): EdgeSwapPlugin {
       const sendReply = await call(uri+'transaction',
           {
         // route: uri+'transaction',
-        body: {
+      params: {
           amount: fromAmount,
           coin_from: request.fromCurrencyCode,
           coin_to: request.toCurrencyCode,
