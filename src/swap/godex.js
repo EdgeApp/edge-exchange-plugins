@@ -36,7 +36,8 @@ const swapInfo = {
 }
 
 // const uri = 'https://api.godex.io/api/v1/'
-const uri = 'http://api.gdxapp.com:8082//api/v1/'
+const uri = 'http://api.gdxapp.com:8082/api/v1/'
+
 
 const expirationMs = 1000 * 60 * 20
 
@@ -250,8 +251,9 @@ export function makeGodexPlugin (opts: EdgeCorePluginOptions): EdgeSwapPlugin {
           return: fromAddress,
           // return_extra_id: 'empty',
           // withdrawal_extra_id: 'empty',
-        return_extra_id: null,
-        withdrawal_extra_id: null,
+          return_extra_id: null,
+          withdrawal_extra_id: null,
+          type: 'demo'
           // return: fromAddress
         }
       })
