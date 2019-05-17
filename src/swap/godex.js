@@ -279,6 +279,11 @@ export function makeGodexPlugin (opts: EdgeCorePluginOptions): EdgeSwapPlugin {
       }
       io.console.info('godex spendInfo', spendInfo)
 
+      const tx = await request.fromWallet.makeSpend(spendInfo)
+      tx.otherParams.payinAddress = spendInfo.spendTargets[0].publicAddress
+      // tx.otherParams.uniqueIdentifier =
+      //     spendInfo.spendTargets[0].otherParams.uniqueIdentifier
+
 
 
       // Convert that to the output format:
