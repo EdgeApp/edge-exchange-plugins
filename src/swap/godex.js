@@ -254,6 +254,7 @@ export function makeGodexPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
 
 
             // Check the minimum:
+            let nativeMin
             if (request.quoteFor === 'from') {
                 io.console.info('Check the minimum from');
                 const nativeMin = await request.fromWallet.denominationToNative(
