@@ -222,6 +222,8 @@ export function makeGodexPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
             io.console.info(quoteReplies);
             io.console.info('min_amount:' + quoteReplies[0].min_amount);
             io.console.info('amount:' + quoteReplies[0].amount);
+            io.console.info('min_amount quoteReplies[1]:' + quoteReplies[1].min_amount);
+            io.console.info('amount quoteReplies[1]:' + quoteReplies[1].amount);
             // checkReply(quoteReplies[0])
             // checkReply(quoteReplies[1])
 
