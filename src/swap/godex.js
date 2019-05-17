@@ -63,6 +63,7 @@ type QuoteInfo = {
   deposit_address: string,
   deposit_amount: number,
   deposit_currency: string,
+  deposit: string,
   spot_price: number,
   price: number,
   price_locked_at: string,
@@ -258,24 +259,25 @@ export function makeGodexPlugin (opts: EdgeCorePluginOptions): EdgeSwapPlugin {
         }
       })
       io.console.info('sendReply'+sendReply);
-      io.console.info('sendReply result'+sendReply.result);
-      // const quoteInfo: QuoteInfo = sendReply.result;
+      io.console.info('sendReply result'+sendReply.deposit);
+      const quoteInfo: QuoteInfo = sendReply;
       // io.console.info('QuoteInfo'+quoteInfo);
 
       // Make the transaction:
-      // const spendInfo = {
-      //   currencyCode: request.fromCurrencyCode,
-      //   spendTargets: [
-      //     {
-      //       nativeAmount: fromNativeAmount,
-      //       publicAddress: quoteInfo.payinAddress,
-      //       otherParams: {
-      //         uniqueIdentifier: quoteInfo.payinExtraId
-      //       }
-      //     }
-      //   ]
-      // }
-      // io.console.info('godex spendInfo', spendInfo)
+      const spendInfo = {
+        currencyCode: request.fromCurrencyCode,
+        spendTargets: [
+          {
+            nativeAmount: fromNativeAmount,
+            // publicAddress: quoteInfo.payinAddress,
+            publicAddress: quoteInfo.deposit,
+            // otherParams: {
+            //   uniqueIdentifier: quoteInfo.payinExtraId
+            // }
+          }
+        ]
+      }
+      io.console.info('godex spendInfo', spendInfo)
 
 
 
