@@ -55,10 +55,12 @@ function parseUtf8 (text: string): Uint8Array {
   return out
 }
 
-const API_PREFIX = 'https://api.godex.io/api/v1'
+// const API_PREFIX = 'https://api.godex.io/api/v1'
 
 type QuoteInfo = {
-  swap_id: string,
+  // swap_id: string,
+  transaction_id: string,
+  deposit_extra_id: string,
   created_at: string,
   deposit_address: string,
   deposit_amount: number,
@@ -247,7 +249,7 @@ export function makeGodexPlugin (opts: EdgeCorePluginOptions): EdgeSwapPlugin {
           deposit_amount: fromAmount,
           coin_from: request.fromCurrencyCode,
           coin_to: request.toCurrencyCode,
-          address: toAddress,
+          // address: toAddress,
           withdrawal: toAddress,
           return: fromAddress,
           // return_extra_id: 'empty',
@@ -271,9 +273,9 @@ export function makeGodexPlugin (opts: EdgeCorePluginOptions): EdgeSwapPlugin {
             nativeAmount: fromNativeAmount,
             // publicAddress: quoteInfo.payinAddress,
             publicAddress: quoteInfo.deposit,
-            // otherParams: {
-            //   uniqueIdentifier: quoteInfo.payinExtraId
-            // }
+            otherParams: {
+              uniqueIdentifier: quoteInfo.deposit_extra_id
+            }
           }
         ]
       }
@@ -281,8 +283,8 @@ export function makeGodexPlugin (opts: EdgeCorePluginOptions): EdgeSwapPlugin {
 
       const tx = await request.fromWallet.makeSpend(spendInfo)
       tx.otherParams.payinAddress = spendInfo.spendTargets[0].publicAddress
-      // tx.otherParams.uniqueIdentifier =
-      //     spendInfo.spendTargets[0].otherParams.uniqueIdentifier
+      tx.otherParams.uniqueIdentifier =
+          spendInfo.spendTargets[0].otherParams.uniqueIdentifier
 
 
 
@@ -295,7 +297,8 @@ export function makeGodexPlugin (opts: EdgeCorePluginOptions): EdgeSwapPlugin {
         toAddress,
         'godex',
         new Date(Date.now() + expirationMs),
-        quoteData.swap_id
+        // quoteInfo.swap_id
+          quoteInfo.transaction_id
       )
     }
   }
