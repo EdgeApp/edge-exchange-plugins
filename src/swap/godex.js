@@ -57,7 +57,7 @@ function parseUtf8 (text: string): Uint8Array {
 
 const API_PREFIX = 'https://api.godex.io/api/v1'
 
-type GodexQuoteJson = {
+type QuoteInfo = {
   swap_id: string,
   created_at: string,
   deposit_address: string,
@@ -258,6 +258,25 @@ export function makeGodexPlugin (opts: EdgeCorePluginOptions): EdgeSwapPlugin {
         }
       })
       io.console.info('sendReply'+sendReply);
+      const quoteInfo: QuoteInfo = sendReply.result;
+      io.console.info('QuoteInfo'+quoteInfo);
+
+      // Make the transaction:
+      const spendInfo = {
+        currencyCode: request.fromCurrencyCode,
+        spendTargets: [
+          {
+            nativeAmount: fromNativeAmount,
+            publicAddress: quoteInfo.payinAddress,
+            otherParams: {
+              uniqueIdentifier: quoteInfo.payinExtraId
+            }
+          }
+        ]
+      }
+      io.console.info('godex spendInfo', spendInfo)
+
+
 
       // Convert that to the output format:
       return makeSwapPluginQuote(
