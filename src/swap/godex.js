@@ -241,7 +241,7 @@ export function makeGodexPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
             } else {
                 io.console.info('Calculate the amounts to');
                 // fromAmount = mul(quoteReplies[1].result, '1.02')
-                fromAmount = quoteReplies[0].amount
+                fromAmount = quoteReplies[1].amount
                 fromNativeAmount = await request.fromWallet.denominationToNative(
                     fromAmount,
                     request.fromCurrencyCode
@@ -254,13 +254,26 @@ export function makeGodexPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
 
 
             // Check the minimum:
-            const nativeMin = await request.fromWallet.denominationToNative(
-                quoteReplies[0].min_amount,
-                request.fromCurrencyCode
-            )
-            if (lt(fromNativeAmount, nativeMin)) {
-                throw new SwapBelowLimitError(swapInfo, nativeMin)
+            if (request.quoteFor === 'from') {
+                io.console.info('Check the minimum from');
+                const nativeMin = await request.fromWallet.denominationToNative(
+                    quoteReplies[0].min_amount,
+                    request.fromCurrencyCode
+                )
+                if (lt(fromNativeAmount, nativeMin)) {
+                    throw new SwapBelowLimitError(swapInfo, nativeMin)
+                }
+            }else{
+                io.console.info('Check the minimum to');
+                const nativeMin = await request.fromWallet.denominationToNative(
+                    quoteReplies[1].min_amount,
+                    request.fromCurrencyCode
+                )
+                if (lt(fromNativeAmount, nativeMin)) {
+                    throw new SwapBelowLimitError(swapInfo, nativeMin)
+                }
             }
+
             io.console.info('nativeMin' + nativeMin);
 
 
@@ -278,6 +291,7 @@ export function makeGodexPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
                         // withdrawal_extra_id: 'empty',
                         return_extra_id: null,
                         withdrawal_extra_id: null,
+                        affiliate_id: initOptions.affiliateId,
                         type: 'demo'
                         // return: fromAddress
                     }
