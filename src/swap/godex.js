@@ -209,14 +209,11 @@ export function makeGodexPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
                     //   from: quoteParams.from,
                     //   to:  quoteParams.to
                     // }
-                })
+                }),
                 // ,
-                // call({
-                //   jsonrpc: '2.0',
-                //   id: 'two',
-                //   method: 'getExchangeAmount',
-                //   params: quoteParams
-                // })
+                call(uri + 'info-revert',{
+                  params: quoteParams
+                })
             ])
             io.console.info('godex info api');
             // checkReply(quoteReplies)
