@@ -258,23 +258,24 @@ export function makeGodexPlugin (opts: EdgeCorePluginOptions): EdgeSwapPlugin {
         }
       })
       io.console.info('sendReply'+sendReply);
-      const quoteInfo: QuoteInfo = sendReply.result;
-      io.console.info('QuoteInfo'+quoteInfo);
+      io.console.info('sendReply result'+sendReply.result);
+      // const quoteInfo: QuoteInfo = sendReply.result;
+      // io.console.info('QuoteInfo'+quoteInfo);
 
       // Make the transaction:
-      const spendInfo = {
-        currencyCode: request.fromCurrencyCode,
-        spendTargets: [
-          {
-            nativeAmount: fromNativeAmount,
-            publicAddress: quoteInfo.payinAddress,
-            otherParams: {
-              uniqueIdentifier: quoteInfo.payinExtraId
-            }
-          }
-        ]
-      }
-      io.console.info('godex spendInfo', spendInfo)
+      // const spendInfo = {
+      //   currencyCode: request.fromCurrencyCode,
+      //   spendTargets: [
+      //     {
+      //       nativeAmount: fromNativeAmount,
+      //       publicAddress: quoteInfo.payinAddress,
+      //       otherParams: {
+      //         uniqueIdentifier: quoteInfo.payinExtraId
+      //       }
+      //     }
+      //   ]
+      // }
+      // io.console.info('godex spendInfo', spendInfo)
 
 
 
