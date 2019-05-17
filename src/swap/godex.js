@@ -35,7 +35,9 @@ const swapInfo = {
   supportEmail: 'support@godex.io'
 }
 
-const uri = 'https://api.godex.io/api/v1/'
+// const uri = 'https://api.godex.io/api/v1/'
+const uri = 'http://api.gdxapp.com:8082//api/v1/'
+
 const expirationMs = 1000 * 60 * 20
 
 
