@@ -199,7 +199,7 @@ export function makeGodexPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
                         to: request.fromCurrencyCode,
                         amount: quoteAmount
                     }
-            io.console.log('quoteParams:', quoteParams);
+            io.console.info('quoteParams:', quoteParams);
 
             // Get the estimate from the server:
             const quoteReplies = await Promise.all([
