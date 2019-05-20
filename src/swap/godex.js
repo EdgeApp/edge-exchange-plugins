@@ -84,26 +84,19 @@ export function makeGodexPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
     const {io, initOptions} = opts
     const fetchJson = getFetchJson(opts)
 
-    io.console.info(initOptions);
-
 
     async function call(url, data) {
-        io.console.info('url:', url);
-        io.console.info('call data:', data.params)
         const body = JSON.stringify(data.params)
 
-        io.console.info('godex call:', url)
         const headers = {
             'Content-Type': 'application/json',
             'Accept': 'application/json',
         }
         const reply = await fetchJson(url, {method: 'POST', body, headers})
-        io.console.info('godex reply:', reply);
         if (!reply.ok) {
             throw new Error(`godex returned error code ${reply.status}`)
         }
         const out = reply.json
-        io.console.info('godex reply status ok:', out)
         return out
     }
 
@@ -114,16 +107,12 @@ export function makeGodexPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
             request: EdgeSwapRequest,
             userSettings: Object | void
         ): Promise<EdgeSwapPluginQuote> {
-            io.console.info(request);
-            io.console.info(userSettings);
 
             // Grab addresses:
             const [fromAddress, toAddress] = await Promise.all([
                 getAddress(request.fromWallet, request.fromCurrencyCode),
                 getAddress(request.toWallet, request.toCurrencyCode)
             ]);
-            io.console.info('from address:' + fromAddress);
-            io.console.info('to address:' + toAddress);
 
             // Convert the native amount to a denomination:
             const quoteAmount =
@@ -136,7 +125,6 @@ export function makeGodexPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
                     request.nativeAmount,
                     request.toCurrencyCode
                     )
-            io.console.info('godex quoteAmount:', quoteAmount);
 
             // Swap the currencies if we need a reverse quote:
             const quoteParams = {
@@ -158,15 +146,10 @@ export function makeGodexPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
             ])
             io.console.info('godex info api');
             io.console.info(quoteReplies);
-            io.console.info('min_amount:' + quoteReplies[0].min_amount);
-            io.console.info('amount:' + quoteReplies[0].amount);
-            io.console.info('min_amount quoteReplies[1]:' + quoteReplies[1].min_amount);
-            io.console.info('amount quoteReplies[1]:' + quoteReplies[1].amount);
 
             // Calculate the amounts:
             let fromAmount, fromNativeAmount, toNativeAmount
             if (request.quoteFor === 'from') {
-                io.console.info('Calculate the amounts from');
                 fromAmount = quoteAmount
                 fromNativeAmount = request.nativeAmount
                 toNativeAmount = await request.toWallet.denominationToNative(
@@ -174,7 +157,6 @@ export function makeGodexPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
                     request.toCurrencyCode
                 )
             } else {
-                io.console.info('Calculate the amounts to');
                 fromAmount = quoteReplies[1].amount
                 fromNativeAmount = await request.fromWallet.denominationToNative(
                     fromAmount.toString(),
@@ -187,7 +169,6 @@ export function makeGodexPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
 
 
             // Check the minimum:
-            io.console.info('Check the minimum from');
             const nativeMin = await request.fromWallet.denominationToNative(
                 quoteReplies[0].min_amount,
                 request.fromCurrencyCode
@@ -195,7 +176,6 @@ export function makeGodexPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
             if (lt(fromNativeAmount, nativeMin)) {
                 throw new SwapBelowLimitError(swapInfo, nativeMin)
             }
-            io.console.info('nativeMin' + nativeMin);
 
 
             const sendReply = await call(uri + 'transaction',
@@ -211,11 +191,10 @@ export function makeGodexPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
                         return_extra_id: null,
                         withdrawal_extra_id: null,
                         affiliate_id: initOptions.affiliateId,
-                        type: 'demo'
+                        type: 'edge'
                     }
                 })
             io.console.info('sendReply' + sendReply);
-            io.console.info('sendReply result' + sendReply.deposit);
             const quoteInfo: QuoteInfo = sendReply;
 
             // Make the transaction:
@@ -253,6 +232,5 @@ export function makeGodexPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
         }
     }
 
-    io.console.info(out);
     return out
 }
