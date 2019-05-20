@@ -25,7 +25,7 @@ function hmacSha512(data: Uint8Array, key: Uint8Array): Uint8Array {
 
 const swapInfo = {
     pluginName: 'godex',
-    displayName: 'godex',
+    displayName: 'Godex',
 
     quoteUri: 'https://godex.io/exchange/status/#',
     supportEmail: 'support@godex.io'
