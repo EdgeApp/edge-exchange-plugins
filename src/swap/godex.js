@@ -4,15 +4,10 @@ import {gt, lt} from 'biggystring'
 import {
     type EdgeCorePluginOptions,
     type EdgeCurrencyWallet,
-    type EdgeSpendInfo,
-    type EdgeSpendTarget,
     type EdgeSwapPlugin,
     type EdgeSwapPluginQuote,
     type EdgeSwapRequest,
-    SwapAboveLimitError,
-    SwapBelowLimitError,
-    SwapCurrencyError,
-    SwapPermissionError
+    SwapBelowLimitError
 } from 'edge-core-js/types'
 import {base16} from 'rfc4648'
 import hashjs from 'hash.js'
@@ -207,13 +202,7 @@ export function makeGodexPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
             const quoteReplies = await Promise.all([
                 call(uri + 'info', {
                     params: quoteParams
-                    // params: {
-                    //   amount: quoteAmount,
-                    //   from: quoteParams.from,
-                    //   to:  quoteParams.to
-                    // }
                 }),
-                // ,
                 call(uri + 'info-revert', {
                     params: quoteParams
                 })
