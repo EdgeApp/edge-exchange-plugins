@@ -195,8 +195,10 @@ export function makeGodexPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
                         amount: quoteAmount
                     }
                     : {
-                        from: request.toCurrencyCode,
-                        to: request.fromCurrencyCode,
+                        // from: request.toCurrencyCode,
+                        // to: request.fromCurrencyCode,
+                        from: request.fromCurrencyCode,
+                        to: request.toCurrencyCode,
                         amount: quoteAmount
                     }
             io.console.info('quoteParams:', quoteParams);
