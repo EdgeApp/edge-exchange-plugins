@@ -270,7 +270,7 @@ export function makeGodexPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
             } else {
                 io.console.info('Check the minimum to');
                 const nativeMin = await request.fromWallet.denominationToNative(
-                    quoteReplies[1].min_amount,
+                    quoteReplies[0].min_amount,
                     request.fromCurrencyCode
                 )
                 if (lt(fromNativeAmount, nativeMin)) {
