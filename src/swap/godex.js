@@ -225,7 +225,7 @@ export function makeGodexPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
                 io.console.info('Calculate the amounts to');
                 fromAmount = quoteReplies[1].amount
                 fromNativeAmount = await request.fromWallet.denominationToNative(
-                    fromAmount,
+                    fromAmount.toString(),
                     request.fromCurrencyCode
                 )
                 toNativeAmount = request.nativeAmount
