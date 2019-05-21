@@ -281,6 +281,7 @@ export function makeFaastPlugin (opts: EdgeCorePluginOptions): EdgeSwapPlugin {
         tx,
         toAddress,
         'faast',
+        true,
         new Date(quoteData.price_locked_until),
         quoteData.swap_id
       )

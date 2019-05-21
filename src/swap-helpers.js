@@ -13,6 +13,7 @@ export function makeSwapPluginQuote (
   tx: EdgeTransaction,
   destinationAddress: string,
   pluginName: string,
+  isEstimate: boolean = false,
   expirationDate?: Date,
   quoteId?: string
 ): EdgeSwapPluginQuote {
@@ -29,7 +30,7 @@ export function makeSwapPluginQuote (
     pluginName,
     expirationDate,
     quoteId,
-
+    isEstimate,
     async approve (): Promise<EdgeTransaction> {
       const signedTransaction = await fromWallet.signTx(tx)
       const broadcastedTransaction = await fromWallet.broadcastTx(
