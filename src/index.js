@@ -9,6 +9,7 @@ import { makeShapeshiftRatePlugin } from './rate/shapeshift-rate.js'
 import { makeXagauPlugin } from './rate/xagau.js'
 import { makeChangellyPlugin } from './swap/changelly.js'
 import { makeChangeNowPlugin } from './swap/changenow.js'
+import { makeCoinSwitchPlugin } from './swap/coinswitch.js'
 import { makeFaastPlugin } from './swap/faast.js'
 import { makeFoxExchangePlugin } from './swap/foxExchange.js'
 import { makeGodexPlugin } from './swap/godex.js'
@@ -32,7 +33,8 @@ const edgeCorePlugins = {
   shapeshift: makeShapeshiftPlugin,
   totle: makeTotlePlugin,
   foxExchange: makeFoxExchangePlugin,
-  godex: makeGodexPlugin
+  godex: makeGodexPlugin,
+  coinswitch: makeCoinSwitchPlugin
 }
 
 if (
