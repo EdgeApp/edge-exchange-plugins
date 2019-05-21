@@ -9,6 +9,7 @@ import {
   type EdgeSwapPlugin,
   type EdgeSwapPluginQuote,
   type EdgeSwapRequest,
+  type EdgeTransaction,
   SwapAboveLimitError,
   SwapBelowLimitError,
   SwapCurrencyError,
@@ -270,7 +271,8 @@ export function makeFaastPlugin (opts: EdgeCorePluginOptions): EdgeSwapPlugin {
         spendTargets: [spendTarget]
       }
       io.console.info('faast spendInfo', spendInfo)
-      const tx = await fromWallet.makeSpend(spendInfo)
+      const tx: EdgeTransaction = await fromWallet.makeSpend(spendInfo)
+      if (tx.otherParams == null) tx.otherParams = {}
       tx.otherParams.payinAddress = spendInfo.spendTargets[0].publicAddress
 
       // Convert that to the output format:

@@ -7,6 +7,7 @@ import {
   type EdgeSwapPlugin,
   type EdgeSwapPluginQuote,
   type EdgeSwapRequest,
+  type EdgeTransaction,
   SwapAboveLimitError,
   SwapBelowLimitError,
   SwapCurrencyError
@@ -250,7 +251,10 @@ export function makeChangeNowPlugin (
                 ]
               }
               io.console.info('changenow spendInfo', spendInfo)
-              const tx = await request.fromWallet.makeSpend(spendInfo)
+              const tx: EdgeTransaction = await request.fromWallet.makeSpend(
+                spendInfo
+              )
+              if (tx.otherParams == null) tx.otherParams = {}
               tx.otherParams.payinAddress =
                 spendInfo.spendTargets[0].publicAddress
               tx.otherParams.uniqueIdentifier =
@@ -356,7 +360,8 @@ export function makeChangeNowPlugin (
         ]
       }
       io.console.info('changenow spendInfo', spendInfo)
-      const tx = await request.fromWallet.makeSpend(spendInfo)
+      const tx: EdgeTransaction = await request.fromWallet.makeSpend(spendInfo)
+      if (tx.otherParams == null) tx.otherParams = {}
       tx.otherParams.payinAddress = spendInfo.spendTargets[0].publicAddress
       tx.otherParams.uniqueIdentifier =
         spendInfo.spendTargets[0].otherParams.uniqueIdentifier

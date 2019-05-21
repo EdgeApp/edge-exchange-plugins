@@ -7,6 +7,7 @@ import {
   type EdgeSwapPlugin,
   type EdgeSwapPluginQuote,
   type EdgeSwapRequest,
+  type EdgeTransaction,
   SwapBelowLimitError,
   SwapCurrencyError
 } from 'edge-core-js/types'
@@ -243,7 +244,8 @@ export function makeChangellyPlugin (
         ]
       }
       io.console.info('changelly spendInfo', spendInfo)
-      const tx = await request.fromWallet.makeSpend(spendInfo)
+      const tx: EdgeTransaction = await request.fromWallet.makeSpend(spendInfo)
+      if (tx.otherParams == null) tx.otherParams = {}
       tx.otherParams.payinAddress = spendInfo.spendTargets[0].publicAddress
       tx.otherParams.uniqueIdentifier =
         spendInfo.spendTargets[0].otherParams.uniqueIdentifier
