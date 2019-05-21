@@ -97,6 +97,7 @@ export function makeChangeNowPlugin (
       userSettings: Object | void
     ): Promise<EdgeSwapPluginQuote> {
       // Grab addresses:
+      let isEstimate = true
       const [fromAddress, toAddress] = await Promise.all([
         getAddress(request.fromWallet, request.fromCurrencyCode),
         getAddress(request.toWallet, request.toCurrencyCode)
@@ -254,7 +255,7 @@ export function makeChangeNowPlugin (
                 spendInfo.spendTargets[0].publicAddress
               tx.otherParams.uniqueIdentifier =
                 spendInfo.spendTargets[0].otherParams.uniqueIdentifier
-
+              isEstimate = false
               return makeSwapPluginQuote(
                 request,
                 fromNativeAmount,
@@ -262,6 +263,7 @@ export function makeChangeNowPlugin (
                 tx,
                 toAddress,
                 'changenow',
+                isEstimate,
                 new Date(Date.now() + expirationMs),
                 quoteInfo.id
               )
@@ -366,6 +368,7 @@ export function makeChangeNowPlugin (
         tx,
         toAddress,
         'changenow',
+        isEstimate,
         new Date(Date.now() + expirationMs) // ,
         // quoteInfo.id
       )
