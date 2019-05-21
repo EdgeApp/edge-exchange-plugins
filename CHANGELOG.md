@@ -1,5 +1,9 @@
 # edge-exchange-plugins
 
+# 0.6.1 (2019-05-21)
+
+- Add `isEstimate` flags to swap quotes.
+
 # 0.6.0 (2019-04-29)
 
 - Add Shapeshift and Faa.st swap plugins.
