@@ -1,12 +1,13 @@
 // @flow
 
-import { add, div, lt, mul, sub } from 'biggystring'
+import { add, div, gt, lt, mul, sub } from 'biggystring'
 import {
   type EdgeCorePluginOptions,
   type EdgeCurrencyWallet,
   type EdgeSwapPlugin,
   type EdgeSwapPluginQuote,
   type EdgeSwapRequest,
+  SwapAboveLimitError,
   SwapBelowLimitError,
   SwapCurrencyError
 } from 'edge-core-js/types'
@@ -54,7 +55,7 @@ function checkReply (reply: Object, request?: EdgeSwapRequest) {
     )
   }
   if (!reply.success) {
-    throw new Error('CoinSwitch error: ' + JSON.stringify(reply.code))
+    throw new Error(JSON.stringify(reply.code))
   }
 }
 
@@ -159,13 +160,23 @@ export function makeCoinSwitchPlugin (
         toNativeAmount = request.nativeAmount
       }
 
-      const nativeMin = await request.fromWallet.denominationToNative(
-        quoteReplies[0].data.limitMinDepositCoin.toString(),
-        request.fromCurrencyCode
-      )
+      const [nativeMin, nativeMax] = await Promise.all([
+        request.fromWallet.denominationToNative(
+          quoteReplies[0].data.limitMinDepositCoin.toString(),
+          request.fromCurrencyCode
+        ),
+        request.fromWallet.denominationToNative(
+          quoteReplies[0].data.limitMaxDepositCoin.toString(),
+          request.fromCurrencyCode
+        )
+      ])
 
       if (lt(fromNativeAmount, nativeMin)) {
         throw new SwapBelowLimitError(swapInfo, nativeMin)
+      }
+
+      if (gt(fromNativeAmount, nativeMax)) {
+        throw new SwapAboveLimitError(swapInfo, nativeMax)
       }
 
       const createOrder = await call({
