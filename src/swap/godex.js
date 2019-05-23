@@ -84,7 +84,7 @@ export function makeGodexPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
     const {io, initOptions} = opts
     const fetchJson = getFetchJson(opts)
     const apiKey = opts.apiKey
-    io.console.info(initOptions);
+    io.console.info('initOptions',initOptions);
 
     async function call(url, data) {
         const body = JSON.stringify(data.params)
@@ -193,7 +193,8 @@ export function makeGodexPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
                         return_extra_id: null,
                         withdrawal_extra_id: null,
                         affiliate_id: initOptions.affiliateId,
-                        type: 'edge'
+                        // type: 'edge'
+                        type: 'demo'
                     }
                 })
             io.console.info('sendReply' + sendReply);
