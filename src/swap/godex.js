@@ -84,6 +84,7 @@ export function makeGodexPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
     const {io, initOptions} = opts
     const fetchJson = getFetchJson(opts)
     const apiKey = opts.apiKey
+    io.console.info(initOptions);
 
     async function call(url, data) {
         const body = JSON.stringify(data.params)
