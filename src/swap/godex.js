@@ -83,7 +83,7 @@ async function getAddress(wallet: EdgeCurrencyWallet, currencyCode: string) {
 export function makeGodexPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
     const {io, initOptions} = opts
     const fetchJson = getFetchJson(opts)
-
+    const apiKey = opts.apiKey
 
     async function call(url, data) {
         const body = JSON.stringify(data.params)
@@ -91,6 +91,7 @@ export function makeGodexPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
         const headers = {
             'Content-Type': 'application/json',
             'Accept': 'application/json',
+            'Authorization': apiKey
         }
         const reply = await fetchJson(url, {method: 'POST', body, headers})
         if (!reply.ok) {
