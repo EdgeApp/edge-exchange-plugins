@@ -77,7 +77,7 @@ export function makeChangeNowPlugin (
     const api = uri + json.route + apiKey
     const reply = await fetchJson(api, { method: 'POST', body, headers })
     if (!reply.ok) {
-      throw new Error(`ChangeNow fixed returned error code ${reply.status}`)
+      throw new Error(`CN: ChangeNow call returned error code ${reply.status}`)
     }
     const out = reply.json
     io.console.info('changenow fixed reply:', out)
@@ -289,7 +289,24 @@ export function makeChangeNowPlugin (
         quoteParams.from +
         '_' +
         quoteParams.to
+      const min = await get(
+        'min-amount/' + quoteParams.from + '_' + quoteParams.to
+      )
+      const [nativeMin] = await Promise.all([
+        request.fromWallet.denominationToNative(
+          min.minAmount.toString(),
+          request.fromCurrencyCode
+        )
+      ])
+
       const quoteReply = await get(estQuery)
+      if (quoteReply.error) {
+        io.console.info('CN: reply error ', quoteReply.error)
+        if (quoteReply.error === 'deposit_too_small') {
+          throw new SwapBelowLimitError(swapInfo, nativeMin)
+        }
+      }
+      io.console.info('CN:got reply  ', quoteReply)
       if (request.quoteFor === 'from') {
         fromAmount = quoteAmount
         fromNativeAmount = request.nativeAmount
@@ -306,16 +323,7 @@ export function makeChangeNowPlugin (
         toNativeAmount = request.nativeAmount
       }
       console.log('CN: estQuery quoteReply  ', quoteReply)
-      const min = await get(
-        'min-amount/' + quoteParams.from + '_' + quoteParams.to
-      )
-      console.log('CN: min  ', min)
-      const [nativeMin] = await Promise.all([
-        request.fromWallet.denominationToNative(
-          min.minAmount.toString(),
-          request.fromCurrencyCode
-        )
-      ])
+
       if (lt(fromNativeAmount, nativeMin)) {
         throw new SwapBelowLimitError(swapInfo, nativeMin)
       }
