@@ -225,6 +225,7 @@ export function makeChangeNowPlugin (
                   refundAddress: fromAddress
                 }
               })
+              io.console.info('CN: Fixed sendReply q ', sendReply)
               const quoteInfo: QuoteInfo = {
                 id: sendReply.id,
                 payinAddress: sendReply.payinAddress,
@@ -260,10 +261,14 @@ export function makeChangeNowPlugin (
               tx.otherParams.uniqueIdentifier =
                 spendInfo.spendTargets[0].otherParams.uniqueIdentifier
               isEstimate = false
+              const toAmount = await request.toWallet.denominationToNative(
+                sendReply.amount,
+                request.toCurrencyCode
+              )
               return makeSwapPluginQuote(
                 request,
                 fromNativeAmount,
-                toNativeAmount,
+                toAmount,
                 tx,
                 toAddress,
                 'changenow',
