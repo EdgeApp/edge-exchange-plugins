@@ -65,7 +65,8 @@ type QuoteInfo = {
     return_extra_id: string,
     final_amount: string,
     hash_in: string,
-    hash_out: string
+    hash_out: string,
+    isEstimate: boolean
 }
 
 const dontUseLegacy = {
@@ -191,7 +192,8 @@ export function makeGodexPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
                         return_extra_id: null,
                         withdrawal_extra_id: null,
                         affiliate_id: initOptions.affiliateId,
-                        type: 'edge'
+                        type: 'edge',
+                        isEstimate: false
                     }
                 })
             io.console.info('sendReply' + sendReply);
