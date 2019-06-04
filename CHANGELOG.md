@@ -1,5 +1,11 @@
 # edge-exchange-plugins
 
+# 0.6.2 (2019-06-04)
+
+- Changelly fixed rate quotes in both directions.
+- ChangeNOW fixed quote amount displayed to user.
+- ChangeNOW added catch for below minimum.
+
 # 0.6.1 (2019-05-21)
 
 - Add `isEstimate` flags to swap quotes.
