@@ -1,6 +1,6 @@
 // @flow
 
-import { lt, mul } from 'biggystring'
+import { gt, lt, mul } from 'biggystring'
 import {
   type EdgeCorePluginOptions,
   type EdgeCurrencyWallet,
@@ -8,6 +8,7 @@ import {
   type EdgeSwapPluginQuote,
   type EdgeSwapRequest,
   type EdgeTransaction,
+  SwapAboveLimitError,
   SwapBelowLimitError,
   SwapCurrencyError
 } from 'edge-core-js/types'
@@ -43,7 +44,7 @@ const swapInfo = {
 
 const uri = 'https://api.changelly.com'
 const expirationMs = 1000 * 60 * 20
-
+const expirationFixedMs = 1000 * 60 * 5
 type QuoteInfo = {
   id: string,
   apiExtraFee: string,
@@ -51,13 +52,32 @@ type QuoteInfo = {
   payinExtraId: string | null,
   payoutExtraId: string | null,
   amountExpectedFrom: number,
-  status: 'new',
+  status: string,
   currencyFrom: string,
   currencyTo: string,
   amountTo: number,
   payinAddress: string,
   payoutAddress: string,
   createdAt: string
+}
+type FixedQuoteInfo = {
+  id: string,
+  amountExpectedFrom: string,
+  amountExpectedTo: string,
+  amountTo: number,
+  apiExtraFee: string,
+  changellyFee: string,
+  createdAt: string,
+  currencyFrom: string,
+  currencyTo: string,
+  kycRequired: boolean,
+  payinAddress: string,
+  payinExtraId: string | null,
+  payoutAddress: string,
+  payoutExtraId: string | null,
+  refundAddress: string,
+  refundExtraId: string | null,
+  status: string
 }
 
 const dontUseLegacy = {
@@ -87,7 +107,6 @@ function checkReply (reply: Object, request?: EdgeSwapRequest) {
         request.toCurrencyCode
       )
     }
-
     throw new Error('Changelly error: ' + JSON.stringify(reply.error))
   }
 }
@@ -110,25 +129,160 @@ export function makeChangellyPlugin (
       .stringify(hmacSha512(parseUtf8(body), secret))
       .toLowerCase()
 
-    io.console.info('changelly call:', json)
     const headers = {
       'Content-Type': 'application/json',
       'api-key': apiKey,
       sign
     }
     const reply = await fetchJson(uri, { method: 'POST', body, headers })
+
     if (!reply.ok) {
       throw new Error(`Changelly returned error code ${reply.status}`)
     }
     const out = reply.json
-    io.console.info('changelly reply:', out)
     return out
   }
 
   const out: EdgeSwapPlugin = {
     swapInfo,
-
     async fetchSwapQuote (
+      request: EdgeSwapRequest,
+      userSettings: Object | void
+    ): Promise<EdgeSwapPluginQuote> {
+      io.console.info('Starting Changelly')
+      const fixedPromise = this.getFixedQuote(request, userSettings)
+      const estimatePromise = this.getEstimate(request, userSettings)
+      try {
+        const fixedResult = await fixedPromise
+        return fixedResult
+      } catch (e) {
+        const estimateResult = await estimatePromise
+        return estimateResult
+      }
+    },
+    async getFixedQuote (
+      request: EdgeSwapRequest,
+      userSettings: Object | void
+    ): Promise<EdgeSwapPluginQuote> {
+      const [fromAddress, toAddress] = await Promise.all([
+        getAddress(request.fromWallet, request.fromCurrencyCode),
+        getAddress(request.toWallet, request.toCurrencyCode)
+      ])
+      const quoteAmount =
+        request.quoteFor === 'from'
+          ? await request.fromWallet.nativeToDenomination(
+            request.nativeAmount,
+            request.fromCurrencyCode
+          )
+          : await request.toWallet.nativeToDenomination(
+            request.nativeAmount,
+            request.toCurrencyCode
+          )
+
+      const fixedRateQuote = await call({
+        jsonrpc: '2.0',
+        id: 'one',
+        method: 'getFixRate',
+        params: {
+          from: request.fromCurrencyCode,
+          to: request.toCurrencyCode
+        }
+      })
+      const min =
+        request.quoteFor === 'from'
+          ? fixedRateQuote.result.minFrom
+          : fixedRateQuote.result.minTo
+      const max =
+        request.quoteFor === 'from'
+          ? fixedRateQuote.result.maxFrom
+          : fixedRateQuote.result.maxTo
+      const nativeMin = await request.fromWallet.denominationToNative(
+        min,
+        request.fromCurrencyCode
+      )
+      const nativeMax = await request.fromWallet.denominationToNative(
+        max,
+        request.fromCurrencyCode
+      )
+      if (lt(request.nativeAmount, nativeMin)) {
+        throw new SwapBelowLimitError(swapInfo, nativeMin)
+      }
+      if (gt(request.nativeAmount, nativeMax)) {
+        throw new SwapAboveLimitError(swapInfo, nativeMax)
+      }
+      const params =
+        request.quoteFor === 'from'
+          ? {
+            amount: quoteAmount,
+            from: request.fromCurrencyCode,
+            to: request.toCurrencyCode,
+            address: toAddress,
+            extraId: null,
+            refundAddress: fromAddress,
+            refundExtraId: null,
+            rateId: fixedRateQuote.result.id
+          }
+          : {
+            amountTo: quoteAmount,
+            from: request.fromCurrencyCode,
+            to: request.toCurrencyCode,
+            address: toAddress,
+            extraId: null,
+            refundAddress: fromAddress,
+            refundExtraId: null,
+            rateId: fixedRateQuote.result.id
+          }
+
+      const sendReply = await call({
+        jsonrpc: '2.0',
+        id: 2,
+        method: 'createFixTransaction',
+        params
+      })
+      checkReply(sendReply)
+      const quoteInfo: FixedQuoteInfo = sendReply.result
+      const spendInfoAmount = await request.fromWallet.denominationToNative(
+        quoteInfo.amountExpectedFrom,
+        quoteInfo.currencyFrom
+      )
+      const spendInfo = {
+        currencyCode: request.fromCurrencyCode,
+        spendTargets: [
+          {
+            nativeAmount: spendInfoAmount,
+            publicAddress: quoteInfo.payinAddress,
+            otherParams: {
+              uniqueIdentifier: quoteInfo.payinExtraId
+            }
+          }
+        ]
+      }
+      const tx = await request.fromWallet.makeSpend(spendInfo)
+      tx.otherParams.payinAddress = spendInfo.spendTargets[0].publicAddress
+      tx.otherParams.uniqueIdentifier =
+        spendInfo.spendTargets[0].otherParams.uniqueIdentifier
+
+      const amountExpectedFromNative = await request.fromWallet.denominationToNative(
+        sendReply.result.amountExpectedFrom,
+        request.fromCurrencyCode
+      )
+      const amountExpectedToTo = await request.fromWallet.denominationToNative(
+        sendReply.result.amountExpectedTo,
+        request.toCurrencyCode
+      )
+      return makeSwapPluginQuote(
+        request,
+        amountExpectedFromNative,
+        amountExpectedToTo,
+        tx,
+        toAddress,
+        'changelly',
+        false,
+        new Date(Date.now() + expirationFixedMs),
+        quoteInfo.id
+      )
+    },
+    async getEstimate (
       request: EdgeSwapRequest,
       userSettings: Object | void
     ): Promise<EdgeSwapPluginQuote> {
@@ -229,7 +383,6 @@ export function makeChangellyPlugin (
       })
       checkReply(sendReply)
       const quoteInfo: QuoteInfo = sendReply.result
-
       // Make the transaction:
       const spendInfo = {
         currencyCode: request.fromCurrencyCode,
@@ -246,6 +399,7 @@ export function makeChangellyPlugin (
       io.console.info('changelly spendInfo', spendInfo)
       const tx: EdgeTransaction = await request.fromWallet.makeSpend(spendInfo)
       if (tx.otherParams == null) tx.otherParams = {}
+
       tx.otherParams.payinAddress = spendInfo.spendTargets[0].publicAddress
       tx.otherParams.uniqueIdentifier =
         spendInfo.spendTargets[0].otherParams.uniqueIdentifier
