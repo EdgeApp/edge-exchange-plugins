@@ -10,6 +10,7 @@ import { makeShapeshiftRatePlugin } from './rate/shapeshift-rate.js'
 import { makeChangellyPlugin } from './swap/changelly.js'
 import { makeChangeNowPlugin } from './swap/changenow.js'
 import { makeFaastPlugin } from './swap/faast.js'
+import { makeFoxExchangePlugin } from './swap/foxExchange.js'
 import { makeShapeshiftPlugin } from './swap/shapeshift.js'
 
 const edgeCorePlugins = {
@@ -26,7 +27,8 @@ const edgeCorePlugins = {
   changelly: makeChangellyPlugin,
   changenow: makeChangeNowPlugin,
   faast: makeFaastPlugin,
-  shapeshift: makeShapeshiftPlugin
+  shapeshift: makeShapeshiftPlugin,
+  foxExchange: makeFoxExchangePlugin
 }
 
 if (
