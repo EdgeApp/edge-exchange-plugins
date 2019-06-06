@@ -46,6 +46,13 @@ type FaastQuoteJson = {
   terms?: string
 }
 
+type FaastAddressJson = {
+  valid: boolean,
+  blockchain: string,
+  standardized: string,
+  terms?: string
+}
+
 const dontUseLegacy = {
   DGB: true
 }
@@ -141,6 +148,7 @@ export function makeFaastPlugin (opts: EdgeCorePluginOptions): EdgeSwapPlugin {
       if (toCurrencyCode === fromCurrencyCode) {
         throw new SwapCurrencyError(swapInfo, fromCurrencyCode, toCurrencyCode)
       }
+      io.console.info('faast request', request)
 
       let fromCurrency
       let toCurrency
@@ -173,66 +181,106 @@ export function makeFaastPlugin (opts: EdgeCorePluginOptions): EdgeSwapPlugin {
         throw new SwapPermissionError(swapInfo, 'geoRestriction')
       }
 
-      // Check for minimum / maximum:
-      if (quoteFor === 'from') {
-        let pairInfo
-        try {
-          pairInfo = await get(`/price/${fromCurrencyCode}_${toCurrencyCode}`)
-        } catch (e) {
-          if (/not currently supported/.test(e.message)) {
-            throw new SwapCurrencyError(
-              swapInfo,
-              fromCurrencyCode,
-              toCurrencyCode
-            )
-          }
-          throw e
-        }
-        const [nativeMax, nativeMin] = await Promise.all([
-          pairInfo.maximum_deposit
-            ? fromWallet.denominationToNative(
-              pairInfo.maximum_deposit.toString(),
-              fromCurrencyCode
-            )
-            : null,
-          fromWallet.denominationToNative(
-            pairInfo.minimum_deposit.toString(),
-            fromCurrencyCode
-          )
-        ])
-        if (lt(nativeAmount, nativeMin)) {
-          throw new SwapBelowLimitError(swapInfo, nativeMin)
-        }
-        if (nativeMax != null && gt(nativeAmount, nativeMax)) {
-          throw new SwapAboveLimitError(swapInfo, nativeMax)
-        }
-      }
-
       // Grab addresses:
       const fromAddress = await getAddress(fromWallet, fromCurrencyCode)
       const toAddress = await getAddress(toWallet, toCurrencyCode)
 
+      // Ensure the address format can be handled:
+      const [
+        fromAddressData: FaastAddressJson,
+        toAddressData: FaastAddressJson
+      ] = await Promise.all([
+        post('/address', { address: fromAddress, currency: fromCurrencyCode }),
+        post('/address', { address: toAddress, currency: toCurrencyCode })
+      ])
+      if (!fromAddressData.valid || !toAddressData.valid) {
+        throw new SwapCurrencyError(swapInfo, fromCurrencyCode, toCurrencyCode)
+      }
+
       // Figure out amount:
       let quoteAmount
+      let amount
       if (quoteFor === 'from') {
-        const amount = await fromWallet.nativeToDenomination(
+        amount = await fromWallet.nativeToDenomination(
           nativeAmount,
           fromCurrencyCode
         )
         quoteAmount = { deposit_amount: Number.parseFloat(amount) }
       } else {
-        const amount = await toWallet.nativeToDenomination(
+        amount = await toWallet.nativeToDenomination(
           nativeAmount,
           toCurrencyCode
         )
         quoteAmount = { withdrawal_amount: Number.parseFloat(amount) }
       }
 
+      // Check for minimum / maximum:
+      io.console.info('amount', amount)
+      const query = `?${
+        quoteFor === 'from' ? 'deposit' : 'withdrawal'
+      }_amount=${amount}`
+      io.console.info('query', query)
+      let pairInfo
+      try {
+        pairInfo = await get(
+          `/price/${fromCurrencyCode}_${toCurrencyCode}${query}`
+        )
+      } catch (e) {
+        if (/not currently supported/.test(e.message)) {
+          throw new SwapCurrencyError(
+            swapInfo,
+            fromCurrencyCode,
+            toCurrencyCode
+          )
+        }
+        throw e
+      }
+
+      let nativeMax
+      let nativeMin
+      if (quoteFor === 'from') {
+        ;[nativeMax, nativeMin] = await Promise.all([
+          pairInfo.maximum_deposit
+            ? fromWallet.denominationToNative(
+              pairInfo.maximum_deposit.toString(),
+              fromCurrencyCode
+            )
+            : null,
+          typeof pairInfo.minimum_deposit === 'number'
+            ? fromWallet.denominationToNative(
+              pairInfo.minimum_deposit.toString(),
+              fromCurrencyCode
+            )
+            : null
+        ])
+      } else {
+        ;[nativeMax, nativeMin] = await Promise.all([
+          pairInfo.maximum_withdrawal
+            ? toWallet.denominationToNative(
+              pairInfo.maximum_withdrawal.toString(),
+              toCurrencyCode
+            )
+            : null,
+          typeof pairInfo.minimum_withdrawal === 'number'
+            ? toWallet.denominationToNative(
+              pairInfo.minimum_withdrawal.toString(),
+              toCurrencyCode
+            )
+            : null
+        ])
+      }
+      if (nativeMin != null && lt(nativeAmount, nativeMin)) {
+        throw new SwapBelowLimitError(swapInfo, nativeMin)
+      }
+      if (nativeMax != null && gt(nativeAmount, nativeMax)) {
+        throw new SwapAboveLimitError(swapInfo, nativeMax)
+      }
+
       const body: Object = {
         deposit_currency: fromCurrencyCode,
         withdrawal_currency: toCurrencyCode,
-        return_address: fromAddress,
-        withdrawal_address: toAddress,
+        refund_address: fromAddressData.standardized,
+        withdrawal_address: toAddressData.standardized,
         ...quoteAmount,
         ...affiliateOptions
       }
@@ -243,11 +291,11 @@ export function makeFaastPlugin (opts: EdgeCorePluginOptions): EdgeSwapPlugin {
       } catch (e) {
         // TODO: Using the nativeAmount here is technically a bug,
         // since we don't know the actual limit in this case:
-        if (/is below/.test(e.message)) {
-          throw new SwapBelowLimitError(swapInfo, nativeAmount)
+        if (/amount less than/.test(e.message)) {
+          throw new SwapBelowLimitError(swapInfo, nativeMin || nativeAmount)
         }
         if (/is greater/.test(e.message)) {
-          throw new SwapAboveLimitError(swapInfo, nativeAmount)
+          throw new SwapAboveLimitError(swapInfo, nativeMax || nativeAmount)
         }
         throw e
       }
@@ -281,9 +329,9 @@ export function makeFaastPlugin (opts: EdgeCorePluginOptions): EdgeSwapPlugin {
         fromNativeAmount,
         toNativeAmount,
         tx,
-        toAddress,
+        toAddressData.standardized,
         'faast',
-        true,
+        false,
         new Date(quoteData.price_locked_until),
         quoteData.swap_id
       )
