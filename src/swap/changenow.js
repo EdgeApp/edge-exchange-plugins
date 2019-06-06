@@ -262,7 +262,7 @@ export function makeChangeNowPlugin (
                 spendInfo.spendTargets[0].otherParams.uniqueIdentifier
               isEstimate = false
               const toAmount = await request.toWallet.denominationToNative(
-                sendReply.amount,
+                sendReply.amount.toString(),
                 request.toCurrencyCode
               )
               return makeSwapPluginQuote(
