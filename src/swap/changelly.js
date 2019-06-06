@@ -149,7 +149,6 @@ export function makeChangellyPlugin (
       request: EdgeSwapRequest,
       userSettings: Object | void
     ): Promise<EdgeSwapPluginQuote> {
-      io.console.info('Starting Changelly')
       const fixedPromise = this.getFixedQuote(request, userSettings)
       const estimatePromise = this.getEstimate(request, userSettings)
       try {
@@ -243,8 +242,9 @@ export function makeChangellyPlugin (
       const quoteInfo: FixedQuoteInfo = sendReply.result
       const spendInfoAmount = await request.fromWallet.denominationToNative(
         quoteInfo.amountExpectedFrom,
-        quoteInfo.currencyFrom
+        quoteInfo.currencyFrom.toUpperCase()
       )
+
       const spendInfo = {
         currencyCode: request.fromCurrencyCode,
         spendTargets: [
@@ -396,7 +396,7 @@ export function makeChangellyPlugin (
           }
         ]
       }
-      io.console.info('changelly spendInfo', spendInfo)
+      io.console.info('Starting Changelly')
       const tx: EdgeTransaction = await request.fromWallet.makeSpend(spendInfo)
       if (tx.otherParams == null) tx.otherParams = {}
 
