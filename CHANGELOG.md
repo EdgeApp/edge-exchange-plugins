@@ -1,5 +1,9 @@
 # edge-exchange-plugins
 
+# 0.6.5 (2019-06-04)
+
+- fix error when currency is temporarily disabled
+
 # 0.6.4 (2019-06-04)
 
 - fix amount string instead of number error
