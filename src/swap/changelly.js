@@ -94,17 +94,17 @@ async function getAddress (
     : addressInfo.publicAddress
 }
 
-function checkReply (
-  reply: Object,
-  fromCurrencyCode: string,
-  toCurrencyCode: string
-) {
+function checkReply (reply: Object, request: EdgeSwapRequest) {
   if (reply.error != null) {
     if (
       reply.error.code === -32602 ||
       /Invalid currency:/.test(reply.error.message)
     ) {
-      throw new SwapCurrencyError(swapInfo, fromCurrencyCode, toCurrencyCode)
+      throw new SwapCurrencyError(
+        swapInfo,
+        request.fromCurrencyCode,
+        request.toCurrencyCode
+      )
     }
     throw new Error('Changelly error: ' + JSON.stringify(reply.error))
   }
@@ -237,7 +237,7 @@ export function makeChangellyPlugin (
         method: 'createFixTransaction',
         params
       })
-      checkReply(sendReply, request.fromCurrencyCode, request.toCurrencyCode)
+      checkReply(sendReply, request)
       const quoteInfo: FixedQuoteInfo = sendReply.result
       const spendInfoAmount = await request.fromWallet.denominationToNative(
         quoteInfo.amountExpectedFrom,
@@ -335,16 +335,8 @@ export function makeChangellyPlugin (
           params: quoteParams
         })
       ])
-      checkReply(
-        quoteReplies[0],
-        request.fromCurrencyCode,
-        request.toCurrencyCode
-      )
-      checkReply(
-        quoteReplies[1],
-        request.fromCurrencyCode,
-        request.toCurrencyCode
-      )
+      checkReply(quoteReplies[0], request)
+      checkReply(quoteReplies[1], request)
 
       // Calculate the amounts:
       let fromAmount, fromNativeAmount, toNativeAmount
@@ -388,7 +380,7 @@ export function makeChangellyPlugin (
           refundExtraId: null
         }
       })
-      checkReply(sendReply, request.fromCurrencyCode, request.toCurrencyCode)
+      checkReply(sendReply, request)
       const quoteInfo: QuoteInfo = sendReply.result
       // Make the transaction:
       const spendInfo = {
