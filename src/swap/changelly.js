@@ -94,12 +94,11 @@ async function getAddress (
     : addressInfo.publicAddress
 }
 
-function checkReply (reply: Object, request?: EdgeSwapRequest) {
+function checkReply (reply: Object, request: EdgeSwapRequest) {
   if (reply.error != null) {
     if (
-      request != null &&
-      (reply.error.code === -32602 ||
-        /Invalid currency:/.test(reply.error.message))
+      reply.error.code === -32602 ||
+      /Invalid currency:/.test(reply.error.message)
     ) {
       throw new SwapCurrencyError(
         swapInfo,
@@ -238,7 +237,7 @@ export function makeChangellyPlugin (
         method: 'createFixTransaction',
         params
       })
-      checkReply(sendReply)
+      checkReply(sendReply, request)
       const quoteInfo: FixedQuoteInfo = sendReply.result
       const spendInfoAmount = await request.fromWallet.denominationToNative(
         quoteInfo.amountExpectedFrom,
@@ -336,8 +335,8 @@ export function makeChangellyPlugin (
           params: quoteParams
         })
       ])
-      checkReply(quoteReplies[0])
-      checkReply(quoteReplies[1])
+      checkReply(quoteReplies[0], request)
+      checkReply(quoteReplies[1], request)
 
       // Calculate the amounts:
       let fromAmount, fromNativeAmount, toNativeAmount
@@ -381,7 +380,7 @@ export function makeChangellyPlugin (
           refundExtraId: null
         }
       })
-      checkReply(sendReply)
+      checkReply(sendReply, request)
       const quoteInfo: QuoteInfo = sendReply.result
       // Make the transaction:
       const spendInfo = {
