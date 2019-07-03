@@ -1,5 +1,6 @@
 // @flow
 
+import { makeTotlePlugin } from './plugins/totle.js'
 import { makeCoinbasePlugin } from './rate/coinbase.js'
 import { makeCoincapPlugin } from './rate/coincap.js'
 import { makeCoincapLegacyPlugin } from './rate/coincapLegacy.js'
@@ -11,7 +12,6 @@ import { makeChangellyPlugin } from './swap/changelly.js'
 import { makeChangeNowPlugin } from './swap/changenow.js'
 import { makeFaastPlugin } from './swap/faast.js'
 import { makeShapeshiftPlugin } from './swap/shapeshift.js'
-import { makeTotlePlugin } from './plugins/totle.js'
 
 const edgeCorePlugins = {
   // Rate plugins:
