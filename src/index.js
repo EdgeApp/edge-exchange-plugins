@@ -11,6 +11,7 @@ import { makeChangellyPlugin } from './swap/changelly.js'
 import { makeChangeNowPlugin } from './swap/changenow.js'
 import { makeFaastPlugin } from './swap/faast.js'
 import { makeShapeshiftPlugin } from './swap/shapeshift.js'
+import { makeTotlePlugin } from './plugins/totle.js'
 
 const edgeCorePlugins = {
   // Rate plugins:
@@ -26,7 +27,8 @@ const edgeCorePlugins = {
   changelly: makeChangellyPlugin,
   changenow: makeChangeNowPlugin,
   faast: makeFaastPlugin,
-  shapeshift: makeShapeshiftPlugin
+  shapeshift: makeShapeshiftPlugin,
+  totle: makeTotlePlugin
 }
 
 if (
