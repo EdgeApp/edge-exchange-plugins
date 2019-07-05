@@ -6,9 +6,10 @@ import {
   type EdgeSwapPluginQuote,
   type EdgeSwapRequest,
   type EdgeTransaction,
+  InsufficientFundsError,
+  NoAmountSpecifiedError,
   SwapCurrencyError
 } from 'edge-core-js/types'
-import Web3 from 'web3'
 
 import { getFetchJson } from '../react-native-io.js'
 
@@ -16,65 +17,86 @@ const swapInfo = {
   pluginName: 'totle',
   displayName: 'Totle',
 
-  quoteUri: 'https://services.totlesystem.com/orders/suggestions/v0-5-5',
+  quoteUri: 'https://api.totle.com/swap',
   supportEmail: 'support@totle.com'
 }
 
-const swapUri = 'https://services.totlesystem.com/orders/suggestions/v0-5-5'
-const tokenUri = 'https://services.totlesystem.com/suggester/tokens'
+const swapUri = 'https://api.totle.com/swap'
+const tokenUri = 'https://services.totlesystem.com/tokens'
 const expirationMs = 1000 * 60 * 20
-
-type TradeSummary = {
-  token: string,
-  exchange: string,
-  price: string,
-  amount: string,
-  fee: string
-}
 
 type QuoteInfo = {
   id: string,
-  contractAddress: string,
-  ethValue: string,
   summary: {
-    sells: Array<TradeSummary>,
-    buys: Array<TradeSummary>
+    baseAsset: {
+      address: string,
+      symbol: string,
+      decimals: string
+    },
+    sourceAsset: {
+      address: string,
+      symbol: string,
+      decimals: string
+    },
+    sourceAmount: string,
+    destinationAsset: {
+      address: string,
+      symbol: string,
+      decimals: string
+    },
+    destinationAmount: string,
+    notes: [],
+    rate: string,
+    market: {
+      rate: string,
+      slippage: string
+    }
   },
-  payload: {
-    data: string
-  },
-  gas: {
-    price: string,
-    limit: string,
-    strict: boolean
-  }
+  transactions: [
+    {
+      type: 'swap' | 'approve',
+      id: string,
+      tx: {
+        to: string,
+        from: string,
+        value: string,
+        data: string,
+        gasPrice: string,
+        gas: string,
+        nonce?: string
+      }
+    }
+  ]
 }
 
-const ETH_ADDRESS = '0x0000000000000000000000000000000000000000'
-const ERC20_ABI = [ { constant: false, inputs: [ { name: '_spender', type: 'address' }, { name: '_value', type: 'uint256' } ], name: 'approve', outputs: [ { name: '', type: 'bool' } ], payable: false, type: 'function' }, { constant: true, inputs: [ { name: '_owner', type: 'address' }, { name: '_spender', type: 'address' } ], name: 'allowance', outputs: [ { name: '', type: 'uint256' } ], payable: false, type: 'function' } ]
-const totleTransferProxyAddress = '0x74758AcFcE059f503a7E6B0fC2c8737600f9F2c4'
-const provider = new Web3.providers.WebsocketProvider('wss://node.totlesystem.com')
-const web3 = new Web3(provider)
-const { toBN } = web3.utils
-
-function checkReply (reply: Object, request?: EdgeSwapRequest) {
+function checkReply (reply: Object, request: EdgeSwapRequest) {
   if (reply.success === false) {
-    throw new Error('Totle error: ' + reply.message)
+    const code = reply.response.code
+    // unsupported tokens
+    if (code === 1203) {
+      throw new SwapCurrencyError(
+        swapInfo,
+        request.fromCurrencyCode,
+        request.toCurrencyCode
+      )
+    } else if (code === 3100) {
+      throw new InsufficientFundsError()
+    } else if (code === 1201) {
+      throw new NoAmountSpecifiedError()
+    }
   }
 }
 
-export function makeTotlePlugin (
-  opts: EdgeCorePluginOptions
-): EdgeSwapPlugin {
+export function makeTotlePlugin (opts: EdgeCorePluginOptions): EdgeSwapPlugin {
   const { initOptions, io } = opts
   const fetchJson = getFetchJson(opts)
 
-  const { affiliateContract } = initOptions
+  const { partnerContract } = initOptions
 
   async function call (json: any) {
     const body = JSON.stringify({
       ...json,
-      affiliateContract
+      partnerContract
     })
 
     io.console.info('Totle call:', json)
@@ -109,154 +131,80 @@ export function makeTotlePlugin (
     ): Promise<EdgeSwapPluginQuote> {
       const tokens = await fetchTokens()
 
-      let isFromToken = true
-      let fromTokenAddress
-      let toTokenAddress
-      const fromToken = tokens.find((t) => t.symbol === request.fromCurrencyCode)
-      const toToken = tokens.find((t) => t.symbol === request.toCurrencyCode)
-
-      if ((!fromToken && request.fromCurrencyCode !== 'ETH') || (!toToken && request.toCurrencyCode !== 'ETH')) {
-        throw new SwapCurrencyError(
-          swapInfo,
-          request.fromCurrencyCode,
-          request.toCurrencyCode
-        )
-      }
-
-      if (request.fromCurrencyCode === 'ETH') {
-        isFromToken = false
-
-        fromTokenAddress = ETH_ADDRESS
-        toTokenAddress = toToken.address
-      } else if (request.toCurrencyCode === 'ETH') {
-        fromTokenAddress = fromToken.address
-        toTokenAddress = ETH_ADDRESS
-      } else {
-        fromTokenAddress = fromToken.address
-        toTokenAddress = toToken.address
-      }
+      const fromToken = tokens.find(t => t.symbol === request.fromCurrencyCode)
+      const toToken = tokens.find(t => t.symbol === request.toCurrencyCode)
 
       // Grab addresses:
-      const { publicAddress: fromAddress } = await request.fromWallet.getReceiveAddress({ currencyCode })
-      const { publicAddress: toAddress } = await request.toWallet.getReceiveAddress({ currencyCode })
-
-      // Swap the currencies if we need a reverse quote:
-      const quoteParams =
-        request.quoteFor === 'from'
-          ? {
-            from: fromTokenAddress,
-            to: toTokenAddress
-          }
-          : {
-            from: toTokenAddress,
-            to: fromTokenAddress
-          }
+      const {
+        publicAddress: userFromAddress
+      } = await request.fromWallet.getReceiveAddress({}) //  currencyCode ?
+      const {
+        publicAddress: userToAddress
+      } = await request.toWallet.getReceiveAddress({}) //  currencyCode ?
 
       // Get the estimate from the server:
       const reply = await call({
-        address: fromAddress,
-        affiliateContract,
+        address: userFromAddress,
         swap: {
-          ...quoteParams,
-          amount: request.nativeAmount,
-          minFillPercent: 97,
-          minSlippagePercent: 2
+          from: fromToken.address,
+          to: toToken.address,
+          [`${request.quoteFor}Amount`]: request.nativeAmount,
+          strictDestination: request.quoteFor === 'to'
         }
       })
-      // TODO: check
-      checkReply(reply)
+      checkReply(reply, request)
 
       const quoteInfo: QuoteInfo = reply.response
 
-      let fromNativeAmount = toBN(request.nativeAmount)
-      let toNativeAmount = toBN('0')
-      if (request.toCurrencyCode === 'ETH') {
-        for (const { amount, price } of quoteInfo.summary.sells) {
-          const factor = 10 ** 18
-          const ethAmount = toBN(amount).mul(toBN(price * factor)).div(toBN(factor))
-          toNativeAmount.iadd(ethAmount)
-        }
-      } else {
-        if (quoteInfo.summary.sells) {
-          let fromAmount = '0'
-          for (const { amount } of quoteInfo.summary.sells) {
-            fromAmount = (Number(fromAmount) + Number(amount)).toString()
-          }
-          fromNativeAmount = fromAmount
-        }
-        if (quoteInfo.summary.buys) {
-          for (const { amount } of quoteInfo.summary.buys) {
-            toNativeAmount = (Number(toNativeAmount) + Number(amount)).toString()
-          }
-        }
-      }
+      const fromNativeAmount = quoteInfo.summary.sourceAmount
+      const toNativeAmount = quoteInfo.summary.destinationAmount
 
       const txs = []
-
-      // Check if source is a token and then check it is approved to sell
-      if (isFromToken) {
-        const tokenContract = new web3.eth.Contract(ERC20_ABI, fromTokenAddress)
-        const allowance = toBN(await tokenContract.methods.allowance(fromAddress, totleTransferProxyAddress).call())
-        const zero = toBN(0)
-
-        if (allowance.eq(zero)) {
-          const uintMax = toBN(2).pow(toBN(256)).sub(toBN(1)).toString()
-          const approveData = tokenContract.methods.approve(totleTransferProxyAddress, uintMax).encodeABI()
-
-          const spendInfo = {
-            currencyCode: request.fromCurrencyCode,
-            spendTargets: [
-              {
-                nativeAmount: '0',
-                publicAddress: fromTokenAddress,
-                otherParams: {
-                  data: approveData
-                }
+      let quoteId
+      for (const tx of quoteInfo.transactions) {
+        // Make the transaction:
+        const spendInfo = {
+          currencyCode: request.fromCurrencyCode,
+          spendTargets: [
+            {
+              nativeAmount: tx.tx.value,
+              publicAddress: tx.tx.to,
+              otherParams: {
+                uniqueIdentifier: tx.id,
+                data: tx.tx.data
               }
-            ]
-          }
-
-          const approveTx = await request.fromWallet.makeSpend(spendInfo)
-          txs.push(approveTx)
-        }
-      }
-
-      // Make the transaction:
-      const spendInfo = {
-        currencyCode: request.fromCurrencyCode,
-        spendTargets: [
-          {
-            nativeAmount: quoteInfo.ethValue,
-            publicAddress: quoteInfo.contractAddress,
-            otherParams: {
-              uniqueIdentifier: quoteInfo.id,
-              data: quoteInfo.payload.data
             }
+          ],
+          networkFeeOption: 'custom',
+          customNetworkFee: {
+            gasLimit: tx.tx.gas,
+            gasPrice: String(parseInt(tx.tx.gasPrice) / 1000000000)
           }
-        ],
-        networkFeeOption: 'custom',
-        customNetworkFee: {
-          gasLimit: quoteInfo.gas.limit,
-          gasPrice: String(quoteInfo.gas.price / 1000000000)
         }
-      }
-      io.console.info('Totle spendInfo', spendInfo)
-      const rebalanceTx = await request.fromWallet.makeSpend(spendInfo)
-      rebalanceTx.otherParams.payinAddress = spendInfo.spendTargets[0].publicAddress
-      rebalanceTx.otherParams.uniqueIdentifier =
-        spendInfo.spendTargets[0].otherParams.uniqueIdentifier
 
-      txs.push(rebalanceTx)
+        const transaction = await request.fromWallet.makeSpend(spendInfo)
+
+        if (tx.type === 'swap') {
+          quoteId = tx.id
+
+          transaction.otherParams.payinAddress =
+            spendInfo.spendTargets[0].publicAddress
+          transaction.otherParams.uniqueIdentifier =
+            spendInfo.spendTargets[0].otherParams.uniqueIdentifier
+        }
+
+        txs.push(transaction)
+      }
 
       const quote = makeTotleSwapPluginQuote(
         request,
-        fromNativeAmount.toString(),
-        toNativeAmount.toString(),
+        fromNativeAmount,
+        toNativeAmount,
         txs,
-        toAddress,
+        userToAddress,
         'totle',
         new Date(Date.now() + expirationMs),
-        quoteInfo.id,
+        quoteId,
         io
       )
       io.console.info(quote)
@@ -295,14 +243,12 @@ function makeTotleSwapPluginQuote (
     quoteId,
 
     async approve (): Promise<EdgeTransaction> {
-      let swapTx
+      let swapTx: EdgeTransaction
 
       for (const tx of txs) {
         const signedTransaction = await fromWallet.signTx(tx)
         // NOTE: The swap transaction will always be the last one
-        swapTx = await fromWallet.broadcastTx(
-          signedTransaction
-        )
+        swapTx = await fromWallet.broadcastTx(signedTransaction)
         await fromWallet.saveTx(signedTransaction)
       }
 
