@@ -1,5 +1,9 @@
 # edge-exchange-plugins
 
+# 0.6.6 (2019-07-09)
+
+- Enable HERC and AGLD exchange rate fix
+
 # 0.6.5 (2019-06-04)
 
 - fix error when currency is temporarily disabled
