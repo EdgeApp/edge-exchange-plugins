@@ -256,7 +256,8 @@ export function makeChangellyPlugin (
           }
         ]
       }
-      const tx = await request.fromWallet.makeSpend(spendInfo)
+      const tx: EdgeTransaction = await request.fromWallet.makeSpend(spendInfo)
+      if (tx.otherParams == null) tx.otherParams = {}
       tx.otherParams.payinAddress = spendInfo.spendTargets[0].publicAddress
       tx.otherParams.uniqueIdentifier =
         spendInfo.spendTargets[0].otherParams.uniqueIdentifier
