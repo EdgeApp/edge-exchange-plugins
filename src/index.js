@@ -1,6 +1,6 @@
 // @flow
 
-import { makeTotlePlugin } from './plugins/totle.js'
+import { makeTotlePlugin } from './swap/totle.js'
 import { makeCoinbasePlugin } from './rate/coinbase.js'
 import { makeCoincapPlugin } from './rate/coincap.js'
 import { makeCoincapLegacyPlugin } from './rate/coincapLegacy.js'

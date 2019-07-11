@@ -156,8 +156,8 @@ export function makeTotlePlugin (opts: EdgeCorePluginOptions): EdgeSwapPlugin {
 
       const quoteInfo: QuoteInfo = reply.response
 
-      const fromNativeAmount = quoteInfo.summary.sourceAmount
-      const toNativeAmount = quoteInfo.summary.destinationAmount
+      const fromNativeAmount = quoteInfo.summary[0].sourceAmount
+      const toNativeAmount = quoteInfo.summary[0].destinationAmount
 
       const txs = []
       let quoteId
@@ -182,8 +182,10 @@ export function makeTotlePlugin (opts: EdgeCorePluginOptions): EdgeSwapPlugin {
           }
         }
 
-        const transaction = await request.fromWallet.makeSpend(spendInfo)
-
+        const transaction: EdgeTransaction = await request.fromWallet.makeSpend(
+          spendInfo
+        )
+        if (transaction.otherParams == null) transaction.otherParams = {}
         if (tx.type === 'swap') {
           quoteId = tx.id
 
@@ -228,6 +230,7 @@ function makeTotleSwapPluginQuote (
 ): EdgeSwapPluginQuote {
   io.console.info(arguments)
   const { fromWallet } = request
+
   const swapTx = txs[txs.length - 1]
 
   const out: EdgeSwapPluginQuote = {
@@ -243,15 +246,14 @@ function makeTotleSwapPluginQuote (
     quoteId,
 
     async approve (): Promise<EdgeTransaction> {
-      let swapTx: EdgeTransaction
-
+      let swapTx = {}
       for (const tx of txs) {
         const signedTransaction = await fromWallet.signTx(tx)
         // NOTE: The swap transaction will always be the last one
         swapTx = await fromWallet.broadcastTx(signedTransaction)
         await fromWallet.saveTx(signedTransaction)
       }
-
+      if (!swapTx) throw new Error('No Totle swapTx')
       return swapTx
     },
 
