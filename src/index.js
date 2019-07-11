@@ -1,5 +1,6 @@
 // @flow
 
+import { makeTotlePlugin } from './swap/totle.js'
 import { makeCoinbasePlugin } from './rate/coinbase.js'
 import { makeCoincapPlugin } from './rate/coincap.js'
 import { makeCoincapLegacyPlugin } from './rate/coincapLegacy.js'
@@ -26,7 +27,8 @@ const edgeCorePlugins = {
   changelly: makeChangellyPlugin,
   changenow: makeChangeNowPlugin,
   faast: makeFaastPlugin,
-  shapeshift: makeShapeshiftPlugin
+  shapeshift: makeShapeshiftPlugin,
+  totle: makeTotlePlugin
 }
 
 if (
