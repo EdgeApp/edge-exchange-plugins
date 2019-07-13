@@ -1,5 +1,10 @@
 # edge-exchange-plugins
 
+# 0.6.8 (2019-07-12)
+
+- Add more info to readme
+- Fix Totle unavailable swap pair case
+
 # 0.6.6 (2019-07-09)
 
 - Enable HERC and AGLD exchange rate fix
