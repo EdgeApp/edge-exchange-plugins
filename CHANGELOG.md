@@ -1,5 +1,9 @@
 # edge-exchange-plugins
 
+# 0.6.9 (2019.07-13)
+
+- Implement currency-not-supported error for Totle transactions between different ETH wallets
+
 # 0.6.8 (2019-07-12)
 
 - Add more info to readme
