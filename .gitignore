@@ -1,5 +1,8 @@
+# Javascript:
 lib/
 node_modules/
-.vscode/settings.json
+package-lock.json
 
+# Editors:
 .idea/
+.vscode/
