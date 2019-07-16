@@ -31,11 +31,4 @@ const edgeCorePlugins = {
   totle: makeTotlePlugin
 }
 
-if (
-  typeof window !== 'undefined' &&
-  typeof window.addEdgeCorePlugins === 'function'
-) {
-  window.addEdgeCorePlugins(edgeCorePlugins)
-}
-
 export default edgeCorePlugins
