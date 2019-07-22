@@ -1,5 +1,10 @@
 # edge-exchange-plugins
 
+# 0.6.10 (2019-07-22)
+
+- Upgrade faa.st plugin.
+- Fix crashes on old Android WebView versions.
+
 # 0.6.9 (2019.07-13)
 
 - Implement currency-not-supported error for Totle transactions between different ETH wallets
