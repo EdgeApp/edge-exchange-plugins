@@ -22,7 +22,7 @@ const swapInfo = {
 }
 
 const swapUri = 'https://api.totle.com/swap'
-const tokenUri = 'https://services.totlesystem.com/tokens'
+const tokenUri = 'https://api.totle.com/tokens'
 const expirationMs = 1000 * 60 * 20
 
 type QuoteInfo = {
