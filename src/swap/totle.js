@@ -255,11 +255,19 @@ function makeTotleSwapPluginQuote (
 
     async approve (): Promise<EdgeTransaction> {
       let swapTx = {}
+      let index = 0
       for (const tx of txs) {
         const signedTransaction = await fromWallet.signTx(tx)
         // NOTE: The swap transaction will always be the last one
         swapTx = await fromWallet.broadcastTx(signedTransaction)
+        const lastTransactionIndex = txs.length - 1
+        // if it's the last transaction of the array then assign `nativeAmount` data
+        // (after signing and broadcasting) for metadata purposes
+        if (index === lastTransactionIndex) {
+          tx.nativeAmount = `-${fromNativeAmount}`
+        }
         await fromWallet.saveTx(signedTransaction)
+        index++
       }
       if (!swapTx) throw new Error('No Totle swapTx')
       return swapTx
