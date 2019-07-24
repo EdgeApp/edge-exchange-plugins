@@ -145,12 +145,6 @@ export function makeTotlePlugin (opts: EdgeCorePluginOptions): EdgeSwapPlugin {
         publicAddress: userToAddress
       } = await request.toWallet.getReceiveAddress({}) //  currencyCode ?
 
-      // Totle and other DEX's may not allow swapping to a different
-      // wallet (received coins must come to same wallet), throw not-enabled error
-      if (userFromAddress !== userToAddress) {
-        throw new SwapCurrencyError(swapInfo, fromToken, toToken)
-      }
-
       // Get the estimate from the server:
       const reply = await call({
         address: userFromAddress,
@@ -158,7 +152,8 @@ export function makeTotlePlugin (opts: EdgeCorePluginOptions): EdgeSwapPlugin {
           from: fromToken.address,
           to: toToken.address,
           [`${request.quoteFor}Amount`]: request.nativeAmount,
-          strictDestination: request.quoteFor === 'to'
+          strictDestination: request.quoteFor === 'to',
+          destinationAddress: userToAddress
         }
       })
       checkReply(reply, request)
