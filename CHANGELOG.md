@@ -1,5 +1,9 @@
 # edge-exchange-plugins
 
+# 0.6.11 (2019-07-24)
+
+- Set nativeAmount for outgoing Totle tx after broadcast
+
 # 0.6.10 (2019-07-22)
 
 - Upgrade faa.st plugin.
