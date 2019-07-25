@@ -4,14 +4,15 @@ import { makeCoinbasePlugin } from './rate/coinbase.js'
 import { makeCoincapPlugin } from './rate/coincap.js'
 import { makeCoincapLegacyPlugin } from './rate/coincapLegacy.js'
 import { makeCurrencyconverterapiPlugin } from './rate/currencyconverterapi.js'
-import { makeHercPlugin } from './rate/herc.js'
 import { makeNomicsPlugin } from './rate/nomics.js'
 import { makeShapeshiftRatePlugin } from './rate/shapeshift-rate.js'
+import { makeXagauPlugin } from './rate/xagau.js'
 import { makeChangellyPlugin } from './swap/changelly.js'
 import { makeChangeNowPlugin } from './swap/changenow.js'
 import { makeFaastPlugin } from './swap/faast.js'
 import { makeFoxExchangePlugin } from './swap/foxExchange.js'
 import { makeShapeshiftPlugin } from './swap/shapeshift.js'
+import { makeTotlePlugin } from './swap/totle.js'
 
 const edgeCorePlugins = {
   // Rate plugins:
@@ -20,7 +21,7 @@ const edgeCorePlugins = {
   coincap: makeCoincapPlugin,
   coincapLegacy: makeCoincapLegacyPlugin,
   currencyconverterapi: makeCurrencyconverterapiPlugin,
-  herc: makeHercPlugin,
+  xagau: makeXagauPlugin,
   nomics: makeNomicsPlugin,
 
   // Swap plugins:
@@ -28,6 +29,7 @@ const edgeCorePlugins = {
   changenow: makeChangeNowPlugin,
   faast: makeFaastPlugin,
   shapeshift: makeShapeshiftPlugin,
+  totle: makeTotlePlugin,
   foxExchange: makeFoxExchangePlugin
 }
 

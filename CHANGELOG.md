@@ -1,5 +1,35 @@
 # edge-exchange-plugins
 
+# 0.6.12 (2019-07-25)
+
+- Allow Totle transactions between wallets
+
+# 0.6.11 (2019-07-24)
+
+- Set nativeAmount for outgoing Totle tx after broadcast
+
+# 0.6.10 (2019-07-22)
+
+- Upgrade faa.st plugin.
+- Fix crashes on old Android WebView versions.
+
+# 0.6.9 (2019.07-13)
+
+- Implement currency-not-supported error for Totle transactions between different ETH wallets
+
+# 0.6.8 (2019-07-12)
+
+- Add more info to readme
+- Fix Totle unavailable swap pair case
+
+# 0.6.6 (2019-07-09)
+
+- Enable HERC and AGLD exchange rate fix
+
+# 0.6.5 (2019-06-04)
+
+- fix error when currency is temporarily disabled
+
 # 0.6.4 (2019-06-04)
 
 - fix amount string instead of number error
