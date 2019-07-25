@@ -151,16 +151,11 @@ export function makeShapeshiftPlugin (
         toCurrencyCode,
         toWallet
       } = request
-      if (userSettings == null || userSettings.accessToken == null) {
-        throw new SwapPermissionError(swapInfo.pluginName, 'needsActivation')
-      }
-      const { accessToken } = userSettings
-
       if (toCurrencyCode === fromCurrencyCode) {
         throw new SwapCurrencyError(swapInfo, fromCurrencyCode, toCurrencyCode)
       }
 
-      // Check for supported currencies:
+      // Check for supported currencies, even if we aren't activated:
       const json = await get(`/getcoins/`)
       const fromStatus = json[fromCurrencyCode.toUpperCase()]
       const toStatus = json[toCurrencyCode.toUpperCase()]
@@ -177,6 +172,7 @@ export function makeShapeshiftPlugin (
       if (userSettings == null || userSettings.accessToken == null) {
         throw new SwapPermissionError(swapInfo.pluginName, 'needsActivation')
       }
+      const { accessToken } = userSettings
 
       // Check for minimum / maximum:
       if (quoteFor === 'from') {
