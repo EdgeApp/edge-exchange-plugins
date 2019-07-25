@@ -1,5 +1,9 @@
 # edge-exchange-plugins
 
+# 0.6.12 (2019-07-25)
+
+- Allow Totle transactions between wallets
+
 # 0.6.11 (2019-07-24)
 
 - Set nativeAmount for outgoing Totle tx after broadcast
