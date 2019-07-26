@@ -10,6 +10,7 @@ import { makeXagauPlugin } from './rate/xagau.js'
 import { makeChangellyPlugin } from './swap/changelly.js'
 import { makeChangeNowPlugin } from './swap/changenow.js'
 import { makeFaastPlugin } from './swap/faast.js'
+import { makeFoxExchangePlugin } from './swap/foxExchange.js'
 import { makeShapeshiftPlugin } from './swap/shapeshift.js'
 import { makeTotlePlugin } from './swap/totle.js'
 
@@ -28,7 +29,15 @@ const edgeCorePlugins = {
   changenow: makeChangeNowPlugin,
   faast: makeFaastPlugin,
   shapeshift: makeShapeshiftPlugin,
-  totle: makeTotlePlugin
+  totle: makeTotlePlugin,
+  foxExchange: makeFoxExchangePlugin
+}
+
+if (
+  typeof window !== 'undefined' &&
+  typeof window.addEdgeCorePlugins === 'function'
+) {
+  window.addEdgeCorePlugins(edgeCorePlugins)
 }
 
 export default edgeCorePlugins
