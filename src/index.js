@@ -11,6 +11,7 @@ import { makeChangellyPlugin } from './swap/changelly.js'
 import { makeChangeNowPlugin } from './swap/changenow.js'
 import { makeFaastPlugin } from './swap/faast.js'
 import { makeFoxExchangePlugin } from './swap/foxExchange.js'
+import { makeGodexPlugin } from './swap/godex.js'
 import { makeShapeshiftPlugin } from './swap/shapeshift.js'
 import { makeTotlePlugin } from './swap/totle.js'
 
@@ -30,7 +31,8 @@ const edgeCorePlugins = {
   faast: makeFaastPlugin,
   shapeshift: makeShapeshiftPlugin,
   totle: makeTotlePlugin,
-  foxExchange: makeFoxExchangePlugin
+  foxExchange: makeFoxExchangePlugin,
+  godex: makeGodexPlugin
 }
 
 if (
