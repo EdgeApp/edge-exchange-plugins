@@ -1,5 +1,9 @@
 # edge-exchange-plugins
 
+# 0.7.0 (2019-07-29)
+
+- Integrate Fox and GoDex as swap partners
+
 # 0.6.12 (2019-07-25)
 
 - Allow Totle transactions between wallets
