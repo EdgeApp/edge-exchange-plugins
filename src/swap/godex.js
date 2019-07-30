@@ -7,6 +7,7 @@ import {
   type EdgeSwapPlugin,
   type EdgeSwapPluginQuote,
   type EdgeSwapRequest,
+  type EdgeTransaction,
   SwapBelowLimitError
 } from 'edge-core-js/types'
 
@@ -185,7 +186,8 @@ export function makeGodexPlugin (opts: EdgeCorePluginOptions): EdgeSwapPlugin {
       }
       io.console.info('godex spendInfo', spendInfo)
 
-      const tx = await request.fromWallet.makeSpend(spendInfo)
+      const tx: EdgeTransaction = await request.fromWallet.makeSpend(spendInfo)
+      if (!tx.otherParams) tx.otherParams = {}
       tx.otherParams.payinAddress = spendInfo.spendTargets[0].publicAddress
       tx.otherParams.uniqueIdentifier =
         spendInfo.spendTargets[0].otherParams.uniqueIdentifier
