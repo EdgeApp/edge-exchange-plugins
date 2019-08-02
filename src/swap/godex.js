@@ -163,7 +163,7 @@ export function makeGodexPlugin (opts: EdgeCorePluginOptions): EdgeSwapPlugin {
           // withdrawal_extra_id: 'empty',
           return_extra_id: null,
           withdrawal_extra_id: null,
-          affiliate_id: initOptions.affiliateId,
+          affiliate_id: initOptions.apiKey,
           type: 'edge',
           isEstimate: false
         }
