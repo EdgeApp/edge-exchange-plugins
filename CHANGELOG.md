@@ -1,5 +1,9 @@
 # edge-exchange-plugins
 
+# 0.7.1 (2019-08-03)
+
+- Fix apiKey variable name for GoDex
+
 # 0.7.0 (2019-07-29)
 
 - Integrate Fox and GoDex as swap partners
