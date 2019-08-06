@@ -1,5 +1,9 @@
 # edge-exchange-plugins
 
+# 0.7.2 (2019-08-03)
+
+- Change display name for Fox Exchange
+
 # 0.7.1 (2019-08-03)
 
 - Fix apiKey variable name for GoDex
