@@ -17,7 +17,7 @@ import { getFetchJson } from '../react-native-io.js'
 
 const swapInfo = {
   pluginName: 'foxExchange',
-  displayName: 'fox.exchange',
+  displayName: 'Fox Exchange',
 
   quoteUri: 'https://fox.exchange/tx/',
   supportEmail: 'support@fox.exchange'
