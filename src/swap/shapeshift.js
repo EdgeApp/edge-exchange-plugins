@@ -288,7 +288,7 @@ export function makeShapeshiftPlugin (
         toAddress,
         'shapeshift',
         false,
-        new Date(exchangeData.expiration),
+        new Date(exchangeData.expiration * 1000),
         exchangeData.orderId
       )
     }
