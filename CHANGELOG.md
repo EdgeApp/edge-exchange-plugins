@@ -1,6 +1,11 @@
 # edge-exchange-plugins
 
-# 0.7.2 (2019-08-03)
+# 0.7.3 (2019-08-06)
+
+- Fix ShapeShift auth error logic.
+- Fix ShapeShift quote expiration dates.
+
+# 0.7.2 (2019-08-06)
 
 - Change display name for Fox Exchange
 
