@@ -1,5 +1,9 @@
 # edge-exchange-plugins
 
+# 0.8.0 (2019-08-14)
+
+- Add Coinswitch as swap partner
+
 # 0.7.3 (2019-08-06)
 
 - Fix ShapeShift auth error logic.
