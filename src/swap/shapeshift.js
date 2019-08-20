@@ -97,6 +97,13 @@ export function makeShapeshiftPlugin (
     ) {
       throw new SwapPermissionError(swapInfo, 'noVerification')
     }
+    if (
+      reply.status === 403 &&
+      replyJson != null &&
+      replyJson.message === 'User must complete KYC'
+    ) {
+      throw new SwapPermissionError(swapInfo, 'noVerification')
+    }
 
     // Anything else:
     if (!reply.ok || (replyJson != null && replyJson.error != null)) {
