@@ -1,5 +1,9 @@
 # edge-exchange-plugins
 
+# 0.8.1 (2019-08-22)
+
+- Change GoDex transactions to fixed rate
+
 # 0.8.0 (2019-08-14)
 
 - Add Coinswitch as swap partner
