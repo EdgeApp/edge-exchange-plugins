@@ -63,7 +63,7 @@ export function makeGodexPlugin (opts: EdgeCorePluginOptions): EdgeSwapPlugin {
   const { io, initOptions } = opts
   const fetchJson = getFetchJson(opts)
 
-  async function call (url, data) {
+  async function call (url, request, data) {
     const body = JSON.stringify(data.params)
 
     const headers = {
@@ -72,6 +72,13 @@ export function makeGodexPlugin (opts: EdgeCorePluginOptions): EdgeSwapPlugin {
     }
     const reply = await fetchJson(url, { method: 'POST', body, headers })
     if (!reply.ok) {
+      if (reply.status === 422) {
+        throw new SwapCurrencyError(
+          swapInfo,
+          request.fromCurrencyCode,
+          request.toCurrencyCode
+        )
+      }
       throw new Error(`godex returned error code ${reply.status}`)
     }
     const out = reply.json
@@ -121,10 +128,10 @@ export function makeGodexPlugin (opts: EdgeCorePluginOptions): EdgeSwapPlugin {
 
       // Get the estimate from the server:
       const quoteReplies = await Promise.all([
-        call(uri + 'info', {
+        call(uri + 'info', request, {
           params: quoteParams
         }),
-        call(uri + 'info-revert', {
+        call(uri + 'info-revert', request, {
           params: quoteParams
         })
       ])
@@ -160,7 +167,7 @@ export function makeGodexPlugin (opts: EdgeCorePluginOptions): EdgeSwapPlugin {
         throw new SwapBelowLimitError(swapInfo, nativeMin)
       }
 
-      const sendReply = await call(uri + 'transaction', {
+      const sendReply = await call(uri + 'transaction', request, {
         params: {
           deposit_amount: fromAmount,
           coin_from: request.fromCurrencyCode,
