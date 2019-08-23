@@ -177,7 +177,7 @@ export function makeShapeshiftPlugin (
 
       // Bail out early if we need activation:
       if (userSettings == null || userSettings.accessToken == null) {
-        throw new SwapPermissionError(swapInfo.pluginName, 'needsActivation')
+        throw new SwapPermissionError(swapInfo, 'needsActivation')
       }
       const { accessToken } = userSettings
 
