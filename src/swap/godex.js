@@ -18,7 +18,7 @@ const swapInfo = {
   pluginName: 'godex',
   displayName: 'Godex',
 
-  quoteUri: 'https://godex.io/exchange/status/#',
+  quoteUri: 'https://godex.io/exchange/waiting/',
   supportEmail: 'support@godex.io'
 }
 
