@@ -1,5 +1,15 @@
 # edge-exchange-plugins
 
+# 0.8.3 (2019-08-23)
+
+- Fix GoDex unsupported currency error reporting
+- Fix ShapeShift KYC error reporting
+
+# 0.8.2 (2019-08-23)
+
+- Disable USDT as a GoDex source currency
+- Fix GoDex quote URI
+
 # 0.8.1 (2019-08-22)
 
 - Change GoDex transactions to fixed rate
