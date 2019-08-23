@@ -8,7 +8,8 @@ import {
   type EdgeSwapPluginQuote,
   type EdgeSwapRequest,
   type EdgeTransaction,
-  SwapBelowLimitError
+  SwapBelowLimitError,
+  SwapCurrencyError
 } from 'edge-core-js/types'
 
 import { getFetchJson } from '../react-native-io'
@@ -84,6 +85,13 @@ export function makeGodexPlugin (opts: EdgeCorePluginOptions): EdgeSwapPlugin {
       request: EdgeSwapRequest,
       userSettings: Object | void
     ): Promise<EdgeSwapPluginQuote> {
+      if (request.fromCurrencyCode === 'USDT') {
+        throw new SwapCurrencyError(
+          swapInfo,
+          request.fromCurrencyCode,
+          request.toCurrencyCode
+        )
+      }
       // Grab addresses:
       const [fromAddress, toAddress] = await Promise.all([
         getAddress(request.fromWallet, request.fromCurrencyCode),
