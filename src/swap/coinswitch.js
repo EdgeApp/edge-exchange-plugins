@@ -1,6 +1,6 @@
 // @flow
 
-import { add, div, gt, lt, mul, sub } from 'biggystring'
+import { gt, lt } from 'biggystring'
 import {
   type EdgeCorePluginOptions,
   type EdgeCurrencyWallet,
@@ -24,7 +24,7 @@ const swapInfo = {
 }
 
 const uri = 'https://api.coinswitch.co/'
-const expirationMs = 60 * 60 * 12 * 1000
+const expirationMs = 1000 * 60 * 20
 
 type QuoteInfo = {
   orderId: string,
@@ -52,6 +52,9 @@ async function getAddress (
 
 function checkReply (reply: Object, request?: EdgeSwapRequest) {
   if (request != null && !reply.data) {
+    if (reply.code) {
+      throw new Error(JSON.stringify(reply.code))
+    }
     throw new SwapCurrencyError(
       swapInfo,
       request.fromCurrencyCode,
@@ -59,6 +62,7 @@ function checkReply (reply: Object, request?: EdgeSwapRequest) {
     )
   }
   if (!reply.success) {
+    console.log(JSON.stringify(reply.msg))
     throw new Error(JSON.stringify(reply.code))
   }
 }
@@ -76,7 +80,7 @@ export function makeCoinSwitchPlugin (
 
   async function call (json: any) {
     const body = JSON.stringify(json.params)
-    io.console.info('coinswitch call:', json)
+    io.console.info('coinswitch fixed call:', json)
     const headers = {
       'Content-Type': 'application/json',
       'x-api-key': apiKey
@@ -118,45 +122,46 @@ export function makeCoinSwitchPlugin (
       const quoteParams =
         request.quoteFor === 'from'
           ? {
-            depositCoin: request.fromCurrencyCode,
-            destinationCoin: request.toCurrencyCode,
+            depositCoin: request.fromCurrencyCode.toLowerCase(),
+            destinationCoin: request.toCurrencyCode.toLowerCase(),
             depositCoinAmount: quoteAmount
           }
           : {
-            depositCoin: request.fromCurrencyCode,
-            destinationCoin: request.toCurrencyCode,
+            depositCoin: request.fromCurrencyCode.toLowerCase(),
+            destinationCoin: request.toCurrencyCode.toLowerCase(),
             destinationCoinAmount: quoteAmount
           }
 
       const quoteReplies = await Promise.all([
         call({
-          route: 'v2/rate',
+          route: 'v2/fixed/offer',
+          params: quoteParams
+        }),
+        call({
+          route: 'v2/fixed/pairs',
           params: {
-            depositCoin: quoteParams.depositCoin.toLowerCase(),
-            destinationCoin: quoteParams.destinationCoin.toLowerCase()
+            depositCoin: quoteParams.depositCoin,
+            destinationCoin: quoteParams.destinationCoin
           }
         })
       ])
 
       checkReply(quoteReplies[0], request)
+      checkReply(quoteReplies[1], request)
 
       let fromAmount, fromNativeAmount, toNativeAmount
-      const minerFee = quoteReplies[0].data.minerFee.toString()
-      const rate = quoteReplies[0].data.rate.toString()
+      const offerReferenceId = quoteReplies[0].data.offerReferenceId
 
       if (request.quoteFor === 'from') {
         fromAmount = quoteAmount
         fromNativeAmount = request.nativeAmount
-        const exchangeAmountBeforeMinerFee = mul(rate, quoteAmount)
-        const exchangeAmount = sub(exchangeAmountBeforeMinerFee, minerFee)
+        const exchangeAmount = quoteReplies[0].data.destinationCoinAmount
         toNativeAmount = await request.toWallet.denominationToNative(
           exchangeAmount,
           request.toCurrencyCode
         )
       } else {
-        const exchangeAmountAfterMinerFee = add(quoteAmount, minerFee)
-        fromAmount = div(exchangeAmountAfterMinerFee, rate, 16)
-
+        fromAmount = quoteReplies[0].data.depositCoinAmount
         fromNativeAmount = await request.fromWallet.denominationToNative(
           fromAmount,
           request.fromCurrencyCode
@@ -166,11 +171,11 @@ export function makeCoinSwitchPlugin (
 
       const [nativeMin, nativeMax] = await Promise.all([
         request.fromWallet.denominationToNative(
-          quoteReplies[0].data.limitMinDepositCoin.toString(),
+          quoteReplies[1].data[0].limitMinDepositCoin.toString(),
           request.fromCurrencyCode
         ),
         request.fromWallet.denominationToNative(
-          quoteReplies[0].data.limitMaxDepositCoin.toString(),
+          quoteReplies[1].data[0].limitMaxDepositCoin.toString(),
           request.fromCurrencyCode
         )
       ])
@@ -184,11 +189,12 @@ export function makeCoinSwitchPlugin (
       }
 
       const createOrder = await call({
-        route: 'v2/order',
+        route: 'v2/fixed/order',
         params: {
           depositCoin: quoteParams.depositCoin.toLowerCase(),
           destinationCoin: quoteParams.destinationCoin.toLowerCase(),
           depositCoinAmount: parseFloat(fromAmount),
+          offerReferenceId: offerReferenceId,
           destinationAddress: { address: toAddress, tag: null },
           refundAddress: { address: fromAddress, tag: null }
         }
@@ -224,7 +230,7 @@ export function makeCoinSwitchPlugin (
         tx,
         toAddress,
         'coinswitch',
-        true,
+        false, // isEstimate
         new Date(Date.now() + expirationMs),
         quoteInfo.orderId
       )
