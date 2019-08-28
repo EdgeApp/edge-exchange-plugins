@@ -24,7 +24,7 @@ const swapInfo = {
 }
 
 const uri = 'https://api.coinswitch.co/'
-const expirationMs = 1000 * 60 * 20
+const expirationMs = 1000 * 60 * 15
 
 type QuoteInfo = {
   orderId: string,
