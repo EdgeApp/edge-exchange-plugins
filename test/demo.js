@@ -31,7 +31,6 @@ async function showRate (
 }
 
 showRate(edgeCorePlugins.coinbase, 'iso:USD', 'BTC')
-showRate(edgeCorePlugins['shapeshift-rate'], 'BTC', 'ETH')
 
 // Uncomment and insert key to test:
 // showRate(edgeCorePlugins['currencyconverterapi'], 'iso:USD', 'iso:IRR', {
