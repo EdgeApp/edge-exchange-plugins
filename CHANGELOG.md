@@ -1,6 +1,6 @@
 # edge-exchange-plugins
 
-# 0.8.4 (2019-09-20)
+# 0.8.5 (2019-09-20)
 
 - Remove obsolete plugins (deprecated API's)
 - Implement constantRate plugins for pegged currencies
