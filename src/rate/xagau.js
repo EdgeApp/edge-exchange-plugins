@@ -39,6 +39,11 @@ export function makeXagauPlugin (opts: EdgeCorePluginOptions): EdgeRatePlugin {
           })
         }
       }
+      pairs.push({
+        fromCurrency: 'TBTC',
+        toCurrency: 'iso:USD',
+        rate: 0.01
+      })
       return pairs
     }
   }

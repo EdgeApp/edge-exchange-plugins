@@ -31,6 +31,7 @@ export function makeCoincapLegacyPlugin (
     },
 
     async fetchRates (pairsHint) {
+      //  endpoint has been deprecated
       const reply = await io.fetch('https://coincap.io/front')
       const json = await reply.json()
 

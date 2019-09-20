@@ -6,6 +6,8 @@ import {
 } from 'edge-core-js/types'
 import currencies from 'iso4217'
 
+import { DUPLICATE_RATE_MAP } from '../rate-helpers.js'
+
 const codeTable = {}
 for (const number of Object.keys(currencies)) {
   const entry = currencies[number]
@@ -28,6 +30,7 @@ export function makeCoinbasePlugin (
       displayName: 'Coinbase'
     },
 
+    // fiat-to-fiat
     async fetchRates (pairsHint) {
       const reply = await io.fetch('https://api.coinbase.com/v2/exchange-rates')
       const json = await reply.json()
@@ -45,8 +48,14 @@ export function makeCoinbasePlugin (
           toCurrency,
           rate
         })
+        if (DUPLICATE_RATE_MAP[toCurrency]) {
+          pairs.push({
+            fromCurrency: 'iso:USD',
+            toCurrency: DUPLICATE_RATE_MAP[toCurrency],
+            rate
+          })
+        }
       }
-
       return pairs
     }
   }

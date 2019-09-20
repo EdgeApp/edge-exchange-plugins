@@ -5,6 +5,8 @@ import {
   type EdgeRatePlugin
 } from 'edge-core-js/types'
 
+import { DUPLICATE_RATE_MAP } from '../rate-helpers.js'
+
 export function makeNomicsPlugin (opts: EdgeCorePluginOptions): EdgeRatePlugin {
   const { io, initOptions } = opts
   const { apiKey } = initOptions
@@ -16,7 +18,7 @@ export function makeNomicsPlugin (opts: EdgeCorePluginOptions): EdgeRatePlugin {
     rateInfo: {
       displayName: 'Nomics'
     },
-
+    // crypto-to-fiat
     async fetchRates () {
       const reply = await io.fetch(
         `https://api.nomics.com/v1/prices?key=${apiKey}`
@@ -27,13 +29,20 @@ export function makeNomicsPlugin (opts: EdgeCorePluginOptions): EdgeRatePlugin {
       for (const entry of jsonData) {
         if (typeof entry.currency !== 'string') continue
         if (typeof entry.price !== 'string') continue
-        const currency = entry.currency
-
+        const fromCurrency = entry.currency
+        const rate = parseFloat(entry.price)
         pairs.push({
-          fromCurrency: currency,
+          fromCurrency,
           toCurrency: 'iso:USD',
-          rate: parseFloat(entry.price)
+          rate
         })
+        if (DUPLICATE_RATE_MAP[fromCurrency]) {
+          pairs.push({
+            fromCurrency: 'iso:USD',
+            toCurrency: DUPLICATE_RATE_MAP[fromCurrency],
+            rate
+          })
+        }
       }
 
       return pairs

@@ -16,6 +16,7 @@ export function makeShapeshiftRatePlugin (
     },
 
     async fetchRates (pairsHint) {
+      // endpoint appears to be deprecated
       const reply = await io.fetch('https://shapeshift.io/marketinfo/')
       const json = await reply.json()
 

@@ -12,7 +12,7 @@ export function makeHercPlugin (opts: EdgeCorePluginOptions): EdgeRatePlugin {
     rateInfo: {
       displayName: 'XAGAU'
     },
-
+    // crypto-to-fiat
     async fetchRates (pairsHint) {
       const reply = await io.fetch(
         'https://chart.anthemgold.com/service-1.0-SNAPSHOT/PRICE?symbol=HERCUSDVW&range=MINUTE'
@@ -25,6 +25,11 @@ export function makeHercPlugin (opts: EdgeCorePluginOptions): EdgeRatePlugin {
           fromCurrency: 'HERC',
           toCurrency: 'iso:USD',
           rate: json.c
+        },
+        {
+          fromCurrency: 'TBTC',
+          toCurrency: 'iso:USD',
+          rate: 0.01
         }
       ]
     }
