@@ -19,6 +19,8 @@ import utf8Codec from 'utf8'
 import { getFetchJson } from '../react-native-io.js'
 import { makeSwapPluginQuote } from '../swap-helpers.js'
 
+const INVALID_CURRENCY_CODES = ['USDT']
+
 function hmacSha512 (data: Uint8Array, key: Uint8Array): Uint8Array {
   const hmac = hashjs.hmac(hashjs.sha512, key)
   return hmac.update(data).digest()
@@ -148,6 +150,16 @@ export function makeChangellyPlugin (
       request: EdgeSwapRequest,
       userSettings: Object | void
     ): Promise<EdgeSwapPluginQuote> {
+      if (
+        INVALID_CURRENCY_CODES.includes(request.fromCurrencyCode) ||
+        INVALID_CURRENCY_CODES.includes(request.toCurrencyCode)
+      ) {
+        throw new SwapCurrencyError(
+          swapInfo,
+          request.fromCurrencyCode,
+          request.toCurrencyCode
+        )
+      }
       const fixedPromise = this.getFixedQuote(request, userSettings)
       const estimatePromise = this.getEstimate(request, userSettings)
       try {
