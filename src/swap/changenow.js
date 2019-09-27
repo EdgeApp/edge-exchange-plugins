@@ -46,6 +46,13 @@ const dontUseLegacy = {
   DGB: true
 }
 
+const INVALID_CURRENCY_CODES = {
+  // technically Changenow supports the ERC-20 version as
+  // "USDTERC20" but repercussions need to be considered
+  // before allowing it as a tradeable coin
+  USDT: true
+}
+
 async function getAddress (
   wallet: EdgeCurrencyWallet,
   currencyCode: string
@@ -97,6 +104,16 @@ export function makeChangeNowPlugin (
       request: EdgeSwapRequest,
       userSettings: Object | void
     ): Promise<EdgeSwapPluginQuote> {
+      if (
+        INVALID_CURRENCY_CODES[request.fromCurrencyCode] ||
+        INVALID_CURRENCY_CODES[request.toCurrencyCode]
+      ) {
+        throw new SwapCurrencyError(
+          swapInfo,
+          request.fromCurrencyCode,
+          request.toCurrencyCode
+        )
+      }
       // Grab addresses:
       let isEstimate = true
       const [fromAddress, toAddress] = await Promise.all([
