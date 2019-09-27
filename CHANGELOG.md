@@ -1,5 +1,9 @@
 # edge-exchange-plugins
 
+# 0.8.6 (2019-90-27)
+
+- Fix ChangeNow and Changelly issues with USDT
+
 # 0.8.5 (2019-09-20)
 
 - Remove obsolete plugins (deprecated API's)
