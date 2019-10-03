@@ -19,9 +19,7 @@ import utf8Codec from 'utf8'
 import { getFetchJson } from '../react-native-io.js'
 import { makeSwapPluginQuote } from '../swap-helpers.js'
 
-const INVALID_CURRENCY_CODES = {
-  USDT: true
-}
+const INVALID_CURRENCY_CODES = {}
 
 // Invalid currency codes should *not* have transcribed codes
 // because currency codes with transcribed versions are NOT invalid
