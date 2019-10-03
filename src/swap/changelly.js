@@ -23,13 +23,6 @@ const INVALID_CURRENCY_CODES = {
   USDT: true
 }
 
-// Invalid currency codes should *not* have transcribed codes
-// because currency codes with transcribed versions are NOT invalid
-const CURRENCY_CODE_TRANSCRIPTION = {
-  // Edge currencyCode: exchangeCurrencyCode
-  USDT: 'USDT20'
-}
-
 function hmacSha512 (data: Uint8Array, key: Uint8Array): Uint8Array {
   const hmac = hashjs.hmac(hashjs.sha512, key)
   return hmac.update(data).digest()
@@ -160,7 +153,6 @@ export function makeChangellyPlugin (
       userSettings: Object | void
     ): Promise<EdgeSwapPluginQuote> {
       if (
-        // if either currencyCode is invalid *and* doesn't have a transcription
         INVALID_CURRENCY_CODES[request.fromCurrencyCode] ||
         INVALID_CURRENCY_CODES[request.toCurrencyCode]
       ) {
@@ -199,22 +191,13 @@ export function makeChangellyPlugin (
             request.toCurrencyCode
           )
 
-      let safeFromCurrencyCode = request.fromCurrencyCode
-      let safeToCurrencyCode = request.toCurrencyCode
-      if (CURRENCY_CODE_TRANSCRIPTION[request.fromCurrencyCode]) {
-        safeFromCurrencyCode =
-          CURRENCY_CODE_TRANSCRIPTION[request.fromCurrencyCode]
-      }
-      if (CURRENCY_CODE_TRANSCRIPTION[request.toCurrencyCode]) {
-        safeToCurrencyCode = CURRENCY_CODE_TRANSCRIPTION[request.toCurrencyCode]
-      }
       const fixedRateQuote = await call({
         jsonrpc: '2.0',
         id: 'one',
         method: 'getFixRate',
         params: {
-          from: safeFromCurrencyCode,
-          to: safeToCurrencyCode
+          from: request.fromCurrencyCode,
+          to: request.toCurrencyCode
         }
       })
       const min =
@@ -243,8 +226,8 @@ export function makeChangellyPlugin (
         request.quoteFor === 'from'
           ? {
             amount: quoteAmount,
-            from: safeFromCurrencyCode,
-            to: safeToCurrencyCode,
+            from: request.fromCurrencyCode,
+            to: request.toCurrencyCode,
             address: toAddress,
             extraId: null,
             refundAddress: fromAddress,
@@ -253,8 +236,8 @@ export function makeChangellyPlugin (
           }
           : {
             amountTo: quoteAmount,
-            from: safeFromCurrencyCode,
-            to: safeToCurrencyCode,
+            from: request.fromCurrencyCode,
+            to: request.toCurrencyCode,
             address: toAddress,
             extraId: null,
             refundAddress: fromAddress,
@@ -272,9 +255,7 @@ export function makeChangellyPlugin (
       const quoteInfo: FixedQuoteInfo = sendReply.result
       const spendInfoAmount = await request.fromWallet.denominationToNative(
         quoteInfo.amountExpectedFrom,
-        // need to verify that this is okay
-        // why use currencyCode from quoteInfo in the first place?
-        request.fromCurrencyCode.toUpperCase()
+        quoteInfo.currencyFrom.toUpperCase()
       )
 
       const spendInfo = {
@@ -337,26 +318,17 @@ export function makeChangellyPlugin (
             request.toCurrencyCode
           )
 
-      let safeFromCurrencyCode = request.fromCurrencyCode
-      let safeToCurrencyCode = request.toCurrencyCode
-      if (CURRENCY_CODE_TRANSCRIPTION[request.fromCurrencyCode]) {
-        safeFromCurrencyCode =
-          CURRENCY_CODE_TRANSCRIPTION[request.fromCurrencyCode]
-      }
-      if (CURRENCY_CODE_TRANSCRIPTION[request.toCurrencyCode]) {
-        safeToCurrencyCode = CURRENCY_CODE_TRANSCRIPTION[request.toCurrencyCode]
-      }
       // Swap the currencies if we need a reverse quote:
       const quoteParams =
         request.quoteFor === 'from'
           ? {
-            from: safeFromCurrencyCode,
-            to: safeToCurrencyCode,
+            from: request.fromCurrencyCode,
+            to: request.toCurrencyCode,
             amount: quoteAmount
           }
           : {
-            from: safeToCurrencyCode,
-            to: safeFromCurrencyCode,
+            from: request.toCurrencyCode,
+            to: request.fromCurrencyCode,
             amount: quoteAmount
           }
 
@@ -367,8 +339,8 @@ export function makeChangellyPlugin (
           id: 'one',
           method: 'getMinAmount',
           params: {
-            from: safeFromCurrencyCode,
-            to: safeToCurrencyCode
+            from: request.fromCurrencyCode,
+            to: request.toCurrencyCode
           }
         }),
         call({
@@ -415,8 +387,8 @@ export function makeChangellyPlugin (
         method: 'createTransaction',
         params: {
           amount: fromAmount,
-          from: safeFromCurrencyCode,
-          to: safeToCurrencyCode,
+          from: request.fromCurrencyCode,
+          to: request.toCurrencyCode,
           address: toAddress,
           extraId: null, // TODO: Do we need this for Monero?
           refundAddress: fromAddress,

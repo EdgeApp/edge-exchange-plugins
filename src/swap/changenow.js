@@ -46,14 +46,11 @@ const dontUseLegacy = {
   DGB: true
 }
 
-const CURRENCY_CODE_TRANSCRIPTION = {
-  USDT: 'USDTERC20'
-}
-
-// Invalid currency codes should *not* have transcribed codes
-// because currency codes with transcribed versions are NOT invalid
 const INVALID_CURRENCY_CODES = {
-  // edgeCurrenvyCode: exchangeCurrencyCode
+  // technically Changenow supports the ERC-20 version as
+  // "USDTERC20" but repercussions need to be considered
+  // before allowing it as a tradeable coin
+  USDT: true
 }
 
 async function getAddress (
@@ -108,7 +105,6 @@ export function makeChangeNowPlugin (
       userSettings: Object | void
     ): Promise<EdgeSwapPluginQuote> {
       if (
-        // if either currencyCode is invalid *and* doesn't have a transcription
         INVALID_CURRENCY_CODES[request.fromCurrencyCode] ||
         INVALID_CURRENCY_CODES[request.toCurrencyCode]
       ) {
@@ -125,19 +121,10 @@ export function makeChangeNowPlugin (
         getAddress(request.toWallet, request.toCurrencyCode)
       ])
 
-      // transcribe currencyCodes if necessary
-      let safeFromCurrencyCode = request.fromCurrencyCode
-      let safeToCurrencyCode = request.toCurrencyCode
-      if (CURRENCY_CODE_TRANSCRIPTION[request.fromCurrencyCode]) {
-        safeFromCurrencyCode =
-          CURRENCY_CODE_TRANSCRIPTION[request.fromCurrencyCode]
-      }
-      if (CURRENCY_CODE_TRANSCRIPTION[request.toCurrencyCode]) {
-        safeToCurrencyCode = CURRENCY_CODE_TRANSCRIPTION[request.toCurrencyCode]
-      }
-
-      // get the markets
-      const availablePairs = await get('currencies-to/' + safeFromCurrencyCode)
+      // get the markets:
+      const availablePairs = await get(
+        'currencies-to/' + request.fromCurrencyCode
+      )
       const fixedMarket = await get('market-info/fixed-rate/' + apiKey) // Promise.all([fetchCurrencies()])
 
       const quoteAmount =
@@ -155,13 +142,13 @@ export function makeChangeNowPlugin (
       const quoteParams =
         request.quoteFor === 'from'
           ? {
-            from: safeFromCurrencyCode.toLowerCase(),
-            to: safeToCurrencyCode.toLowerCase(),
+            from: request.fromCurrencyCode.toLowerCase(),
+            to: request.toCurrencyCode.toLowerCase(),
             amount: quoteAmount
           }
           : {
-            from: safeToCurrencyCode.toLowerCase(),
-            to: safeFromCurrencyCode.toLowerCase(),
+            from: request.toCurrencyCode.toLowerCase(),
+            to: request.fromCurrencyCode.toLowerCase(),
             amount: quoteAmount
           }
 
@@ -172,7 +159,7 @@ export function makeChangeNowPlugin (
       let quoteReplyKeep = { estimatedAmount: '0' }
       for (let i = 0; i < availablePairs.length; i++) {
         const obj = availablePairs[i]
-        if (safeToCurrencyCode.toLowerCase() === obj.ticker) {
+        if (request.toCurrencyCode.toLowerCase() === obj.ticker) {
           pairsToUse.push(obj)
           if (obj.supportsFixedRate) {
             let minerFee = null
@@ -248,8 +235,8 @@ export function makeChangeNowPlugin (
                 route: 'transactions/fixed-rate/',
                 body: {
                   amount: fromAmount,
-                  from: safeFromCurrencyCode,
-                  to: safeToCurrencyCode,
+                  from: request.fromCurrencyCode,
+                  to: request.toCurrencyCode,
                   address: toAddress,
                   extraId: null, // TODO: Do we need this for Monero?
                   refundAddress: fromAddress
@@ -327,13 +314,6 @@ export function makeChangeNowPlugin (
       const min = await get(
         'min-amount/' + quoteParams.from + '_' + quoteParams.to
       )
-      if (!min.minAmount) {
-        throw new SwapCurrencyError(
-          swapInfo,
-          request.fromCurrencyCode,
-          request.toCurrencyCode
-        )
-      }
       const [nativeMin] = await Promise.all([
         request.fromWallet.denominationToNative(
           min.minAmount.toString(),
@@ -374,8 +354,8 @@ export function makeChangeNowPlugin (
         route: 'transactions/',
         body: {
           amount: fromAmount,
-          from: safeFromCurrencyCode.toLowerCase(),
-          to: safeToCurrencyCode.toLowerCase(),
+          from: request.fromCurrencyCode.toLowerCase(),
+          to: request.toCurrencyCode.toLowerCase(),
           address: toAddress,
           extraId: null, // TODO: Do we need this for Monero?
           refundAddress: fromAddress
