@@ -327,7 +327,7 @@ export function makeChangeNowPlugin (
       const min = await get(
         'min-amount/' + quoteParams.from + '_' + quoteParams.to
       )
-      if (!min.minAmount) {
+      if (min.minAmount == null) {
         throw new SwapCurrencyError(
           swapInfo,
           request.fromCurrencyCode,
