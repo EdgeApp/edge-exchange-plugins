@@ -1,6 +1,10 @@
 # edge-exchange-plugins
 
-# 0.8.6 (2019-90-27)
+# 0.8.7 (2019-10-09)
+
+- Re-enable USDT on ChangeNow and Changelly.
+
+# 0.8.6 (2019-09-27)
 
 - Fix ChangeNow and Changelly issues with USDT
 
