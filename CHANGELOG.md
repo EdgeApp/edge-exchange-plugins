@@ -1,5 +1,9 @@
 # edge-exchange-plugins
 
+# 0.8.8 (2019-10-22)
+
+- Enable compound token exchange rates
+
 # 0.8.7 (2019-10-09)
 
 - Re-enable USDT on ChangeNow and Changelly.
