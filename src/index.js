@@ -2,6 +2,7 @@
 
 import { makeCoinbasePlugin } from './rate/coinbase.js'
 import { makeCoincapPlugin } from './rate/coincap.js'
+import { makeCompoundPlugin } from './rate/compound.js'
 import { makeConstantRatePlugin } from './rate/constantRate.js'
 import { makeCurrencyconverterapiPlugin } from './rate/currencyconverterapi.js'
 import { makeNomicsPlugin } from './rate/nomics.js'
@@ -23,6 +24,7 @@ const edgeCorePlugins = {
   xagau: makeXagauPlugin,
   nomics: makeNomicsPlugin,
   constantRate: makeConstantRatePlugin,
+  compound: makeCompoundPlugin,
 
   // Swap plugins:
   changelly: makeChangellyPlugin,
