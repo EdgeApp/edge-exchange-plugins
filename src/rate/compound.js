@@ -4,18 +4,9 @@ import {
   type EdgeCorePluginOptions,
   type EdgeRatePlugin
 } from 'edge-core-js/types'
-import currencies from 'iso4217'
-
-const codeTable = {}
-for (const number of Object.keys(currencies)) {
-  const entry = currencies[number]
-  codeTable[entry.Code] = true
-}
 
 function fixCurrency (currencyCode) {
-  currencyCode = currencyCode.toUpperCase()
-
-  return codeTable[currencyCode] ? 'iso:' + currencyCode : currencyCode
+  return currencyCode.toUpperCase()
 }
 
 export function makeCompoundPlugin (
@@ -33,7 +24,6 @@ export function makeCompoundPlugin (
       const json = await reply.json()
       if (!json || !json.cToken) return []
 
-      // Grab all the USD pairs:
       const pairs = []
       for (const rateInfo of json.cToken) {
         const rate = Number(rateInfo.exchange_rate.value)
