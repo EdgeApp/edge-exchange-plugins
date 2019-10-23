@@ -1,5 +1,11 @@
 # edge-exchange-plugins
 
+
+# 0.8.9 (2019-10-23)
+
+- Include `apiKey` for Totle swaps
+- Peg WBTC to BTC as 1-to-1 rate
+
 # 0.8.8 (2019-10-22)
 
 - Enable compound token exchange rates
