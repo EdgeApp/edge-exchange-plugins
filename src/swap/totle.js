@@ -91,12 +91,13 @@ export function makeTotlePlugin (opts: EdgeCorePluginOptions): EdgeSwapPlugin {
   const { initOptions, io } = opts
   const fetchJson = getFetchJson(opts)
 
-  const { partnerContract } = initOptions
+  const { partnerContract, apiKey } = initOptions
 
   async function call (json: any) {
     const body = JSON.stringify({
       ...json,
-      partnerContract
+      partnerContract,
+      apiKey
     })
 
     io.console.info('Totle call:', json)
