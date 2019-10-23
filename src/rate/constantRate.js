@@ -30,6 +30,11 @@ export function makeConstantRatePlugin (
           fromCurrency: 'iso:BRL',
           toCurrency: 'BRZ',
           rate: 1
+        },
+        {
+          fromCurrency: 'WBTC',
+          toCurrency: 'BTC',
+          rate: 1
         }
       ]
       return pairs
