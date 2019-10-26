@@ -52,18 +52,18 @@ const dontUseLegacy = {
   DGB: true
 }
 
-async function getAddress (wallet: EdgeCurrencyWallet, currencyCode: string) {
+async function getAddress(wallet: EdgeCurrencyWallet, currencyCode: string) {
   const addressInfo = await wallet.getReceiveAddress({ currencyCode })
   return addressInfo.legacyAddress && !dontUseLegacy[currencyCode]
     ? addressInfo.legacyAddress
     : addressInfo.publicAddress
 }
 
-export function makeGodexPlugin (opts: EdgeCorePluginOptions): EdgeSwapPlugin {
+export function makeGodexPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
   const { io, initOptions } = opts
   const fetchJson = getFetchJson(opts)
 
-  async function call (url, request, data) {
+  async function call(url, request, data) {
     const body = JSON.stringify(data.params)
 
     const headers = {
@@ -88,7 +88,7 @@ export function makeGodexPlugin (opts: EdgeCorePluginOptions): EdgeSwapPlugin {
   const out: EdgeSwapPlugin = {
     swapInfo,
 
-    async fetchSwapQuote (
+    async fetchSwapQuote(
       request: EdgeSwapRequest,
       userSettings: Object | void
     ): Promise<EdgeSwapPluginQuote> {
@@ -109,13 +109,13 @@ export function makeGodexPlugin (opts: EdgeCorePluginOptions): EdgeSwapPlugin {
       const quoteAmount =
         request.quoteFor === 'from'
           ? await request.fromWallet.nativeToDenomination(
-            request.nativeAmount,
-            request.fromCurrencyCode
-          )
+              request.nativeAmount,
+              request.fromCurrencyCode
+            )
           : await request.toWallet.nativeToDenomination(
-            request.nativeAmount,
-            request.toCurrencyCode
-          )
+              request.nativeAmount,
+              request.toCurrencyCode
+            )
 
       // Swap the currencies if we need a reverse quote:
       const quoteParams = {

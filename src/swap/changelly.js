@@ -28,12 +28,12 @@ const CURRENCY_CODE_TRANSCRIPTION = {
   USDT: 'USDT20'
 }
 
-function hmacSha512 (data: Uint8Array, key: Uint8Array): Uint8Array {
+function hmacSha512(data: Uint8Array, key: Uint8Array): Uint8Array {
   const hmac = hashjs.hmac(hashjs.sha512, key)
   return hmac.update(data).digest()
 }
 
-function parseUtf8 (text: string): Uint8Array {
+function parseUtf8(text: string): Uint8Array {
   const byteString: string = utf8Codec.encode(text)
   const out = new Uint8Array(byteString.length)
 
@@ -93,7 +93,7 @@ const dontUseLegacy = {
   DGB: true
 }
 
-async function getAddress (
+async function getAddress(
   wallet: EdgeCurrencyWallet,
   currencyCode: string
 ): Promise<string> {
@@ -103,7 +103,7 @@ async function getAddress (
     : addressInfo.publicAddress
 }
 
-function checkReply (reply: Object, request: EdgeSwapRequest) {
+function checkReply(reply: Object, request: EdgeSwapRequest) {
   if (reply.error != null) {
     if (
       reply.error.code === -32602 ||
@@ -119,7 +119,7 @@ function checkReply (reply: Object, request: EdgeSwapRequest) {
   }
 }
 
-export function makeChangellyPlugin (
+export function makeChangellyPlugin(
   opts: EdgeCorePluginOptions
 ): EdgeSwapPlugin {
   const { initOptions, io } = opts
@@ -131,7 +131,7 @@ export function makeChangellyPlugin (
   const { apiKey } = initOptions
   const secret = parseUtf8(initOptions.secret)
 
-  async function call (json: any) {
+  async function call(json: any) {
     const body = JSON.stringify(json)
     const sign = base16
       .stringify(hmacSha512(parseUtf8(body), secret))
@@ -153,7 +153,7 @@ export function makeChangellyPlugin (
 
   const out: EdgeSwapPlugin = {
     swapInfo,
-    async fetchSwapQuote (
+    async fetchSwapQuote(
       request: EdgeSwapRequest,
       userSettings: Object | void
     ): Promise<EdgeSwapPluginQuote> {
@@ -178,7 +178,7 @@ export function makeChangellyPlugin (
         return estimateResult
       }
     },
-    async getFixedQuote (
+    async getFixedQuote(
       request: EdgeSwapRequest,
       userSettings: Object | void
     ): Promise<EdgeSwapPluginQuote> {
@@ -189,13 +189,13 @@ export function makeChangellyPlugin (
       const quoteAmount =
         request.quoteFor === 'from'
           ? await request.fromWallet.nativeToDenomination(
-            request.nativeAmount,
-            request.fromCurrencyCode
-          )
+              request.nativeAmount,
+              request.fromCurrencyCode
+            )
           : await request.toWallet.nativeToDenomination(
-            request.nativeAmount,
-            request.toCurrencyCode
-          )
+              request.nativeAmount,
+              request.toCurrencyCode
+            )
 
       let safeFromCurrencyCode = request.fromCurrencyCode
       let safeToCurrencyCode = request.toCurrencyCode
@@ -240,25 +240,25 @@ export function makeChangellyPlugin (
       const params =
         request.quoteFor === 'from'
           ? {
-            amount: quoteAmount,
-            from: safeFromCurrencyCode,
-            to: safeToCurrencyCode,
-            address: toAddress,
-            extraId: null,
-            refundAddress: fromAddress,
-            refundExtraId: null,
-            rateId: fixedRateQuote.result.id
-          }
+              amount: quoteAmount,
+              from: safeFromCurrencyCode,
+              to: safeToCurrencyCode,
+              address: toAddress,
+              extraId: null,
+              refundAddress: fromAddress,
+              refundExtraId: null,
+              rateId: fixedRateQuote.result.id
+            }
           : {
-            amountTo: quoteAmount,
-            from: safeFromCurrencyCode,
-            to: safeToCurrencyCode,
-            address: toAddress,
-            extraId: null,
-            refundAddress: fromAddress,
-            refundExtraId: null,
-            rateId: fixedRateQuote.result.id
-          }
+              amountTo: quoteAmount,
+              from: safeFromCurrencyCode,
+              to: safeToCurrencyCode,
+              address: toAddress,
+              extraId: null,
+              refundAddress: fromAddress,
+              refundExtraId: null,
+              rateId: fixedRateQuote.result.id
+            }
 
       const sendReply = await call({
         jsonrpc: '2.0',
@@ -313,7 +313,7 @@ export function makeChangellyPlugin (
         quoteInfo.id
       )
     },
-    async getEstimate (
+    async getEstimate(
       request: EdgeSwapRequest,
       userSettings: Object | void
     ): Promise<EdgeSwapPluginQuote> {
@@ -327,13 +327,13 @@ export function makeChangellyPlugin (
       const quoteAmount =
         request.quoteFor === 'from'
           ? await request.fromWallet.nativeToDenomination(
-            request.nativeAmount,
-            request.fromCurrencyCode
-          )
+              request.nativeAmount,
+              request.fromCurrencyCode
+            )
           : await request.toWallet.nativeToDenomination(
-            request.nativeAmount,
-            request.toCurrencyCode
-          )
+              request.nativeAmount,
+              request.toCurrencyCode
+            )
 
       let safeFromCurrencyCode = request.fromCurrencyCode
       let safeToCurrencyCode = request.toCurrencyCode
@@ -348,15 +348,15 @@ export function makeChangellyPlugin (
       const quoteParams =
         request.quoteFor === 'from'
           ? {
-            from: safeFromCurrencyCode,
-            to: safeToCurrencyCode,
-            amount: quoteAmount
-          }
+              from: safeFromCurrencyCode,
+              to: safeToCurrencyCode,
+              amount: quoteAmount
+            }
           : {
-            from: safeToCurrencyCode,
-            to: safeFromCurrencyCode,
-            amount: quoteAmount
-          }
+              from: safeToCurrencyCode,
+              to: safeFromCurrencyCode,
+              amount: quoteAmount
+            }
 
       // Get the estimate from the server:
       const quoteReplies = await Promise.all([

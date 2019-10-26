@@ -68,7 +68,7 @@ const dontUseLegacy = {
   BCH: true
 }
 
-async function getAddress (
+async function getAddress(
   wallet: EdgeCurrencyWallet,
   currencyCode: string
 ): Promise<string> {
@@ -78,7 +78,7 @@ async function getAddress (
     : addressInfo.publicAddress
 }
 
-export function makeFoxExchangePlugin (
+export function makeFoxExchangePlugin(
   opts: EdgeCorePluginOptions
 ): EdgeSwapPlugin {
   const { initOptions, io } = opts
@@ -92,11 +92,11 @@ export function makeFoxExchangePlugin (
   const out: EdgeSwapPlugin = {
     swapInfo,
 
-    async fetchSwapQuote (
+    async fetchSwapQuote(
       request: EdgeSwapRequest,
       userSettings: Object | void
     ): Promise<EdgeSwapPluginQuote> {
-      async function post (path: string, data: Object) {
+      async function post(path: string, data: Object) {
         io.console.info(`fox request to ${path}`, data)
         const body = JSON.stringify(data)
         const reply = await fetchJson(`${uri}${path}`, {
@@ -258,9 +258,9 @@ export function makeFoxExchangePlugin (
                 request.quoteFor === 'from'
                   ? request.nativeAmount
                   : await request.fromWallet.denominationToNative(
-                    String(sourceAmount),
-                    request.fromCurrencyCode
-                  ),
+                      String(sourceAmount),
+                      request.fromCurrencyCode
+                    ),
               publicAddress: dummyAddress,
               otherParams: {}
             }
@@ -277,15 +277,15 @@ export function makeFoxExchangePlugin (
             request.quoteFor === 'from'
               ? request.nativeAmount
               : await request.fromWallet.denominationToNative(
-                String(sourceAmount),
-                request.fromCurrencyCode
-              ),
+                  String(sourceAmount),
+                  request.fromCurrencyCode
+                ),
           toNativeAmount:
             request.quoteFor === 'from'
               ? await request.toWallet.denominationToNative(
-                String(targetAmount),
-                request.toCurrencyCode
-              )
+                  String(targetAmount),
+                  request.toCurrencyCode
+                )
               : request.nativeAmount,
           networkFee: {
             currencyCode: request.fromWallet.currencyInfo.currencyCode,
@@ -299,7 +299,7 @@ export function makeFoxExchangePlugin (
           quoteId: rateResp.futureOrderId,
           isEstimate: !rateResp.quoteToken,
 
-          async approve (): Promise<EdgeTransaction> {
+          async approve(): Promise<EdgeTransaction> {
             const orderResp: OrderInfo = await post('/order', {
               depositCoin: request.fromCurrencyCode,
               destinationCoin: request.toCurrencyCode,
@@ -345,7 +345,7 @@ export function makeFoxExchangePlugin (
             return broadcastedTransaction
           },
 
-          async close () {
+          async close() {
             try {
               await post('/cancelQuote', {
                 futureOrderId: rateResp.futureOrderId,

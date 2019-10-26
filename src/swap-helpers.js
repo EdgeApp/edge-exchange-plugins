@@ -6,7 +6,7 @@ import {
   type EdgeTransaction
 } from 'edge-core-js/types'
 
-export function makeSwapPluginQuote (
+export function makeSwapPluginQuote(
   request: EdgeSwapRequest,
   fromNativeAmount: string,
   toNativeAmount: string,
@@ -31,7 +31,7 @@ export function makeSwapPluginQuote (
     expirationDate,
     quoteId,
     isEstimate,
-    async approve (): Promise<EdgeTransaction> {
+    async approve(): Promise<EdgeTransaction> {
       const signedTransaction = await fromWallet.signTx(tx)
       const broadcastedTransaction = await fromWallet.broadcastTx(
         signedTransaction
@@ -41,7 +41,7 @@ export function makeSwapPluginQuote (
       return broadcastedTransaction
     },
 
-    async close () {}
+    async close() {}
   }
   return out
 }

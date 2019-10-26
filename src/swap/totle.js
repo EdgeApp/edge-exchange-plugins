@@ -69,7 +69,7 @@ type QuoteInfo = {
   ]
 }
 
-function checkReply (reply: Object, request: EdgeSwapRequest) {
+function checkReply(reply: Object, request: EdgeSwapRequest) {
   if (reply.success === false) {
     const code = reply.response.code
     // unsupported tokens
@@ -87,13 +87,13 @@ function checkReply (reply: Object, request: EdgeSwapRequest) {
   }
 }
 
-export function makeTotlePlugin (opts: EdgeCorePluginOptions): EdgeSwapPlugin {
+export function makeTotlePlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
   const { initOptions, io } = opts
   const fetchJson = getFetchJson(opts)
 
   const { partnerContract, apiKey } = initOptions
 
-  async function call (json: any) {
+  async function call(json: any) {
     const body = JSON.stringify({
       ...json,
       partnerContract,
@@ -113,7 +113,7 @@ export function makeTotlePlugin (opts: EdgeCorePluginOptions): EdgeSwapPlugin {
     return out
   }
 
-  async function fetchTokens () {
+  async function fetchTokens() {
     const reply = await fetchJson(tokenUri, { method: 'GET' })
     if (!reply.ok) {
       throw new Error(`Totle returned error code ${reply.status}`)
@@ -126,7 +126,7 @@ export function makeTotlePlugin (opts: EdgeCorePluginOptions): EdgeSwapPlugin {
   const out: EdgeSwapPlugin = {
     swapInfo,
 
-    async fetchSwapQuote (
+    async fetchSwapQuote(
       request: EdgeSwapRequest,
       userSettings: Object | void
     ): Promise<EdgeSwapPluginQuote> {
@@ -222,7 +222,7 @@ export function makeTotlePlugin (opts: EdgeCorePluginOptions): EdgeSwapPlugin {
   return out
 }
 
-function makeTotleSwapPluginQuote (
+function makeTotleSwapPluginQuote(
   request: EdgeSwapRequest,
   fromNativeAmount: string,
   toNativeAmount: string,
@@ -249,7 +249,7 @@ function makeTotleSwapPluginQuote (
     expirationDate,
     quoteId,
 
-    async approve (): Promise<EdgeTransaction> {
+    async approve(): Promise<EdgeTransaction> {
       let swapTx = {}
       let index = 0
       for (const tx of txs) {
@@ -269,7 +269,7 @@ function makeTotleSwapPluginQuote (
       return swapTx
     },
 
-    async close () {}
+    async close() {}
   }
   return out
 }

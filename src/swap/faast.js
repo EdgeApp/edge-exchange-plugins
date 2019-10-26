@@ -59,14 +59,14 @@ const dontUseLegacy = {
   DGB: true
 }
 
-async function getAddress (wallet: EdgeCurrencyWallet, currencyCode: string) {
+async function getAddress(wallet: EdgeCurrencyWallet, currencyCode: string) {
   const addressInfo = await wallet.getReceiveAddress({ currencyCode })
   return addressInfo.legacyAddress && !dontUseLegacy[currencyCode]
     ? addressInfo.legacyAddress
     : addressInfo.publicAddress
 }
 
-export function makeFaastPlugin (opts: EdgeCorePluginOptions): EdgeSwapPlugin {
+export function makeFaastPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
   const { io, initOptions } = opts
 
   let affiliateOptions = {}
@@ -80,7 +80,7 @@ export function makeFaastPlugin (opts: EdgeCorePluginOptions): EdgeSwapPlugin {
     }
   }
 
-  async function checkReply (uri: string, reply: Response) {
+  async function checkReply(uri: string, reply: Response) {
     let replyJson
     try {
       replyJson = await reply.json()
@@ -112,13 +112,13 @@ export function makeFaastPlugin (opts: EdgeCorePluginOptions): EdgeSwapPlugin {
     return replyJson
   }
 
-  async function get (path) {
+  async function get(path) {
     const uri = `${API_PREFIX}${path}`
     const reply = await io.fetch(uri)
     return checkReply(uri, reply)
   }
 
-  async function post (path, body): Object {
+  async function post(path, body): Object {
     const uri = `${API_PREFIX}${path}`
     io.console.info('faast request', path, body)
     const reply = await io.fetch(uri, {
@@ -135,7 +135,7 @@ export function makeFaastPlugin (opts: EdgeCorePluginOptions): EdgeSwapPlugin {
   const out: EdgeSwapPlugin = {
     swapInfo,
 
-    async fetchSwapQuote (
+    async fetchSwapQuote(
       request: EdgeSwapRequest,
       userSettings: Object | void
     ): Promise<EdgeSwapPluginQuote> {
@@ -249,30 +249,30 @@ export function makeFaastPlugin (opts: EdgeCorePluginOptions): EdgeSwapPlugin {
         ;[nativeMax, nativeMin] = await Promise.all([
           pairInfo.maximum_deposit
             ? fromWallet.denominationToNative(
-              pairInfo.maximum_deposit.toString(),
-              fromCurrencyCode
-            )
+                pairInfo.maximum_deposit.toString(),
+                fromCurrencyCode
+              )
             : null,
           typeof pairInfo.minimum_deposit === 'number'
             ? fromWallet.denominationToNative(
-              pairInfo.minimum_deposit.toString(),
-              fromCurrencyCode
-            )
+                pairInfo.minimum_deposit.toString(),
+                fromCurrencyCode
+              )
             : null
         ])
       } else {
         ;[nativeMax, nativeMin] = await Promise.all([
           pairInfo.maximum_withdrawal
             ? toWallet.denominationToNative(
-              pairInfo.maximum_withdrawal.toString(),
-              toCurrencyCode
-            )
+                pairInfo.maximum_withdrawal.toString(),
+                toCurrencyCode
+              )
             : null,
           typeof pairInfo.minimum_withdrawal === 'number'
             ? toWallet.denominationToNative(
-              pairInfo.minimum_withdrawal.toString(),
-              toCurrencyCode
-            )
+                pairInfo.minimum_withdrawal.toString(),
+                toCurrencyCode
+              )
             : null
         ])
       }

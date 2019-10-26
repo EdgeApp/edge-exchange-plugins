@@ -5,7 +5,7 @@ import {
   type EdgeRatePlugin
 } from 'edge-core-js/types'
 
-export function makeHercPlugin (opts: EdgeCorePluginOptions): EdgeRatePlugin {
+export function makeHercPlugin(opts: EdgeCorePluginOptions): EdgeRatePlugin {
   const { io } = opts
 
   return {
@@ -13,7 +13,7 @@ export function makeHercPlugin (opts: EdgeCorePluginOptions): EdgeRatePlugin {
       displayName: 'XAGAU'
     },
 
-    async fetchRates (pairsHint) {
+    async fetchRates(pairsHint) {
       const reply = await io.fetch(
         'https://chart.anthemgold.com/service-1.0-SNAPSHOT/PRICE?symbol=HERCUSDVW&range=MINUTE'
       )
