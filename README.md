@@ -1,25 +1,37 @@
-# Airbitz Exchange Plugins
+# Edge Exchange Plugins
 
-This library exports a collection of exchange-rate plugins for use with [`airbitz-core-js`](https://github.com/Airbitz/airbitz-core-js).
+This library exports a collection of exchange-rate & swap plugins for use with [`edge-core-js`](https://github.com/EdgeApp/edge-core-js).
 
 Use it like this:
 
 ```js
-import { makeContext } from 'airbitz-core-js'
-import { coinbasePlugin, shapeshiftPlugin } from 'airbitz-exchange-plugins'
+import {
+  addEdgeCorePlugins,
+  lockEdgeCorePlugins,
+  makeEdgeContext
+} from 'edge-core-js'
+import exchangePlugins from 'edge-exchange-plugins'
 
-makeContext({
-  plugins: [coinbasePlugin, shapeshiftPlugin]
+addEdgeCorePlugins(exchangePlugins)
+lockEdgeCorePlugins()
+
+makeEdgeContext({
+  apiKey: '',
+  appId: '',
+  plugins: {
+    // Plugin names from edge-exchange-plugins:
+    coinbase: true,
+    shapeshift: true
+  }
 })
+
 ```
 
-The supported plugins are:
+Please see [index.js](./src/index.js) for the list of plugins in this repo.
 
-* `coinbasePlugin` - Converts from BTC to most fiat currencies.
-* `shapeshiftPlugin` - Converts from BTC to most common altcoins.
+## edge-react-gui
 
-
-To enable in edge-react-gui please make sure that the appropriate truthy value (can be object) is included into `env.json`, and that the new `env.json` values are updated on the server building and delivering the app. Since `env.json` is gitignored, plugins may be enabled on your local dev environment but will not be enabled for `develop` or `master` (release) builds until the `env.json` on that build server is updted to include the new plugin.
+To enable in edge-react-gui please make sure that the appropriate truthy value (can be object) is included into `env.json`, and that the new `env.json` values are updated on the server building and delivering the app. Since `env.json` is gitignored, plugins may be enabled on your local dev environment but will not be enabled for `develop` or `master` (release) builds until the `env.json` on that build server is updated to include the new plugin.
 
 # Adding Your Exchange
 
