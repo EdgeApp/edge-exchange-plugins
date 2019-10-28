@@ -1,5 +1,8 @@
 # edge-exchange-plugins
 
+# 0.8.10 (2019-10-28)
+
+- Disable Faa.st XRP swaps
 
 # 0.8.9 (2019-10-23)
 
@@ -121,7 +124,7 @@
 
 # 0.5.5 (2019-04-09)
 
-- Add exchange rates from Coincap *legacy* API
+- Add exchange rates from Coincap _legacy_ API
 
 # 0.5.4 (2019-04-03)
 
