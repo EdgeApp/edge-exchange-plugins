@@ -5,7 +5,7 @@ import {
   type EdgeRatePlugin
 } from 'edge-core-js/types'
 
-export function makeCoincapPlugin (opts: EdgeCorePluginOptions): EdgeRatePlugin {
+export function makeCoincapPlugin(opts: EdgeCorePluginOptions): EdgeRatePlugin {
   const { io } = opts
 
   return {
@@ -13,7 +13,7 @@ export function makeCoincapPlugin (opts: EdgeCorePluginOptions): EdgeRatePlugin 
       displayName: 'Coincap'
     },
 
-    async fetchRates (pairsHint) {
+    async fetchRates(pairsHint) {
       const reply = await io.fetch('https://api.coincap.io/v2/assets')
       const json = await reply.json()
 

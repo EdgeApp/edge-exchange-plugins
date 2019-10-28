@@ -5,11 +5,11 @@ import {
   type EdgeRatePlugin
 } from 'edge-core-js/types'
 
-function fixCurrency (currencyCode) {
+function fixCurrency(currencyCode) {
   return currencyCode.toUpperCase()
 }
 
-export function makeCompoundPlugin (
+export function makeCompoundPlugin(
   opts: EdgeCorePluginOptions
 ): EdgeRatePlugin {
   const { io } = opts
@@ -19,7 +19,7 @@ export function makeCompoundPlugin (
       displayName: 'Compound'
     },
 
-    async fetchRates (pairsHint) {
+    async fetchRates(pairsHint) {
       const reply = await io.fetch('https://api.compound.finance/api/v2/ctoken')
       const json = await reply.json()
       if (!json || !json.cToken) return []

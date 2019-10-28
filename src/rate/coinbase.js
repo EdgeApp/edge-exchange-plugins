@@ -12,13 +12,13 @@ for (const number of Object.keys(currencies)) {
   codeTable[entry.Code] = true
 }
 
-function fixCurrency (currencyCode) {
+function fixCurrency(currencyCode) {
   currencyCode = currencyCode.toUpperCase()
 
   return codeTable[currencyCode] ? 'iso:' + currencyCode : currencyCode
 }
 
-export function makeCoinbasePlugin (
+export function makeCoinbasePlugin(
   opts: EdgeCorePluginOptions
 ): EdgeRatePlugin {
   const { io } = opts
@@ -28,7 +28,7 @@ export function makeCoinbasePlugin (
       displayName: 'Coinbase'
     },
 
-    async fetchRates (pairsHint) {
+    async fetchRates(pairsHint) {
       const reply = await io.fetch('https://api.coinbase.com/v2/exchange-rates')
       const json = await reply.json()
 

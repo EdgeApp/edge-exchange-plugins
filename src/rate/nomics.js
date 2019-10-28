@@ -5,7 +5,7 @@ import {
   type EdgeRatePlugin
 } from 'edge-core-js/types'
 
-export function makeNomicsPlugin (opts: EdgeCorePluginOptions): EdgeRatePlugin {
+export function makeNomicsPlugin(opts: EdgeCorePluginOptions): EdgeRatePlugin {
   const { io, initOptions } = opts
   const { apiKey } = initOptions
 
@@ -17,7 +17,7 @@ export function makeNomicsPlugin (opts: EdgeCorePluginOptions): EdgeRatePlugin {
       displayName: 'Nomics'
     },
 
-    async fetchRates () {
+    async fetchRates() {
       const reply = await io.fetch(
         `https://api.nomics.com/v1/prices?key=${apiKey}`
       )

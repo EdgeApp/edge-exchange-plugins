@@ -6,7 +6,7 @@ import edgeCorePlugins from '../src/index.js'
 
 const io = makeNodeIo(__dirname)
 
-async function showRate (
+async function showRate(
   plugin,
   fromCurrency: string,
   toCurrency: string,

@@ -10,7 +10,7 @@ const targetCurrencyCodes = {
   USDAGLD: 'AGLD'
 }
 
-export function makeXagauPlugin (opts: EdgeCorePluginOptions): EdgeRatePlugin {
+export function makeXagauPlugin(opts: EdgeCorePluginOptions): EdgeRatePlugin {
   const { io } = opts
 
   return {
@@ -18,7 +18,7 @@ export function makeXagauPlugin (opts: EdgeCorePluginOptions): EdgeRatePlugin {
       displayName: 'Xagau'
     },
 
-    async fetchRates (pairsHint) {
+    async fetchRates(pairsHint) {
       const reply = await io.fetch(
         'https://chart.anthemgold.com/service-1.0-SNAPSHOT/MULTIPRICE?'
       )

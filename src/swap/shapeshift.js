@@ -51,14 +51,14 @@ const dontUseLegacy = {
   DGB: true
 }
 
-async function getAddress (wallet: EdgeCurrencyWallet, currencyCode: string) {
+async function getAddress(wallet: EdgeCurrencyWallet, currencyCode: string) {
   const addressInfo = await wallet.getReceiveAddress({ currencyCode })
   return addressInfo.legacyAddress && !dontUseLegacy[currencyCode]
     ? addressInfo.legacyAddress
     : addressInfo.publicAddress
 }
 
-export function makeShapeshiftPlugin (
+export function makeShapeshiftPlugin(
   opts: EdgeCorePluginOptions
 ): EdgeSwapPlugin {
   const { io, initOptions } = opts
@@ -68,7 +68,7 @@ export function makeShapeshiftPlugin (
   }
   const { apiKey } = initOptions
 
-  async function checkReply (uri: string, reply: Response) {
+  async function checkReply(uri: string, reply: Response) {
     let replyJson
     try {
       replyJson = await reply.json()
@@ -117,13 +117,13 @@ export function makeShapeshiftPlugin (
     return replyJson
   }
 
-  async function get (path) {
+  async function get(path) {
     const uri = `${API_PREFIX}${path}`
     const reply = await io.fetch(uri)
     return checkReply(uri, reply)
   }
 
-  async function post (path, body, accessToken: string): Object {
+  async function post(path, body, accessToken: string): Object {
     const uri = `${API_PREFIX}${path}`
     const reply = await io.fetch(uri, {
       method: 'POST',
@@ -140,13 +140,13 @@ export function makeShapeshiftPlugin (
   const out: EdgeSwapPlugin = {
     swapInfo,
 
-    checkSettings (userSettings: Object): EdgeSwapPluginStatus {
+    checkSettings(userSettings: Object): EdgeSwapPluginStatus {
       return {
         needsActivation: userSettings.accessToken == null
       }
     },
 
-    async fetchSwapQuote (
+    async fetchSwapQuote(
       request: EdgeSwapRequest,
       userSettings: Object | void
     ): Promise<EdgeSwapPluginQuote> {

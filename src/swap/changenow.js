@@ -56,7 +56,7 @@ const INVALID_CURRENCY_CODES = {
   // edgeCurrenvyCode: exchangeCurrencyCode
 }
 
-async function getAddress (
+async function getAddress(
   wallet: EdgeCurrencyWallet,
   currencyCode: string
 ): Promise<string> {
@@ -66,7 +66,7 @@ async function getAddress (
     : addressInfo.publicAddress
 }
 
-export function makeChangeNowPlugin (
+export function makeChangeNowPlugin(
   opts: EdgeCorePluginOptions
 ): EdgeSwapPlugin {
   const { initOptions, io } = opts
@@ -77,7 +77,7 @@ export function makeChangeNowPlugin (
   }
   const { apiKey } = initOptions
 
-  async function call (json: any) {
+  async function call(json: any) {
     const body = JSON.stringify(json.body)
     io.console.info('changenow call fixed :', json)
     const headers = {
@@ -94,7 +94,7 @@ export function makeChangeNowPlugin (
     return out
   }
 
-  async function get (path: string) {
+  async function get(path: string) {
     const api = `${uri}${path}`
     const reply = await fetchJson(api)
     return reply.json
@@ -103,7 +103,7 @@ export function makeChangeNowPlugin (
   const out: EdgeSwapPlugin = {
     swapInfo,
 
-    async fetchSwapQuote (
+    async fetchSwapQuote(
       request: EdgeSwapRequest,
       userSettings: Object | void
     ): Promise<EdgeSwapPluginQuote> {
@@ -143,27 +143,27 @@ export function makeChangeNowPlugin (
       const quoteAmount =
         request.quoteFor === 'from'
           ? await request.fromWallet.nativeToDenomination(
-            request.nativeAmount,
-            request.fromCurrencyCode
-          )
+              request.nativeAmount,
+              request.fromCurrencyCode
+            )
           : await request.toWallet.nativeToDenomination(
-            request.nativeAmount,
-            request.toCurrencyCode
-          )
+              request.nativeAmount,
+              request.toCurrencyCode
+            )
 
       // Swap the currencies if we need a reverse quote:
       const quoteParams =
         request.quoteFor === 'from'
           ? {
-            from: safeFromCurrencyCode.toLowerCase(),
-            to: safeToCurrencyCode.toLowerCase(),
-            amount: quoteAmount
-          }
+              from: safeFromCurrencyCode.toLowerCase(),
+              to: safeToCurrencyCode.toLowerCase(),
+              amount: quoteAmount
+            }
           : {
-            from: safeToCurrencyCode.toLowerCase(),
-            to: safeFromCurrencyCode.toLowerCase(),
-            amount: quoteAmount
-          }
+              from: safeToCurrencyCode.toLowerCase(),
+              to: safeFromCurrencyCode.toLowerCase(),
+              amount: quoteAmount
+            }
 
       const pairsToUse = []
       let useFixed = false

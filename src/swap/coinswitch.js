@@ -40,7 +40,7 @@ const dontUseLegacy = {
   DGB: true
 }
 
-async function getAddress (
+async function getAddress(
   wallet: EdgeCurrencyWallet,
   currencyCode: string
 ): Promise<string> {
@@ -50,7 +50,7 @@ async function getAddress (
     : addressInfo.publicAddress
 }
 
-function checkReply (reply: Object, request?: EdgeSwapRequest) {
+function checkReply(reply: Object, request?: EdgeSwapRequest) {
   if (request != null && !reply.data) {
     throw new SwapCurrencyError(
       swapInfo,
@@ -63,7 +63,7 @@ function checkReply (reply: Object, request?: EdgeSwapRequest) {
   }
 }
 
-export function makeCoinSwitchPlugin (
+export function makeCoinSwitchPlugin(
   opts: EdgeCorePluginOptions
 ): EdgeSwapPlugin {
   const { initOptions, io } = opts
@@ -74,7 +74,7 @@ export function makeCoinSwitchPlugin (
   }
   const { apiKey } = initOptions
 
-  async function call (json: any) {
+  async function call(json: any) {
     const body = JSON.stringify(json.params)
     io.console.info('coinswitch call:', json)
     const headers = {
@@ -94,7 +94,7 @@ export function makeCoinSwitchPlugin (
   const out: EdgeSwapPlugin = {
     swapInfo,
 
-    async fetchSwapQuote (
+    async fetchSwapQuote(
       request: EdgeSwapRequest,
       userSettings: Object | void
     ): Promise<EdgeSwapPluginQuote> {
@@ -107,26 +107,26 @@ export function makeCoinSwitchPlugin (
       const quoteAmount =
         request.quoteFor === 'from'
           ? await request.fromWallet.nativeToDenomination(
-            request.nativeAmount,
-            request.fromCurrencyCode
-          )
+              request.nativeAmount,
+              request.fromCurrencyCode
+            )
           : await request.toWallet.nativeToDenomination(
-            request.nativeAmount,
-            request.toCurrencyCode
-          )
+              request.nativeAmount,
+              request.toCurrencyCode
+            )
 
       const quoteParams =
         request.quoteFor === 'from'
           ? {
-            depositCoin: request.fromCurrencyCode,
-            destinationCoin: request.toCurrencyCode,
-            depositCoinAmount: quoteAmount
-          }
+              depositCoin: request.fromCurrencyCode,
+              destinationCoin: request.toCurrencyCode,
+              depositCoinAmount: quoteAmount
+            }
           : {
-            depositCoin: request.fromCurrencyCode,
-            destinationCoin: request.toCurrencyCode,
-            destinationCoinAmount: quoteAmount
-          }
+              depositCoin: request.fromCurrencyCode,
+              destinationCoin: request.toCurrencyCode,
+              destinationCoinAmount: quoteAmount
+            }
 
       const quoteReplies = await Promise.all([
         call({

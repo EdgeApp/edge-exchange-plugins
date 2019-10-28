@@ -16,7 +16,7 @@ const checkAndPush = (isoCc, ccArray) => {
   }
 }
 
-export function makeCurrencyconverterapiPlugin (
+export function makeCurrencyconverterapiPlugin(
   opts: EdgeCorePluginOptions
 ): EdgeRatePlugin {
   const fetchJson = getFetchJson(opts)
@@ -31,7 +31,7 @@ export function makeCurrencyconverterapiPlugin (
       displayName: 'CurrencyConverterAPI'
     },
 
-    async fetchRates (pairsHint) {
+    async fetchRates(pairsHint) {
       // TODO: pairsHint is broken in Core and doesn't actually look at wallet or account
       // fiat settings. Hard code known rare currencies for now
       pairsHint = [
