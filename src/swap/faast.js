@@ -18,6 +18,8 @@ import {
 
 import { makeSwapPluginQuote } from '../swap-helpers.js'
 
+const INVALID_CURRENCY_CODES = ['XRP']
+
 const swapInfo = {
   pluginName: 'faast',
   displayName: 'Faa.st',
@@ -145,9 +147,14 @@ export function makeFaastPlugin (opts: EdgeCorePluginOptions): EdgeSwapPlugin {
         toCurrencyCode,
         toWallet
       } = request
-      if (toCurrencyCode === fromCurrencyCode) {
+      if (
+        toCurrencyCode === fromCurrencyCode ||
+        INVALID_CURRENCY_CODES.includes(toCurrencyCode) ||
+        INVALID_CURRENCY_CODES.includes(fromCurrencyCode)
+      ) {
         throw new SwapCurrencyError(swapInfo, fromCurrencyCode, toCurrencyCode)
       }
+
       io.console.info('faast request', request)
 
       let fromCurrency
