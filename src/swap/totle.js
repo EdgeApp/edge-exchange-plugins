@@ -1,5 +1,6 @@
 // @flow
 
+import { div, mul } from 'biggystring'
 import {
   type EdgeCorePluginOptions,
   type EdgeSwapPlugin,
@@ -10,7 +11,6 @@ import {
   NoAmountSpecifiedError,
   SwapCurrencyError
 } from 'edge-core-js/types'
-import { div, mul } from 'biggystring'
 
 import { getFetchJson } from '../react-native-io.js'
 
@@ -98,13 +98,13 @@ function checkReply (reply: Object, request: EdgeSwapRequest) {
   }
 }
 
-export function makeTotlePlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
+export function makeTotlePlugin (opts: EdgeCorePluginOptions): EdgeSwapPlugin {
   const { initOptions, io } = opts
   const fetchJson = getFetchJson(opts)
 
   const { partnerContract, apiKey } = initOptions
 
-  async function call(json: any) {
+  async function call (json: any) {
     const body = JSON.stringify({
       ...json,
       partnerContract,
@@ -124,7 +124,7 @@ export function makeTotlePlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
     return out
   }
 
-  async function fetchTokens() {
+  async function fetchTokens () {
     const reply = await fetchJson(tokenUri, { method: 'GET' })
     if (!reply.ok) {
       throw new Error(`Totle returned error code ${reply.status}`)
@@ -137,7 +137,7 @@ export function makeTotlePlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
   const out: EdgeSwapPlugin = {
     swapInfo,
 
-    async fetchSwapQuote(
+    async fetchSwapQuote (
       request: EdgeSwapRequest,
       userSettings: Object | void
     ): Promise<EdgeSwapPluginQuote> {
@@ -174,21 +174,23 @@ export function makeTotlePlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
 
       let fromNativeAmount: string = summary[0].sourceAmount // string with many zeroes
       let toNativeAmount: string = summary[0].destinationAmount // string with many zeroes
-      // const fromBase = new BN(10 ** fromToken.decimals)
-      // const toBase = new BN(10 ** toToken.decimals)
       const fromMultiplier = '1' + '0'.repeat(fromToken.decimals)
       const toMultiplier = '1' + '0'.repeat(toToken.decimals)
       const isSourceRequest = request.quoteFor === 'from'
       if (isSourceRequest) {
         const fromExchangeAmount = div(fromNativeAmount, fromMultiplier, 10)
-        const toExchangeAmount = mul(fromExchangeAmount, summary[0].guaranteedRate)
+        const toExchangeAmount = mul(
+          fromExchangeAmount,
+          summary[0].guaranteedRate
+        )
         toNativeAmount = mul(toExchangeAmount, toMultiplier)
-        // toNativeAmount = new BN(fromNativeAmount).dividedBy(fromBase).multipliedBy(new BN(summary[0].guaranteedRate)).multipliedBy(toBase).toString()
       } else {
         const toExchangeAmount = div(toNativeAmount, toMultiplier, 10)
-        const fromExchangeAmount = mul(toExchangeAmount, summary[0].guaranteedRate)
+        const fromExchangeAmount = mul(
+          toExchangeAmount,
+          summary[0].guaranteedRate
+        )
         fromNativeAmount = mul(fromExchangeAmount, fromMultiplier)
-        // fromNativeAmount = new BN(toNativeAmount).dividedBy(toBase).dividedBy(new BN(summary[0].guaranteedRate)).multipliedBy(fromBase).toString()
       }
 
       const txs = []
@@ -250,7 +252,7 @@ export function makeTotlePlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
   return out
 }
 
-function makeTotleSwapPluginQuote(
+function makeTotleSwapPluginQuote (
   request: EdgeSwapRequest,
   fromNativeAmount: string,
   toNativeAmount: string,
@@ -278,7 +280,7 @@ function makeTotleSwapPluginQuote(
     expirationDate,
     quoteId,
 
-    async approve(): Promise<EdgeTransaction> {
+    async approve (): Promise<EdgeTransaction> {
       let swapTx = {}
       let index = 0
       for (const tx of txs) {
@@ -298,7 +300,7 @@ function makeTotleSwapPluginQuote(
       return swapTx
     },
 
-    async close() {}
+    async close () {}
   }
   return out
 }
