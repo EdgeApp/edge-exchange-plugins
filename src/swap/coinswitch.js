@@ -24,7 +24,8 @@ const swapInfo = {
 }
 
 const uri = 'https://api.coinswitch.co/'
-const expirationMs = 60 * 60 * 12 * 1000
+const expirationMs = 1000 * 60 * 15
+const fixedExpirationMs = 1000 * 60 * 5
 
 type QuoteInfo = {
   orderId: string,
@@ -40,7 +41,7 @@ const dontUseLegacy = {
   DGB: true
 }
 
-async function getAddress(
+async function getAddress (
   wallet: EdgeCurrencyWallet,
   currencyCode: string
 ): Promise<string> {
@@ -50,7 +51,7 @@ async function getAddress(
     : addressInfo.publicAddress
 }
 
-function checkReply(reply: Object, request?: EdgeSwapRequest) {
+function checkReply (reply: Object, request?: EdgeSwapRequest) {
   if (request != null && !reply.data) {
     throw new SwapCurrencyError(
       swapInfo,
@@ -63,7 +64,7 @@ function checkReply(reply: Object, request?: EdgeSwapRequest) {
   }
 }
 
-export function makeCoinSwitchPlugin(
+export function makeCoinSwitchPlugin (
   opts: EdgeCorePluginOptions
 ): EdgeSwapPlugin {
   const { initOptions, io } = opts
@@ -74,7 +75,7 @@ export function makeCoinSwitchPlugin(
   }
   const { apiKey } = initOptions
 
-  async function call(json: any) {
+  async function call (json: any) {
     const body = JSON.stringify(json.params)
     io.console.info('coinswitch call:', json)
     const headers = {
@@ -87,7 +88,7 @@ export function makeCoinSwitchPlugin(
       throw new Error(`CoinSwitch returned error code ${reply.status}`)
     }
     const out = await reply.json
-    io.console.info('coinswitch fixed reply:', out)
+    io.console.info('coinswitch reply:', out)
     return out
   }
 
@@ -98,7 +99,143 @@ export function makeCoinSwitchPlugin(
       request: EdgeSwapRequest,
       userSettings: Object | void
     ): Promise<EdgeSwapPluginQuote> {
-      // Grab addresses:
+      const fixedPromise = this.getFixedQuote(request, userSettings)
+      const estimatePromise = this.getEstimate(request, userSettings)
+      // try fixed and if error then get estimate
+      try {
+        const fixedResult = await fixedPromise
+        return fixedResult
+      } catch (e) {
+        const estimateResult = await estimatePromise
+        return estimateResult
+      }
+    },
+    async getFixedQuote (
+      request: EdgeSwapRequest,
+      userSettings: Object | void
+    ): Promise<EdgeSwapPluginQuote> {
+      const [fromAddress, toAddress] = await Promise.all([
+        getAddress(request.fromWallet, request.fromCurrencyCode),
+        getAddress(request.toWallet, request.toCurrencyCode)
+      ])
+
+      const quoteAmount =
+        request.quoteFor === 'from'
+          ? await request.fromWallet.nativeToDenomination(
+              request.nativeAmount,
+              request.fromCurrencyCode
+            )
+          : await request.toWallet.nativeToDenomination(
+              request.nativeAmount,
+              request.toCurrencyCode
+          )
+      const quoteParams =
+        request.quoteFor === 'from'
+          ? {
+              depositCoin: request.fromCurrencyCode.toLowerCase(),
+              destinationCoin: request.toCurrencyCode.toLowerCase(),
+              depositCoinAmount: quoteAmount
+            }
+          : {
+              depositCoin: request.fromCurrencyCode.toLowerCase(),
+              destinationCoin: request.toCurrencyCode.toLowerCase(),
+              destinationCoinAmount: quoteAmount
+            }
+
+      const quoteReplies = await Promise.all([
+        call({
+          route: 'v2/fixed/offer',
+          params: quoteParams
+        }),
+        call({
+          route: 'v2/fixed/pairs',
+          params: {
+            depositCoin: quoteParams.depositCoin,
+            destinationCoin: quoteParams.destinationCoin
+          }
+        })
+      ])
+
+      checkReply(quoteReplies[0], request)
+      checkReply(quoteReplies[1], request)
+
+      let fromAmount, fromNativeAmount, toNativeAmount
+      const offerReferenceId = quoteReplies[0].data.offerReferenceId
+
+      if (request.quoteFor === 'from') {
+        fromAmount = quoteAmount
+        fromNativeAmount = request.nativeAmount
+        const exchangeAmount = quoteReplies[0].data.destinationCoinAmount
+        toNativeAmount = await request.toWallet.denominationToNative(exchangeAmount, request.toCurrencyCode)
+      } else {
+        fromAmount = quoteReplies[0].data.depositCoinAmount
+        fromNativeAmount = await request.fromWallet.denominationToNative(fromAmount, request.fromCurrencyCode)
+        toNativeAmount = request.nativeAmount
+      }
+
+      const [nativeMin, nativeMax] = await Promise.all([
+        request.fromWallet.denominationToNative(quoteReplies[1].data[0].limitMinDepositCoin.toString(), request.fromCurrencyCode),
+        request.fromWallet.denominationToNative(quoteReplies[1].data[0].limitMaxDepositCoin.toString(), request.fromCurrencyCode)
+      ])
+
+      if (lt(fromNativeAmount, nativeMin)) {
+        throw new SwapBelowLimitError(swapInfo, nativeMin)
+      }
+
+      if (gt(fromNativeAmount, nativeMax)) {
+        throw new SwapAboveLimitError(swapInfo, nativeMax)
+      }
+
+      const createOrder = await call({
+        route: 'v2/fixed/order',
+        params: {
+          depositCoin: quoteParams.depositCoin.toLowerCase(),
+          destinationCoin: quoteParams.destinationCoin.toLowerCase(),
+          depositCoinAmount: parseFloat(fromAmount),
+          offerReferenceId: offerReferenceId,
+          destinationAddress: { address: toAddress, tag: null },
+          refundAddress: { address: fromAddress, tag: null }
+        }
+      })
+
+      checkReply(createOrder)
+      const quoteInfo: QuoteInfo = createOrder.data
+
+      // Make the transaction:
+      const spendInfo = {
+        currencyCode: request.fromCurrencyCode,
+        spendTargets: [
+          {
+            nativeAmount: fromNativeAmount,
+            publicAddress: quoteInfo.exchangeAddress.address,
+            otherParams: {
+              uniqueIdentifier: quoteInfo.exchangeAddress.tag
+            }
+          }
+        ]
+      }
+      io.console.info('coinswitch fixedRate spendInfo', spendInfo)
+      const tx: EdgeTransaction = await request.fromWallet.makeSpend(spendInfo)
+      if (!tx.otherParams) tx.otherParams = {}
+      tx.otherParams.payinAddress = spendInfo.spendTargets[0].publicAddress
+      tx.otherParams.uniqueIdentifier = spendInfo.spendTargets[0].otherParams.uniqueIdentifier
+
+      return makeSwapPluginQuote(
+        request,
+        fromNativeAmount,
+        toNativeAmount,
+        tx,
+        toAddress,
+        'coinswitch',
+        false, // isEstimate
+        new Date(Date.now() + fixedExpirationMs),
+        quoteInfo.orderId
+      )
+    },
+    async getEstimate (
+      request: EdgeSwapRequest,
+      userSettings: Object | void
+    ): Promise<EdgeSwapPluginQuote> {
       const [fromAddress, toAddress] = await Promise.all([
         getAddress(request.fromWallet, request.fromCurrencyCode),
         getAddress(request.toWallet, request.toCurrencyCode)
@@ -118,13 +255,13 @@ export function makeCoinSwitchPlugin(
       const quoteParams =
         request.quoteFor === 'from'
           ? {
-              depositCoin: request.fromCurrencyCode,
-              destinationCoin: request.toCurrencyCode,
+              depositCoin: request.fromCurrencyCode.toLowerCase(),
+              destinationCoin: request.toCurrencyCode.toLowerCase(),
               depositCoinAmount: quoteAmount
             }
           : {
-              depositCoin: request.fromCurrencyCode,
-              destinationCoin: request.toCurrencyCode,
+              depositCoin: request.fromCurrencyCode.toLowerCase(),
+              destinationCoin: request.toCurrencyCode.toLowerCase(),
               destinationCoinAmount: quoteAmount
             }
 
@@ -210,7 +347,7 @@ export function makeCoinSwitchPlugin(
           }
         ]
       }
-      io.console.info('coinswitch spendInfo', spendInfo)
+      io.console.info('coinswitch estimate spendInfo', spendInfo)
       const tx: EdgeTransaction = await request.fromWallet.makeSpend(spendInfo)
       if (!tx.otherParams) tx.otherParams = {}
       tx.otherParams.payinAddress = spendInfo.spendTargets[0].publicAddress
@@ -229,6 +366,7 @@ export function makeCoinSwitchPlugin(
         quoteInfo.orderId
       )
     }
+
   }
 
   return out
