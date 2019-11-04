@@ -1,5 +1,11 @@
 # edge-exchange-plugins
 
+# 0.8.11 (2019-11-04)
+
+- Support Totle fixed-rate quotes.
+- Support CoinSwitch fixed-rate quotes.
+- Update readme file.
+
 # 0.8.10 (2019-10-28)
 
 - Disable Faa.st XRP swaps
