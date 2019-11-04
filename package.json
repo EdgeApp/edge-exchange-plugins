@@ -41,6 +41,7 @@
     "*.js": "eslint"
   },
   "dependencies": {
+    "biggystring": "^3.0.2",
     "esm": "^3.2.4",
     "hashjs": "^1.2.0",
     "iso4217": "^0.2.0",
