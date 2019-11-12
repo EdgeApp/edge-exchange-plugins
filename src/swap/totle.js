@@ -279,6 +279,7 @@ function makeTotleSwapPluginQuote (
     pluginName,
     expirationDate,
     quoteId,
+    isEstimate,
 
     async approve (): Promise<EdgeTransaction> {
       let swapTx = {}
