@@ -16,7 +16,7 @@ import {
 
 import { makeSwapPluginQuote } from '../swap-helpers.js'
 
-const INVALID_CURRENCY_CODES = ['XRP']
+const INVALID_CURRENCY_CODES = []
 
 const swapInfo = {
   pluginName: 'faast',
