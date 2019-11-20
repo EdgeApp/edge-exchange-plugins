@@ -1,5 +1,9 @@
 # edge-exchange-plugins
 
+# 0.8.12 (2019-11-04)
+
+- Support Faast unique identifiers 
+
 # 0.8.11 (2019-11-04)
 
 - Support Totle fixed-rate quotes.
