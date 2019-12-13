@@ -178,6 +178,7 @@ export function makeChangellyPlugin(
         return estimateResult
       }
     },
+
     async getFixedQuote(
       request: EdgeSwapRequest,
       userSettings: Object | void
@@ -313,6 +314,7 @@ export function makeChangellyPlugin(
         quoteInfo.id
       )
     },
+
     async getEstimate(
       request: EdgeSwapRequest,
       userSettings: Object | void

@@ -41,7 +41,7 @@ const dontUseLegacy = {
   DGB: true
 }
 
-async function getAddress (
+async function getAddress(
   wallet: EdgeCurrencyWallet,
   currencyCode: string
 ): Promise<string> {
@@ -51,7 +51,7 @@ async function getAddress (
     : addressInfo.publicAddress
 }
 
-function checkReply (reply: Object, request?: EdgeSwapRequest) {
+function checkReply(reply: Object, request?: EdgeSwapRequest) {
   if (request != null && !reply.data) {
     throw new SwapCurrencyError(
       swapInfo,
@@ -64,7 +64,7 @@ function checkReply (reply: Object, request?: EdgeSwapRequest) {
   }
 }
 
-export function makeCoinSwitchPlugin (
+export function makeCoinSwitchPlugin(
   opts: EdgeCorePluginOptions
 ): EdgeSwapPlugin {
   const { initOptions, io } = opts
@@ -75,7 +75,7 @@ export function makeCoinSwitchPlugin (
   }
   const { apiKey } = initOptions
 
-  async function call (json: any) {
+  async function call(json: any) {
     const body = JSON.stringify(json.params)
     io.console.info('coinswitch call:', json)
     const headers = {
@@ -110,7 +110,7 @@ export function makeCoinSwitchPlugin (
         return estimateResult
       }
     },
-    async getFixedQuote (
+    async getFixedQuote(
       request: EdgeSwapRequest,
       userSettings: Object | void
     ): Promise<EdgeSwapPluginQuote> {
@@ -128,7 +128,7 @@ export function makeCoinSwitchPlugin (
           : await request.toWallet.nativeToDenomination(
               request.nativeAmount,
               request.toCurrencyCode
-          )
+            )
       const quoteParams =
         request.quoteFor === 'from'
           ? {
@@ -166,16 +166,28 @@ export function makeCoinSwitchPlugin (
         fromAmount = quoteAmount
         fromNativeAmount = request.nativeAmount
         const exchangeAmount = quoteReplies[0].data.destinationCoinAmount
-        toNativeAmount = await request.toWallet.denominationToNative(exchangeAmount, request.toCurrencyCode)
+        toNativeAmount = await request.toWallet.denominationToNative(
+          exchangeAmount,
+          request.toCurrencyCode
+        )
       } else {
         fromAmount = quoteReplies[0].data.depositCoinAmount
-        fromNativeAmount = await request.fromWallet.denominationToNative(fromAmount, request.fromCurrencyCode)
+        fromNativeAmount = await request.fromWallet.denominationToNative(
+          fromAmount,
+          request.fromCurrencyCode
+        )
         toNativeAmount = request.nativeAmount
       }
 
       const [nativeMin, nativeMax] = await Promise.all([
-        request.fromWallet.denominationToNative(quoteReplies[1].data[0].limitMinDepositCoin.toString(), request.fromCurrencyCode),
-        request.fromWallet.denominationToNative(quoteReplies[1].data[0].limitMaxDepositCoin.toString(), request.fromCurrencyCode)
+        request.fromWallet.denominationToNative(
+          quoteReplies[1].data[0].limitMinDepositCoin.toString(),
+          request.fromCurrencyCode
+        ),
+        request.fromWallet.denominationToNative(
+          quoteReplies[1].data[0].limitMaxDepositCoin.toString(),
+          request.fromCurrencyCode
+        )
       ])
 
       if (lt(fromNativeAmount, nativeMin)) {
@@ -218,7 +230,8 @@ export function makeCoinSwitchPlugin (
       const tx: EdgeTransaction = await request.fromWallet.makeSpend(spendInfo)
       if (!tx.otherParams) tx.otherParams = {}
       tx.otherParams.payinAddress = spendInfo.spendTargets[0].publicAddress
-      tx.otherParams.uniqueIdentifier = spendInfo.spendTargets[0].otherParams.uniqueIdentifier
+      tx.otherParams.uniqueIdentifier =
+        spendInfo.spendTargets[0].otherParams.uniqueIdentifier
 
       return makeSwapPluginQuote(
         request,
@@ -232,7 +245,7 @@ export function makeCoinSwitchPlugin (
         quoteInfo.orderId
       )
     },
-    async getEstimate (
+    async getEstimate(
       request: EdgeSwapRequest,
       userSettings: Object | void
     ): Promise<EdgeSwapPluginQuote> {
@@ -366,7 +379,6 @@ export function makeCoinSwitchPlugin (
         quoteInfo.orderId
       )
     }
-
   }
 
   return out
