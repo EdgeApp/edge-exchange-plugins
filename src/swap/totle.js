@@ -146,7 +146,11 @@ export function makeTotlePlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
       const fromToken = tokens.find(t => t.symbol === request.fromCurrencyCode)
       const toToken = tokens.find(t => t.symbol === request.toCurrencyCode)
       if (!fromToken || !toToken) {
-        throw new SwapCurrencyError(swapInfo, fromToken, toToken)
+        throw new SwapCurrencyError(
+          swapInfo,
+          request.fromCurrencyCode,
+          request.toCurrencyCode
+        )
       }
 
       // Grab addresses:
