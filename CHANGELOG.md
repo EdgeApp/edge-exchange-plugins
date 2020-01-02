@@ -1,5 +1,10 @@
 # edge-exchange-plugins
 
+# 0.8.13 (2020-01-02)
+
+- Refactor Godex plugin
+- Re-enable USDT for Godex
+
 # 0.8.12 (2019-11-04)
 
 - Support Faast unique identifiers 
