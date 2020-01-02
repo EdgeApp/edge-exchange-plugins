@@ -127,28 +127,26 @@ export function makeGodexPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
       io.console.info('quoteParams:', quoteParams)
 
       // Get the estimate from the server:
-      const quoteReplies = await Promise.all([
-        call(uri + 'info', request, {
-          params: quoteParams
-        }),
-        call(uri + 'info-revert', request, {
-          params: quoteParams
-        })
-      ])
+
       io.console.info('godex info api')
-      io.console.info(quoteReplies)
 
       // Calculate the amounts:
-      let fromAmount, fromNativeAmount, toNativeAmount
+      let fromAmount, fromNativeAmount, toNativeAmount, reply
       if (request.quoteFor === 'from') {
+        reply = await call(uri + 'info', request, {
+          params: quoteParams
+        })
         fromAmount = quoteAmount
         fromNativeAmount = request.nativeAmount
         toNativeAmount = await request.toWallet.denominationToNative(
-          quoteReplies[0].amount.toString(),
+          reply.amount.toString(),
           request.toCurrencyCode
         )
       } else {
-        fromAmount = quoteReplies[1].amount
+        reply = await call(uri + 'info-revert', request, {
+          params: quoteParams
+        })
+        fromAmount = reply.amount
         fromNativeAmount = await request.fromWallet.denominationToNative(
           fromAmount.toString(),
           request.fromCurrencyCode
@@ -160,7 +158,7 @@ export function makeGodexPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
 
       // Check the minimum:
       const nativeMin = await request.fromWallet.denominationToNative(
-        quoteReplies[0].min_amount,
+        reply.min_amount,
         request.fromCurrencyCode
       )
       if (lt(fromNativeAmount, nativeMin)) {
