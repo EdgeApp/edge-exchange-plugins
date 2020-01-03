@@ -12,7 +12,6 @@ import {
   SwapCurrencyError
 } from 'edge-core-js/types'
 
-import { getFetchJson } from '../react-native-io'
 import { makeSwapPluginQuote } from '../swap-helpers.js'
 
 const swapInfo = {
@@ -60,8 +59,8 @@ async function getAddress(wallet: EdgeCurrencyWallet, currencyCode: string) {
 }
 
 export function makeGodexPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
-  const { initOptions, log } = opts
-  const fetchJson = getFetchJson(opts)
+  const { initOptions, io, log } = opts
+  const { fetchCors = io.fetch } = io
 
   async function call(url, request, data) {
     const body = JSON.stringify(data.params)
@@ -70,19 +69,18 @@ export function makeGodexPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
       'Content-Type': 'application/json',
       Accept: 'application/json'
     }
-    const reply = await fetchJson(url, { method: 'POST', body, headers })
-    if (!reply.ok) {
-      if (reply.status === 422) {
+    const response = await fetchCors(url, { method: 'POST', body, headers })
+    if (!response.ok) {
+      if (response.status === 422) {
         throw new SwapCurrencyError(
           swapInfo,
           request.fromCurrencyCode,
           request.toCurrencyCode
         )
       }
-      throw new Error(`godex returned error code ${reply.status}`)
+      throw new Error(`godex returned error code ${response.status}`)
     }
-    const out = reply.json
-    return out
+    return response.json()
   }
 
   const out: EdgeSwapPlugin = {

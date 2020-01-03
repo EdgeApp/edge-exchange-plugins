@@ -13,8 +13,6 @@ import {
   SwapPermissionError
 } from 'edge-core-js/types'
 
-import { getFetchJson } from '../react-native-io.js'
-
 const swapInfo = {
   pluginName: 'foxExchange',
   displayName: 'Fox Exchange',
@@ -81,8 +79,8 @@ async function getAddress(
 export function makeFoxExchangePlugin(
   opts: EdgeCorePluginOptions
 ): EdgeSwapPlugin {
-  const { initOptions, log } = opts
-  const fetchJson = getFetchJson(opts)
+  const { initOptions, io, log } = opts
+  const { fetchCors = io.fetch } = io
 
   if (initOptions.apiKey == null) {
     throw new Error('No fox.exchange apiKey provided.')
@@ -99,7 +97,7 @@ export function makeFoxExchangePlugin(
       async function post(path: string, data: Object) {
         log(`request to ${path}`, data)
         const body = JSON.stringify(data)
-        const reply = await fetchJson(`${uri}${path}`, {
+        const response = await fetchCors(`${uri}${path}`, {
           method: 'POST',
           body,
           headers: {
@@ -110,10 +108,10 @@ export function makeFoxExchangePlugin(
           }
         })
 
-        const json = reply.json
-        log(`reply to ${path} (${reply.status})`, json)
+        const json = await response.json()
+        log(`reply to ${path} (${response.status})`, json)
         if (!json) {
-          throw new Error(`fox returned error code ${reply.status}`)
+          throw new Error(`fox returned error code ${response.status}`)
         } else if (!json.success) {
           if (
             json.code === 'invalid_symbol' ||

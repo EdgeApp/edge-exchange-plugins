@@ -13,7 +13,6 @@ import {
   SwapCurrencyError
 } from 'edge-core-js/types'
 
-import { getFetchJson } from '../react-native-io.js'
 import { makeSwapPluginQuote } from '../swap-helpers.js'
 
 const swapInfo = {
@@ -69,8 +68,8 @@ async function getAddress(
 export function makeChangeNowPlugin(
   opts: EdgeCorePluginOptions
 ): EdgeSwapPlugin {
-  const { initOptions, log } = opts
-  const fetchJson = getFetchJson(opts)
+  const { initOptions, io, log } = opts
+  const { fetchCors = io.fetch } = io
 
   if (initOptions.apiKey == null) {
     throw new Error('No ChangeNow apiKey provided.')
@@ -85,19 +84,19 @@ export function makeChangeNowPlugin(
     }
 
     const api = uri + json.route + apiKey
-    const reply = await fetchJson(api, { method: 'POST', body, headers })
-    if (!reply.ok) {
-      throw new Error(`ChangeNow call returned error code ${reply.status}`)
+    const response = await fetchCors(api, { method: 'POST', body, headers })
+    if (!response.ok) {
+      throw new Error(`ChangeNow call returned error code ${response.status}`)
     }
-    const out = reply.json
+    const out = await response.json()
     log('fixed reply:', out)
     return out
   }
 
   async function get(path: string) {
     const api = `${uri}${path}`
-    const reply = await fetchJson(api)
-    return reply.json
+    const response = await fetchCors(api)
+    return response.json()
   }
 
   const out: EdgeSwapPlugin = {

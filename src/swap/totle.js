@@ -13,8 +13,6 @@ import {
   SwapCurrencyError
 } from 'edge-core-js/types'
 
-import { getFetchJson } from '../react-native-io.js'
-
 const swapInfo = {
   pluginName: 'totle',
   displayName: 'Totle',
@@ -100,8 +98,8 @@ function checkReply(reply: Object, request: EdgeSwapRequest) {
 }
 
 export function makeTotlePlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
-  const { initOptions, log } = opts
-  const fetchJson = getFetchJson(opts)
+  const { initOptions, io, log } = opts
+  const { fetchCors = io.fetch } = io
 
   const { partnerContract, apiKey } = initOptions
 
@@ -116,21 +114,22 @@ export function makeTotlePlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
     const headers = {
       'Content-Type': 'application/json'
     }
-    const reply = await fetchJson(swapUri, { method: 'POST', body, headers })
-    if (!reply.ok) {
-      throw new Error(`Totle returned error code ${reply.status}`)
+    const response = await fetchCors(swapUri, { method: 'POST', body, headers })
+    if (!response.ok) {
+      throw new Error(`Totle returned error code ${response.status}`)
     }
-    const out = reply.json
+    const out = await response.json()
     log('swap reply:', out)
     return out
   }
 
   async function fetchTokens() {
-    const reply = await fetchJson(tokenUri, { method: 'GET' })
-    if (!reply.ok) {
-      throw new Error(`Totle returned error code ${reply.status}`)
+    const response = await fetchCors(tokenUri, { method: 'GET' })
+    if (!response.ok) {
+      throw new Error(`Totle returned error code ${response.status}`)
     }
-    const out = reply.json.tokens
+    const json = await response.json()
+    const out = json.tokens
     log('token reply:', out)
     return out
   }

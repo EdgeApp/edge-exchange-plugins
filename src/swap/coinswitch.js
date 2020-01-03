@@ -13,7 +13,6 @@ import {
   SwapCurrencyError
 } from 'edge-core-js/types'
 
-import { getFetchJson } from '../react-native-io.js'
 import { makeSwapPluginQuote } from '../swap-helpers.js'
 
 const swapInfo = {
@@ -67,8 +66,8 @@ function checkReply(reply: Object, request?: EdgeSwapRequest) {
 export function makeCoinSwitchPlugin(
   opts: EdgeCorePluginOptions
 ): EdgeSwapPlugin {
-  const { initOptions, log } = opts
-  const fetchJson = getFetchJson(opts)
+  const { initOptions, io, log } = opts
+  const { fetchCors = io.fetch } = io
 
   if (initOptions.apiKey == null) {
     throw new Error('No coinswitch apiKey provided.')
@@ -83,11 +82,11 @@ export function makeCoinSwitchPlugin(
       'x-api-key': apiKey
     }
     const api = uri + json.route
-    const reply = await fetchJson(api, { method: 'POST', body, headers })
-    if (!reply.ok) {
-      throw new Error(`CoinSwitch returned error code ${reply.status}`)
+    const response = await fetchCors(api, { method: 'POST', body, headers })
+    if (!response.ok) {
+      throw new Error(`CoinSwitch returned error code ${response.status}`)
     }
-    const out = await reply.json
+    const out = await response.json()
     log('reply:', out)
     return out
   }
