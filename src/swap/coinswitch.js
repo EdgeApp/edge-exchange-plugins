@@ -67,7 +67,7 @@ function checkReply(reply: Object, request?: EdgeSwapRequest) {
 export function makeCoinSwitchPlugin(
   opts: EdgeCorePluginOptions
 ): EdgeSwapPlugin {
-  const { initOptions, io } = opts
+  const { initOptions, log } = opts
   const fetchJson = getFetchJson(opts)
 
   if (initOptions.apiKey == null) {
@@ -77,7 +77,7 @@ export function makeCoinSwitchPlugin(
 
   async function call(json: any) {
     const body = JSON.stringify(json.params)
-    io.console.info('coinswitch call:', json)
+    log('call:', json)
     const headers = {
       'Content-Type': 'application/json',
       'x-api-key': apiKey
@@ -88,7 +88,7 @@ export function makeCoinSwitchPlugin(
       throw new Error(`CoinSwitch returned error code ${reply.status}`)
     }
     const out = await reply.json
-    io.console.info('coinswitch reply:', out)
+    log('reply:', out)
     return out
   }
 
@@ -226,7 +226,7 @@ export function makeCoinSwitchPlugin(
           }
         ]
       }
-      io.console.info('coinswitch fixedRate spendInfo', spendInfo)
+      log('fixedRate spendInfo', spendInfo)
       const tx: EdgeTransaction = await request.fromWallet.makeSpend(spendInfo)
       if (!tx.otherParams) tx.otherParams = {}
       tx.otherParams.payinAddress = spendInfo.spendTargets[0].publicAddress
@@ -360,7 +360,7 @@ export function makeCoinSwitchPlugin(
           }
         ]
       }
-      io.console.info('coinswitch estimate spendInfo', spendInfo)
+      log('estimate spendInfo', spendInfo)
       const tx: EdgeTransaction = await request.fromWallet.makeSpend(spendInfo)
       if (!tx.otherParams) tx.otherParams = {}
       tx.otherParams.payinAddress = spendInfo.spendTargets[0].publicAddress

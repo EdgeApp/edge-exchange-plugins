@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 // @flow
 
 import { type EdgeRatePlugin, makeNodeIo } from 'edge-core-js'

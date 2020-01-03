@@ -81,7 +81,7 @@ async function getAddress(
 export function makeFoxExchangePlugin(
   opts: EdgeCorePluginOptions
 ): EdgeSwapPlugin {
-  const { initOptions, io } = opts
+  const { initOptions, log } = opts
   const fetchJson = getFetchJson(opts)
 
   if (initOptions.apiKey == null) {
@@ -97,7 +97,7 @@ export function makeFoxExchangePlugin(
       userSettings: Object | void
     ): Promise<EdgeSwapPluginQuote> {
       async function post(path: string, data: Object) {
-        io.console.info(`fox request to ${path}`, data)
+        log(`request to ${path}`, data)
         const body = JSON.stringify(data)
         const reply = await fetchJson(`${uri}${path}`, {
           method: 'POST',
@@ -111,7 +111,7 @@ export function makeFoxExchangePlugin(
         })
 
         const json = reply.json
-        io.console.info(`fox reply to ${path} (${reply.status})`, json)
+        log(`reply to ${path} (${reply.status})`, json)
         if (!json) {
           throw new Error(`fox returned error code ${reply.status}`)
         } else if (!json.success) {
@@ -136,7 +136,7 @@ export function makeFoxExchangePlugin(
             throw new SwapAboveLimitError(swapInfo, request.nativeAmount)
           }
 
-          io.console.error('fox error:', json)
+          log.error('error:', json)
           throw new Error('fox.exchange replied: ' + json.error || json.code)
         }
 
@@ -313,7 +313,7 @@ export function makeFoxExchangePlugin(
               quoteToken: rateResp.quoteToken
             })
 
-            io.console.info(`fox transaction ID: ${orderResp.orderId}`)
+            log(`transaction ID: ${orderResp.orderId}`)
 
             const tx: EdgeTransaction = await request.fromWallet.makeSpend({
               currencyCode: request.fromCurrencyCode,
@@ -359,7 +359,7 @@ export function makeFoxExchangePlugin(
 
         return quote
       } catch (e) {
-        io.console.info(`fox exception`, e)
+        log(`exception`, e)
         throw e
       }
     }

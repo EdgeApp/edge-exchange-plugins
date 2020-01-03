@@ -122,7 +122,7 @@ function checkReply(reply: Object, request: EdgeSwapRequest) {
 export function makeChangellyPlugin(
   opts: EdgeCorePluginOptions
 ): EdgeSwapPlugin {
-  const { initOptions, io } = opts
+  const { initOptions, log } = opts
   const fetchJson = getFetchJson(opts)
 
   if (initOptions.apiKey == null || initOptions.secret == null) {
@@ -438,7 +438,7 @@ export function makeChangellyPlugin(
           }
         ]
       }
-      io.console.info('Starting Changelly')
+      log('spendInfo', spendInfo)
       const tx: EdgeTransaction = await request.fromWallet.makeSpend(spendInfo)
       if (tx.otherParams == null) tx.otherParams = {}
 

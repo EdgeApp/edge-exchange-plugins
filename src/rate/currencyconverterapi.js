@@ -19,6 +19,7 @@ const checkAndPush = (isoCc, ccArray) => {
 export function makeCurrencyconverterapiPlugin(
   opts: EdgeCorePluginOptions
 ): EdgeRatePlugin {
+  const { log } = opts
   const fetchJson = getFetchJson(opts)
 
   const { apiKey } = opts.initOptions
@@ -60,10 +61,7 @@ export function makeCurrencyconverterapiPlugin(
             rate
           })
         } catch (e) {
-          console.log(
-            `Failed to get ${isoCode} rate from currencyconverterapi.com`,
-            e
-          )
+          log(`Failed to get ${isoCode} rate from currencyconverterapi.com`, e)
         }
       }
       return pairs

@@ -3,6 +3,7 @@
 import { div, mul } from 'biggystring'
 import {
   type EdgeCorePluginOptions,
+  type EdgeLog,
   type EdgeSwapPlugin,
   type EdgeSwapPluginQuote,
   type EdgeSwapRequest,
@@ -99,7 +100,7 @@ function checkReply(reply: Object, request: EdgeSwapRequest) {
 }
 
 export function makeTotlePlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
-  const { initOptions, io } = opts
+  const { initOptions, log } = opts
   const fetchJson = getFetchJson(opts)
 
   const { partnerContract, apiKey } = initOptions
@@ -111,7 +112,7 @@ export function makeTotlePlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
       apiKey
     })
 
-    io.console.info('Totle call:', json)
+    log('call:', json)
     const headers = {
       'Content-Type': 'application/json'
     }
@@ -120,7 +121,7 @@ export function makeTotlePlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
       throw new Error(`Totle returned error code ${reply.status}`)
     }
     const out = reply.json
-    io.console.info('Totle swap reply:', out)
+    log('swap reply:', out)
     return out
   }
 
@@ -130,7 +131,7 @@ export function makeTotlePlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
       throw new Error(`Totle returned error code ${reply.status}`)
     }
     const out = reply.json.tokens
-    io.console.info('Totle token reply:', out)
+    log('token reply:', out)
     return out
   }
 
@@ -246,9 +247,9 @@ export function makeTotlePlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
         false,
         new Date(Date.now() + expirationMs),
         quoteId,
-        io
+        log
       )
-      io.console.info(quote)
+      log(quote)
       return quote
     }
   }
@@ -266,9 +267,9 @@ function makeTotleSwapPluginQuote(
   isEstimate: boolean,
   expirationDate?: Date,
   quoteId?: string,
-  io
+  log: EdgeLog
 ): EdgeSwapPluginQuote {
-  io.console.info(arguments)
+  log(arguments)
   const { fromWallet } = request
   const swapTx = txs[txs.length - 1]
 

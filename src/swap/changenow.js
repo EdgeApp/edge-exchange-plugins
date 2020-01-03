@@ -69,7 +69,7 @@ async function getAddress(
 export function makeChangeNowPlugin(
   opts: EdgeCorePluginOptions
 ): EdgeSwapPlugin {
-  const { initOptions, io } = opts
+  const { initOptions, log } = opts
   const fetchJson = getFetchJson(opts)
 
   if (initOptions.apiKey == null) {
@@ -79,7 +79,7 @@ export function makeChangeNowPlugin(
 
   async function call(json: any) {
     const body = JSON.stringify(json.body)
-    io.console.info('changenow call fixed :', json)
+    log('call fixed:', json)
     const headers = {
       'Content-Type': 'application/json'
     }
@@ -87,10 +87,10 @@ export function makeChangeNowPlugin(
     const api = uri + json.route + apiKey
     const reply = await fetchJson(api, { method: 'POST', body, headers })
     if (!reply.ok) {
-      throw new Error(`CN: ChangeNow call returned error code ${reply.status}`)
+      throw new Error(`ChangeNow call returned error code ${reply.status}`)
     }
     const out = reply.json
-    io.console.info('changenow fixed reply:', out)
+    log('fixed reply:', out)
     return out
   }
 
@@ -255,7 +255,7 @@ export function makeChangeNowPlugin(
                   refundAddress: fromAddress
                 }
               })
-              io.console.info('CN: Fixed sendReply q ', sendReply)
+              log('Fixed sendReply q ', sendReply)
               const quoteInfo: QuoteInfo = {
                 id: sendReply.id,
                 payinAddress: sendReply.payinAddress,
@@ -281,7 +281,7 @@ export function makeChangeNowPlugin(
                   }
                 ]
               }
-              io.console.info('changenow spendInfo', spendInfo)
+              log('spendInfo', spendInfo)
               const tx: EdgeTransaction = await request.fromWallet.makeSpend(
                 spendInfo
               )
@@ -343,12 +343,12 @@ export function makeChangeNowPlugin(
 
       const quoteReply = await get(estQuery)
       if (quoteReply.error) {
-        io.console.info('CN: reply error ', quoteReply.error)
+        log('reply error ', quoteReply.error)
         if (quoteReply.error === 'deposit_too_small') {
           throw new SwapBelowLimitError(swapInfo, nativeMin)
         }
       }
-      io.console.info('CN:got reply  ', quoteReply)
+      log('got reply  ', quoteReply)
       if (request.quoteFor === 'from') {
         fromAmount = quoteAmount
         fromNativeAmount = request.nativeAmount
@@ -364,7 +364,7 @@ export function makeChangeNowPlugin(
         )
         toNativeAmount = request.nativeAmount
       }
-      console.log('CN: estQuery quoteReply  ', quoteReply)
+      log('estQuery quoteReply  ', quoteReply)
 
       if (lt(fromNativeAmount, nativeMin)) {
         throw new SwapBelowLimitError(swapInfo, nativeMin)
@@ -409,7 +409,7 @@ export function makeChangeNowPlugin(
           }
         ]
       }
-      io.console.info('changenow spendInfo', spendInfo)
+      log('spendInfo', spendInfo)
       const tx: EdgeTransaction = await request.fromWallet.makeSpend(spendInfo)
       if (tx.otherParams == null) tx.otherParams = {}
       tx.otherParams.payinAddress = spendInfo.spendTargets[0].publicAddress
