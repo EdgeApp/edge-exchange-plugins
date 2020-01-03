@@ -4,6 +4,7 @@ import { div, gt, lt, mul } from 'biggystring'
 import {
   type EdgeCorePluginOptions,
   type EdgeCurrencyWallet,
+  type EdgeFetchResponse,
   type EdgeSpendInfo,
   type EdgeSpendTarget,
   type EdgeSwapPlugin,
@@ -68,7 +69,7 @@ export function makeShapeshiftPlugin(
   }
   const { apiKey } = initOptions
 
-  async function checkReply(uri: string, reply: Response) {
+  async function checkReply(uri: string, reply: EdgeFetchResponse) {
     let replyJson
     try {
       replyJson = await reply.json()

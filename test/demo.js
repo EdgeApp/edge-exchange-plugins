@@ -5,6 +5,7 @@ import { type EdgeRatePlugin, makeNodeIo } from 'edge-core-js'
 import edgeCorePlugins from '../src/index.js'
 
 const io = makeNodeIo(__dirname)
+const log = Object.assign(() => {}, { error() {}, warn() {} })
 
 async function showRate(
   plugin,
@@ -15,6 +16,7 @@ async function showRate(
   const instance: EdgeRatePlugin = plugin({
     initOptions,
     io,
+    log,
     nativeIo: {},
     pluginDisklet: io.disklet
   })

@@ -4,6 +4,7 @@ import { gt, lt } from 'biggystring'
 import {
   type EdgeCorePluginOptions,
   type EdgeCurrencyWallet,
+  type EdgeFetchResponse,
   type EdgeSwapPlugin,
   type EdgeSwapPluginQuote,
   type EdgeSwapRequest,
@@ -81,7 +82,7 @@ export function makeFaastPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
     }
   }
 
-  async function checkReply(uri: string, reply: Response) {
+  async function checkReply(uri: string, reply: EdgeFetchResponse) {
     let replyJson
     try {
       replyJson = await reply.json()

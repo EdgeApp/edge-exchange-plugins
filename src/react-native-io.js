@@ -1,6 +1,9 @@
 // @flow
 
-import { type EdgeCorePluginOptions } from 'edge-core-js/types'
+import {
+  type EdgeCorePluginOptions,
+  type EdgeFetchFunction
+} from 'edge-core-js/types'
 
 type FetchJsonReply = {
   json: Object,
@@ -16,7 +19,7 @@ export type FetchJson = (uri: string, opts?: Object) => Promise<FetchJsonReply>
  * The reply object contains the status of the fetch,
  * as well as the returned JSON, but no methods.
  */
-function makeFetchJson(io: { +fetch: typeof fetch }): FetchJson {
+function makeFetchJson(io: { +fetch: EdgeFetchFunction }): FetchJson {
   return function fetchJson(url, opts) {
     return io.fetch(url, opts).then(response => {
       const { ok, status } = response
