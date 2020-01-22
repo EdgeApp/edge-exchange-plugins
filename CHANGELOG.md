@@ -1,5 +1,10 @@
 # edge-exchange-plugins
 
+# 0.9.0 (2020-01-22)
+
+- Require edge-core-js v0.16.18 or greater.
+- Remove our react-native-io module.
+
 # 0.8.13 (2020-01-02)
 
 - Refactor Godex plugin
@@ -7,7 +12,7 @@
 
 # 0.8.12 (2019-11-04)
 
-- Support Faast unique identifiers 
+- Support Faast unique identifiers
 
 # 0.8.11 (2019-11-04)
 
