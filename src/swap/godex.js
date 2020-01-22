@@ -12,7 +12,6 @@ import {
   SwapCurrencyError
 } from 'edge-core-js/types'
 
-import { getFetchJson } from '../react-native-io'
 import { makeSwapPluginQuote } from '../swap-helpers.js'
 
 const swapInfo = {
@@ -60,8 +59,8 @@ async function getAddress(wallet: EdgeCurrencyWallet, currencyCode: string) {
 }
 
 export function makeGodexPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
-  const { io, initOptions } = opts
-  const fetchJson = getFetchJson(opts)
+  const { initOptions, io, log } = opts
+  const { fetchCors = io.fetch } = io
 
   async function call(url, request, data) {
     const body = JSON.stringify(data.params)
@@ -70,19 +69,18 @@ export function makeGodexPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
       'Content-Type': 'application/json',
       Accept: 'application/json'
     }
-    const reply = await fetchJson(url, { method: 'POST', body, headers })
-    if (!reply.ok) {
-      if (reply.status === 422) {
+    const response = await fetchCors(url, { method: 'POST', body, headers })
+    if (!response.ok) {
+      if (response.status === 422) {
         throw new SwapCurrencyError(
           swapInfo,
           request.fromCurrencyCode,
           request.toCurrencyCode
         )
       }
-      throw new Error(`godex returned error code ${reply.status}`)
+      throw new Error(`godex returned error code ${response.status}`)
     }
-    const out = reply.json
-    return out
+    return response.json()
   }
 
   const out: EdgeSwapPlugin = {
@@ -116,12 +114,7 @@ export function makeGodexPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
         to: request.toCurrencyCode,
         amount: quoteAmount
       }
-
-      io.console.info('quoteParams:', quoteParams)
-
-      // Get the estimate from the server:
-
-      io.console.info('godex info api')
+      log('quoteParams:', quoteParams)
 
       // Calculate the amounts:
       let fromAmount, fromNativeAmount, toNativeAmount, reply
@@ -146,8 +139,8 @@ export function makeGodexPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
         )
         toNativeAmount = request.nativeAmount
       }
-      io.console.info('fromNativeAmount' + fromNativeAmount)
-      io.console.info('toNativeAmount' + toNativeAmount)
+      log('fromNativeAmount' + fromNativeAmount)
+      log('toNativeAmount' + toNativeAmount)
 
       // Check the minimum:
       const nativeMin = await request.fromWallet.denominationToNative(
@@ -174,7 +167,7 @@ export function makeGodexPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
           isEstimate: false
         }
       })
-      io.console.info('sendReply' + sendReply)
+      log('sendReply' + sendReply)
       const quoteInfo: QuoteInfo = sendReply
 
       // Make the transaction:
@@ -190,7 +183,7 @@ export function makeGodexPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
           }
         ]
       }
-      io.console.info('godex spendInfo', spendInfo)
+      log('spendInfo', spendInfo)
 
       const tx: EdgeTransaction = await request.fromWallet.makeSpend(spendInfo)
       if (!tx.otherParams) tx.otherParams = {}

@@ -4,6 +4,7 @@ import { div, gt, lt, mul } from 'biggystring'
 import {
   type EdgeCorePluginOptions,
   type EdgeCurrencyWallet,
+  type EdgeFetchResponse,
   type EdgeSpendInfo,
   type EdgeSpendTarget,
   type EdgeSwapPlugin,
@@ -61,14 +62,14 @@ async function getAddress(wallet: EdgeCurrencyWallet, currencyCode: string) {
 export function makeShapeshiftPlugin(
   opts: EdgeCorePluginOptions
 ): EdgeSwapPlugin {
-  const { io, initOptions } = opts
+  const { initOptions, io, log } = opts
 
   if (initOptions.apiKey == null) {
     throw new Error('No Shapeshift API key provided')
   }
   const { apiKey } = initOptions
 
-  async function checkReply(uri: string, reply: Response) {
+  async function checkReply(uri: string, reply: EdgeFetchResponse) {
     let replyJson
     try {
       replyJson = await reply.json()
@@ -77,7 +78,7 @@ export function makeShapeshiftPlugin(
         `Shapeshift ${uri} returned error code ${reply.status} (no JSON)`
       )
     }
-    io.console.info('shapeshift reply', replyJson)
+    log('reply', replyJson)
 
     // Shapeshift is not available in some parts of the world:
     if (
@@ -278,7 +279,7 @@ export function makeShapeshiftPlugin(
         currencyCode: fromCurrencyCode,
         spendTargets: [spendTarget]
       }
-      io.console.info('shapeshift spendInfo', spendInfo)
+      log('spendInfo', spendInfo)
       const tx: EdgeTransaction = await fromWallet.makeSpend(spendInfo)
       if (tx.otherParams == null) tx.otherParams = {}
       tx.otherParams.payinAddress = spendInfo.spendTargets[0].publicAddress

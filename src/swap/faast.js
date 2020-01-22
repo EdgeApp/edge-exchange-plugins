@@ -4,6 +4,7 @@ import { gt, lt } from 'biggystring'
 import {
   type EdgeCorePluginOptions,
   type EdgeCurrencyWallet,
+  type EdgeFetchResponse,
   type EdgeSwapPlugin,
   type EdgeSwapPluginQuote,
   type EdgeSwapRequest,
@@ -68,11 +69,11 @@ async function getAddress(wallet: EdgeCurrencyWallet, currencyCode: string) {
 }
 
 export function makeFaastPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
-  const { io, initOptions } = opts
+  const { initOptions, io, log } = opts
 
   let affiliateOptions = {}
   if (initOptions.affiliateId == null) {
-    io.console.info('No faast affiliateId provided.')
+    log('No affiliateId provided.')
   } else {
     const { affiliateId, affiliateMargin } = initOptions
     affiliateOptions = {
@@ -81,7 +82,7 @@ export function makeFaastPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
     }
   }
 
-  async function checkReply(uri: string, reply: Response) {
+  async function checkReply(uri: string, reply: EdgeFetchResponse) {
     let replyJson
     try {
       replyJson = await reply.json()
@@ -90,7 +91,7 @@ export function makeFaastPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
         `Faast ${uri} returned error code ${reply.status} (no JSON)`
       )
     }
-    io.console.info('faast reply', replyJson)
+    log('reply', replyJson)
 
     // Faast is not available in some parts of the world:
     if (
@@ -121,7 +122,7 @@ export function makeFaastPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
 
   async function post(path, body): Object {
     const uri = `${API_PREFIX}${path}`
-    io.console.info('faast request', path, body)
+    log('request', path, body)
     const reply = await io.fetch(uri, {
       method: 'POST',
       headers: {
@@ -156,7 +157,7 @@ export function makeFaastPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
         throw new SwapCurrencyError(swapInfo, fromCurrencyCode, toCurrencyCode)
       }
 
-      io.console.info('faast request', request)
+      log('request', request)
 
       let fromCurrency
       let toCurrency
@@ -223,11 +224,11 @@ export function makeFaastPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
       }
 
       // Check for minimum / maximum:
-      io.console.info('amount', amount)
+      log('amount', amount)
       const query = `?${
         quoteFor === 'from' ? 'deposit' : 'withdrawal'
       }_amount=${amount}`
-      io.console.info('query', query)
+      log('query', query)
       let pairInfo
       try {
         pairInfo = await get(
@@ -330,7 +331,7 @@ export function makeFaastPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
         spendTargets: [spendTarget]
       }
 
-      io.console.info('faast spendInfo', spendInfo)
+      log('spendInfo', spendInfo)
       const tx: EdgeTransaction = await fromWallet.makeSpend(spendInfo)
       if (tx.otherParams == null) tx.otherParams = {}
       tx.otherParams.payinAddress = spendTarget.publicAddress

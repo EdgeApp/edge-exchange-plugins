@@ -13,7 +13,6 @@ import {
   SwapCurrencyError
 } from 'edge-core-js/types'
 
-import { getFetchJson } from '../react-native-io.js'
 import { makeSwapPluginQuote } from '../swap-helpers.js'
 
 const swapInfo = {
@@ -67,8 +66,8 @@ function checkReply(reply: Object, request?: EdgeSwapRequest) {
 export function makeCoinSwitchPlugin(
   opts: EdgeCorePluginOptions
 ): EdgeSwapPlugin {
-  const { initOptions, io } = opts
-  const fetchJson = getFetchJson(opts)
+  const { initOptions, io, log } = opts
+  const { fetchCors = io.fetch } = io
 
   if (initOptions.apiKey == null) {
     throw new Error('No coinswitch apiKey provided.')
@@ -77,18 +76,18 @@ export function makeCoinSwitchPlugin(
 
   async function call(json: any) {
     const body = JSON.stringify(json.params)
-    io.console.info('coinswitch call:', json)
+    log('call:', json)
     const headers = {
       'Content-Type': 'application/json',
       'x-api-key': apiKey
     }
     const api = uri + json.route
-    const reply = await fetchJson(api, { method: 'POST', body, headers })
-    if (!reply.ok) {
-      throw new Error(`CoinSwitch returned error code ${reply.status}`)
+    const response = await fetchCors(api, { method: 'POST', body, headers })
+    if (!response.ok) {
+      throw new Error(`CoinSwitch returned error code ${response.status}`)
     }
-    const out = await reply.json
-    io.console.info('coinswitch reply:', out)
+    const out = await response.json()
+    log('reply:', out)
     return out
   }
 
@@ -226,7 +225,7 @@ export function makeCoinSwitchPlugin(
           }
         ]
       }
-      io.console.info('coinswitch fixedRate spendInfo', spendInfo)
+      log('fixedRate spendInfo', spendInfo)
       const tx: EdgeTransaction = await request.fromWallet.makeSpend(spendInfo)
       if (!tx.otherParams) tx.otherParams = {}
       tx.otherParams.payinAddress = spendInfo.spendTargets[0].publicAddress
@@ -360,7 +359,7 @@ export function makeCoinSwitchPlugin(
           }
         ]
       }
-      io.console.info('coinswitch estimate spendInfo', spendInfo)
+      log('estimate spendInfo', spendInfo)
       const tx: EdgeTransaction = await request.fromWallet.makeSpend(spendInfo)
       if (!tx.otherParams) tx.otherParams = {}
       tx.otherParams.payinAddress = spendInfo.spendTargets[0].publicAddress

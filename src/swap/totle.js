@@ -3,6 +3,7 @@
 import { div, mul } from 'biggystring'
 import {
   type EdgeCorePluginOptions,
+  type EdgeLog,
   type EdgeSwapPlugin,
   type EdgeSwapPluginQuote,
   type EdgeSwapRequest,
@@ -11,8 +12,6 @@ import {
   NoAmountSpecifiedError,
   SwapCurrencyError
 } from 'edge-core-js/types'
-
-import { getFetchJson } from '../react-native-io.js'
 
 const swapInfo = {
   pluginName: 'totle',
@@ -99,8 +98,8 @@ function checkReply(reply: Object, request: EdgeSwapRequest) {
 }
 
 export function makeTotlePlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
-  const { initOptions, io } = opts
-  const fetchJson = getFetchJson(opts)
+  const { initOptions, io, log } = opts
+  const { fetchCors = io.fetch } = io
 
   const { partnerContract, apiKey } = initOptions
 
@@ -111,26 +110,27 @@ export function makeTotlePlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
       apiKey
     })
 
-    io.console.info('Totle call:', json)
+    log('call:', json)
     const headers = {
       'Content-Type': 'application/json'
     }
-    const reply = await fetchJson(swapUri, { method: 'POST', body, headers })
-    if (!reply.ok) {
-      throw new Error(`Totle returned error code ${reply.status}`)
+    const response = await fetchCors(swapUri, { method: 'POST', body, headers })
+    if (!response.ok) {
+      throw new Error(`Totle returned error code ${response.status}`)
     }
-    const out = reply.json
-    io.console.info('Totle swap reply:', out)
+    const out = await response.json()
+    log('swap reply:', out)
     return out
   }
 
   async function fetchTokens() {
-    const reply = await fetchJson(tokenUri, { method: 'GET' })
-    if (!reply.ok) {
-      throw new Error(`Totle returned error code ${reply.status}`)
+    const response = await fetchCors(tokenUri, { method: 'GET' })
+    if (!response.ok) {
+      throw new Error(`Totle returned error code ${response.status}`)
     }
-    const out = reply.json.tokens
-    io.console.info('Totle token reply:', out)
+    const json = await response.json()
+    const out = json.tokens
+    log('token reply:', out)
     return out
   }
 
@@ -246,9 +246,9 @@ export function makeTotlePlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
         false,
         new Date(Date.now() + expirationMs),
         quoteId,
-        io
+        log
       )
-      io.console.info(quote)
+      log(quote)
       return quote
     }
   }
@@ -266,9 +266,9 @@ function makeTotleSwapPluginQuote(
   isEstimate: boolean,
   expirationDate?: Date,
   quoteId?: string,
-  io
+  log: EdgeLog
 ): EdgeSwapPluginQuote {
-  io.console.info(arguments)
+  log(arguments)
   const { fromWallet } = request
   const swapTx = txs[txs.length - 1]
 

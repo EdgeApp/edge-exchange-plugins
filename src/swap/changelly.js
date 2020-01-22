@@ -16,7 +16,6 @@ import hashjs from 'hash.js'
 import { base16 } from 'rfc4648'
 import utf8Codec from 'utf8'
 
-import { getFetchJson } from '../react-native-io.js'
 import { makeSwapPluginQuote } from '../swap-helpers.js'
 
 const INVALID_CURRENCY_CODES = {}
@@ -122,8 +121,8 @@ function checkReply(reply: Object, request: EdgeSwapRequest) {
 export function makeChangellyPlugin(
   opts: EdgeCorePluginOptions
 ): EdgeSwapPlugin {
-  const { initOptions, io } = opts
-  const fetchJson = getFetchJson(opts)
+  const { initOptions, io, log } = opts
+  const { fetchCors = io.fetch } = io
 
   if (initOptions.apiKey == null || initOptions.secret == null) {
     throw new Error('No Changelly apiKey or secret provided.')
@@ -142,13 +141,12 @@ export function makeChangellyPlugin(
       'api-key': apiKey,
       sign
     }
-    const reply = await fetchJson(uri, { method: 'POST', body, headers })
+    const response = await fetchCors(uri, { method: 'POST', body, headers })
 
-    if (!reply.ok) {
-      throw new Error(`Changelly returned error code ${reply.status}`)
+    if (!response.ok) {
+      throw new Error(`Changelly returned error code ${response.status}`)
     }
-    const out = reply.json
-    return out
+    return response.json()
   }
 
   const out: EdgeSwapPlugin = {
@@ -438,7 +436,7 @@ export function makeChangellyPlugin(
           }
         ]
       }
-      io.console.info('Starting Changelly')
+      log('spendInfo', spendInfo)
       const tx: EdgeTransaction = await request.fromWallet.makeSpend(spendInfo)
       if (tx.otherParams == null) tx.otherParams = {}
 
