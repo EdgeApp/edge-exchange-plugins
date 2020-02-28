@@ -8,6 +8,7 @@ import { makeCurrencyconverterapiPlugin } from './rate/currencyconverterapi.js'
 import { makeNomicsPlugin } from './rate/nomics.js'
 import { makeXagauPlugin } from './rate/xagau.js'
 import { makeChangellyPlugin } from './swap/changelly.js'
+import { makeSideShiftPlugin } from './swap/sideshift'
 import { makeChangeNowPlugin } from './swap/changenow.js'
 import { makeCoinSwitchPlugin } from './swap/coinswitch.js'
 import { makeFaastPlugin } from './swap/faast.js'
@@ -29,6 +30,7 @@ const edgeCorePlugins = {
 
   // Swap plugins:
   changelly: makeChangellyPlugin,
+  sideshift: makeSideShiftPlugin,
   changenow: makeChangeNowPlugin,
   coinswitch: makeCoinSwitchPlugin,
   faast: makeFaastPlugin,
