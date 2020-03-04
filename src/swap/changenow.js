@@ -102,8 +102,11 @@ export function makeChangeNowPlugin(
 
     async fetchSwapQuote(
       request: EdgeSwapRequest,
-      userSettings: Object | void
+      userSettings: Object | void,
+      opts: { promoCode?: string }
     ): Promise<EdgeSwapPluginQuote> {
+      const { promoCode } = opts
+
       if (
         // if either currencyCode is invalid *and* doesn't have a transcription
         INVALID_CURRENCY_CODES[request.fromCurrencyCode] ||
@@ -135,7 +138,10 @@ export function makeChangeNowPlugin(
 
       // get the markets
       const availablePairs = await get(`currencies-to/${safeFromCurrencyCode}`)
-      const fixedMarket = await get(`market-info/fixed-rate/${apiKey}`)
+      const fixedMarket = await get(
+        `market-info/fixed-rate/${apiKey}` +
+          (promoCode != null ? `?promo=${promoCode}` : '')
+      )
 
       const quoteAmount =
         request.quoteFor === 'from'
@@ -194,7 +200,8 @@ export function makeChangeNowPlugin(
                 ])
                 // lets get the quoteObject here
                 const quoteReply = await get(
-                  `exchange-amount/fixed-rate/${quoteParams.amount}/${quoteParams.from}_${quoteParams.to}?api_key=${apiKey}`
+                  `exchange-amount/fixed-rate/${quoteParams.amount}/${quoteParams.from}_${quoteParams.to}?api_key=${apiKey}` +
+                    (promoCode != null ? `&promo=${promoCode}` : '')
                 )
                 if (quoteReply.error === 'out_of_range') {
                   if (lt(quoteParams.amount, item.min.toString())) {
@@ -235,7 +242,8 @@ export function makeChangeNowPlugin(
                 toNativeAmount = request.nativeAmount
               }
               const sendReply = await post(
-                `transactions/fixed-rate/${apiKey}`,
+                `transactions/fixed-rate/${apiKey}` +
+                  (promoCode != null ? `?promo=${promoCode}` : ''),
                 {
                   amount: fromAmount,
                   from: safeFromCurrencyCode,
@@ -354,14 +362,18 @@ export function makeChangeNowPlugin(
         throw new SwapBelowLimitError(swapInfo, nativeMin)
       }
 
-      const sendReply = await post(`transactions/${apiKey}`, {
-        amount: fromAmount,
-        from: safeFromCurrencyCode.toLowerCase(),
-        to: safeToCurrencyCode.toLowerCase(),
-        address: toAddress,
-        extraId: null, // TODO: Do we need this for Monero?
-        refundAddress: fromAddress
-      })
+      const sendReply = await post(
+        `transactions/${apiKey}` +
+          (promoCode != null ? `?promo=${promoCode}` : ''),
+        {
+          amount: fromAmount,
+          from: safeFromCurrencyCode.toLowerCase(),
+          to: safeToCurrencyCode.toLowerCase(),
+          address: toAddress,
+          extraId: null, // TODO: Do we need this for Monero?
+          refundAddress: fromAddress
+        }
+      )
       // checkReply(sendReply)
       const quoteInfo: QuoteInfo = {
         id: sendReply.id,
