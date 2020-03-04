@@ -1924,10 +1924,10 @@ duplexify@^3.4.2, duplexify@^3.6.0:
     readable-stream "^2.0.0"
     stream-shift "^1.0.0"
 
-edge-core-js@^0.16.18:
-  version "0.16.18"
-  resolved "https://registry.yarnpkg.com/edge-core-js/-/edge-core-js-0.16.18.tgz#aba52dd797ec74926dddf8e4e7913949b83df56f"
-  integrity sha512-dC+tbg6KZ4rKBt0kz0bVp3uHjOvK6Pcm/RMXOUYNZKHNJ+R1b3HjBRcKqFtN4dfoBP5wnp5GYWzEP6EeSl61sQ==
+edge-core-js@^0.16.23:
+  version "0.16.23"
+  resolved "https://registry.yarnpkg.com/edge-core-js/-/edge-core-js-0.16.23.tgz#8bdd38d262355bb08f987a774cf05ac71c4c459e"
+  integrity sha512-ynTXYdIOTiKL+c9DlcOJ/OCi+oydqktCOkG6cNO2Rj+/ZkIyBFPeR573QQ7jFK5JWxTJ1IytGkYeH1vSkWo4/A==
   dependencies:
     aes-js "^3.1.0"
     base-x "^1.0.4"
@@ -1947,7 +1947,6 @@ edge-core-js@^0.16.18:
     redux-pixies "^0.3.6"
     rfc4648 "^1.1.0"
     scrypt-js "^2.0.3"
-    utf8 "^3.0.0"
     ws "^5.1.1"
     yaob "^0.3.6"
 
