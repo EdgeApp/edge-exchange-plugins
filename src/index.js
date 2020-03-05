@@ -14,6 +14,7 @@ import { makeFaastPlugin } from './swap/faast.js'
 import { makeFoxExchangePlugin } from './swap/foxExchange.js'
 import { makeGodexPlugin } from './swap/godex.js'
 import { makeShapeshiftPlugin } from './swap/shapeshift.js'
+import { makeSwitchainPlugin } from './swap/switchain.js'
 import { makeTotlePlugin } from './swap/totle.js'
 
 const edgeCorePlugins = {
@@ -34,7 +35,8 @@ const edgeCorePlugins = {
   totle: makeTotlePlugin,
   foxExchange: makeFoxExchangePlugin,
   godex: makeGodexPlugin,
-  coinswitch: makeCoinSwitchPlugin
+  coinswitch: makeCoinSwitchPlugin,
+  switchain: makeSwitchainPlugin
 }
 
 if (
