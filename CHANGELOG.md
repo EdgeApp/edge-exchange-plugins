@@ -1,5 +1,10 @@
 # edge-exchange-plugins
 
+# 0.9.1 (2020-03-04)
+
+- Pass promo codes to ChangeNow.
+- Expose `pluginId`, as `pluginName` is being deprecated.
+
 # 0.9.0 (2020-01-22)
 
 - Require edge-core-js v0.16.18 or greater.
