@@ -14,27 +14,29 @@ import { makeFaastPlugin } from './swap/faast.js'
 import { makeFoxExchangePlugin } from './swap/foxExchange.js'
 import { makeGodexPlugin } from './swap/godex.js'
 import { makeShapeshiftPlugin } from './swap/shapeshift.js'
+import { makeSwitchainPlugin } from './swap/switchain.js'
 import { makeTotlePlugin } from './swap/totle.js'
 
 const edgeCorePlugins = {
   // Rate plugins:
   coinbase: makeCoinbasePlugin,
   coincap: makeCoincapPlugin,
-  currencyconverterapi: makeCurrencyconverterapiPlugin,
-  xagau: makeXagauPlugin,
-  nomics: makeNomicsPlugin,
-  constantRate: makeConstantRatePlugin,
   compound: makeCompoundPlugin,
+  constantRate: makeConstantRatePlugin,
+  currencyconverterapi: makeCurrencyconverterapiPlugin,
+  nomics: makeNomicsPlugin,
+  xagau: makeXagauPlugin,
 
   // Swap plugins:
   changelly: makeChangellyPlugin,
   changenow: makeChangeNowPlugin,
+  coinswitch: makeCoinSwitchPlugin,
   faast: makeFaastPlugin,
-  shapeshift: makeShapeshiftPlugin,
-  totle: makeTotlePlugin,
   foxExchange: makeFoxExchangePlugin,
   godex: makeGodexPlugin,
-  coinswitch: makeCoinSwitchPlugin
+  shapeshift: makeShapeshiftPlugin,
+  switchain: makeSwitchainPlugin,
+  totle: makeTotlePlugin
 }
 
 if (
