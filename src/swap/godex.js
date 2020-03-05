@@ -4,6 +4,7 @@ import { lt } from 'biggystring'
 import {
   type EdgeCorePluginOptions,
   type EdgeCurrencyWallet,
+  type EdgeSwapInfo,
   type EdgeSwapPlugin,
   type EdgeSwapPluginQuote,
   type EdgeSwapRequest,
@@ -14,8 +15,10 @@ import {
 
 import { makeSwapPluginQuote } from '../swap-helpers.js'
 
-const swapInfo = {
-  pluginName: 'godex',
+const pluginId = 'godex'
+const swapInfo: EdgeSwapInfo = {
+  pluginId,
+  pluginName: pluginId, // Deprecated
   displayName: 'Godex',
 
   quoteUri: 'https://godex.io/exchange/waiting/',

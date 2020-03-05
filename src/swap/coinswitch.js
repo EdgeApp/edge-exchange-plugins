@@ -4,6 +4,7 @@ import { add, div, gt, lt, mul, sub } from 'biggystring'
 import {
   type EdgeCorePluginOptions,
   type EdgeCurrencyWallet,
+  type EdgeSwapInfo,
   type EdgeSwapPlugin,
   type EdgeSwapPluginQuote,
   type EdgeSwapRequest,
@@ -15,8 +16,11 @@ import {
 
 import { makeSwapPluginQuote } from '../swap-helpers.js'
 
-const swapInfo = {
-  pluginName: 'coinswitch',
+const pluginId = 'coinswitch'
+
+const swapInfo: EdgeSwapInfo = {
+  pluginId,
+  pluginName: pluginId, // Deprecated
   displayName: 'CoinSwitch',
   quoteUri: 'https://coinswitch.co/app/exchange/transaction/',
   supportEmail: 'support@coinswitch.co'

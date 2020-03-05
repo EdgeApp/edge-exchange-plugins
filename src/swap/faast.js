@@ -5,6 +5,7 @@ import {
   type EdgeCorePluginOptions,
   type EdgeCurrencyWallet,
   type EdgeFetchResponse,
+  type EdgeSwapInfo,
   type EdgeSwapPlugin,
   type EdgeSwapPluginQuote,
   type EdgeSwapRequest,
@@ -19,8 +20,10 @@ import { makeSwapPluginQuote } from '../swap-helpers.js'
 
 const INVALID_CURRENCY_CODES = []
 
-const swapInfo = {
-  pluginName: 'faast',
+const pluginId = 'faast'
+const swapInfo: EdgeSwapInfo = {
+  pluginId,
+  pluginName: pluginId, // Deprecated
   displayName: 'Faa.st',
 
   quoteUri: 'https://faa.st/app/orders/',

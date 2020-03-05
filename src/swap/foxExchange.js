@@ -3,6 +3,7 @@
 import {
   type EdgeCorePluginOptions,
   type EdgeCurrencyWallet,
+  type EdgeSwapInfo,
   type EdgeSwapPlugin,
   type EdgeSwapPluginQuote,
   type EdgeSwapRequest,
@@ -13,8 +14,10 @@ import {
   SwapPermissionError
 } from 'edge-core-js/types'
 
-const swapInfo = {
-  pluginName: 'foxExchange',
+const pluginId = 'foxExchange'
+const swapInfo: EdgeSwapInfo = {
+  pluginId,
+  pluginName: pluginId, // Deprecated
   displayName: 'Fox Exchange',
 
   quoteUri: 'https://fox.exchange/tx/',
@@ -290,7 +293,8 @@ export function makeFoxExchangePlugin(
             nativeAmount: dummyTx.networkFee
           },
           destinationAddress,
-          pluginName: swapInfo.pluginName,
+          pluginId,
+          pluginName: pluginId, // Deprecated
           expirationDate: new Date(
             rateResp.validTill || Date.now() + expirationMs
           ),

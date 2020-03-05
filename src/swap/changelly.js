@@ -4,6 +4,7 @@ import { gt, lt, mul } from 'biggystring'
 import {
   type EdgeCorePluginOptions,
   type EdgeCurrencyWallet,
+  type EdgeSwapInfo,
   type EdgeSwapPlugin,
   type EdgeSwapPluginQuote,
   type EdgeSwapRequest,
@@ -42,8 +43,11 @@ function parseUtf8(text: string): Uint8Array {
 
   return out
 }
-const swapInfo = {
-  pluginName: 'changelly',
+
+const pluginId = 'changelly'
+const swapInfo: EdgeSwapInfo = {
+  pluginId,
+  pluginName: pluginId, // Deprecated
   displayName: 'Changelly',
 
   // quoteUri: 'https://changelly.com/transaction/',

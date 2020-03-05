@@ -4,6 +4,7 @@ import { lt, mul } from 'biggystring'
 import {
   type EdgeCorePluginOptions,
   type EdgeCurrencyWallet,
+  type EdgeSwapInfo,
   type EdgeSwapPlugin,
   type EdgeSwapPluginQuote,
   type EdgeSwapRequest,
@@ -15,8 +16,10 @@ import {
 
 import { makeSwapPluginQuote } from '../swap-helpers.js'
 
-const swapInfo = {
-  pluginName: 'changenow',
+const pluginId = 'changenow'
+const swapInfo: EdgeSwapInfo = {
+  pluginId,
+  pluginName: pluginId, // Deprecated
   displayName: 'Change NOW',
 
   quoteUri: 'https://changenow.io/exchange/txs/',

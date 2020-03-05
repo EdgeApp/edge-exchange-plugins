@@ -12,7 +12,7 @@ export function makeSwapPluginQuote(
   toNativeAmount: string,
   tx: EdgeTransaction,
   destinationAddress: string,
-  pluginName: string,
+  pluginId: string,
   isEstimate: boolean = false,
   expirationDate?: Date,
   quoteId?: string
@@ -27,7 +27,8 @@ export function makeSwapPluginQuote(
       nativeAmount: tx.networkFee
     },
     destinationAddress,
-    pluginName,
+    pluginId,
+    pluginName: pluginId, // Deprecated
     expirationDate,
     quoteId,
     isEstimate,

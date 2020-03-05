@@ -4,6 +4,7 @@ import { div, mul } from 'biggystring'
 import {
   type EdgeCorePluginOptions,
   type EdgeLog,
+  type EdgeSwapInfo,
   type EdgeSwapPlugin,
   type EdgeSwapPluginQuote,
   type EdgeSwapRequest,
@@ -13,8 +14,10 @@ import {
   SwapCurrencyError
 } from 'edge-core-js/types'
 
-const swapInfo = {
-  pluginName: 'totle',
+const pluginId = 'totle'
+const swapInfo: EdgeSwapInfo = {
+  pluginId,
+  pluginName: pluginId, // Deprecated
   displayName: 'Totle',
 
   quoteUri: 'https://api.totle.com/swap',
@@ -242,7 +245,6 @@ export function makeTotlePlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
         toNativeAmount,
         txs,
         userToAddress,
-        'totle',
         false,
         new Date(Date.now() + expirationMs),
         quoteId,
@@ -262,7 +264,6 @@ function makeTotleSwapPluginQuote(
   toNativeAmount: string,
   txs: Array<EdgeTransaction>,
   destinationAddress: string,
-  pluginName: string,
   isEstimate: boolean,
   expirationDate?: Date,
   quoteId?: string,
@@ -280,7 +281,8 @@ function makeTotleSwapPluginQuote(
       nativeAmount: swapTx.networkFee
     },
     destinationAddress,
-    pluginName,
+    pluginId,
+    pluginName: pluginId, // Deprecated
     expirationDate,
     quoteId,
     isEstimate,

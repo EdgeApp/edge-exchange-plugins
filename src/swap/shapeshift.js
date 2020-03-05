@@ -7,6 +7,7 @@ import {
   type EdgeFetchResponse,
   type EdgeSpendInfo,
   type EdgeSpendTarget,
+  type EdgeSwapInfo,
   type EdgeSwapPlugin,
   type EdgeSwapPluginQuote,
   type EdgeSwapPluginStatus,
@@ -20,8 +21,10 @@ import {
 
 import { makeSwapPluginQuote } from '../swap-helpers.js'
 
-const swapInfo = {
-  pluginName: 'shapeshift',
+const pluginId = 'shapeshift'
+const swapInfo: EdgeSwapInfo = {
+  pluginId,
+  pluginName: pluginId, // Deprecated
   displayName: 'ShapeShift',
 
   quoteUri: 'https://shapeshift.io/#/status/',
