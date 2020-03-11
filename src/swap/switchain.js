@@ -41,7 +41,8 @@ type SwitchainOfferResponse = {
   maxLimit: string,
   minLimit: string,
   expiryTs: number,
-  minerFee: string
+  minerFee: string,
+  orderId?: string
 }
 
 type SwitchainOrderCreationResponse = {
@@ -71,16 +72,6 @@ const dontUseLegacy = {
   DGB: true
 }
 
-async function getAddress(
-  wallet: EdgeCurrencyWallet,
-  currencyCode: string
-): Promise<string> {
-  const addressInfo = await wallet.getReceiveAddress({ currencyCode })
-  return addressInfo.legacyAddress && !dontUseLegacy[currencyCode]
-    ? addressInfo.legacyAddress
-    : addressInfo.publicAddress
-}
-
 export function makeSwitchainPlugin(
   opts: EdgeCorePluginOptions
 ): EdgeSwapPlugin {
@@ -88,6 +79,17 @@ export function makeSwitchainPlugin(
 
   if (!initOptions.apiKey) {
     throw new Error('No Switchain API key provided.')
+  }
+
+  async function getAddress(
+    wallet: EdgeCurrencyWallet,
+    currencyCode: string
+  ): Promise<string> {
+    const addressInfo = await wallet.getReceiveAddress({ currencyCode })
+
+    return addressInfo.legacyAddress && !dontUseLegacy[currencyCode]
+      ? addressInfo.legacyAddress
+      : addressInfo.publicAddress
   }
 
   async function swHttpCall(
@@ -186,16 +188,24 @@ export function makeSwitchainPlugin(
 
       const pair = `${fromCurrencyCode.toUpperCase()}-${toCurrencyCode.toUpperCase()}`
 
+      // get wallet addresses for exchange
+      const [fromAddress, toAddress] = await Promise.all([
+        getAddress(fromWallet, fromCurrencyCode),
+        getAddress(toWallet, toCurrencyCode)
+      ])
+
       // Check for supported currencies, even if we aren't activated:
       const json: SwitchainOfferResponse = await swHttpCall(
         '/offer',
         'GET',
         null,
         {
-          pair
+          pair,
+          orderIdSeed: toAddress
         }
       )
       const { maxLimit, minLimit, minerFee, quote, signature, expiryTs } = json
+      orderId = json.orderId
 
       // get native min max limits
       const [nativeMax, nativeMin] = await Promise.all([
@@ -215,23 +225,20 @@ export function makeSwitchainPlugin(
         if (lt(nativeAmount, nativeMin)) {
           throw new SwapBelowLimitError(swapInfo, nativeMin)
         }
-        if (gt(fromAmount, nativeMax)) {
+        if (gt(nativeAmount, nativeMax)) {
           throw new SwapAboveLimitError(swapInfo, nativeMax)
         }
       } else {
-        if (lt(div(toAmount, quote), minLimit)) {
+        const toAmountInFrom = div(toAmount, quote, 8)
+
+        if (lt(toAmountInFrom, minLimit)) {
           throw new SwapBelowLimitError(swapInfo, nativeMin)
         }
-        if (gt(div(toAmount, quote), maxLimit)) {
+
+        if (gt(toAmountInFrom, maxLimit)) {
           throw new SwapAboveLimitError(swapInfo, nativeMax)
         }
       }
-
-      // get wallet addresses for exchange
-      const [fromAddress, toAddress] = await Promise.all([
-        getAddress(fromWallet, fromCurrencyCode),
-        getAddress(toWallet, toCurrencyCode)
-      ])
 
       // order creation body
       const quoteAmount = quoteForFrom ? { fromAmount } : { toAmount }
@@ -251,7 +258,7 @@ export function makeSwitchainPlugin(
       )
       if (!quoteForFrom) {
         fromNativeAmount = await fromWallet.denominationToNative(
-          div(add(toAmount, minerFee), quote, 10, 16),
+          div(add(toAmount, minerFee), quote, 8),
           fromCurrencyCode
         )
         toNativeAmount = nativeAmount
@@ -259,15 +266,14 @@ export function makeSwitchainPlugin(
 
       const destinationAddress = toAddress
       const expirationDate = new Date(expiryTs * 1000)
-      orderId = 'noOrderIdYet'
       const isEstimate = false
 
       // create preliminary tx using our recieve address to calculate a networkFee
-      const publicAddress = await getAddress(toWallet, toCurrencyCode)
-
       const spendInfo: EdgeSpendInfo = {
         currencyCode: fromCurrencyCode,
-        spendTargets: [{ nativeAmount: fromNativeAmount, publicAddress }]
+        spendTargets: [
+          { nativeAmount: fromNativeAmount, publicAddress: fromAddress }
+        ]
       }
 
       const preliminaryTx: EdgeTransaction = await fromWallet.makeSpend(
@@ -320,7 +326,6 @@ export function makeSwitchainPlugin(
           'POST',
           orderCreationBody
         )
-        orderId = json.orderId
         const { exchangeAddress, exchangeAddressTag } = json
 
         // create tx with response and send
