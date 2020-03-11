@@ -159,7 +159,6 @@ export function makeSwitchainPlugin(
     refundAddress: '',
     signature: ''
   }
-  let orderId = ''
 
   const out: EdgeSwapPlugin = {
     swapInfo,
@@ -204,8 +203,15 @@ export function makeSwitchainPlugin(
           orderIdSeed: toAddress
         }
       )
-      const { maxLimit, minLimit, minerFee, quote, signature, expiryTs } = json
-      orderId = json.orderId
+      const {
+        maxLimit,
+        minLimit,
+        minerFee,
+        quote,
+        signature,
+        expiryTs,
+        orderId
+      } = json
 
       // get native min max limits
       const [nativeMax, nativeMin] = await Promise.all([
@@ -247,6 +253,7 @@ export function makeSwitchainPlugin(
         toAddress,
         refundAddress: fromAddress,
         signature,
+        orderId,
         ...quoteAmount
       }
 
