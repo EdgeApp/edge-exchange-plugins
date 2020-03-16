@@ -27,7 +27,7 @@ const swapInfo: EdgeSwapInfo = {
   supportEmail: 'help@switchain.com'
 }
 
-const apiUrl = 'https://api-testnet.switchain.com/rest/v1'
+let apiUrl = 'https://api.switchain.com/rest/v1'
 
 type SwitchainResponseError = {
   error: string,
@@ -75,7 +75,7 @@ const dontUseLegacy = {
 export function makeSwitchainPlugin(
   opts: EdgeCorePluginOptions
 ): EdgeSwapPlugin {
-  const { initOptions, io, log } = opts
+  const { initOptions, io } = opts
 
   if (!initOptions.apiKey) {
     throw new Error('No Switchain API key provided.')
@@ -131,7 +131,6 @@ export function makeSwitchainPlugin(
         `Switchain ${uri} returned error code ${reply.status} (no JSON)`
       )
     }
-    log('reply', replyJson)
 
     if (reply.status !== 200) {
       if (replyJson.reason) {
@@ -183,6 +182,9 @@ export function makeSwitchainPlugin(
       // convert TBTC to BTC for testing purposes
       if (fromCurrencyCode.toUpperCase() === 'TBTC') {
         fromCurrencyCode = 'BTC'
+        apiUrl = 'https://api-testnet.switchain.com/rest/v1'
+      } else {
+        apiUrl = 'https://api.switchain.com/rest/v1'
       }
 
       const pair = `${fromCurrencyCode.toUpperCase()}-${toCurrencyCode.toUpperCase()}`
