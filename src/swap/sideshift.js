@@ -13,9 +13,6 @@ import {
   SwapBelowLimitError,
   SwapCurrencyError
 } from 'edge-core-js/types'
-import hashjs from 'hash.js'
-import { base16 } from 'rfc4648'
-import utf8Codec from 'utf8'
 
 import { makeSwapPluginQuote } from '../swap-helpers.js'
 
@@ -26,22 +23,6 @@ const INVALID_CURRENCY_CODES = {}
 const CURRENCY_CODE_TRANSCRIPTION = {
   // Edge currencyCode: exchangeCurrencyCode
   USDT: 'USDT20'
-}
-
-function hmacSha512(data: Uint8Array, key: Uint8Array): Uint8Array {
-  const hmac = hashjs.hmac(hashjs.sha512, key)
-  return hmac.update(data).digest()
-}
-
-function parseUtf8(text: string): Uint8Array {
-  const byteString: string = utf8Codec.encode(text)
-  const out = new Uint8Array(byteString.length)
-
-  for (let i = 0; i < byteString.length; ++i) {
-    out[i] = byteString.charCodeAt(i)
-  }
-
-  return out
 }
 
 const swapInfo: EdgeSwapInfo = {
@@ -127,19 +108,12 @@ export function makeSideShiftPlugin(
   if (initOptions.apiKey == null || initOptions.secret == null) {
     throw new Error('No SideShift apiKey or secret provided.')
   }
-  const { apiKey } = initOptions
-  const secret = parseUtf8(initOptions.secret)
 
   async function call(json: any) {
     const body = JSON.stringify(json)
-    const sign = base16
-      .stringify(hmacSha512(parseUtf8(body), secret))
-      .toLowerCase()
 
     const headers = {
-      'Content-Type': 'application/json',
-      'api-key': apiKey,
-      sign
+      'Content-Type': 'application/json'
     }
     const response = await io.fetch(uri, { method: 'POST', body, headers })
 
@@ -166,15 +140,22 @@ export function makeSideShiftPlugin(
           request.toCurrencyCode
         )
       }
-      const fixedPromise = this.getFixedQuote(request, userSettings)
+
+      // Non-fixed-rate:
       const estimatePromise = this.getEstimate(request, userSettings)
-      try {
-        const fixedResult = await fixedPromise
-        return fixedResult
-      } catch (e) {
-        const estimateResult = await estimatePromise
-        return estimateResult
-      }
+      const estimateResult = await estimatePromise
+      return estimateResult
+
+      // For Fixed-Rate (SideShift ToDo):
+      // const fixedPromise = this.getFixedQuote(request, userSettings)
+      // const estimatePromise = this.getEstimate(request, userSettings)
+      // try {
+      //   const fixedResult = await fixedPromise
+      //   return fixedResult
+      // } catch (e) {
+      //   const estimateResult = await estimatePromise
+      //   return estimateResult
+      // }
     },
 
     async getFixedQuote(
