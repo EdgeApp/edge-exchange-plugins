@@ -14,7 +14,7 @@ export function makeCoincapPlugin(opts: EdgeCorePluginOptions): EdgeRatePlugin {
     },
 
     async fetchRates(pairsHint) {
-      const reply = await io.fetch('https://api.coincap.io/v2/assets')
+      const reply = await io.fetch('https://api.coincap.io/v2/assets?limit=500')
       const json = await reply.json()
 
       // Grab all the pairs which are in USD:
