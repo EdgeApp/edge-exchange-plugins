@@ -1,5 +1,10 @@
 # edge-exchange-plugins
 
+# 0.9.2 (2020-04-01)
+
+- Update Totle plugin to address API changes
+- Increase number of returned rates from Coincap to 500
+
 # 0.9.1 (2020-03-04)
 
 - Pass promo codes to ChangeNow.
