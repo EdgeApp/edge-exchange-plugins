@@ -6,7 +6,7 @@ import {
   type EdgeCurrencyWallet,
   type EdgeSwapInfo,
   type EdgeSwapPlugin,
-  type EdgeSwapPluginQuote,
+  type EdgeSwapQuote,
   type EdgeSwapRequest,
   type EdgeTransaction,
   SwapAboveLimitError,
@@ -20,7 +20,6 @@ const pluginId = 'coinswitch'
 
 const swapInfo: EdgeSwapInfo = {
   pluginId,
-  pluginName: pluginId, // Deprecated
   displayName: 'CoinSwitch',
   quoteUri: 'https://coinswitch.co/app/exchange/transaction/',
   supportEmail: 'support@coinswitch.co'
@@ -101,7 +100,7 @@ export function makeCoinSwitchPlugin(
     async fetchSwapQuote(
       request: EdgeSwapRequest,
       userSettings: Object | void
-    ): Promise<EdgeSwapPluginQuote> {
+    ): Promise<EdgeSwapQuote> {
       const fixedPromise = this.getFixedQuote(request, userSettings)
       const estimatePromise = this.getEstimate(request, userSettings)
       // try fixed and if error then get estimate
@@ -116,7 +115,7 @@ export function makeCoinSwitchPlugin(
     async getFixedQuote(
       request: EdgeSwapRequest,
       userSettings: Object | void
-    ): Promise<EdgeSwapPluginQuote> {
+    ): Promise<EdgeSwapQuote> {
       const [fromAddress, toAddress] = await Promise.all([
         getAddress(request.fromWallet, request.fromCurrencyCode),
         getAddress(request.toWallet, request.toCurrencyCode)
@@ -251,7 +250,7 @@ export function makeCoinSwitchPlugin(
     async getEstimate(
       request: EdgeSwapRequest,
       userSettings: Object | void
-    ): Promise<EdgeSwapPluginQuote> {
+    ): Promise<EdgeSwapQuote> {
       const [fromAddress, toAddress] = await Promise.all([
         getAddress(request.fromWallet, request.fromCurrencyCode),
         getAddress(request.toWallet, request.toCurrencyCode)

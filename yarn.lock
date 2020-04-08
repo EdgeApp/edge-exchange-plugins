@@ -1138,11 +1138,6 @@ async-each@^1.0.1:
   resolved "https://registry.yarnpkg.com/async-each/-/async-each-1.0.3.tgz#b727dbf87d7651602f06f4d4ac387f47d91b0cbf"
   integrity sha512-z/WhQ5FPySLdvREByI2vZiTWwCnF0moMJ1hK9YQwDTHKh6I7/uSckMetoRGb5UBZPC1z0jlw+n/XCgjeH7y1AQ==
 
-async-limiter@~1.0.0:
-  version "1.0.1"
-  resolved "https://registry.yarnpkg.com/async-limiter/-/async-limiter-1.0.1.tgz#dd379e94f0db8310b08291f9d64c3209766617fd"
-  integrity sha512-csOlWGAcRFJaI6m+F2WKdnMKr4HhdhFVBk0H/QbJFMCr+uO2kwohwXQPxw/9OCxp05r5ghVBFSyioixx3gfkNQ==
-
 atob@^2.1.2:
   version "2.1.2"
   resolved "https://registry.yarnpkg.com/atob/-/atob-2.1.2.tgz#6d9517eb9e030d2436666651e86bd9f6f13533c9"
@@ -1912,10 +1907,10 @@ duplexify@^3.4.2, duplexify@^3.6.0:
     readable-stream "^2.0.0"
     stream-shift "^1.0.0"
 
-edge-core-js@^0.16.23:
-  version "0.16.24"
-  resolved "https://registry.yarnpkg.com/edge-core-js/-/edge-core-js-0.16.24.tgz#149a6a6e8c02effd84b3dcc7197d1f8e75575d86"
-  integrity sha512-RRwM+w3hd0pSTq1yr3ZI/73I/WFz3SbhEv/f/yqsUdhfZh6XAsFz1GM3t0mP0xbc3I+OCUv62pudOLS5EK1EBQ==
+edge-core-js@^0.17.0:
+  version "0.17.0"
+  resolved "https://registry.yarnpkg.com/edge-core-js/-/edge-core-js-0.17.0.tgz#70f09fdff492ed1f06367787f55d7de410a80a33"
+  integrity sha512-4iEe63nhFnfxb2E/3fQjOG9nejrUC+dVzqSI1jwEGQ4dkCRg4Qf1klFEonw/3mtzRF0Wzr7V/ASPqywsumALrg==
   dependencies:
     aes-js "^3.1.0"
     base-x "^1.0.4"
@@ -1935,7 +1930,6 @@ edge-core-js@^0.16.23:
     redux-pixies "^0.3.6"
     rfc4648 "^1.1.0"
     scrypt-js "^2.0.3"
-    ws "^5.1.1"
     yaob "^0.3.6"
 
 electron-to-chromium@^1.3.390:
@@ -5564,13 +5558,6 @@ write@1.0.3:
   integrity sha512-/lg70HAjtkUgWPVZhZcm+T4hkL8Zbtp1nFNOn3lRrxnlv50SRBv7cR7RqR+GMsd3hUXy9hWBo4CHTbFTcOYwig==
   dependencies:
     mkdirp "^0.5.1"
-
-ws@^5.1.1:
-  version "5.2.2"
-  resolved "https://registry.yarnpkg.com/ws/-/ws-5.2.2.tgz#dffef14866b8e8dc9133582514d1befaf96e980f"
-  integrity sha512-jaHFD6PFv6UgoIVda6qZllptQsMlDEJkTQcybzzXDYM1XO9Y8em691FGMPmM46WGyLU4z9KMgQN+qrux/nhlHA==
-  dependencies:
-    async-limiter "~1.0.0"
 
 xtend@^4.0.0, xtend@~4.0.1:
   version "4.0.2"

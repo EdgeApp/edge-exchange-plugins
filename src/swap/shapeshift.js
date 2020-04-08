@@ -9,8 +9,8 @@ import {
   type EdgeSpendTarget,
   type EdgeSwapInfo,
   type EdgeSwapPlugin,
-  type EdgeSwapPluginQuote,
   type EdgeSwapPluginStatus,
+  type EdgeSwapQuote,
   type EdgeSwapRequest,
   type EdgeTransaction,
   SwapAboveLimitError,
@@ -24,7 +24,6 @@ import { makeSwapPluginQuote } from '../swap-helpers.js'
 const pluginId = 'shapeshift'
 const swapInfo: EdgeSwapInfo = {
   pluginId,
-  pluginName: pluginId, // Deprecated
   displayName: 'ShapeShift',
 
   quoteUri: 'https://shapeshift.io/#/status/',
@@ -153,7 +152,7 @@ export function makeShapeshiftPlugin(
     async fetchSwapQuote(
       request: EdgeSwapRequest,
       userSettings: Object | void
-    ): Promise<EdgeSwapPluginQuote> {
+    ): Promise<EdgeSwapQuote> {
       const {
         fromCurrencyCode,
         fromWallet,

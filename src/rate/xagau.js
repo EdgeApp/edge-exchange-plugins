@@ -15,6 +15,7 @@ export function makeXagauPlugin(opts: EdgeCorePluginOptions): EdgeRatePlugin {
 
   return {
     rateInfo: {
+      pluginId: 'xagau',
       displayName: 'Xagau'
     },
 
