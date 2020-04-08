@@ -10,6 +10,7 @@ export function makeCoincapPlugin(opts: EdgeCorePluginOptions): EdgeRatePlugin {
 
   return {
     rateInfo: {
+      pluginId: 'coincap',
       displayName: 'Coincap'
     },
 

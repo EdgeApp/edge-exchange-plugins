@@ -25,6 +25,7 @@ export function makeCoinbasePlugin(
 
   return {
     rateInfo: {
+      pluginId: 'coinbase',
       displayName: 'Coinbase'
     },
 

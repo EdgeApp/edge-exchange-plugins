@@ -27,6 +27,7 @@ export function makeCurrencyconverterapiPlugin(
 
   return {
     rateInfo: {
+      pluginId: 'currencyconverterapi',
       displayName: 'CurrencyConverterAPI'
     },
 

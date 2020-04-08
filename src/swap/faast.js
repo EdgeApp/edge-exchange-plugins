@@ -7,7 +7,7 @@ import {
   type EdgeFetchResponse,
   type EdgeSwapInfo,
   type EdgeSwapPlugin,
-  type EdgeSwapPluginQuote,
+  type EdgeSwapQuote,
   type EdgeSwapRequest,
   type EdgeTransaction,
   SwapAboveLimitError,
@@ -23,7 +23,6 @@ const INVALID_CURRENCY_CODES = []
 const pluginId = 'faast'
 const swapInfo: EdgeSwapInfo = {
   pluginId,
-  pluginName: pluginId, // Deprecated
   displayName: 'Faa.st',
 
   quoteUri: 'https://faa.st/app/orders/',
@@ -143,7 +142,7 @@ export function makeFaastPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
     async fetchSwapQuote(
       request: EdgeSwapRequest,
       userSettings: Object | void
-    ): Promise<EdgeSwapPluginQuote> {
+    ): Promise<EdgeSwapQuote> {
       const {
         fromCurrencyCode,
         fromWallet,

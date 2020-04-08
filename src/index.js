@@ -20,11 +20,11 @@ const edgeCorePlugins = {
   // Rate plugins:
   coinbase: makeCoinbasePlugin,
   coincap: makeCoincapPlugin,
-  currencyconverterapi: makeCurrencyconverterapiPlugin,
-  xagau: makeXagauPlugin,
-  nomics: makeNomicsPlugin,
-  constantRate: makeConstantRatePlugin,
   compound: makeCompoundPlugin,
+  constantRate: makeConstantRatePlugin,
+  currencyconverterapi: makeCurrencyconverterapiPlugin,
+  nomics: makeNomicsPlugin,
+  xagau: makeXagauPlugin,
 
   // Swap plugins:
   changelly: makeChangellyPlugin,

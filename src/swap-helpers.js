@@ -1,8 +1,9 @@
 // @flow
 
 import {
-  type EdgeSwapPluginQuote,
+  type EdgeSwapQuote,
   type EdgeSwapRequest,
+  type EdgeSwapResult,
   type EdgeTransaction
 } from 'edge-core-js/types'
 
@@ -16,10 +17,10 @@ export function makeSwapPluginQuote(
   isEstimate: boolean = false,
   expirationDate?: Date,
   quoteId?: string
-): EdgeSwapPluginQuote {
+): EdgeSwapQuote {
   const { fromWallet } = request
 
-  const out: EdgeSwapPluginQuote = {
+  const out: EdgeSwapQuote = {
     fromNativeAmount,
     toNativeAmount,
     networkFee: {
@@ -28,18 +29,21 @@ export function makeSwapPluginQuote(
     },
     destinationAddress,
     pluginId,
-    pluginName: pluginId, // Deprecated
     expirationDate,
     quoteId,
     isEstimate,
-    async approve(): Promise<EdgeTransaction> {
+    async approve(): Promise<EdgeSwapResult> {
       const signedTransaction = await fromWallet.signTx(tx)
       const broadcastedTransaction = await fromWallet.broadcastTx(
         signedTransaction
       )
       await fromWallet.saveTx(signedTransaction)
 
-      return broadcastedTransaction
+      return {
+        transaction: broadcastedTransaction,
+        orderId: quoteId,
+        destinationAddress
+      }
     },
 
     async close() {}

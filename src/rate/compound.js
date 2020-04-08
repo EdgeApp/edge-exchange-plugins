@@ -16,6 +16,7 @@ export function makeCompoundPlugin(
 
   return {
     rateInfo: {
+      pluginId: 'compound',
       displayName: 'Compound'
     },
 
