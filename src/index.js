@@ -7,6 +7,7 @@ import { makeConstantRatePlugin } from './rate/constantRate.js'
 import { makeCurrencyconverterapiPlugin } from './rate/currencyconverterapi.js'
 import { makeNomicsPlugin } from './rate/nomics.js'
 import { makeXagauPlugin } from './rate/xagau.js'
+import { makeChangeHeroPlugin } from './swap/changehero.js'
 import { makeChangellyPlugin } from './swap/changelly.js'
 import { makeChangeNowPlugin } from './swap/changenow.js'
 import { makeCoinSwitchPlugin } from './swap/coinswitch.js'
@@ -34,7 +35,8 @@ const edgeCorePlugins = {
   totle: makeTotlePlugin,
   foxExchange: makeFoxExchangePlugin,
   godex: makeGodexPlugin,
-  coinswitch: makeCoinSwitchPlugin
+  coinswitch: makeCoinSwitchPlugin,
+  changehero: makeChangeHeroPlugin
 }
 
 if (
