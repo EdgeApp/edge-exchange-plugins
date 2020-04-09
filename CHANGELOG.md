@@ -1,5 +1,9 @@
 # edge-exchange-plugins
 
+# 0.9.3 (2020-04-09)
+
+- Add a temporary $0.001 FIO exchange rate.
+
 # 0.9.2 (2020-04-01)
 
 - Update Totle plugin to address API changes
