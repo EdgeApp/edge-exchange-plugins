@@ -5,8 +5,9 @@ import {
   type EdgeCurrencyWallet,
   type EdgeSwapInfo,
   type EdgeSwapPlugin,
-  type EdgeSwapPluginQuote,
+  type EdgeSwapQuote,
   type EdgeSwapRequest,
+  type EdgeSwapResult,
   type EdgeTransaction,
   SwapAboveLimitError,
   SwapBelowLimitError,
@@ -17,7 +18,6 @@ import {
 const pluginId = 'foxExchange'
 const swapInfo: EdgeSwapInfo = {
   pluginId,
-  pluginName: pluginId, // Deprecated
   displayName: 'Fox Exchange',
 
   quoteUri: 'https://fox.exchange/tx/',
@@ -96,7 +96,7 @@ export function makeFoxExchangePlugin(
     async fetchSwapQuote(
       request: EdgeSwapRequest,
       userSettings: Object | void
-    ): Promise<EdgeSwapPluginQuote> {
+    ): Promise<EdgeSwapQuote> {
       async function post(path: string, data: Object) {
         log(`request to ${path}`, data)
         const body = JSON.stringify(data)
@@ -273,7 +273,7 @@ export function makeFoxExchangePlugin(
           request.toCurrencyCode
         )
 
-        const quote: EdgeSwapPluginQuote = {
+        const quote: EdgeSwapQuote = {
           fromNativeAmount:
             request.quoteFor === 'from'
               ? request.nativeAmount
@@ -294,14 +294,13 @@ export function makeFoxExchangePlugin(
           },
           destinationAddress,
           pluginId,
-          pluginName: pluginId, // Deprecated
           expirationDate: new Date(
             rateResp.validTill || Date.now() + expirationMs
           ),
           quoteId: rateResp.futureOrderId,
           isEstimate: !rateResp.quoteToken,
 
-          async approve(): Promise<EdgeTransaction> {
+          async approve(): Promise<EdgeSwapResult> {
             const orderResp: OrderInfo = await post('/order', {
               depositCoin: request.fromCurrencyCode,
               destinationCoin: request.toCurrencyCode,
@@ -344,7 +343,11 @@ export function makeFoxExchangePlugin(
             )
             await request.fromWallet.saveTx(signedTransaction)
 
-            return broadcastedTransaction
+            return {
+              transaction: broadcastedTransaction,
+              orderId: rateResp.futureOrderId,
+              destinationAddress
+            }
           },
 
           async close() {

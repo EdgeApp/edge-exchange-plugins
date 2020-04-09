@@ -6,7 +6,7 @@ import {
   type EdgeCurrencyWallet,
   type EdgeSwapInfo,
   type EdgeSwapPlugin,
-  type EdgeSwapPluginQuote,
+  type EdgeSwapQuote,
   type EdgeSwapRequest,
   type EdgeTransaction,
   SwapBelowLimitError,
@@ -18,7 +18,6 @@ import { makeSwapPluginQuote } from '../swap-helpers.js'
 const pluginId = 'godex'
 const swapInfo: EdgeSwapInfo = {
   pluginId,
-  pluginName: pluginId, // Deprecated
   displayName: 'Godex',
 
   quoteUri: 'https://godex.io/exchange/waiting/',
@@ -92,7 +91,7 @@ export function makeGodexPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
     async fetchSwapQuote(
       request: EdgeSwapRequest,
       userSettings: Object | void
-    ): Promise<EdgeSwapPluginQuote> {
+    ): Promise<EdgeSwapQuote> {
       // Grab addresses:
       const [fromAddress, toAddress] = await Promise.all([
         getAddress(request.fromWallet, request.fromCurrencyCode),

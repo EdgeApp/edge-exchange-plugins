@@ -6,8 +6,9 @@ import {
   type EdgeLog,
   type EdgeSwapInfo,
   type EdgeSwapPlugin,
-  type EdgeSwapPluginQuote,
+  type EdgeSwapQuote,
   type EdgeSwapRequest,
+  type EdgeSwapResult,
   type EdgeTransaction,
   InsufficientFundsError,
   NoAmountSpecifiedError,
@@ -17,7 +18,6 @@ import {
 const pluginId = 'totle'
 const swapInfo: EdgeSwapInfo = {
   pluginId,
-  pluginName: pluginId, // Deprecated
   displayName: 'Totle',
 
   quoteUri: 'https://api.totle.com/swap',
@@ -143,7 +143,7 @@ export function makeTotlePlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
     async fetchSwapQuote(
       request: EdgeSwapRequest,
       userSettings: Object | void
-    ): Promise<EdgeSwapPluginQuote> {
+    ): Promise<EdgeSwapQuote> {
       const tokens: Array<Token> = await fetchTokens()
 
       const fromToken = tokens.find(t => t.symbol === request.fromCurrencyCode)
@@ -279,12 +279,12 @@ function makeTotleSwapPluginQuote(
   expirationDate?: Date,
   quoteId?: string,
   log: EdgeLog
-): EdgeSwapPluginQuote {
+): EdgeSwapQuote {
   log(arguments)
   const { fromWallet } = request
   const swapTx = txs[txs.length - 1]
 
-  const out: EdgeSwapPluginQuote = {
+  const out: EdgeSwapQuote = {
     fromNativeAmount,
     toNativeAmount,
     networkFee: {
@@ -293,13 +293,12 @@ function makeTotleSwapPluginQuote(
     },
     destinationAddress,
     pluginId,
-    pluginName: pluginId, // Deprecated
     expirationDate,
     quoteId,
     isEstimate,
 
-    async approve(): Promise<EdgeTransaction> {
-      let swapTx = {}
+    async approve(): Promise<EdgeSwapResult> {
+      let swapTx
       let index = 0
       for (const tx of txs) {
         const signedTransaction = await fromWallet.signTx(tx)
@@ -315,7 +314,11 @@ function makeTotleSwapPluginQuote(
         index++
       }
       if (!swapTx) throw new Error('No Totle swapTx')
-      return swapTx
+      return {
+        transaction: swapTx,
+        destinationAddress,
+        orderId: pluginId
+      }
     },
 
     async close() {}

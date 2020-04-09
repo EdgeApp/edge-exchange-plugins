@@ -6,7 +6,7 @@ import {
   type EdgeCurrencyWallet,
   type EdgeSwapInfo,
   type EdgeSwapPlugin,
-  type EdgeSwapPluginQuote,
+  type EdgeSwapQuote,
   type EdgeSwapRequest,
   type EdgeTransaction,
   SwapAboveLimitError,
@@ -47,7 +47,6 @@ function parseUtf8(text: string): Uint8Array {
 const pluginId = 'changelly'
 const swapInfo: EdgeSwapInfo = {
   pluginId,
-  pluginName: pluginId, // Deprecated
   displayName: 'Changelly',
 
   // quoteUri: 'https://changelly.com/transaction/',
@@ -158,7 +157,7 @@ export function makeChangellyPlugin(
     async fetchSwapQuote(
       request: EdgeSwapRequest,
       userSettings: Object | void
-    ): Promise<EdgeSwapPluginQuote> {
+    ): Promise<EdgeSwapQuote> {
       if (
         // if either currencyCode is invalid *and* doesn't have a transcription
         INVALID_CURRENCY_CODES[request.fromCurrencyCode] ||
@@ -184,7 +183,7 @@ export function makeChangellyPlugin(
     async getFixedQuote(
       request: EdgeSwapRequest,
       userSettings: Object | void
-    ): Promise<EdgeSwapPluginQuote> {
+    ): Promise<EdgeSwapQuote> {
       const [fromAddress, toAddress] = await Promise.all([
         getAddress(request.fromWallet, request.fromCurrencyCode),
         getAddress(request.toWallet, request.toCurrencyCode)
@@ -320,7 +319,7 @@ export function makeChangellyPlugin(
     async getEstimate(
       request: EdgeSwapRequest,
       userSettings: Object | void
-    ): Promise<EdgeSwapPluginQuote> {
+    ): Promise<EdgeSwapQuote> {
       // Grab addresses:
       const [fromAddress, toAddress] = await Promise.all([
         getAddress(request.fromWallet, request.fromCurrencyCode),

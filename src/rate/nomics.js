@@ -14,6 +14,7 @@ export function makeNomicsPlugin(opts: EdgeCorePluginOptions): EdgeRatePlugin {
   }
   return {
     rateInfo: {
+      pluginId: 'nomics',
       displayName: 'Nomics'
     },
 

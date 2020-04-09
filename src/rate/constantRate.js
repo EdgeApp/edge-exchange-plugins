@@ -10,6 +10,7 @@ export function makeConstantRatePlugin(
 ): EdgeRatePlugin {
   return {
     rateInfo: {
+      pluginId: 'constantRate',
       displayName: 'ConstantRate'
     },
 

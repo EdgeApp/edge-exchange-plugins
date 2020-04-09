@@ -10,6 +10,7 @@ export function makeHercPlugin(opts: EdgeCorePluginOptions): EdgeRatePlugin {
 
   return {
     rateInfo: {
+      pluginId: 'herc',
       displayName: 'XAGAU'
     },
 

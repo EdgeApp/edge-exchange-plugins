@@ -6,7 +6,7 @@ import {
   type EdgeCurrencyWallet,
   type EdgeSwapInfo,
   type EdgeSwapPlugin,
-  type EdgeSwapPluginQuote,
+  type EdgeSwapQuote,
   type EdgeSwapRequest,
   type EdgeTransaction,
   SwapAboveLimitError,
@@ -19,7 +19,6 @@ import { makeSwapPluginQuote } from '../swap-helpers.js'
 const pluginId = 'changenow'
 const swapInfo: EdgeSwapInfo = {
   pluginId,
-  pluginName: pluginId, // Deprecated
   displayName: 'Change NOW',
 
   quoteUri: 'https://changenow.io/exchange/txs/',
@@ -107,7 +106,7 @@ export function makeChangeNowPlugin(
       request: EdgeSwapRequest,
       userSettings: Object | void,
       opts: { promoCode?: string }
-    ): Promise<EdgeSwapPluginQuote> {
+    ): Promise<EdgeSwapQuote> {
       const { promoCode } = opts
 
       if (
