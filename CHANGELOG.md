@@ -1,5 +1,9 @@
 # edge-exchange-plugins
 
+# 0.10.0 (2020-04-09)
+
+- Upgrade to the new edge-core-js v0.17.0 API.
+
 # 0.9.3 (2020-04-09)
 
 - Add a temporary $0.001 FIO exchange rate.
