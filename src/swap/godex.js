@@ -90,7 +90,8 @@ export function makeGodexPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
 
     async fetchSwapQuote(
       request: EdgeSwapRequest,
-      userSettings: Object | void
+      userSettings: Object | void,
+      opts: { promoCode?: string }
     ): Promise<EdgeSwapQuote> {
       // Grab addresses:
       const [fromAddress, toAddress] = await Promise.all([
@@ -152,23 +153,27 @@ export function makeGodexPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
       if (lt(fromNativeAmount, nativeMin)) {
         throw new SwapBelowLimitError(swapInfo, nativeMin)
       }
-
-      const sendReply = await call(uri + 'transaction', request, {
-        params: {
-          deposit_amount: fromAmount,
-          coin_from: request.fromCurrencyCode,
-          coin_to: request.toCurrencyCode,
-          withdrawal: toAddress,
-          return: fromAddress,
-          // return_extra_id: 'empty',
-          // withdrawal_extra_id: 'empty',
-          return_extra_id: null,
-          withdrawal_extra_id: null,
-          affiliate_id: initOptions.apiKey,
-          type: 'edge',
-          isEstimate: false
+      const { promoCode } = opts
+      const sendReply = await call(
+        uri + 'transaction' + (promoCode != null ? `?promo=${promoCode}` : ''),
+        request,
+        {
+          params: {
+            deposit_amount: fromAmount,
+            coin_from: request.fromCurrencyCode,
+            coin_to: request.toCurrencyCode,
+            withdrawal: toAddress,
+            return: fromAddress,
+            // return_extra_id: 'empty',
+            // withdrawal_extra_id: 'empty',
+            return_extra_id: null,
+            withdrawal_extra_id: null,
+            affiliate_id: initOptions.apiKey,
+            type: 'edge',
+            isEstimate: false
+          }
         }
-      })
+      )
       log('sendReply' + sendReply)
       const quoteInfo: QuoteInfo = sendReply
 
