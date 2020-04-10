@@ -133,17 +133,18 @@ export function makeChangellyPlugin(
   const { apiKey } = initOptions
   const secret = parseUtf8(initOptions.secret)
 
-  async function call(json: any) {
+  async function call(json: any, promoCode?: string) {
     const body = JSON.stringify(json)
     const sign = base16
       .stringify(hmacSha512(parseUtf8(body), secret))
       .toLowerCase()
 
-    const headers = {
+    const headers: { [header: string]: string } = {
       'Content-Type': 'application/json',
       'api-key': apiKey,
       sign
     }
+    if (promoCode != null) headers['X-Promo-Code'] = promoCode
     const response = await fetchCors(uri, { method: 'POST', body, headers })
 
     if (!response.ok) {
@@ -182,8 +183,10 @@ export function makeChangellyPlugin(
 
     async getFixedQuote(
       request: EdgeSwapRequest,
-      userSettings: Object | void
+      userSettings: Object | void,
+      opts: { promoCode?: string }
     ): Promise<EdgeSwapQuote> {
+      const { promoCode } = opts
       const [fromAddress, toAddress] = await Promise.all([
         getAddress(request.fromWallet, request.fromCurrencyCode),
         getAddress(request.toWallet, request.toCurrencyCode)
@@ -262,12 +265,15 @@ export function makeChangellyPlugin(
               rateId: fixedRateQuote.result.id
             }
 
-      const sendReply = await call({
-        jsonrpc: '2.0',
-        id: 2,
-        method: 'createFixTransaction',
-        params
-      })
+      const sendReply = await call(
+        {
+          jsonrpc: '2.0',
+          id: 2,
+          method: 'createFixTransaction',
+          params
+        },
+        promoCode
+      )
       checkReply(sendReply, request)
       const quoteInfo: FixedQuoteInfo = sendReply.result
       const spendInfoAmount = await request.fromWallet.denominationToNative(
@@ -318,8 +324,10 @@ export function makeChangellyPlugin(
 
     async getEstimate(
       request: EdgeSwapRequest,
-      userSettings: Object | void
+      userSettings: Object | void,
+      opts: { promoCode?: string }
     ): Promise<EdgeSwapQuote> {
+      const { promoCode } = opts
       // Grab addresses:
       const [fromAddress, toAddress] = await Promise.all([
         getAddress(request.fromWallet, request.fromCurrencyCode),
@@ -410,20 +418,23 @@ export function makeChangellyPlugin(
       }
 
       // Get the address:
-      const sendReply = await call({
-        jsonrpc: '2.0',
-        id: 3,
-        method: 'createTransaction',
-        params: {
-          amount: fromAmount,
-          from: safeFromCurrencyCode,
-          to: safeToCurrencyCode,
-          address: toAddress,
-          extraId: null, // TODO: Do we need this for Monero?
-          refundAddress: fromAddress,
-          refundExtraId: null
-        }
-      })
+      const sendReply = await call(
+        {
+          jsonrpc: '2.0',
+          id: 3,
+          method: 'createTransaction',
+          params: {
+            amount: fromAmount,
+            from: safeFromCurrencyCode,
+            to: safeToCurrencyCode,
+            address: toAddress,
+            extraId: null, // TODO: Do we need this for Monero?
+            refundAddress: fromAddress,
+            refundExtraId: null
+          }
+        },
+        promoCode
+      )
       checkReply(sendReply, request)
       const quoteInfo: QuoteInfo = sendReply.result
       // Make the transaction:
