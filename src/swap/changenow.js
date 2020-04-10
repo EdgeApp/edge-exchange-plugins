@@ -244,15 +244,15 @@ export function makeChangeNowPlugin(
                 toNativeAmount = request.nativeAmount
               }
               const sendReply = await post(
-                `transactions/fixed-rate/${apiKey}` +
-                  (promoCode != null ? `?promo=${promoCode}` : ''),
+                `transactions/fixed-rate/${apiKey}`,
                 {
                   amount: fromAmount,
                   from: safeFromCurrencyCode,
                   to: safeToCurrencyCode,
                   address: toAddress,
                   extraId: null, // TODO: Do we need this for Monero?
-                  refundAddress: fromAddress
+                  refundAddress: fromAddress,
+                  payload: { promoCode }
                 }
               )
               log('Fixed sendReply q ', sendReply)
@@ -364,18 +364,15 @@ export function makeChangeNowPlugin(
         throw new SwapBelowLimitError(swapInfo, nativeMin)
       }
 
-      const sendReply = await post(
-        `transactions/${apiKey}` +
-          (promoCode != null ? `?promo=${promoCode}` : ''),
-        {
-          amount: fromAmount,
-          from: safeFromCurrencyCode.toLowerCase(),
-          to: safeToCurrencyCode.toLowerCase(),
-          address: toAddress,
-          extraId: null, // TODO: Do we need this for Monero?
-          refundAddress: fromAddress
-        }
-      )
+      const sendReply = await post(`transactions/${apiKey}`, {
+        amount: fromAmount,
+        from: safeFromCurrencyCode.toLowerCase(),
+        to: safeToCurrencyCode.toLowerCase(),
+        address: toAddress,
+        extraId: null, // TODO: Do we need this for Monero?
+        refundAddress: fromAddress,
+        payload: { promoCode }
+      })
       // checkReply(sendReply)
       const quoteInfo: QuoteInfo = {
         id: sendReply.id,
