@@ -157,7 +157,8 @@ export function makeChangellyPlugin(
     swapInfo,
     async fetchSwapQuote(
       request: EdgeSwapRequest,
-      userSettings: Object | void
+      userSettings: Object | void,
+      opts: { promoCode?: string }
     ): Promise<EdgeSwapQuote> {
       if (
         // if either currencyCode is invalid *and* doesn't have a transcription
@@ -170,8 +171,8 @@ export function makeChangellyPlugin(
           request.toCurrencyCode
         )
       }
-      const fixedPromise = this.getFixedQuote(request, userSettings)
-      const estimatePromise = this.getEstimate(request, userSettings)
+      const fixedPromise = this.getFixedQuote(request, userSettings, opts)
+      const estimatePromise = this.getEstimate(request, userSettings, opts)
       try {
         const fixedResult = await fixedPromise
         return fixedResult
