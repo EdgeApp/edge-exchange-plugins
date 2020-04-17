@@ -1,5 +1,9 @@
 # edge-exchange-plugins
 
+# 0.10.2 (2020-04-17)
+
+- Changed FIO temporary fixed rate
+
 # 0.10.1 (2020-04-16)
 
 - Add a Switchain swap plugin.
