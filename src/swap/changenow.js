@@ -2,6 +2,15 @@
 
 import { lt, mul } from 'biggystring'
 import {
+  type Cleaner,
+  asArray,
+  asDate,
+  asNumber,
+  asObject,
+  asOptional,
+  asString
+} from 'cleaners'
+import {
   type EdgeCorePluginOptions,
   type EdgeCurrencyWallet,
   type EdgeSwapInfo,
@@ -26,22 +35,6 @@ const swapInfo: EdgeSwapInfo = {
 }
 
 const uri = 'https://changenow.io/api/v1/'
-const expirationMs = 1000 * 60 * 20
-
-type QuoteInfo = {
-  error?: string,
-  id: string,
-  payinAddress: string,
-  payoutAddress: string,
-  fromCurrency: string,
-  toCurrency: string,
-  payinExtraId?: string | null,
-  refundAddress: string,
-  amount: string,
-  rate?: string | null,
-  minerFee?: string | null,
-  isEstimate: boolean
-}
 
 const dontUseLegacy = {
   DGB: true
@@ -121,7 +114,6 @@ export function makeChangeNowPlugin(
         )
       }
       // Grab addresses:
-      let isEstimate = true
       const [fromAddress, toAddress] = await Promise.all([
         getAddress(request.fromWallet, request.fromCurrencyCode),
         getAddress(request.toWallet, request.toCurrencyCode)
@@ -140,9 +132,11 @@ export function makeChangeNowPlugin(
 
       // get the markets
       const availablePairs = await get(`currencies-to/${safeFromCurrencyCode}`)
-      const fixedMarket = await get(
-        `market-info/fixed-rate/${apiKey}` +
-          (promoCode != null ? `?promo=${promoCode}` : '')
+      const fixedMarket = asFixedMarketReply(
+        await get(
+          `market-info/fixed-rate/${apiKey}` +
+            (promoCode != null ? `?promo=${promoCode}` : '')
+        )
       )
 
       const quoteAmount =
@@ -171,7 +165,6 @@ export function makeChangeNowPlugin(
             }
 
       const pairsToUse = []
-      let useFixed = false
       let fromAmount, fromNativeAmount, toNativeAmount
       let pairItem
       let quoteReplyKeep = { estimatedAmount: '0' }
@@ -180,9 +173,6 @@ export function makeChangeNowPlugin(
         if (safeToCurrencyCode.toLowerCase() === obj.ticker) {
           pairsToUse.push(obj)
           if (obj.supportsFixedRate) {
-            let minerFee = null
-            let rate = null
-            useFixed = true
             for (let j = 0; j < fixedMarket.length; j++) {
               const item = fixedMarket[j]
               if (
@@ -219,8 +209,6 @@ export function makeChangeNowPlugin(
                     request.toCurrencyCode
                   )
                 }
-                minerFee = item.minerFee
-                rate = item.rate
                 quoteReplyKeep = quoteReply
               }
             }
@@ -243,9 +231,8 @@ export function makeChangeNowPlugin(
                 )
                 toNativeAmount = request.nativeAmount
               }
-              const sendReply = await post(
-                `transactions/fixed-rate/${apiKey}`,
-                {
+              const sendReply = asCreateOrderReply(
+                await post(`transactions/fixed-rate/${apiKey}`, {
                   amount: fromAmount,
                   from: safeFromCurrencyCode,
                   to: safeToCurrencyCode,
@@ -253,30 +240,17 @@ export function makeChangeNowPlugin(
                   extraId: null, // TODO: Do we need this for Monero?
                   refundAddress: fromAddress,
                   payload: { promoCode }
-                }
+                })
               )
               log('Fixed sendReply q ', sendReply)
-              const quoteInfo: QuoteInfo = {
-                id: sendReply.id,
-                payinAddress: sendReply.payinAddress,
-                payoutAddress: sendReply.payoutAddress,
-                fromCurrency: sendReply.fromCurrency,
-                toCurrency: sendReply.toCurrency,
-                payinExtraId: sendReply.payinExtraId || null,
-                refundAddress: sendReply.refundAddress,
-                amount: sendReply.amount,
-                rate: rate || null,
-                minerFee: minerFee || null,
-                isEstimate: !useFixed
-              }
               const spendInfo = {
                 currencyCode: request.fromCurrencyCode,
                 spendTargets: [
                   {
                     nativeAmount: fromNativeAmount,
-                    publicAddress: quoteInfo.payinAddress,
+                    publicAddress: sendReply.payinAddress,
                     otherParams: {
-                      uniqueIdentifier: quoteInfo.payinExtraId
+                      uniqueIdentifier: sendReply.payinExtraId
                     }
                   }
                 ]
@@ -290,7 +264,6 @@ export function makeChangeNowPlugin(
                 spendInfo.spendTargets[0].publicAddress
               tx.otherParams.uniqueIdentifier =
                 spendInfo.spendTargets[0].otherParams.uniqueIdentifier
-              isEstimate = false
               const toAmount = await request.toWallet.denominationToNative(
                 sendReply.amount.toString(),
                 request.toCurrencyCode
@@ -301,10 +274,10 @@ export function makeChangeNowPlugin(
                 toAmount,
                 tx,
                 toAddress,
-                'changenow',
-                isEstimate,
-                new Date(Date.now() + expirationMs),
-                quoteInfo.id
+                pluginId,
+                false,
+                sendReply.validUntil,
+                sendReply.id
               )
             }
           }
@@ -364,29 +337,17 @@ export function makeChangeNowPlugin(
         throw new SwapBelowLimitError(swapInfo, nativeMin)
       }
 
-      const sendReply = await post(`transactions/${apiKey}`, {
-        amount: fromAmount,
-        from: safeFromCurrencyCode.toLowerCase(),
-        to: safeToCurrencyCode.toLowerCase(),
-        address: toAddress,
-        extraId: null, // TODO: Do we need this for Monero?
-        refundAddress: fromAddress,
-        payload: { promoCode }
-      })
-      // checkReply(sendReply)
-      const quoteInfo: QuoteInfo = {
-        id: sendReply.id,
-        payinAddress: sendReply.payinAddress,
-        payoutAddress: sendReply.payoutAddress,
-        fromCurrency: sendReply.fromCurrency,
-        toCurrency: sendReply.toCurrency,
-        payinExtraId: sendReply.payinExtraId || null,
-        refundAddress: sendReply.refundAddress,
-        amount: sendReply.amount,
-        rate: sendReply.rate || null,
-        minerFee: sendReply.minerFee || null,
-        isEstimate: !useFixed
-      }
+      const sendReply = asCreateOrderReply(
+        await post(`transactions/${apiKey}`, {
+          amount: fromAmount,
+          from: safeFromCurrencyCode.toLowerCase(),
+          to: safeToCurrencyCode.toLowerCase(),
+          address: toAddress,
+          extraId: null, // TODO: Do we need this for Monero?
+          refundAddress: fromAddress,
+          payload: { promoCode }
+        })
+      )
 
       // Make the transaction:
       const spendInfo = {
@@ -394,9 +355,9 @@ export function makeChangeNowPlugin(
         spendTargets: [
           {
             nativeAmount: fromNativeAmount,
-            publicAddress: quoteInfo.payinAddress,
+            publicAddress: sendReply.payinAddress,
             otherParams: {
-              uniqueIdentifier: quoteInfo.payinExtraId
+              uniqueIdentifier: sendReply.payinExtraId
             }
           }
         ]
@@ -414,13 +375,49 @@ export function makeChangeNowPlugin(
         toNativeAmount,
         tx,
         toAddress,
-        'changenow',
-        isEstimate,
-        new Date(Date.now() + expirationMs) // ,
-        // quoteInfo.id
+        pluginId,
+        true,
+        new Date(Date.now() + 1000 * 60 * 20)
       )
     }
   }
 
   return out
 }
+
+/**
+ * An optional value, where a blank string means undefined.
+ */
+export function asOptionalBlank<T>(
+  cleaner: (raw: any) => T
+): Cleaner<T | void> {
+  return function asIgnoredBlank(raw) {
+    if (raw == null || raw === '') return
+    return cleaner(raw)
+  }
+}
+
+const asFixedMarketReply = asArray(
+  asObject({
+    from: asString,
+    to: asString,
+    min: asNumber,
+    max: asNumber,
+    rate: asNumber,
+    minerFee: asNumber
+  })
+)
+
+const asCreateOrderReply = asObject({
+  amount: asNumber,
+  fromCurrency: asString,
+  toCurrency: asString,
+  id: asString,
+  payinAddress: asString,
+  payinExtraId: asOptionalBlank(asString),
+  payoutAddress: asOptionalBlank(asString),
+  payoutExtraId: asOptionalBlank(asString),
+  refundAddress: asOptionalBlank(asString),
+  refundExtraId: asOptionalBlank(asString),
+  validUntil: asOptional(asDate)
+})
