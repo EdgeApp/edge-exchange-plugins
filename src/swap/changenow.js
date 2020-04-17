@@ -71,7 +71,7 @@ export function makeChangeNowPlugin(
   opts: EdgeCorePluginOptions
 ): EdgeSwapPlugin {
   const { initOptions, io, log } = opts
-  const { fetchCors = io.fetch } = io
+  const { fetch } = io
 
   if (initOptions.apiKey == null) {
     throw new Error('No ChangeNow apiKey provided.')
@@ -79,14 +79,14 @@ export function makeChangeNowPlugin(
   const { apiKey } = initOptions
 
   async function get(route: string) {
-    const response = await fetchCors(uri + route)
+    const response = await fetch(uri + route)
     return response.json()
   }
 
   async function post(route: string, body: any) {
     log('call fixed:', route, body)
 
-    const response = await fetchCors(uri + route, {
+    const response = await fetch(uri + route, {
       method: 'POST',
       body: JSON.stringify(body),
       headers: { 'Content-Type': 'application/json' }
