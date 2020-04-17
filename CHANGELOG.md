@@ -1,5 +1,11 @@
 # edge-exchange-plugins
 
+# 0.10.1 (2020-04-16)
+
+- Add a Switchain swap plugin.
+- Pass promo codes to Changelly, ChangeNow, and Godex.
+- Fix ChangeNow on Android & add better logging.
+
 # 0.10.0 (2020-04-09)
 
 - Upgrade to the new edge-core-js v0.17.0 API.
