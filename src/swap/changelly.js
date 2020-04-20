@@ -389,6 +389,16 @@ export function makeChangellyPlugin(
         })
       ])
       checkReply(quoteReplies[0], request)
+
+      // Check the minimum:
+      const nativeMin = await request.fromWallet.denominationToNative(
+        quoteReplies[0].result,
+        request.fromCurrencyCode
+      )
+      if (lt(request.nativeAmount, nativeMin)) {
+        throw new SwapBelowLimitError(swapInfo, nativeMin)
+      }
+
       checkReply(quoteReplies[1], request)
 
       // Calculate the amounts:
@@ -407,15 +417,6 @@ export function makeChangellyPlugin(
           request.fromCurrencyCode
         )
         toNativeAmount = request.nativeAmount
-      }
-
-      // Check the minimum:
-      const nativeMin = await request.fromWallet.denominationToNative(
-        quoteReplies[0].result,
-        request.fromCurrencyCode
-      )
-      if (lt(fromNativeAmount, nativeMin)) {
-        throw new SwapBelowLimitError(swapInfo, nativeMin)
       }
 
       // Get the address:
