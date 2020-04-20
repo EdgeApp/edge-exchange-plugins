@@ -40,7 +40,7 @@ export function makeConstantRatePlugin(
         {
           fromCurrency: 'FIO',
           toCurrency: 'iso:USD',
-          rate: 0.01
+          rate: 0.001
         }
       ]
       return pairs
