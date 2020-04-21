@@ -164,12 +164,6 @@ export function makeTotlePlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
         publicAddress: userToAddress
       } = await request.toWallet.getReceiveAddress({}) //  currencyCode ?
 
-      // TODO: Once Totle enables separate souce & destination wallets again,
-      // Remove this and uncomment `destinationAddress` in the block below:
-      if (userFromAddress !== userToAddress) {
-        throw new Error('Source & destination must be the same wallet')
-      }
-
       // Get the estimate from the server:
       const reply = await call({
         address: userFromAddress,
@@ -181,9 +175,9 @@ export function makeTotlePlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
           destinationAsset: toToken.address,
           [request.quoteFor === 'from'
             ? 'sourceAmount'
-            : 'destinationAmount']: request.nativeAmount
+            : 'destinationAmount']: request.nativeAmount,
           // strictDestination: request.quoteFor === 'to',
-          // destinationAddress: userToAddress
+          destinationAddress: userToAddress
         }
       })
       checkReply(reply, request)
