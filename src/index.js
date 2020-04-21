@@ -16,6 +16,7 @@ import { makeGodexPlugin } from './swap/godex.js'
 import { makeShapeshiftPlugin } from './swap/shapeshift.js'
 import { makeSwitchainPlugin } from './swap/switchain.js'
 import { makeTotlePlugin } from './swap/totle.js'
+import { makeTransferPlugin } from './swap/transfer.js'
 
 const edgeCorePlugins = {
   // Rate plugins:
@@ -36,7 +37,8 @@ const edgeCorePlugins = {
   godex: makeGodexPlugin,
   shapeshift: makeShapeshiftPlugin,
   switchain: makeSwitchainPlugin,
-  totle: makeTotlePlugin
+  totle: makeTotlePlugin,
+  transfer: makeTransferPlugin
 }
 
 if (
