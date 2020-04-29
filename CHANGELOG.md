@@ -1,5 +1,10 @@
 # edge-exchange-plugins
 
+# 0.10.3 (2020-04-29)
+
+- Fix Switchain ERC20 token sending issue
+- Fix swapInfo orderUri variable name across all swap partners
+
 # 0.10.2 (2020-04-17)
 
 - Changed FIO temporary fixed rate
