@@ -20,7 +20,7 @@ const swapInfo: EdgeSwapInfo = {
   pluginId,
   displayName: 'Fox Exchange',
 
-  quoteUri: 'https://fox.exchange/tx/',
+  orderUri: 'https://fox.exchange/tx/',
   supportEmail: 'support@fox.exchange'
 }
 

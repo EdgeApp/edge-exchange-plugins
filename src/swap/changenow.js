@@ -30,7 +30,7 @@ const swapInfo: EdgeSwapInfo = {
   pluginId,
   displayName: 'Change NOW',
 
-  quoteUri: 'https://changenow.io/exchange/txs/',
+  orderUri: 'https://changenow.io/exchange/txs/',
   supportEmail: 'support@changenow.io'
 }
 

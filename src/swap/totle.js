@@ -20,7 +20,7 @@ const swapInfo: EdgeSwapInfo = {
   pluginId,
   displayName: 'Totle',
 
-  quoteUri: 'https://api.totle.com/swap',
+  orderUri: 'https://api.totle.com/swap',
   supportEmail: 'support@totle.com'
 }
 

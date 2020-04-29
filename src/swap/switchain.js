@@ -22,7 +22,7 @@ const pluginId = 'switchain'
 const swapInfo: EdgeSwapInfo = {
   pluginId,
   displayName: 'Switchain',
-  quoteUri: 'https://www.switchain.com/order-status/',
+  orderUri: 'https://www.switchain.com/order-status/',
   supportEmail: 'help@switchain.com'
 }
 
@@ -52,7 +52,7 @@ type SwitchainOrderCreationResponse = {
   exchangeAddressTag?: string,
   refundAddress: string,
   refundAddressTag?: string,
-  toAddres: string,
+  toAddress: string,
   toAddressTag?: string
 }
 
@@ -318,7 +318,7 @@ export function makeSwitchainPlugin(
               : {}
           }
           const spendInfo: EdgeSpendInfo = {
-            currencyCode: fromWallet.currencyInfo.currencyCode,
+            currencyCode: fromCurrencyCode,
             spendTargets: [spendTarget]
           }
           const completeTx: EdgeTransaction = await fromWallet.makeSpend(
