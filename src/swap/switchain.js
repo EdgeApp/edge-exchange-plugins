@@ -318,7 +318,7 @@ export function makeSwitchainPlugin(
               : {}
           }
           const spendInfo: EdgeSpendInfo = {
-            currencyCode: fromWallet.currencyInfo.currencyCode,
+            currencyCode: fromCurrencyCode,
             spendTargets: [spendTarget]
           }
           const completeTx: EdgeTransaction = await fromWallet.makeSpend(
