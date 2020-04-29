@@ -52,7 +52,7 @@ type SwitchainOrderCreationResponse = {
   exchangeAddressTag?: string,
   refundAddress: string,
   refundAddressTag?: string,
-  toAddres: string,
+  toAddress: string,
   toAddressTag?: string
 }
 
