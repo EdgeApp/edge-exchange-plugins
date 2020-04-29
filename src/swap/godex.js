@@ -20,7 +20,7 @@ const swapInfo: EdgeSwapInfo = {
   pluginId,
   displayName: 'Godex',
 
-  quoteUri: 'https://godex.io/exchange/waiting/',
+  orderUri: 'https://godex.io/exchange/waiting/',
   supportEmail: 'support@godex.io'
 }
 

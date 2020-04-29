@@ -22,7 +22,7 @@ const pluginId = 'switchain'
 const swapInfo: EdgeSwapInfo = {
   pluginId,
   displayName: 'Switchain',
-  quoteUri: 'https://www.switchain.com/order-status/',
+  orderUri: 'https://www.switchain.com/order-status/',
   supportEmail: 'help@switchain.com'
 }
 

@@ -17,7 +17,7 @@ const swapInfo: EdgeSwapInfo = {
   pluginId,
   displayName: 'Transfer',
 
-  quoteUri: undefined,
+  orderUri: undefined,
   supportEmail: 'support@edge.com'
 }
 

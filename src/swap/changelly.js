@@ -49,7 +49,7 @@ const swapInfo: EdgeSwapInfo = {
   pluginId,
   displayName: 'Changelly',
 
-  // quoteUri: 'https://changelly.com/transaction/',
+  // orderUri: 'https://changelly.com/transaction/',
   supportEmail: 'support@changelly.com'
 }
 

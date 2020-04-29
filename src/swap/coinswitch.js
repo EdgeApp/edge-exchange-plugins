@@ -21,7 +21,7 @@ const pluginId = 'coinswitch'
 const swapInfo: EdgeSwapInfo = {
   pluginId,
   displayName: 'CoinSwitch',
-  quoteUri: 'https://coinswitch.co/app/exchange/transaction/',
+  orderUri: 'https://coinswitch.co/app/exchange/transaction/',
   supportEmail: 'support@coinswitch.co'
 }
 

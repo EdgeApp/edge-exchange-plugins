@@ -25,7 +25,7 @@ const swapInfo: EdgeSwapInfo = {
   pluginId,
   displayName: 'Faa.st',
 
-  quoteUri: 'https://faa.st/app/orders/',
+  orderUri: 'https://faa.st/app/orders/',
   supportEmail: 'support@faa.st'
 }
 
