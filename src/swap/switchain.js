@@ -324,6 +324,8 @@ export function makeSwitchainPlugin(
           const completeTx: EdgeTransaction = await fromWallet.makeSpend(
             spendInfo
           )
+          completeTx.otherParams.payinAddress = exchangeAddress
+          completeTx.otherParams.uniqueIdentifier = exchangeAddressTag
 
           const signedTransaction = await fromWallet.signTx(completeTx)
           const broadcastedTransaction = await fromWallet.broadcastTx(
@@ -333,7 +335,7 @@ export function makeSwitchainPlugin(
 
           return {
             transaction: broadcastedTransaction,
-            destinationAddress: toAddress,
+            destinationAddress: exchangeAddress,
             orderId
           }
         },
