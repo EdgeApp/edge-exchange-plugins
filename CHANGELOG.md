@@ -1,5 +1,10 @@
 # edge-exchange-plugins
 
+# 0.10.4 (2020-05-14)
+
+- Add WazirX exchange rate provider
+- Fix Switchain metadata
+
 # 0.10.3 (2020-04-29)
 
 - Fix Switchain ERC20 token sending issue
