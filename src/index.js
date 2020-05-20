@@ -2,6 +2,7 @@
 
 import { makeCoinbasePlugin } from './rate/coinbase.js'
 import { makeCoincapPlugin } from './rate/coincap.js'
+import { makeCoinGeckoPlugin } from './rate/coingecko'
 import { makeCoinmonitorPlugin } from './rate/coinmonitor.js'
 import { makeCompoundPlugin } from './rate/compound.js'
 import { makeConstantRatePlugin } from './rate/constantRate.js'
@@ -24,6 +25,7 @@ const edgeCorePlugins = {
   // Rate plugins:
   coinbase: makeCoinbasePlugin,
   coincap: makeCoincapPlugin,
+  coingecko: makeCoinGeckoPlugin,
   coinmonitor: makeCoinmonitorPlugin,
   compound: makeCompoundPlugin,
   constantRate: makeConstantRatePlugin,
