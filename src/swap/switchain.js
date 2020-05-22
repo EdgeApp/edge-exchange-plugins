@@ -324,6 +324,7 @@ export function makeSwitchainPlugin(
           const completeTx: EdgeTransaction = await fromWallet.makeSpend(
             spendInfo
           )
+          if (completeTx.otherParams == null) completeTx.otherParams = {}
           completeTx.otherParams.payinAddress = exchangeAddress
           completeTx.otherParams.uniqueIdentifier = exchangeAddressTag
 
