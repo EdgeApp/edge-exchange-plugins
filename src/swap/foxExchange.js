@@ -19,11 +19,10 @@ const pluginId = 'foxExchange'
 const swapInfo: EdgeSwapInfo = {
   pluginId,
   displayName: 'Fox Exchange',
-
-  orderUri: 'https://fox.exchange/tx/',
   supportEmail: 'support@fox.exchange'
 }
 
+const orderUri = 'https://fox.exchange/tx/'
 const uri = 'https://fox.exchange/api/cs'
 const expirationMs = 1000 * 60 * 20
 
@@ -262,8 +261,7 @@ export function makeFoxExchangePlugin(
                       String(sourceAmount),
                       request.fromCurrencyCode
                     ),
-              publicAddress: dummyAddress,
-              otherParams: {}
+              publicAddress: dummyAddress
             }
           ]
         })
@@ -325,17 +323,21 @@ export function makeFoxExchangePlugin(
                     request.fromCurrencyCode
                   ),
                   publicAddress: orderResp.exchangeAddress.address,
-                  otherParams: {
-                    uniqueIdentifier: orderResp.exchangeAddress.tag
-                  }
+                  uniqueIdentifier: orderResp.exchangeAddress.tag || undefined
                 }
-              ]
+              ],
+              swapData: {
+                orderId: rateResp.futureOrderId,
+                orderUri: orderUri + rateResp.futureOrderId,
+                isEstimate: !rateResp.quoteToken,
+                payoutAddress: destinationAddress,
+                payoutCurrencyCode: request.toCurrencyCode,
+                payoutNativeAmount: quote.toNativeAmount,
+                payoutWalletId: request.toWallet.id,
+                plugin: { ...swapInfo },
+                refundAddress: undefined
+              }
             })
-
-            // This seems to be required to format transaction description correctly
-            if (!tx.otherParams) tx.otherParams = {}
-            tx.otherParams.payinAddress = orderResp.exchangeAddress.address
-            tx.otherParams.uniqueIdentifier = orderResp.exchangeAddress.tag
 
             const signedTransaction = await request.fromWallet.signTx(tx)
             const broadcastedTransaction = await request.fromWallet.broadcastTx(

@@ -4,6 +4,7 @@ import { gt, lt, mul } from 'biggystring'
 import {
   type EdgeCorePluginOptions,
   type EdgeCurrencyWallet,
+  type EdgeSpendInfo,
   type EdgeSwapInfo,
   type EdgeSwapPlugin,
   type EdgeSwapQuote,
@@ -49,10 +50,10 @@ const swapInfo: EdgeSwapInfo = {
   pluginId,
   displayName: 'Changelly',
 
-  // orderUri: 'https://changelly.com/transaction/',
   supportEmail: 'support@changelly.com'
 }
 
+// const orderUri = 'https://changelly.com/transaction/'
 const uri = 'https://api.changelly.com'
 const expirationMs = 1000 * 60 * 20
 const expirationFixedMs = 1000 * 60 * 5
@@ -284,24 +285,6 @@ export function makeChangellyPlugin(
         request.fromCurrencyCode.toUpperCase()
       )
 
-      const spendInfo = {
-        currencyCode: request.fromCurrencyCode,
-        spendTargets: [
-          {
-            nativeAmount: spendInfoAmount,
-            publicAddress: quoteInfo.payinAddress,
-            otherParams: {
-              uniqueIdentifier: quoteInfo.payinExtraId
-            }
-          }
-        ]
-      }
-      const tx: EdgeTransaction = await request.fromWallet.makeSpend(spendInfo)
-      if (tx.otherParams == null) tx.otherParams = {}
-      tx.otherParams.payinAddress = spendInfo.spendTargets[0].publicAddress
-      tx.otherParams.uniqueIdentifier =
-        spendInfo.spendTargets[0].otherParams.uniqueIdentifier
-
       const amountExpectedFromNative = await request.fromWallet.denominationToNative(
         sendReply.result.amountExpectedFrom,
         request.fromCurrencyCode
@@ -310,6 +293,30 @@ export function makeChangellyPlugin(
         sendReply.result.amountExpectedTo,
         request.toCurrencyCode
       )
+
+      const spendInfo: EdgeSpendInfo = {
+        currencyCode: request.fromCurrencyCode,
+        spendTargets: [
+          {
+            nativeAmount: spendInfoAmount,
+            publicAddress: quoteInfo.payinAddress,
+            uniqueIdentifier: quoteInfo.payinExtraId || undefined
+          }
+        ],
+        swapData: {
+          orderId: quoteInfo.id,
+          // orderUri: orderUri + quoteInfo.id,
+          isEstimate: false,
+          payoutAddress: toAddress,
+          payoutCurrencyCode: request.toCurrencyCode,
+          payoutNativeAmount: amountExpectedToTo,
+          payoutWalletId: request.toWallet.id,
+          plugin: { ...swapInfo },
+          refundAddress: fromAddress
+        }
+      }
+      const tx: EdgeTransaction = await request.fromWallet.makeSpend(spendInfo)
+
       return makeSwapPluginQuote(
         request,
         amountExpectedFromNative,
@@ -440,25 +447,29 @@ export function makeChangellyPlugin(
       checkReply(sendReply, request)
       const quoteInfo: QuoteInfo = sendReply.result
       // Make the transaction:
-      const spendInfo = {
+      const spendInfo: EdgeSpendInfo = {
         currencyCode: request.fromCurrencyCode,
         spendTargets: [
           {
             nativeAmount: fromNativeAmount,
             publicAddress: quoteInfo.payinAddress,
-            otherParams: {
-              uniqueIdentifier: quoteInfo.payinExtraId
-            }
+            uniqueIdentifier: quoteInfo.payinExtraId || undefined
           }
-        ]
+        ],
+        swapData: {
+          orderId: quoteInfo.id,
+          // orderUri: orderUri + quoteInfo.id,
+          isEstimate: true,
+          payoutAddress: toAddress,
+          payoutCurrencyCode: request.toCurrencyCode,
+          payoutNativeAmount: toNativeAmount,
+          payoutWalletId: request.toWallet.id,
+          plugin: { ...swapInfo },
+          refundAddress: fromAddress
+        }
       }
       log('spendInfo', spendInfo)
       const tx: EdgeTransaction = await request.fromWallet.makeSpend(spendInfo)
-      if (tx.otherParams == null) tx.otherParams = {}
-
-      tx.otherParams.payinAddress = spendInfo.spendTargets[0].publicAddress
-      tx.otherParams.uniqueIdentifier =
-        spendInfo.spendTargets[0].otherParams.uniqueIdentifier
 
       return makeSwapPluginQuote(
         request,

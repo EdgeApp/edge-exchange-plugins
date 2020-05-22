@@ -13,6 +13,7 @@ import {
 import {
   type EdgeCorePluginOptions,
   type EdgeCurrencyWallet,
+  type EdgeSpendInfo,
   type EdgeSwapInfo,
   type EdgeSwapPlugin,
   type EdgeSwapQuote,
@@ -29,11 +30,10 @@ const pluginId = 'changenow'
 const swapInfo: EdgeSwapInfo = {
   pluginId,
   displayName: 'Change NOW',
-
-  orderUri: 'https://changenow.io/exchange/txs/',
   supportEmail: 'support@changenow.io'
 }
 
+const orderUri = 'https://changenow.io/exchange/txs/'
 const uri = 'https://changenow.io/api/v1/'
 
 const dontUseLegacy = {
@@ -243,27 +243,31 @@ export function makeChangeNowPlugin(
                 })
               )
               log('Fixed sendReply q ', sendReply)
-              const spendInfo = {
+              const spendInfo: EdgeSpendInfo = {
                 currencyCode: request.fromCurrencyCode,
                 spendTargets: [
                   {
                     nativeAmount: fromNativeAmount,
                     publicAddress: sendReply.payinAddress,
-                    otherParams: {
-                      uniqueIdentifier: sendReply.payinExtraId
-                    }
+                    uniqueIdentifier: sendReply.payinExtraId
                   }
-                ]
+                ],
+                swapData: {
+                  orderId: sendReply.id,
+                  orderUri: orderUri + sendReply.id,
+                  isEstimate: false,
+                  payoutAddress: toAddress,
+                  payoutCurrencyCode: request.toCurrencyCode,
+                  payoutNativeAmount: toNativeAmount,
+                  payoutWalletId: request.toWallet.id,
+                  plugin: { ...swapInfo },
+                  refundAddress: fromAddress
+                }
               }
               log('spendInfo', spendInfo)
               const tx: EdgeTransaction = await request.fromWallet.makeSpend(
                 spendInfo
               )
-              if (tx.otherParams == null) tx.otherParams = {}
-              tx.otherParams.payinAddress =
-                spendInfo.spendTargets[0].publicAddress
-              tx.otherParams.uniqueIdentifier =
-                spendInfo.spendTargets[0].otherParams.uniqueIdentifier
               const toAmount = await request.toWallet.denominationToNative(
                 sendReply.amount.toString(),
                 request.toCurrencyCode
@@ -350,24 +354,27 @@ export function makeChangeNowPlugin(
       )
 
       // Make the transaction:
-      const spendInfo = {
+      const spendInfo: EdgeSpendInfo = {
         currencyCode: request.fromCurrencyCode,
         spendTargets: [
           {
             nativeAmount: fromNativeAmount,
             publicAddress: sendReply.payinAddress,
-            otherParams: {
-              uniqueIdentifier: sendReply.payinExtraId
-            }
+            uniqueIdentifier: sendReply.payinExtraId
           }
-        ]
+        ],
+        swapData: {
+          isEstimate: true,
+          payoutAddress: toAddress,
+          payoutCurrencyCode: request.toCurrencyCode,
+          payoutNativeAmount: toNativeAmount,
+          payoutWalletId: request.toWallet.id,
+          plugin: { ...swapInfo },
+          refundAddress: fromAddress
+        }
       }
       log('spendInfo', spendInfo)
       const tx: EdgeTransaction = await request.fromWallet.makeSpend(spendInfo)
-      if (tx.otherParams == null) tx.otherParams = {}
-      tx.otherParams.payinAddress = spendInfo.spendTargets[0].publicAddress
-      tx.otherParams.uniqueIdentifier =
-        spendInfo.spendTargets[0].otherParams.uniqueIdentifier
 
       return makeSwapPluginQuote(
         request,
