@@ -25,11 +25,10 @@ const pluginId = 'shapeshift'
 const swapInfo: EdgeSwapInfo = {
   pluginId,
   displayName: 'ShapeShift',
-
-  quoteUri: 'https://shapeshift.io/#/status/',
   supportEmail: 'support@shapeshift.io'
 }
 
+const orderUri = 'https://shapeshift.io/#/status/'
 const API_PREFIX = 'https://shapeshift.io'
 
 type ShapeShiftQuoteJson = {
@@ -265,29 +264,31 @@ export function makeShapeshiftPlugin(
       if (exchangeData.deposit.indexOf('?dt=') !== -1) {
         const splitArray = exchangeData.deposit.split('?dt=')
         spendTarget.publicAddress = splitArray[0]
-        spendTarget.otherParams = {
-          uniqueIdentifier: splitArray[1]
-        }
+        spendTarget.uniqueIdentifier = splitArray[1]
       }
       if (fromCurrencyCode === 'XMR' && exchangeData.sAddress) {
         spendTarget.publicAddress = exchangeData.sAddress
-        spendTarget.otherParams = {
-          uniqueIdentifier: exchangeData.deposit
-        }
+        spendTarget.uniqueIdentifier = exchangeData.deposit
       }
 
       const spendInfo: EdgeSpendInfo = {
         // networkFeeOption: spendInfo.networkFeeOption,
         currencyCode: fromCurrencyCode,
-        spendTargets: [spendTarget]
+        spendTargets: [spendTarget],
+        swapData: {
+          orderId: exchangeData.orderId,
+          orderUri: orderUri + exchangeData.orderId,
+          isEstimate: false,
+          payoutAddress: toAddress,
+          payoutCurrencyCode: request.toCurrencyCode,
+          payoutNativeAmount: toNativeAmount,
+          payoutWalletId: request.toWallet.id,
+          plugin: { ...swapInfo },
+          refundAddress: fromAddress
+        }
       }
       log('spendInfo', spendInfo)
       const tx: EdgeTransaction = await fromWallet.makeSpend(spendInfo)
-      if (tx.otherParams == null) tx.otherParams = {}
-      tx.otherParams.payinAddress = spendInfo.spendTargets[0].publicAddress
-      tx.otherParams.uniqueIdentifier = spendInfo.spendTargets[0].otherParams
-        ? spendInfo.spendTargets[0].otherParams.uniqueIdentifier
-        : ''
 
       // Convert that to the output format:
       return makeSwapPluginQuote(

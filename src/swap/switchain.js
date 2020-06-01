@@ -22,11 +22,11 @@ const pluginId = 'switchain'
 const swapInfo: EdgeSwapInfo = {
   pluginId,
   displayName: 'Switchain',
-  orderUri: 'https://www.switchain.com/order-status/',
   supportEmail: 'help@switchain.com'
 }
 
 let apiUrl = 'https://api.switchain.com/rest/v1'
+const orderUri = 'https://www.switchain.com/order-status/'
 
 type SwitchainResponseError = {
   error: string,
@@ -313,19 +313,26 @@ export function makeSwitchainPlugin(
           const spendTarget: EdgeSpendTarget = {
             nativeAmount: fromNativeAmount,
             publicAddress: exchangeAddress,
-            otherParams: exchangeAddressTag
-              ? { uniqueIdentifier: exchangeAddressTag }
-              : {}
+            uniqueIdentifier: exchangeAddressTag
           }
           const spendInfo: EdgeSpendInfo = {
             currencyCode: fromCurrencyCode,
-            spendTargets: [spendTarget]
+            spendTargets: [spendTarget],
+            swapData: {
+              orderId,
+              orderUri: orderUri + orderId,
+              isEstimate: false,
+              payoutAddress: toAddress,
+              payoutCurrencyCode: request.toCurrencyCode,
+              payoutNativeAmount: toNativeAmount,
+              payoutWalletId: request.toWallet.id,
+              plugin: { ...swapInfo },
+              refundAddress: fromAddress
+            }
           }
           const completeTx: EdgeTransaction = await fromWallet.makeSpend(
             spendInfo
           )
-          completeTx.otherParams.payinAddress = exchangeAddress
-          completeTx.otherParams.uniqueIdentifier = exchangeAddressTag
 
           const signedTransaction = await fromWallet.signTx(completeTx)
           const broadcastedTransaction = await fromWallet.broadcastTx(

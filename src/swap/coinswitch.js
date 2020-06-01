@@ -4,6 +4,7 @@ import { add, div, gt, lt, mul, sub } from 'biggystring'
 import {
   type EdgeCorePluginOptions,
   type EdgeCurrencyWallet,
+  type EdgeSpendInfo,
   type EdgeSwapInfo,
   type EdgeSwapPlugin,
   type EdgeSwapQuote,
@@ -21,10 +22,10 @@ const pluginId = 'coinswitch'
 const swapInfo: EdgeSwapInfo = {
   pluginId,
   displayName: 'CoinSwitch',
-  orderUri: 'https://coinswitch.co/app/exchange/transaction/',
   supportEmail: 'support@coinswitch.co'
 }
 
+const orderUri = 'https://coinswitch.co/app/exchange/transaction/'
 const uri = 'https://api.coinswitch.co/'
 const expirationMs = 1000 * 60 * 15
 const fixedExpirationMs = 1000 * 60 * 5
@@ -216,24 +217,29 @@ export function makeCoinSwitchPlugin(
       const quoteInfo: QuoteInfo = createOrder.data
 
       // Make the transaction:
-      const spendInfo = {
+      const spendInfo: EdgeSpendInfo = {
         currencyCode: request.fromCurrencyCode,
         spendTargets: [
           {
             nativeAmount: fromNativeAmount,
             publicAddress: quoteInfo.exchangeAddress.address,
-            otherParams: {
-              uniqueIdentifier: quoteInfo.exchangeAddress.tag
-            }
+            uniqueIdentifier: quoteInfo.exchangeAddress.tag
           }
-        ]
+        ],
+        swapData: {
+          orderId: quoteInfo.orderId,
+          orderUri: orderUri + quoteInfo.orderId,
+          isEstimate: false,
+          payoutAddress: toAddress,
+          payoutCurrencyCode: request.toCurrencyCode,
+          payoutNativeAmount: toNativeAmount,
+          payoutWalletId: request.toWallet.id,
+          plugin: { ...swapInfo },
+          refundAddress: fromAddress
+        }
       }
       log('fixedRate spendInfo', spendInfo)
       const tx: EdgeTransaction = await request.fromWallet.makeSpend(spendInfo)
-      if (!tx.otherParams) tx.otherParams = {}
-      tx.otherParams.payinAddress = spendInfo.spendTargets[0].publicAddress
-      tx.otherParams.uniqueIdentifier =
-        spendInfo.spendTargets[0].otherParams.uniqueIdentifier
 
       return makeSwapPluginQuote(
         request,
@@ -356,18 +362,23 @@ export function makeCoinSwitchPlugin(
           {
             nativeAmount: fromNativeAmount,
             publicAddress: quoteInfo.exchangeAddress.address,
-            otherParams: {
-              uniqueIdentifier: quoteInfo.exchangeAddress.tag
-            }
+            uniqueIdentifier: quoteInfo.exchangeAddress.tag
           }
-        ]
+        ],
+        swapData: {
+          orderId: quoteInfo.orderId,
+          orderUri: orderUri + quoteInfo.orderId,
+          isEstimate: true,
+          payoutAddress: toAddress,
+          payoutCurrencyCode: request.toCurrencyCode,
+          payoutNativeAmount: toNativeAmount,
+          payoutWalletId: request.toWallet.id,
+          plugin: { ...swapInfo },
+          refundAddress: fromAddress
+        }
       }
       log('estimate spendInfo', spendInfo)
       const tx: EdgeTransaction = await request.fromWallet.makeSpend(spendInfo)
-      if (!tx.otherParams) tx.otherParams = {}
-      tx.otherParams.payinAddress = spendInfo.spendTargets[0].publicAddress
-      tx.otherParams.uniqueIdentifier =
-        spendInfo.spendTargets[0].otherParams.uniqueIdentifier
 
       return makeSwapPluginQuote(
         request,

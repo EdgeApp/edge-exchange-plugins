@@ -5,6 +5,7 @@ import {
   type EdgeCorePluginOptions,
   type EdgeCurrencyWallet,
   type EdgeFetchResponse,
+  type EdgeSpendInfo,
   type EdgeSwapInfo,
   type EdgeSwapPlugin,
   type EdgeSwapQuote,
@@ -24,11 +25,10 @@ const pluginId = 'faast'
 const swapInfo: EdgeSwapInfo = {
   pluginId,
   displayName: 'Faa.st',
-
-  orderUri: 'https://faa.st/app/orders/',
   supportEmail: 'support@faa.st'
 }
 
+const orderUri = 'https://faa.st/app/orders/'
 const API_PREFIX = 'https://api.faa.st/api/v2/public'
 
 type FaastQuoteJson = {
@@ -323,21 +323,27 @@ export function makeFaastPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
       const spendTarget = {
         nativeAmount: quoteFor === 'to' ? fromNativeAmount : nativeAmount,
         publicAddress: quoteData.deposit_address,
-        otherParams: {
-          uniqueIdentifier: quoteData.deposit_address_extra_id
-        }
+        uniqueIdentifier: quoteData.deposit_address_extra_id
       }
 
-      const spendInfo = {
+      const spendInfo: EdgeSpendInfo = {
         currencyCode: fromCurrencyCode,
-        spendTargets: [spendTarget]
+        spendTargets: [spendTarget],
+        swapData: {
+          orderId: quoteData.swap_id,
+          orderUri: orderUri + quoteData.swap_id,
+          isEstimate: false,
+          payoutAddress: toAddress,
+          payoutCurrencyCode: request.toCurrencyCode,
+          payoutNativeAmount: toNativeAmount,
+          payoutWalletId: request.toWallet.id,
+          plugin: { ...swapInfo },
+          refundAddress: fromAddress
+        }
       }
 
       log('spendInfo', spendInfo)
       const tx: EdgeTransaction = await fromWallet.makeSpend(spendInfo)
-      if (tx.otherParams == null) tx.otherParams = {}
-      tx.otherParams.payinAddress = spendTarget.publicAddress
-      tx.otherParams.uniqueIdentifier = spendTarget.otherParams.uniqueIdentifier
 
       // Convert that to the output format:
       return makeSwapPluginQuote(

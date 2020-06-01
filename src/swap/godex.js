@@ -4,6 +4,7 @@ import { lt } from 'biggystring'
 import {
   type EdgeCorePluginOptions,
   type EdgeCurrencyWallet,
+  type EdgeSpendInfo,
   type EdgeSwapInfo,
   type EdgeSwapPlugin,
   type EdgeSwapQuote,
@@ -19,11 +20,10 @@ const pluginId = 'godex'
 const swapInfo: EdgeSwapInfo = {
   pluginId,
   displayName: 'Godex',
-
-  orderUri: 'https://godex.io/exchange/waiting/',
   supportEmail: 'support@godex.io'
 }
 
+const orderUri = 'https://godex.io/exchange/waiting/'
 const uri = 'https://api.godex.io/api/v1/'
 
 const expirationMs = 1000 * 60 * 20
@@ -178,25 +178,30 @@ export function makeGodexPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
       const quoteInfo: QuoteInfo = sendReply
 
       // Make the transaction:
-      const spendInfo = {
+      const spendInfo: EdgeSpendInfo = {
         currencyCode: request.fromCurrencyCode,
         spendTargets: [
           {
             nativeAmount: fromNativeAmount,
             publicAddress: quoteInfo.deposit,
-            otherParams: {
-              uniqueIdentifier: quoteInfo.deposit_extra_id
-            }
+            uniqueIdentifier: quoteInfo.deposit_extra_id
           }
-        ]
+        ],
+        swapData: {
+          orderId: quoteInfo.transaction_id,
+          orderUri: orderUri + quoteInfo.transaction_id,
+          isEstimate: false,
+          payoutAddress: toAddress,
+          payoutCurrencyCode: request.toCurrencyCode,
+          payoutNativeAmount: toNativeAmount,
+          payoutWalletId: request.toWallet.id,
+          plugin: { ...swapInfo },
+          refundAddress: fromAddress
+        }
       }
       log('spendInfo', spendInfo)
 
       const tx: EdgeTransaction = await request.fromWallet.makeSpend(spendInfo)
-      if (!tx.otherParams) tx.otherParams = {}
-      tx.otherParams.payinAddress = spendInfo.spendTargets[0].publicAddress
-      tx.otherParams.uniqueIdentifier =
-        spendInfo.spendTargets[0].otherParams.uniqueIdentifier
 
       // Convert that to the output format:
       return makeSwapPluginQuote(

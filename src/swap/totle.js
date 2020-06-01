@@ -4,6 +4,7 @@ import { div, mul } from 'biggystring'
 import {
   type EdgeCorePluginOptions,
   type EdgeLog,
+  type EdgeSpendInfo,
   type EdgeSwapInfo,
   type EdgeSwapPlugin,
   type EdgeSwapQuote,
@@ -209,36 +210,36 @@ export function makeTotlePlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
       let quoteId
       for (const tx of transactions) {
         // Make the transaction:
-        const spendInfo = {
+        const spendInfo: EdgeSpendInfo = {
           currencyCode: request.fromCurrencyCode,
           spendTargets: [
             {
               nativeAmount: tx.tx.value,
               publicAddress: tx.tx.to,
-              otherParams: {
-                uniqueIdentifier: tx.id,
-                data: tx.tx.data
-              }
+              uniqueIdentifier: tx.id,
+              otherParams: { data: tx.tx.data }
             }
           ],
           networkFeeOption: 'custom',
           customNetworkFee: {
             gasLimit: tx.tx.gas,
             gasPrice: String(parseInt(tx.tx.gasPrice) / 1000000000)
+          },
+          swapData: {
+            isEstimate: false,
+            payoutAddress: userToAddress,
+            payoutCurrencyCode: request.toCurrencyCode,
+            payoutNativeAmount: toNativeAmount,
+            payoutWalletId: request.toWallet.id,
+            plugin: { ...swapInfo }
           }
         }
 
         const transaction: EdgeTransaction = await request.fromWallet.makeSpend(
           spendInfo
         )
-        if (transaction.otherParams == null) transaction.otherParams = {}
         if (tx.type === 'swap') {
           quoteId = tx.id
-
-          transaction.otherParams.payinAddress =
-            spendInfo.spendTargets[0].publicAddress
-          transaction.otherParams.uniqueIdentifier =
-            spendInfo.spendTargets[0].otherParams.uniqueIdentifier
         }
 
         txs.push(transaction)
