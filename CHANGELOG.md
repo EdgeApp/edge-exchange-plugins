@@ -1,5 +1,11 @@
 # edge-exchange-plugins
 
+# 0.11.0 (2020-06-01)
+
+This version requires edge-core-js v0.17.3 or greater.
+
+- Save swap metadata using the new, official edge-core-js API.
+
 # 0.10.4 (2020-05-14)
 
 - Add WazirX exchange rate provider
