@@ -226,6 +226,10 @@ export function makeCoinSwitchPlugin(
             uniqueIdentifier: quoteInfo.exchangeAddress.tag
           }
         ],
+        networkFeeOption:
+          request.fromCurrencyCode.toUpperCase() === 'BTC'
+            ? 'high'
+            : 'standard',
         swapData: {
           orderId: quoteInfo.orderId,
           orderUri: orderUri + quoteInfo.orderId,

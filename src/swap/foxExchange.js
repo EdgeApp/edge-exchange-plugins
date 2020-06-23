@@ -263,7 +263,11 @@ export function makeFoxExchangePlugin(
                     ),
               publicAddress: dummyAddress
             }
-          ]
+          ],
+          networkFeeOption:
+            request.fromCurrencyCode.toUpperCase() === 'BTC'
+              ? 'high'
+              : 'standard'
         })
 
         const destinationAddress = await getAddress(
@@ -326,6 +330,10 @@ export function makeFoxExchangePlugin(
                   uniqueIdentifier: orderResp.exchangeAddress.tag || undefined
                 }
               ],
+              networkFeeOption:
+                request.fromCurrencyCode.toUpperCase() === 'BTC'
+                  ? 'high'
+                  : 'standard',
               swapData: {
                 orderId: rateResp.futureOrderId,
                 orderUri: orderUri + rateResp.futureOrderId,

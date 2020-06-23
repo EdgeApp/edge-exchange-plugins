@@ -187,6 +187,10 @@ export function makeGodexPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
             uniqueIdentifier: quoteInfo.deposit_extra_id
           }
         ],
+        networkFeeOption:
+          request.fromCurrencyCode.toUpperCase() === 'BTC'
+            ? 'high'
+            : 'standard',
         swapData: {
           orderId: quoteInfo.transaction_id,
           orderUri: orderUri + quoteInfo.transaction_id,

@@ -276,6 +276,8 @@ export function makeSwitchainPlugin(
       // create preliminary tx using our recieve address to calculate a networkFee
       const spendInfo: EdgeSpendInfo = {
         currencyCode: fromCurrencyCode,
+        networkFeeOption:
+          fromCurrencyCode.toUpperCase() === 'BTC' ? 'high' : 'standard',
         spendTargets: [
           {
             nativeAmount: fromNativeAmount,
@@ -318,6 +320,8 @@ export function makeSwitchainPlugin(
           const spendInfo: EdgeSpendInfo = {
             currencyCode: fromCurrencyCode,
             spendTargets: [spendTarget],
+            networkFeeOption:
+              fromCurrencyCode.toUpperCase() === 'BTC' ? 'high' : 'standard',
             swapData: {
               orderId,
               orderUri: orderUri + orderId,

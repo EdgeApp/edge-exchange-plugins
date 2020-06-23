@@ -329,6 +329,8 @@ export function makeFaastPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
       const spendInfo: EdgeSpendInfo = {
         currencyCode: fromCurrencyCode,
         spendTargets: [spendTarget],
+        networkFeeOption:
+          fromCurrencyCode.toUpperCase() === 'BTC' ? 'high' : 'standard',
         swapData: {
           orderId: quoteData.swap_id,
           orderUri: orderUri + quoteData.swap_id,
