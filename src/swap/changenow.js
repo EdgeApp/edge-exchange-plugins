@@ -252,6 +252,10 @@ export function makeChangeNowPlugin(
                     uniqueIdentifier: sendReply.payinExtraId
                   }
                 ],
+                networkFeeOption:
+                  request.fromCurrencyCode.toUpperCase() === 'BTC'
+                    ? 'high'
+                    : 'standard',
                 swapData: {
                   orderId: sendReply.id,
                   orderUri: orderUri + sendReply.id,
@@ -363,6 +367,10 @@ export function makeChangeNowPlugin(
             uniqueIdentifier: sendReply.payinExtraId
           }
         ],
+        networkFeeOption:
+          request.fromCurrencyCode.toUpperCase() === 'BTC'
+            ? 'high'
+            : 'standard',
         swapData: {
           isEstimate: true,
           payoutAddress: toAddress,

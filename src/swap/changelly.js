@@ -303,6 +303,10 @@ export function makeChangellyPlugin(
             uniqueIdentifier: quoteInfo.payinExtraId || undefined
           }
         ],
+        networkFeeOption:
+          request.fromCurrencyCode.toUpperCase() === 'BTC'
+            ? 'high'
+            : 'standard',
         swapData: {
           orderId: quoteInfo.id,
           // orderUri: orderUri + quoteInfo.id,
