@@ -1,5 +1,9 @@
 # edge-exchange-plugins
 
+# 0.11.1 (2020-06-22)
+
+- Force high fee when swapping from BTC
+
 # 0.11.0 (2020-06-01)
 
 This version requires edge-core-js v0.17.3 or greater.
