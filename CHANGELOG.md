@@ -1,5 +1,9 @@
 # edge-exchange-plugins
 
+# 0.11.2 (2020-06-30)
+
+- Add promoCode support to Switchain
+
 # 0.11.1 (2020-06-22)
 
 - Force high fee when swapping from BTC
