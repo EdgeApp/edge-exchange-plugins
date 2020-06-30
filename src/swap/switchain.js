@@ -64,7 +64,8 @@ type SwitchainOrderCreationBody = {
   refundAddressTag?: string,
   signature: string,
   fromAmount?: string,
-  toAmount?: string
+  toAmount?: string,
+  promotionCode?: string
 }
 
 const dontUseLegacy = {
@@ -161,7 +162,8 @@ export function makeSwitchainPlugin(
 
     async fetchSwapQuote(
       request: EdgeSwapRequest,
-      userSettings: Object | void
+      userSettings: Object | void,
+      opts: { promoCode?: string }
     ): Promise<EdgeSwapQuote> {
       const {
         fromWallet,
@@ -171,6 +173,7 @@ export function makeSwitchainPlugin(
         toWallet
       } = request
       let { fromCurrencyCode } = request
+      const { promoCode } = opts
 
       if (toCurrencyCode === fromCurrencyCode) {
         throw new SwapCurrencyError(swapInfo, fromCurrencyCode, toCurrencyCode)
@@ -193,14 +196,16 @@ export function makeSwitchainPlugin(
       ])
 
       // retrieve quote for pair
+      const queryParameters: { [string]: string } = {
+        pair,
+        orderIdSeed: toAddress
+      }
+      if (promoCode != null) queryParameters.promotionCode = promoCode
       const json: SwitchainOfferResponse = await swHttpCall(
         '/offer',
         'GET',
         null,
-        {
-          pair,
-          orderIdSeed: toAddress
-        }
+        queryParameters
       )
       const {
         maxLimit,
@@ -256,6 +261,7 @@ export function makeSwitchainPlugin(
         orderId,
         ...quoteAmount
       }
+      if (promoCode != null) orderCreationBody.promotionCode = promoCode
 
       // plugin output creation
       let fromNativeAmount = nativeAmount
