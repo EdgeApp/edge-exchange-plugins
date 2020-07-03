@@ -1,5 +1,9 @@
 # edge-exchange-plugins
 
+# 0.11.3 (2020-07-03)
+
+- Add Coinmonitor rate API support for BTC/ARS pair
+
 # 0.11.2 (2020-06-30)
 
 - Add promoCode support to Switchain
