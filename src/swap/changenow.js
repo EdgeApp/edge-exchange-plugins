@@ -359,6 +359,8 @@ export function makeChangeNowPlugin(
             ? 'high'
             : 'standard',
         swapData: {
+          orderId: sendReply.id,
+          orderUri: orderUri + sendReply.id,
           isEstimate: true,
           payoutAddress: toAddress,
           payoutCurrencyCode: request.toCurrencyCode,
@@ -379,7 +381,8 @@ export function makeChangeNowPlugin(
         toAddress,
         pluginId,
         true,
-        new Date(Date.now() + 1000 * 60 * 20)
+        new Date(Date.now() + 1000 * 60 * 20),
+        sendReply.id
       )
     }
   }
