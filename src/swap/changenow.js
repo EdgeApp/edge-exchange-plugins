@@ -19,7 +19,6 @@ import {
   type EdgeSwapQuote,
   type EdgeSwapRequest,
   type EdgeTransaction,
-  SwapAboveLimitError,
   SwapBelowLimitError,
   SwapCurrencyError
 } from 'edge-core-js/types'
@@ -173,6 +172,7 @@ export function makeChangeNowPlugin(
         if (safeToCurrencyCode.toLowerCase() === obj.ticker) {
           pairsToUse.push(obj)
           if (obj.supportsFixedRate) {
+            let meetsFixedRateRange = true
             for (let j = 0; j < fixedMarket.length; j++) {
               const item = fixedMarket[j]
               if (
@@ -180,27 +180,14 @@ export function makeChangeNowPlugin(
                 item.to === quoteParams.to
               ) {
                 pairItem = item
-                const [nativeMax, nativeMin] = await Promise.all([
-                  request.fromWallet.denominationToNative(
-                    item.max.toString(),
-                    request.fromCurrencyCode
-                  ),
-                  request.fromWallet.denominationToNative(
-                    item.min.toString(),
-                    request.fromCurrencyCode
-                  )
-                ])
                 // lets get the quoteObject here
                 const quoteReply = await get(
                   `exchange-amount/fixed-rate/${quoteParams.amount}/${quoteParams.from}_${quoteParams.to}?api_key=${apiKey}` +
                     (promoCode != null ? `&promo=${promoCode}` : '')
                 )
                 if (quoteReply.error === 'out_of_range') {
-                  if (lt(quoteParams.amount, item.min.toString())) {
-                    throw new SwapBelowLimitError(swapInfo, nativeMin)
-                  } else {
-                    throw new SwapAboveLimitError(swapInfo, nativeMax)
-                  }
+                  meetsFixedRateRange = false
+                  break
                 }
                 if (quoteReply.error) {
                   throw new SwapCurrencyError(
@@ -212,7 +199,7 @@ export function makeChangeNowPlugin(
                 quoteReplyKeep = quoteReply
               }
             }
-            if (pairItem) {
+            if (pairItem && meetsFixedRateRange) {
               if (request.quoteFor === 'from') {
                 fromAmount = quoteAmount
                 fromNativeAmount = request.nativeAmount
