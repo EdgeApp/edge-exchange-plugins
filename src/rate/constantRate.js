@@ -36,11 +36,6 @@ export function makeConstantRatePlugin(
           fromCurrency: 'WBTC',
           toCurrency: 'BTC',
           rate: 1
-        },
-        {
-          fromCurrency: 'FIO',
-          toCurrency: 'iso:USD',
-          rate: 0.001
         }
       ]
       return pairs

@@ -1,5 +1,6 @@
 // @flow
 
+import { makeBitMaxPlugin } from './rate/bitmax.js'
 import { makeCoinbasePlugin } from './rate/coinbase.js'
 import { makeCoincapPlugin } from './rate/coincap.js'
 import { makeCoinmonitorPlugin } from './rate/coinmonitor.js'
@@ -22,6 +23,7 @@ import { makeTransferPlugin } from './swap/transfer.js'
 
 const edgeCorePlugins = {
   // Rate plugins:
+  bitmax: makeBitMaxPlugin,
   coinbase: makeCoinbasePlugin,
   coincap: makeCoincapPlugin,
   coinmonitor: makeCoinmonitorPlugin,
