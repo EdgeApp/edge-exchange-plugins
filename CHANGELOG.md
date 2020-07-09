@@ -1,5 +1,10 @@
 # edge-exchange-plugins
 
+# 0.11.4 (2020-07-09)
+
+- ChangeNow - Add fallback to floating-rate if trade is outside fixed-rate min and max
+- Add FIO rate via BitMax API
+
 # 0.11.3 (2020-07-03)
 
 - Add Coinmonitor rate API support for BTC/ARS pair
