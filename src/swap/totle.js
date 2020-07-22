@@ -149,7 +149,7 @@ export function makeTotlePlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
 
       const fromToken = tokens.find(t => t.symbol === request.fromCurrencyCode)
       const toToken = tokens.find(t => t.symbol === request.toCurrencyCode)
-      if (!fromToken || !toToken) {
+      if (!fromToken || !toToken || fromToken.symbol === toToken.symbol) {
         throw new SwapCurrencyError(
           swapInfo,
           request.fromCurrencyCode,
