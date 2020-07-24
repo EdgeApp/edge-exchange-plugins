@@ -3,6 +3,7 @@
 import { makeBitMaxPlugin } from './rate/bitmax.js'
 import { makeCoinbasePlugin } from './rate/coinbase.js'
 import { makeCoincapPlugin } from './rate/coincap.js'
+import { makeCoinGeckoPlugin } from './rate/coingecko.js'
 import { makeCoinmonitorPlugin } from './rate/coinmonitor.js'
 import { makeCompoundPlugin } from './rate/compound.js'
 import { makeConstantRatePlugin } from './rate/constantRate.js'
@@ -26,6 +27,7 @@ const edgeCorePlugins = {
   bitmax: makeBitMaxPlugin,
   coinbase: makeCoinbasePlugin,
   coincap: makeCoincapPlugin,
+  coingecko: makeCoinGeckoPlugin,
   coinmonitor: makeCoinmonitorPlugin,
   compound: makeCompoundPlugin,
   constantRate: makeConstantRatePlugin,
