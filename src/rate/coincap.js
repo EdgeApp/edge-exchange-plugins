@@ -25,6 +25,13 @@ export function makeCoincapPlugin(opts: EdgeCorePluginOptions): EdgeRatePlugin {
         if (typeof entry.priceUsd !== 'string') continue
         const currency = entry.symbol
 
+        if (currency === 'REP') {
+          pairs.push({
+            fromCurrency: 'REPV2',
+            toCurrency: 'iso:USD',
+            rate: parseFloat(entry.priceUsd)
+          })
+        }
         pairs.push({
           fromCurrency: currency,
           toCurrency: 'iso:USD',
