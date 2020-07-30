@@ -1,5 +1,9 @@
 # edge-exchange-plugins
 
+# 0.11.5 (2020-07-29)
+
+- Copy REP exchange rate for REPV2
+
 # 0.11.4 (2020-07-09)
 
 - ChangeNow - Add fallback to floating-rate if trade is outside fixed-rate min and max
