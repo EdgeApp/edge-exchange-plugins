@@ -25,7 +25,8 @@ export function makeSwapPluginQuote(
     toNativeAmount,
     networkFee: {
       currencyCode: fromWallet.currencyInfo.currencyCode,
-      nativeAmount: tx.networkFee
+      nativeAmount:
+        tx.parentNetworkFee != null ? tx.parentNetworkFee : tx.networkFee
     },
     destinationAddress,
     pluginId,

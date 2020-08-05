@@ -305,7 +305,10 @@ export function makeSwitchainPlugin(
         toNativeAmount,
         networkFee: {
           currencyCode: fromWallet.currencyInfo.currencyCode,
-          nativeAmount: preliminaryTx.networkFee
+          nativeAmount:
+            preliminaryTx.parentNetworkFee != null
+              ? preliminaryTx.parentNetworkFee
+              : preliminaryTx.networkFee
         },
         expirationDate,
         pluginId,
