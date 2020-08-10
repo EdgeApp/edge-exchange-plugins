@@ -284,7 +284,10 @@ function makeTotleSwapPluginQuote(
     toNativeAmount,
     networkFee: {
       currencyCode: fromWallet.currencyInfo.currencyCode,
-      nativeAmount: swapTx.networkFee
+      nativeAmount:
+        swapTx.parentNetworkFee != null
+          ? swapTx.parentNetworkFee
+          : swapTx.networkFee
     },
     destinationAddress,
     pluginId,
