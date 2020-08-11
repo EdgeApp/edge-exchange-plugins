@@ -1,5 +1,10 @@
 # edge-exchange-plugins
 
+# 0.11.6 (2020-08-11)
+
+- Display parent currency and fiat fee for token swaps
+- Add CoinGecko
+
 # 0.11.5 (2020-07-29)
 
 - Copy REP exchange rate for REPV2
