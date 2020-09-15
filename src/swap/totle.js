@@ -207,7 +207,6 @@ export function makeTotlePlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
       }
 
       const txs = []
-      let quoteId
       for (const tx of transactions) {
         // Make the transaction:
         const spendInfo: EdgeSpendInfo = {
@@ -238,9 +237,6 @@ export function makeTotlePlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
         const transaction: EdgeTransaction = await request.fromWallet.makeSpend(
           spendInfo
         )
-        if (tx.type === 'swap') {
-          quoteId = tx.id
-        }
 
         txs.push(transaction)
       }
@@ -253,7 +249,6 @@ export function makeTotlePlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
         userToAddress,
         false,
         new Date(Date.now() + expirationMs),
-        quoteId,
         log
       )
       log(quote)
@@ -272,7 +267,6 @@ function makeTotleSwapPluginQuote(
   destinationAddress: string,
   isEstimate: boolean,
   expirationDate?: Date,
-  quoteId?: string,
   log: EdgeLog
 ): EdgeSwapQuote {
   log(arguments)
@@ -292,7 +286,6 @@ function makeTotleSwapPluginQuote(
     destinationAddress,
     pluginId,
     expirationDate,
-    quoteId,
     isEstimate,
 
     async approve(): Promise<EdgeSwapResult> {
@@ -301,7 +294,8 @@ function makeTotleSwapPluginQuote(
       for (const tx of txs) {
         const signedTransaction = await fromWallet.signTx(tx)
         // NOTE: The swap transaction will always be the last one
-        swapTx = await fromWallet.broadcastTx(signedTransaction)
+        swapTx = signedTransaction
+        // swapTx = await fromWallet.broadcastTx(signedTransaction)
         const lastTransactionIndex = txs.length - 1
         // if it's the last transaction of the array then assign `nativeAmount` data
         // (after signing and broadcasting) for metadata purposes
@@ -315,7 +309,7 @@ function makeTotleSwapPluginQuote(
       return {
         transaction: swapTx,
         destinationAddress,
-        orderId: pluginId
+        orderId: swapTx.txid
       }
     },
 
