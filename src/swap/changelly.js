@@ -53,7 +53,7 @@ const swapInfo: EdgeSwapInfo = {
   supportEmail: 'support@changelly.com'
 }
 
-// const orderUri = 'https://changelly.com/transaction/'
+const orderUri = 'https://changelly.com/transaction/'
 const uri = 'https://api.changelly.com'
 const expirationMs = 1000 * 60 * 20
 const expirationFixedMs = 1000 * 60 * 5
@@ -309,7 +309,7 @@ export function makeChangellyPlugin(
             : 'standard',
         swapData: {
           orderId: quoteInfo.id,
-          // orderUri: orderUri + quoteInfo.id,
+          orderUri: orderUri + quoteInfo.id,
           isEstimate: false,
           payoutAddress: toAddress,
           payoutCurrencyCode: request.toCurrencyCode,
@@ -462,7 +462,7 @@ export function makeChangellyPlugin(
         ],
         swapData: {
           orderId: quoteInfo.id,
-          // orderUri: orderUri + quoteInfo.id,
+          orderUri: orderUri + quoteInfo.id,
           isEstimate: true,
           payoutAddress: toAddress,
           payoutCurrencyCode: request.toCurrencyCode,
