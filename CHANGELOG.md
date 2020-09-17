@@ -1,5 +1,10 @@
 # edge-exchange-plugins
 
+# 0.11.7 (2020-09-17)
+
+- Enable Changelly order status URL
+- Pass last Totle tx as orderId
+
 # 0.11.6 (2020-08-11)
 
 - Display parent currency and fiat fee for token swaps
