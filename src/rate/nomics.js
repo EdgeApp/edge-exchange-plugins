@@ -7,6 +7,7 @@ import {
 
 export function makeNomicsPlugin(opts: EdgeCorePluginOptions): EdgeRatePlugin {
   const { io, initOptions } = opts
+  const { fetchCors = io.fetch } = io
   const { apiKey } = initOptions
 
   if (apiKey == null) {
@@ -19,7 +20,7 @@ export function makeNomicsPlugin(opts: EdgeCorePluginOptions): EdgeRatePlugin {
     },
 
     async fetchRates() {
-      const reply = await io.fetch(
+      const reply = await fetchCors(
         `https://api.nomics.com/v1/prices?key=${apiKey}`
       )
       const jsonData = await reply.json()
