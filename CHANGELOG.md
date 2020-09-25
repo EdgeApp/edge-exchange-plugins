@@ -1,5 +1,10 @@
 # edge-exchange-plugins
 
+# 0.11.8 (2020-09-25)
+
+- Fix CORS issues with Nomics
+- Remove unused xagau and herc plugins
+
 # 0.11.7 (2020-09-17)
 
 - Enable Changelly order status URL
