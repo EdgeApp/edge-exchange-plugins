@@ -292,7 +292,10 @@ export function makeFoxExchangePlugin(
               : request.nativeAmount,
           networkFee: {
             currencyCode: request.fromWallet.currencyInfo.currencyCode,
-            nativeAmount: dummyTx.networkFee
+            nativeAmount:
+              dummyTx.parentNetworkFee != null
+                ? dummyTx.parentNetworkFee
+                : dummyTx.networkFee
           },
           destinationAddress,
           pluginId,
