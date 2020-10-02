@@ -1,5 +1,9 @@
 # edge-exchange-plugins
 
+# 0.11.9 (2020-10-01)
+
+- Fix Fox Exchange parent fee display for token trades
+
 # 0.11.8 (2020-09-25)
 
 - Fix CORS issues with Nomics
