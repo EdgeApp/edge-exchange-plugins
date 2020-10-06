@@ -1,5 +1,9 @@
 # edge-exchange-plugins
 
+# 0.11.10 (2020-10-06)
+
+- Fix debugging comment blocking broadcast
+
 # 0.11.9 (2020-10-01)
 
 - Fix Fox Exchange parent fee display for token trades
