@@ -294,8 +294,7 @@ function makeTotleSwapPluginQuote(
       for (const tx of txs) {
         const signedTransaction = await fromWallet.signTx(tx)
         // NOTE: The swap transaction will always be the last one
-        swapTx = signedTransaction
-        // swapTx = await fromWallet.broadcastTx(signedTransaction)
+        swapTx = await fromWallet.broadcastTx(signedTransaction)
         const lastTransactionIndex = txs.length - 1
         // if it's the last transaction of the array then assign `nativeAmount` data
         // (after signing and broadcasting) for metadata purposes
