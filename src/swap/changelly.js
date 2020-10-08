@@ -1,6 +1,6 @@
 // @flow
 
-import { gt, lt, mul } from 'biggystring'
+import { lt, mul } from 'biggystring'
 import {
   type EdgeCorePluginOptions,
   type EdgeCurrencyWallet,
@@ -10,7 +10,6 @@ import {
   type EdgeSwapQuote,
   type EdgeSwapRequest,
   type EdgeTransaction,
-  SwapAboveLimitError,
   SwapBelowLimitError,
   SwapCurrencyError
 } from 'edge-core-js/types'
@@ -90,6 +89,19 @@ type FixedQuoteInfo = {
   refundAddress: string,
   refundExtraId: string | null,
   status: string
+}
+
+type FixedRateQuote = {
+  jsonrpc: string,
+  id: string,
+  result: {
+    id: string,
+    rate: string,
+    from: string,
+    to: string,
+    amountFrom: string,
+    amountTo: string
+  }
 }
 
 const dontUseLegacy = {
@@ -213,37 +225,17 @@ export function makeChangellyPlugin(
       if (CURRENCY_CODE_TRANSCRIPTION[request.toCurrencyCode]) {
         safeToCurrencyCode = CURRENCY_CODE_TRANSCRIPTION[request.toCurrencyCode]
       }
-      const fixedRateQuote = await call({
+      const fixedRateQuote: FixedRateQuote = await call({
         jsonrpc: '2.0',
         id: 'one',
-        method: 'getFixRate',
+        method: 'getFixRateForAmount',
         params: {
           from: safeFromCurrencyCode,
-          to: safeToCurrencyCode
+          to: safeToCurrencyCode,
+          amountFrom: quoteAmount
         }
       })
-      const min =
-        request.quoteFor === 'from'
-          ? fixedRateQuote.result.minFrom
-          : fixedRateQuote.result.minTo
-      const max =
-        request.quoteFor === 'from'
-          ? fixedRateQuote.result.maxFrom
-          : fixedRateQuote.result.maxTo
-      const nativeMin = await request.fromWallet.denominationToNative(
-        min,
-        request.fromCurrencyCode
-      )
-      const nativeMax = await request.fromWallet.denominationToNative(
-        max,
-        request.fromCurrencyCode
-      )
-      if (lt(request.nativeAmount, nativeMin)) {
-        throw new SwapBelowLimitError(swapInfo, nativeMin)
-      }
-      if (gt(request.nativeAmount, nativeMax)) {
-        throw new SwapAboveLimitError(swapInfo, nativeMax)
-      }
+      checkReply(fixedRateQuote, request)
       const params =
         request.quoteFor === 'from'
           ? {
