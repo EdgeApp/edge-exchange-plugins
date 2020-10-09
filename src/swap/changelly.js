@@ -1,6 +1,7 @@
 // @flow
 
 import { lt, mul } from 'biggystring'
+import { asObject, asString } from 'cleaners'
 import {
   type EdgeCorePluginOptions,
   type EdgeCurrencyWallet,
@@ -91,18 +92,13 @@ type FixedQuoteInfo = {
   status: string
 }
 
-type FixedRateQuote = {
-  jsonrpc: string,
-  id: string,
-  result: {
-    id: string,
-    rate: string,
-    from: string,
-    to: string,
-    amountFrom: string,
-    amountTo: string
-  }
-}
+const asFixedRateQuote = asObject({
+  result: asObject({
+    id: asString
+  })
+})
+
+type FixedRateQuote = $Call<typeof asFixedRateQuote>
 
 const dontUseLegacy = {
   DGB: true
@@ -225,7 +221,7 @@ export function makeChangellyPlugin(
       if (CURRENCY_CODE_TRANSCRIPTION[request.toCurrencyCode]) {
         safeToCurrencyCode = CURRENCY_CODE_TRANSCRIPTION[request.toCurrencyCode]
       }
-      const fixedRateQuote: FixedRateQuote = await call({
+      const fixedRateQuoteResponse: FixedRateQuote = await call({
         jsonrpc: '2.0',
         id: 'one',
         method: 'getFixRateForAmount',
@@ -235,7 +231,7 @@ export function makeChangellyPlugin(
           amountFrom: quoteAmount
         }
       })
-      checkReply(fixedRateQuote, request)
+      const fixedRateQuote = asFixedRateQuote(fixedRateQuoteResponse)
       const params =
         request.quoteFor === 'from'
           ? {
