@@ -1,5 +1,9 @@
 # edge-exchange-plugins
 
+# 0.11.11 (2020-10-09)
+
+- Update Changelly to use getFixRateForAmount
+
 # 0.11.10 (2020-10-06)
 
 - Fix debugging comment blocking broadcast
