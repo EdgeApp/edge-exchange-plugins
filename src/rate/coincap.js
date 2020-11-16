@@ -1,12 +1,28 @@
 // @flow
 
+import { asArray, asObject, asString } from 'cleaners'
 import {
   type EdgeCorePluginOptions,
   type EdgeRatePlugin
 } from 'edge-core-js/types'
 
+const asCoincapResponse = asObject({
+  data: asObject({
+    priceUsd: asString
+  })
+})
+
+const asCoincapAssets = asArray(
+  asObject({
+    id: asString,
+    symbol: asString
+  })
+)
+
+const currencyMap = {}
+
 export function makeCoincapPlugin(opts: EdgeCorePluginOptions): EdgeRatePlugin {
-  const { io } = opts
+  const { io, log } = opts
 
   return {
     rateInfo: {
@@ -15,30 +31,38 @@ export function makeCoincapPlugin(opts: EdgeCorePluginOptions): EdgeRatePlugin {
     },
 
     async fetchRates(pairsHint) {
-      const reply = await io.fetch('https://api.coincap.io/v2/assets?limit=500')
-      const json = await reply.json()
-
-      // Grab all the pairs which are in USD:
       const pairs = []
-      for (const entry of json.data) {
-        if (typeof entry.symbol !== 'string') continue
-        if (typeof entry.priceUsd !== 'string') continue
-        const currency = entry.symbol
-
-        if (currency === 'REP') {
-          pairs.push({
-            fromCurrency: 'REPV2',
-            toCurrency: 'iso:USD',
-            rate: parseFloat(entry.priceUsd)
-          })
-        }
-        pairs.push({
-          fromCurrency: currency,
-          toCurrency: 'iso:USD',
-          rate: parseFloat(entry.priceUsd)
-        })
+      if (Object.keys(currencyMap).length === 0) {
+        const assets = await io.fetch(`https://api.coincap.io/v2/assets/`)
+        const assetsJson = await assets.json()
+        const assetIds = asCoincapAssets(assetsJson.data)
+        assetIds.forEach(code => (currencyMap[code.symbol] = code.id))
       }
-
+      for (const pair of pairsHint) {
+        // Coincap only provides prices in USD and must be queried by unique identifier rather that currency code
+        if (!currencyMap[pair.fromCurrency]) continue
+        try {
+          const reply = await io.fetch(
+            `https://api.coincap.io/v2/assets/${currencyMap[pair.fromCurrency]}`
+          )
+          const json = await reply.json()
+          const rate = parseFloat(asCoincapResponse(json).data.priceUsd)
+          if (pair.fromCurrency === 'REP') {
+            pairs.push({
+              fromCurrency: 'REPV2',
+              toCurrency: 'iso:USD',
+              rate
+            })
+          }
+          pairs.push({
+            fromCurrency: pair.fromCurrency,
+            toCurrency: 'iso:USD',
+            rate
+          })
+        } catch (e) {
+          log(`Issue with Coincap rate data structure ${e}`)
+        }
+      }
       return pairs
     }
   }

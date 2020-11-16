@@ -1,37 +1,27 @@
 // @flow
 
+import { asMap, asObject, asString } from 'cleaners'
 import {
   type EdgeCorePluginOptions,
   type EdgeRatePlugin
 } from 'edge-core-js/types'
-import currencies from 'iso4217'
 
-type WazirXTickerResponse = {
-  [pair: string]: {
-    quote_unit: string,
-    base_unit: string,
-    last: string
-  }
-}
-
-const codeTable = {}
-for (const number of Object.keys(currencies)) {
-  const entry = currencies[number]
-  codeTable[entry.Code] = true
-}
+const asWazirxResponse = asMap(
+  asObject({
+    last: asString
+  })
+)
 
 function fixCurrency(currencyCode) {
   currencyCode = currencyCode.toUpperCase()
 
   if (currencyCode === 'BCHABC') currencyCode = 'BCH'
 
-  if (codeTable[currencyCode]) currencyCode = `iso:${currencyCode}`
-
   return currencyCode
 }
 
 export function makeWazirxPlugin(opts: EdgeCorePluginOptions): EdgeRatePlugin {
-  const { io } = opts
+  const { io, log } = opts
   const { fetchCors = io.fetch } = io
 
   return {
@@ -41,29 +31,34 @@ export function makeWazirxPlugin(opts: EdgeCorePluginOptions): EdgeRatePlugin {
     },
 
     async fetchRates(pairsHint) {
-      const reply = await fetchCors('https://api.wazirx.com/api/v2/tickers')
-      const json: WazirXTickerResponse = await reply.json()
-
-      if (!json) return []
-
-      // Grab all the INR pairs:
       const pairs = []
-      for (const pair in json) {
-        const ticker = json[pair]
+      let rates
+      for (const pair of pairsHint) {
+        // Wazirx is only used to query INR exchange rates
+        if (pair.toCurrency !== 'iso:INR') continue
 
-        if (ticker.quote_unit !== 'inr') continue
+        try {
+          if (rates === undefined) {
+            const reply = await fetchCors(
+              'https://api.wazirx.com/api/v2/tickers'
+            )
+            const json = await reply.json()
+            rates = asWazirxResponse(json)
+          }
 
-        const rate = Number(ticker.last)
-        if (rate <= 0) continue
-
-        const fromCurrency = fixCurrency(ticker.base_unit)
-        pairs.push({
-          fromCurrency,
-          toCurrency: 'iso:INR',
-          rate
-        })
+          const cc = fixCurrency(pair.fromCurrency).toLowerCase()
+          const currencyPair = `${cc}inr`
+          if (rates && rates[currencyPair]) {
+            pairs.push({
+              fromCurrency: pair.fromCurrency,
+              toCurrency: 'iso:INR',
+              rate: Number(rates[currencyPair].last)
+            })
+          }
+        } catch (e) {
+          log(`Issue with Wazirx rate data structure ${e}`)
+        }
       }
-
       return pairs
     }
   }

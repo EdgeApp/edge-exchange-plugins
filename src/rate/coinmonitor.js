@@ -11,7 +11,7 @@ const asCoinmonitorTickerResponse = asObject({ mediana_prom: asString })
 export function makeCoinmonitorPlugin(
   opts: EdgeCorePluginOptions
 ): EdgeRatePlugin {
-  const { io } = opts
+  const { io, log } = opts
   const { fetchCors = io.fetch } = io
 
   return {
@@ -21,20 +21,27 @@ export function makeCoinmonitorPlugin(
     },
 
     async fetchRates(pairsHint) {
-      const response = await fetchCors(
-        'https://ar.coinmonitor.info/api/v3/btc_ars'
-      )
-      if (!response.ok) return []
-
-      const json = await response.json()
-      asCoinmonitorTickerResponse(json)
-      return [
-        {
-          fromCurrency: 'BTC',
-          toCurrency: 'iso:ARS',
-          rate: Number(json.mediana_prom)
+      const pairs = []
+      for (const pair of pairsHint) {
+        if (pair.fromCurrency === 'BTC' && pair.toCurrency === 'iso:ARS') {
+          try {
+            const response = await fetchCors(
+              'https://ar.coinmonitor.info/api/v3/btc_ars'
+            )
+            const json = await response.json()
+            const rate = Number(asCoinmonitorTickerResponse(json).mediana_prom)
+            pairs.push({
+              fromCurrency: 'BTC',
+              toCurrency: 'iso:ARS',
+              rate
+            })
+          } catch (e) {
+            log(`Issue with Coinmonitor rate data structure ${e}`)
+          }
+          break
         }
-      ]
+      }
+      return pairs
     }
   }
 }

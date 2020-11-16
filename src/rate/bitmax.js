@@ -9,7 +9,7 @@ import {
 const asBitMaxTickerResponse = asObject({ data: asObject({ close: asString }) })
 
 export function makeBitMaxPlugin(opts: EdgeCorePluginOptions): EdgeRatePlugin {
-  const { io } = opts
+  const { io, log } = opts
   const { fetchCors = io.fetch } = io
 
   return {
@@ -19,26 +19,36 @@ export function makeBitMaxPlugin(opts: EdgeCorePluginOptions): EdgeRatePlugin {
     },
 
     async fetchRates(pairsHint) {
-      const response = await fetchCors(
-        'https://bitmax.io/api/pro/v1/ticker?symbol=FIO/USDT'
-      )
-      const json = await response.json()
-      if (!response.ok || json.reason === 'DATA_NOT_AVAILABLE') {
-        // Return fixed rate if data is unavailable
-        return [
-          {
-            fromCurrency: 'FIO',
-            toCurrency: 'USDT',
-            rate: 0.001
+      for (const pair of pairsHint) {
+        // BitMax is only used to query FIO price
+        if (pair.fromCurrency !== 'FIO') continue
+        try {
+          const response = await fetchCors(
+            'https://bitmax.io/api/pro/v1/ticker?symbol=FIO/USDT'
+          )
+          const json = await response.json()
+          if (!response.ok || json.reason === 'DATA_NOT_AVAILABLE') {
+            // Return fixed rate if data is unavailable
+            break
           }
-        ]
+          const rate = Number(asBitMaxTickerResponse(json).data.close)
+          return [
+            {
+              fromCurrency: 'FIO',
+              toCurrency: 'USDT',
+              rate
+            }
+          ]
+        } catch (e) {
+          log(`Issue with Bitmax rate data structure ${e}`)
+          break
+        }
       }
-      asBitMaxTickerResponse(json)
       return [
         {
           fromCurrency: 'FIO',
           toCurrency: 'USDT',
-          rate: Number(json.data.close)
+          rate: 0.001
         }
       ]
     }

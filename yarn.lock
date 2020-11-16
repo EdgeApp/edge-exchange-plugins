@@ -1514,6 +1514,11 @@ cleaners@^0.2.0:
   resolved "https://registry.yarnpkg.com/cleaners/-/cleaners-0.2.0.tgz#b1a583878f4c217c8f0bd2e7756dca3eaca91003"
   integrity sha512-UsCPC3eYtqBgk9kYSh8WbFoXbDD4lr9r7wz57MSsluMLFb78ws3ER6Bs2q+7iUmaeBiwZ/+S02FOQ5gEA2y4Sg==
 
+cleaners@^0.3.1:
+  version "0.3.1"
+  resolved "https://registry.yarnpkg.com/cleaners/-/cleaners-0.3.1.tgz#f8fe89d76b1731e07258148a1648ea251d72096d"
+  integrity sha512-PIV0B/TVBnTJlcQtjkLtUOnzBlKUT9QTL/LVw4M22vlgrm+/858oNK3w2umc3Ll9Q9hT2oTCURUOsiSDOpT9bA==
+
 cli-cursor@^2.0.0, cli-cursor@^2.1.0:
   version "2.1.0"
   resolved "https://registry.yarnpkg.com/cli-cursor/-/cli-cursor-2.1.0.tgz#b35dac376479facc3e94747d41d0d0f5238ffcb5"
@@ -1912,29 +1917,29 @@ duplexify@^3.4.2, duplexify@^3.6.0:
     readable-stream "^2.0.0"
     stream-shift "^1.0.0"
 
-edge-core-js@^0.17.3:
-  version "0.17.3"
-  resolved "https://registry.yarnpkg.com/edge-core-js/-/edge-core-js-0.17.3.tgz#86d5591471bd89e478b5c9723ee0e28b1feb0e20"
-  integrity sha512-hqt1rVjld0eHh6eXHqdJzKgcqFAlG7e1yTJcE2NNVahVQrljDhMBxJF1ceBLafOt1J4mAansLTaofYUUX/apPQ==
+edge-core-js@^0.17.17:
+  version "0.17.17"
+  resolved "https://registry.yarnpkg.com/edge-core-js/-/edge-core-js-0.17.17.tgz#d325f740789eb8761bef7e47b58f20acce756f8f"
+  integrity sha512-df/2WdQjcXGoMHiUVXHntnYEUwkWugXi/scqq4NLRiCXRDykaFe7aKJtaasDerorjPbk69gYwcl7M+avPXapVw==
   dependencies:
     aes-js "^3.1.0"
     base-x "^1.0.4"
     biggystring "^3.0.2"
-    cleaners "^0.2.0"
+    cleaners "^0.3.1"
     currency-codes "^1.1.2"
     disklet "^0.4.5"
     elliptic "^6.4.0"
     esm "^3.2.4"
     ethereumjs-tx "^1.3.7"
     ethereumjs-util "^5.2.0"
-    hash.js "^1.0.3"
+    hash.js "^1.1.7"
     hmac-drbg "^1.0.1"
     json-csv "^1.5.0"
-    node-fetch "^2.0.0"
+    node-fetch "^2.6.1"
     redux "^3.6.0"
-    redux-keto "^0.3.3"
+    redux-keto "^0.3.4"
     redux-pixies "^0.3.6"
-    rfc4648 "^1.1.0"
+    rfc4648 "^1.4.0"
     scrypt-js "^2.0.3"
     yaob "^0.3.6"
 
@@ -2808,7 +2813,7 @@ hash-base@^3.0.0:
     inherits "^2.0.1"
     safe-buffer "^5.0.1"
 
-hash.js@^1.0.0, hash.js@^1.0.3:
+hash.js@^1.0.0, hash.js@^1.0.3, hash.js@^1.1.7:
   version "1.1.7"
   resolved "https://registry.yarnpkg.com/hash.js/-/hash.js-1.1.7.tgz#0babca538e8d4ee4a0f8988d68866537a003cf42"
   integrity sha512-taOaskGt4z4SOANNseOviYDvjEJinIkRgmp7LbKP2YTTmVxWBl87s/uzK9r+44BclBSp2X7K1hqeNfz9JbBeXA==
@@ -3758,10 +3763,10 @@ nice-try@^1.0.4:
   resolved "https://registry.yarnpkg.com/nice-try/-/nice-try-1.0.5.tgz#a3378a7696ce7d223e88fc9b764bd7ef1089e366"
   integrity sha512-1nh45deeb5olNY7eX82BkPO7SSxR5SSYJiPTrTdFUVYwAl8CKMA5N9PjTYkHiRjisVcxcQ1HXdLhx2qxxJzLNQ==
 
-node-fetch@^2.0.0:
-  version "2.6.0"
-  resolved "https://registry.yarnpkg.com/node-fetch/-/node-fetch-2.6.0.tgz#e633456386d4aa55863f676a7ab0daa8fdecb0fd"
-  integrity sha512-8dG4H5ujfvFiqDmVu9fQ5bOHUC15JMjMY/Zumv26oOvvVJjM67KF8koCWIabKQ1GJIa9r2mMZscBq/TbdOcmNA==
+node-fetch@^2.6.1:
+  version "2.6.1"
+  resolved "https://registry.yarnpkg.com/node-fetch/-/node-fetch-2.6.1.tgz#045bd323631f76ed2e2b55573394416b639a0052"
+  integrity sha512-V4aYg89jEoVRxRb2fJdAg8FHvI7cEyYdVAh94HH0UIK8oJxUfkjlDQN9RbMx+bEjP7+ggMiFRprSti032Oipxw==
 
 node-libs-browser@^2.2.1:
   version "2.2.1"
@@ -4388,10 +4393,10 @@ readdirp@^2.2.1:
     micromatch "^3.1.10"
     readable-stream "^2.0.2"
 
-redux-keto@^0.3.3:
-  version "0.3.3"
-  resolved "https://registry.yarnpkg.com/redux-keto/-/redux-keto-0.3.3.tgz#db31fbfcbab11784cd2992d7ce204f6e50807969"
-  integrity sha512-JRbMmmhFHLXCl2J3Hb8zCTdM5O0jtY70mRnh/83xArCWeuWQoJK8adzUXiw9egEi//e7ti1Y/FzJlYbZYOSn8A==
+redux-keto@^0.3.4:
+  version "0.3.4"
+  resolved "https://registry.yarnpkg.com/redux-keto/-/redux-keto-0.3.4.tgz#1bf78a36736dc181dd419b10e57116dea17fa3a5"
+  integrity sha512-16q/QujMkv+zdsVRExJuGbl6grXZLoRakBbQR5E9DmEAPIeJoXtjmc6L3bCMUVjBfF+0XFQyJDZwjhS2guh+ng==
 
 redux-pixies@^0.3.6:
   version "0.3.6"
@@ -4562,6 +4567,11 @@ rfc4648@^1.1.0, rfc4648@^1.3.0:
   version "1.3.0"
   resolved "https://registry.yarnpkg.com/rfc4648/-/rfc4648-1.3.0.tgz#2a69c76f05bc0e388feab933672de9b492af95f1"
   integrity sha512-x36K12jOflpm1V8QjPq3I+pt7Z1xzeZIjiC8J2Oxd7bE1efTrOG241DTYVJByP/SxR9jl1t7iZqYxDX864jgBQ==
+
+rfc4648@^1.4.0:
+  version "1.4.0"
+  resolved "https://registry.yarnpkg.com/rfc4648/-/rfc4648-1.4.0.tgz#c75b2856ad2e2d588b6ddb985d556f1f7f2a2abd"
+  integrity sha512-3qIzGhHlMHA6PoT6+cdPKZ+ZqtxkIvg8DZGKA5z6PQ33/uuhoJ+Ws/D/J9rXW6gXodgH8QYlz2UCl+sdUDmNIg==
 
 rimraf@2.6.3:
   version "2.6.3"
