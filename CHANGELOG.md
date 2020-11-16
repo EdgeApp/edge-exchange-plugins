@@ -1,5 +1,9 @@
 # edge-exchange-plugins
 
+# 0.11.12 (2020-11-15)
+
+- Add support for rate hints. The exchange rate plugins will only return specific rate pairs requested from the core.
+
 # 0.11.11 (2020-10-09)
 
 - Update Changelly to use getFixRateForAmount
