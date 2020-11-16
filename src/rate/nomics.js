@@ -1,12 +1,19 @@
 // @flow
 
+import { asArray, asObject, asString } from 'cleaners'
 import {
   type EdgeCorePluginOptions,
   type EdgeRatePlugin
 } from 'edge-core-js/types'
 
+const asNomicsResponse = asArray(
+  asObject({
+    price: asString
+  })
+)
+
 export function makeNomicsPlugin(opts: EdgeCorePluginOptions): EdgeRatePlugin {
-  const { io, initOptions } = opts
+  const { io, initOptions, log } = opts
   const { fetchCors = io.fetch } = io
   const { apiKey } = initOptions
 
@@ -19,25 +26,25 @@ export function makeNomicsPlugin(opts: EdgeCorePluginOptions): EdgeRatePlugin {
       displayName: 'Nomics'
     },
 
-    async fetchRates() {
-      const reply = await fetchCors(
-        `https://api.nomics.com/v1/prices?key=${apiKey}`
-      )
-      const jsonData = await reply.json()
-      // Grab all the pairs which are in USD:
+    async fetchRates(pairsHint) {
       const pairs = []
-      for (const entry of jsonData) {
-        if (typeof entry.currency !== 'string') continue
-        if (typeof entry.price !== 'string') continue
-        const currency = entry.currency
-
-        pairs.push({
-          fromCurrency: currency,
-          toCurrency: 'iso:USD',
-          rate: parseFloat(entry.price)
-        })
+      for (const pair of pairsHint) {
+        const fiatCode = pair.toCurrency.split(':')
+        try {
+          const reply = await fetchCors(
+            `https://api.nomics.com/v1/currencies/ticker?key=${apiKey}&ids=${pair.fromCurrency}&convert=${fiatCode[1]}`
+          )
+          const jsonData = await reply.json()
+          const rate = Number(asNomicsResponse(jsonData)[0].price)
+          pairs.push({
+            fromCurrency: pair.fromCurrency,
+            toCurrency: pair.toCurrency,
+            rate
+          })
+        } catch (e) {
+          log(`Issue with Nomics rate data structure ${e}`)
+        }
       }
-
       return pairs
     }
   }

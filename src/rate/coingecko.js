@@ -1,6 +1,6 @@
 // @flow
 
-import { asNumber, asObject } from 'cleaners'
+import { asMap, asNumber, asObject } from 'cleaners'
 import {
   type EdgeCorePluginOptions,
   type EdgeRatePlugin
@@ -8,9 +8,7 @@ import {
 
 const asGeckoUsdReply = asObject({
   market_data: asObject({
-    current_price: asObject({
-      usd: asNumber
-    })
+    current_price: asMap(asNumber)
   })
 })
 
@@ -26,24 +24,31 @@ export function makeCoinGeckoPlugin(
     },
 
     async fetchRates(pairsHint) {
-      const reply = await io.fetch(
-        'https://api.coingecko.com/api/v3/coins/telos?localization=false&tickers=false&market_data=true&community_data=false&developer_data=false&sparkline=false'
-      )
-      const json = await reply.json()
-
-      // Grab all the pairs (TLOS to _______)
       const pairs = []
-      try {
-        const rate = asGeckoUsdReply(json).market_data.current_price.usd
-        pairs.push({
-          fromCurrency: 'TLOS',
-          toCurrency: 'iso:USD',
-          rate
-        })
-      } catch (error) {
-        log('Issue with Coingecko rate data structure')
+      let rates
+      for (const pair of pairsHint) {
+        // Coingecko is only used to query TLOS price
+        if (pair.fromCurrency !== 'TLOS') continue
+        try {
+          if (rates === undefined) {
+            const reply = await io.fetch(
+              'https://api.coingecko.com/api/v3/coins/telos?localization=false&tickers=false&market_data=true&community_data=false&developer_data=false&sparkline=false'
+            )
+            const json = await reply.json()
+            rates = asGeckoUsdReply(json)
+          }
+          const fiatCode = pair.toCurrency.split(':')
+          const rate =
+            rates.market_data.current_price[fiatCode[1].toLowerCase()]
+          pairs.push({
+            fromCurrency: pair.fromCurrency,
+            toCurrency: pair.toCurrency,
+            rate
+          })
+        } catch (e) {
+          log(`Issue with Coingecko rate data structure ${e}`)
+        }
       }
-
       return pairs
     }
   }

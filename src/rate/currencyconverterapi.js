@@ -34,10 +34,10 @@ export function makeCurrencyconverterapiPlugin(
     async fetchRates(pairsHint) {
       // TODO: pairsHint is broken in Core and doesn't actually look at wallet or account
       // fiat settings. Hard code known rare currencies for now
-      pairsHint = [
+      pairsHint = pairsHint.concat([
         { fromCurrency: 'iso:USD', toCurrency: 'iso:IMP' },
         { fromCurrency: 'iso:USD', toCurrency: 'iso:IRR' }
-      ]
+      ])
       const isoCodesWanted = []
       for (const pair of pairsHint) {
         checkAndPush(pair.fromCurrency, isoCodesWanted)
