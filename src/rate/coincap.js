@@ -23,6 +23,7 @@ const currencyMap = {}
 
 export function makeCoincapPlugin(opts: EdgeCorePluginOptions): EdgeRatePlugin {
   const { io, log } = opts
+  const fetch = io.fetchCors || io.fetch
 
   return {
     rateInfo: {
@@ -33,7 +34,7 @@ export function makeCoincapPlugin(opts: EdgeCorePluginOptions): EdgeRatePlugin {
     async fetchRates(pairsHint) {
       const pairs = []
       if (Object.keys(currencyMap).length === 0) {
-        const assets = await io.fetch(`https://api.coincap.io/v2/assets/`)
+        const assets = await fetch(`https://api.coincap.io/v2/assets/`)
         const assetsJson = await assets.json()
         const assetIds = asCoincapAssets(assetsJson.data)
         assetIds.forEach(code => (currencyMap[code.symbol] = code.id))
@@ -42,7 +43,7 @@ export function makeCoincapPlugin(opts: EdgeCorePluginOptions): EdgeRatePlugin {
         // Coincap only provides prices in USD and must be queried by unique identifier rather that currency code
         if (!currencyMap[pair.fromCurrency]) continue
         try {
-          const reply = await io.fetch(
+          const reply = await fetch(
             `https://api.coincap.io/v2/assets/${currencyMap[pair.fromCurrency]}`
           )
           const json = await reply.json()
