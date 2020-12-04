@@ -1,5 +1,10 @@
 # edge-exchange-plugins
 
+# 0.11.13 (2020-12-03)
+
+- Add support for FIRO
+- Fix CORS issue with Coincap
+
 # 0.11.12 (2020-11-15)
 
 - Add support for rate hints. The exchange rate plugins will only return specific rate pairs requested from the core.
