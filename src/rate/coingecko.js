@@ -12,6 +12,8 @@ const asGeckoUsdReply = asObject({
   })
 })
 
+const coinGeckoMap = { TLOS: 'telos', FIRO: 'zcoin' }
+
 export function makeCoinGeckoPlugin(
   opts: EdgeCorePluginOptions
 ): EdgeRatePlugin {
@@ -27,12 +29,14 @@ export function makeCoinGeckoPlugin(
       const pairs = []
       let rates
       for (const pair of pairsHint) {
-        // Coingecko is only used to query TLOS price
-        if (pair.fromCurrency !== 'TLOS') continue
+        // Coingecko is only used to query TLOS and FIRO price
+        if (coinGeckoMap[pair.fromCurrency] == null) continue
         try {
           if (rates === undefined) {
             const reply = await io.fetch(
-              'https://api.coingecko.com/api/v3/coins/telos?localization=false&tickers=false&market_data=true&community_data=false&developer_data=false&sparkline=false'
+              `https://api.coingecko.com/api/v3/coins/${
+                coinGeckoMap[pair.fromCurrency]
+              }?localization=false&tickers=false&market_data=true&community_data=false&developer_data=false&sparkline=false`
             )
             const json = await reply.json()
             rates = asGeckoUsdReply(json)
