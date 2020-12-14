@@ -12,6 +12,11 @@ const asNomicsResponse = asArray(
   })
 )
 
+function checkIfFiat(code: string): boolean {
+  if (code.indexOf('iso:') >= 0) return true
+  return false
+}
+
 export function makeNomicsPlugin(opts: EdgeCorePluginOptions): EdgeRatePlugin {
   const { io, initOptions, log } = opts
   const { fetchCors = io.fetch } = io
@@ -29,6 +34,12 @@ export function makeNomicsPlugin(opts: EdgeCorePluginOptions): EdgeRatePlugin {
     async fetchRates(pairsHint) {
       const pairs = []
       for (const pair of pairsHint) {
+        // Skip if codes are both fiat or crypto
+        if (
+          (checkIfFiat(pair.fromCurrency) && checkIfFiat(pair.toCurrency)) ||
+          (!checkIfFiat(pair.fromCurrency) && !checkIfFiat(pair.toCurrency))
+        )
+          continue
         const fiatCode = pair.toCurrency.split(':')
         try {
           const reply = await fetchCors(
@@ -42,7 +53,9 @@ export function makeNomicsPlugin(opts: EdgeCorePluginOptions): EdgeRatePlugin {
             rate
           })
         } catch (e) {
-          log(`Issue with Nomics rate data structure ${e}`)
+          log(
+            `Issue with Nomics rate data structure for ${pair.fromCurrency}/${pair.toCurrency} pair. Error: ${e}`
+          )
         }
       }
       return pairs
