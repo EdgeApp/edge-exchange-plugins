@@ -1,5 +1,6 @@
 // @flow
 
+import { makeSideshiftPlugin } from '../lib/swap/sideshift'
 import { makeBitMaxPlugin } from './rate/bitmax.js'
 import { makeCoinbasePlugin } from './rate/coinbase.js'
 import { makeCoincapPlugin } from './rate/coincap.js'
@@ -42,6 +43,7 @@ const edgeCorePlugins = {
   foxExchange: makeFoxExchangePlugin,
   godex: makeGodexPlugin,
   shapeshift: makeShapeshiftPlugin,
+  sideshift: makeSideshiftPlugin,
   switchain: makeSwitchainPlugin,
   totle: makeTotlePlugin,
   transfer: makeTransferPlugin
