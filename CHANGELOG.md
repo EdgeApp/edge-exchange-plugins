@@ -1,5 +1,11 @@
 # edge-exchange-plugins
 
+# 0.11.14 (2020-12-15)
+
+- Add new swap partner SideShift
+- Add ANT token to Coingecko
+- Reduce Nomics queries by ignoring fiat/fiat pairs
+
 # 0.11.13 (2020-12-03)
 
 - Add support for FIRO
