@@ -1,5 +1,9 @@
 # edge-exchange-plugins
 
+# 0.11.15 (2020-12-21)
+
+- Update ChangeNow to save `amount` returned from order creation endpoints to metadata
+
 # 0.11.14 (2020-12-15)
 
 - Add new swap partner SideShift
