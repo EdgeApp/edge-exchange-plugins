@@ -164,7 +164,7 @@ export function makeChangeNowPlugin(
             }
 
       const pairsToUse = []
-      let fromAmount, fromNativeAmount, toNativeAmount
+      let fromAmount, fromNativeAmount
       let pairItem
       let quoteReplyKeep = { estimatedAmount: '0' }
       for (let i = 0; i < availablePairs.length; i++) {
@@ -203,10 +203,6 @@ export function makeChangeNowPlugin(
               if (request.quoteFor === 'from') {
                 fromAmount = quoteAmount
                 fromNativeAmount = request.nativeAmount
-                toNativeAmount = await request.toWallet.denominationToNative(
-                  quoteReplyKeep.estimatedAmount.toString(),
-                  request.toCurrencyCode
-                )
               } else {
                 fromAmount = mul(
                   quoteReplyKeep.estimatedAmount.toString(),
@@ -216,7 +212,6 @@ export function makeChangeNowPlugin(
                   fromAmount,
                   request.fromCurrencyCode
                 )
-                toNativeAmount = request.nativeAmount
               }
               const sendReply = asCreateOrderReply(
                 await post(`transactions/fixed-rate/${apiKey}`, {
@@ -229,7 +224,10 @@ export function makeChangeNowPlugin(
                   payload: { promoCode }
                 })
               )
-              log('Fixed sendReply q ', sendReply)
+              const toAmount = await request.toWallet.denominationToNative(
+                sendReply.amount.toString(),
+                request.toCurrencyCode
+              )
               const spendInfo: EdgeSpendInfo = {
                 currencyCode: request.fromCurrencyCode,
                 spendTargets: [
@@ -249,7 +247,7 @@ export function makeChangeNowPlugin(
                   isEstimate: false,
                   payoutAddress: toAddress,
                   payoutCurrencyCode: request.toCurrencyCode,
-                  payoutNativeAmount: toNativeAmount,
+                  payoutNativeAmount: toAmount,
                   payoutWalletId: request.toWallet.id,
                   plugin: { ...swapInfo },
                   refundAddress: fromAddress
@@ -258,10 +256,6 @@ export function makeChangeNowPlugin(
               log('spendInfo', spendInfo)
               const tx: EdgeTransaction = await request.fromWallet.makeSpend(
                 spendInfo
-              )
-              const toAmount = await request.toWallet.denominationToNative(
-                sendReply.amount.toString(),
-                request.toCurrencyCode
               )
               return makeSwapPluginQuote(
                 request,
@@ -314,17 +308,12 @@ export function makeChangeNowPlugin(
       if (request.quoteFor === 'from') {
         fromAmount = quoteAmount
         fromNativeAmount = request.nativeAmount
-        toNativeAmount = await request.toWallet.denominationToNative(
-          quoteReply.estimatedAmount.toString(),
-          request.toCurrencyCode
-        )
       } else {
         fromAmount = mul(quoteReply.estimatedAmount.toString(), '1.02')
         fromNativeAmount = await request.fromWallet.denominationToNative(
           fromAmount,
           request.fromCurrencyCode
         )
-        toNativeAmount = request.nativeAmount
       }
       log('estQuery quoteReply  ', quoteReply)
 
@@ -342,6 +331,10 @@ export function makeChangeNowPlugin(
           refundAddress: fromAddress,
           payload: { promoCode }
         })
+      )
+      const toAmount = await request.toWallet.denominationToNative(
+        sendReply.amount.toString(),
+        request.toCurrencyCode
       )
 
       // Make the transaction:
@@ -364,7 +357,7 @@ export function makeChangeNowPlugin(
           isEstimate: true,
           payoutAddress: toAddress,
           payoutCurrencyCode: request.toCurrencyCode,
-          payoutNativeAmount: toNativeAmount,
+          payoutNativeAmount: toAmount,
           payoutWalletId: request.toWallet.id,
           plugin: { ...swapInfo },
           refundAddress: fromAddress
@@ -376,7 +369,7 @@ export function makeChangeNowPlugin(
       return makeSwapPluginQuote(
         request,
         fromNativeAmount,
-        toNativeAmount,
+        toAmount,
         tx,
         toAddress,
         pluginId,
