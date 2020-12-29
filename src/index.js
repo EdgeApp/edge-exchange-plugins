@@ -1,6 +1,5 @@
 // @flow
 
-import { makeSideshiftPlugin } from '../lib/swap/sideshift'
 import { makeBitMaxPlugin } from './rate/bitmax.js'
 import { makeCoinbasePlugin } from './rate/coinbase.js'
 import { makeCoincapPlugin } from './rate/coincap.js'
@@ -18,6 +17,7 @@ import { makeFaastPlugin } from './swap/faast.js'
 import { makeFoxExchangePlugin } from './swap/foxExchange.js'
 import { makeGodexPlugin } from './swap/godex.js'
 import { makeShapeshiftPlugin } from './swap/shapeshift.js'
+import { makeSideshiftPlugin } from './swap/sideshift.js'
 import { makeSwitchainPlugin } from './swap/switchain.js'
 import { makeTotlePlugin } from './swap/totle.js'
 import { makeTransferPlugin } from './swap/transfer.js'

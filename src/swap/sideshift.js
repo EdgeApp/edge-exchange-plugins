@@ -1,6 +1,6 @@
 // @flow
 
-import { asBoolean, asNumber, asObject, asOptional, asString } from 'cleaners'
+import { asBoolean, asObject, asOptional, asString } from 'cleaners'
 import {
   SwapAboveLimitError,
   SwapBelowLimitError,
@@ -157,7 +157,9 @@ const createFetchSwapQuote = (api: SideshiftApi, affiliateId: string) =>
     const depositAmount =
       request.quoteFor === 'from'
         ? quoteAmount
-        : (parseFloat(quoteAmount) / rate.rate).toFixed(8).toString()
+        : (parseFloat(quoteAmount) / parseFloat(rate.rate))
+            .toFixed(8)
+            .toString()
 
     const fixedQuoteRequest = asFixedQuoteRequest({
       depositMethod: safeFromCurrencyCode,
@@ -264,7 +266,7 @@ interface Permission {
 }
 
 interface Rate {
-  rate: number;
+  rate: string;
   min: string;
   max: string;
   error: { message: string } | typeof undefined;
@@ -276,7 +278,7 @@ const asPermissions = asObject({
 })
 
 const asRate = asObject({
-  rate: asNumber,
+  rate: asString,
   min: asString,
   max: asString,
   error: asOptional(asObject({ message: asString }))
@@ -289,14 +291,7 @@ const asFixedQuoteRequest = asObject({
 })
 
 const asFixedQuote = asObject({
-  createdAt: asString,
-  depositAmount: asString,
-  depositMethod: asString,
-  expiresAt: asString,
   id: asString,
-  rate: asString,
-  settleAmount: asString,
-  settleMethod: asString,
   error: asOptional(asObject({ message: asString }))
 })
 
@@ -309,23 +304,12 @@ const asOrderRequest = asObject({
 })
 
 const asOrder = asObject({
-  createdAt: asString,
-  createdAtISO: asString,
-  expiresAt: asString,
   expiresAtISO: asString,
   depositAddress: asObject({
     address: asString
   }),
-  depositMethod: asString,
   id: asString,
   orderId: asString,
-  settleAddress: asObject({
-    address: asString
-  }),
-  settleMethod: asString,
-  depositMax: asString,
-  depositMin: asString,
-  quoteId: asString,
   settleAmount: asString,
   depositAmount: asString
 })
