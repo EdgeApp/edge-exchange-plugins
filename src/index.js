@@ -8,6 +8,7 @@ import { makeCoinmonitorPlugin } from './rate/coinmonitor.js'
 import { makeCompoundPlugin } from './rate/compound.js'
 import { makeConstantRatePlugin } from './rate/constantRate.js'
 import { makeCurrencyconverterapiPlugin } from './rate/currencyconverterapi.js'
+import { makeEdgeRatesPlugin } from './rate/edgeRates.js'
 import { makeNomicsPlugin } from './rate/nomics.js'
 import { makeWazirxPlugin } from './rate/wazirx'
 import { makeChangellyPlugin } from './swap/changelly.js'
@@ -32,6 +33,7 @@ const edgeCorePlugins = {
   compound: makeCompoundPlugin,
   constantRate: makeConstantRatePlugin,
   currencyconverterapi: makeCurrencyconverterapiPlugin,
+  edgeRates: makeEdgeRatesPlugin,
   nomics: makeNomicsPlugin,
   wazirx: makeWazirxPlugin,
 
