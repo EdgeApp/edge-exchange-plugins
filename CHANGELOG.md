@@ -1,5 +1,10 @@
 # edge-exchange-plugins
 
+# 0.11.16 (2020-12-31)
+
+- Add rates1 as a fiat/fiat exchange rate provider
+- Fix Sideshift cleaner throws and formatting
+
 # 0.11.15 (2020-12-21)
 
 - Update ChangeNow to save `amount` returned from order creation endpoints to metadata
