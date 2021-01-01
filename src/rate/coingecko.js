@@ -46,20 +46,17 @@ export function makeCoinGeckoPlugin(
 
     async fetchRates(pairsHint) {
       const pairs = []
-      let rates
       for (const pair of pairsHint) {
         // Coingecko is only used to query specific currencies
         if (coinGeckoMap[pair.fromCurrency] == null) continue
         try {
-          if (rates === undefined) {
-            const reply = await io.fetch(
-              `https://api.coingecko.com/api/v3/coins/${
-                coinGeckoMap[pair.fromCurrency]
-              }?localization=false&tickers=false&market_data=true&community_data=false&developer_data=false&sparkline=false`
-            )
-            const json = await reply.json()
-            rates = asGeckoUsdReply(json)
-          }
+          const reply = await io.fetch(
+            `https://api.coingecko.com/api/v3/coins/${
+              coinGeckoMap[pair.fromCurrency]
+            }?localization=false&tickers=false&market_data=true&community_data=false&developer_data=false&sparkline=false`
+          )
+          const json = await reply.json()
+          const rates = asGeckoUsdReply(json)
           const fiatCode = pair.toCurrency.split(':')
           let toCurrency
           let rate
