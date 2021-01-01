@@ -1,5 +1,9 @@
 # edge-exchange-plugins
 
+# 0.11.17 (2021-01-01)
+
+- Add Aave tokens to Coingecko
+
 # 0.11.16 (2020-12-31)
 
 - Add rates1 as a fiat/fiat exchange rate provider
