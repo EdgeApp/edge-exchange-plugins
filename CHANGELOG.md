@@ -1,5 +1,9 @@
 # edge-exchange-plugins
 
+# 0.11.18 (2021-01-01)
+
+- Coingecko: Initialize `rates` in for-loop
+
 # 0.11.17 (2021-01-01)
 
 - Add Aave tokens to Coingecko
