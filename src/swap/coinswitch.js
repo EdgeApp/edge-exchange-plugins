@@ -4,6 +4,7 @@ import { add, div, gt, lt, mul, sub } from 'biggystring'
 import {
   type EdgeCorePluginOptions,
   type EdgeCurrencyWallet,
+  type EdgeLog,
   type EdgeSpendInfo,
   type EdgeSwapInfo,
   type EdgeSwapPlugin,
@@ -54,8 +55,9 @@ async function getAddress(
     : addressInfo.publicAddress
 }
 
-function checkReply(reply: Object, request?: EdgeSwapRequest) {
+function checkReply(log: EdgeLog, reply: Object, request?: EdgeSwapRequest) {
   if (request != null && !reply.data) {
+    log.warn(`${pluginId} SwapCurrencyError ${JSON.stringify(request)}`)
     throw new SwapCurrencyError(
       swapInfo,
       request.fromCurrencyCode,
@@ -102,6 +104,7 @@ export function makeCoinSwitchPlugin(
       request: EdgeSwapRequest,
       userSettings: Object | void
     ): Promise<EdgeSwapQuote> {
+      log.warn(`${pluginId} swap requested ${JSON.stringify(request)}`)
       const fixedPromise = this.getFixedQuote(request, userSettings)
       const estimatePromise = this.getEstimate(request, userSettings)
       // try fixed and if error then get estimate
@@ -159,8 +162,8 @@ export function makeCoinSwitchPlugin(
         })
       ])
 
-      checkReply(quoteReplies[0], request)
-      checkReply(quoteReplies[1], request)
+      checkReply(log, quoteReplies[0], request)
+      checkReply(log, quoteReplies[1], request)
 
       let fromAmount, fromNativeAmount, toNativeAmount
       const offerReferenceId = quoteReplies[0].data.offerReferenceId
@@ -194,10 +197,20 @@ export function makeCoinSwitchPlugin(
       ])
 
       if (lt(fromNativeAmount, nativeMin)) {
+        log.warn(
+          `${pluginId} SwapBelowLimitError\n${JSON.stringify(
+            swapInfo
+          )}\n${nativeMin}`
+        )
         throw new SwapBelowLimitError(swapInfo, nativeMin)
       }
 
       if (gt(fromNativeAmount, nativeMax)) {
+        log.warn(
+          `${pluginId} SwapAboveLimitError\n${JSON.stringify(
+            swapInfo
+          )}\n${nativeMax}`
+        )
         throw new SwapAboveLimitError(swapInfo, nativeMax)
       }
 
@@ -213,7 +226,7 @@ export function makeCoinSwitchPlugin(
         }
       })
 
-      checkReply(createOrder)
+      checkReply(log, createOrder)
       const quoteInfo: QuoteInfo = createOrder.data
 
       // Make the transaction:
@@ -245,7 +258,7 @@ export function makeCoinSwitchPlugin(
       log('fixedRate spendInfo', spendInfo)
       const tx: EdgeTransaction = await request.fromWallet.makeSpend(spendInfo)
 
-      return makeSwapPluginQuote(
+      const out = makeSwapPluginQuote(
         request,
         fromNativeAmount,
         toNativeAmount,
@@ -256,6 +269,8 @@ export function makeCoinSwitchPlugin(
         new Date(Date.now() + fixedExpirationMs),
         quoteInfo.orderId
       )
+      log.warn(`${pluginId} swap quote ${JSON.stringify(out)}`)
+      return out
     },
     async getEstimate(
       request: EdgeSwapRequest,
@@ -300,7 +315,7 @@ export function makeCoinSwitchPlugin(
         })
       ])
 
-      checkReply(quoteReplies[0], request)
+      checkReply(log, quoteReplies[0], request)
 
       let fromAmount, fromNativeAmount, toNativeAmount
       const minerFee = quoteReplies[0].data.minerFee.toString()
@@ -338,10 +353,20 @@ export function makeCoinSwitchPlugin(
       ])
 
       if (lt(fromNativeAmount, nativeMin)) {
+        log.warn(
+          `${pluginId} SwapBelowLimitError\n${JSON.stringify(
+            swapInfo
+          )}\n${nativeMin}`
+        )
         throw new SwapBelowLimitError(swapInfo, nativeMin)
       }
 
       if (gt(fromNativeAmount, nativeMax)) {
+        log.warn(
+          `${pluginId} SwapAboveLimitError\n${JSON.stringify(
+            swapInfo
+          )}\n${nativeMax}`
+        )
         throw new SwapAboveLimitError(swapInfo, nativeMax)
       }
 
@@ -356,7 +381,7 @@ export function makeCoinSwitchPlugin(
         }
       })
 
-      checkReply(createOrder)
+      checkReply(log, createOrder)
       const quoteInfo: QuoteInfo = createOrder.data
 
       // Make the transaction:
@@ -384,7 +409,7 @@ export function makeCoinSwitchPlugin(
       log('estimate spendInfo', spendInfo)
       const tx: EdgeTransaction = await request.fromWallet.makeSpend(spendInfo)
 
-      return makeSwapPluginQuote(
+      const out = makeSwapPluginQuote(
         request,
         fromNativeAmount,
         toNativeAmount,
@@ -395,6 +420,8 @@ export function makeCoinSwitchPlugin(
         new Date(Date.now() + expirationMs),
         quoteInfo.orderId
       )
+      log.warn(`${pluginId} swap quote ${JSON.stringify(out)}`)
+      return out
     }
   }
 

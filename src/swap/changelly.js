@@ -5,12 +5,14 @@ import { asObject, asString } from 'cleaners'
 import {
   type EdgeCorePluginOptions,
   type EdgeCurrencyWallet,
+  type EdgeLog,
   type EdgeSpendInfo,
   type EdgeSwapInfo,
   type EdgeSwapPlugin,
   type EdgeSwapQuote,
   type EdgeSwapRequest,
   type EdgeTransaction,
+  SwapAboveLimitError,
   SwapBelowLimitError,
   SwapCurrencyError
 } from 'edge-core-js/types'
@@ -114,17 +116,29 @@ async function getAddress(
     : addressInfo.publicAddress
 }
 
-function checkReply(reply: Object, request: EdgeSwapRequest) {
+function checkReply(reply: Object, request: EdgeSwapRequest, log: EdgeLog) {
   if (reply.error != null) {
     if (
       reply.error.code === -32602 ||
       /Invalid currency:/.test(reply.error.message)
     ) {
+      log.warn(`${pluginId} SwapCurrencyError ${JSON.stringify(request)}`)
       throw new SwapCurrencyError(
         swapInfo,
         request.fromCurrencyCode,
         request.toCurrencyCode
       )
+    }
+    // Parse error message to get value (ie. "message": "invalid amount: minimal amount is 0.28200000000000000")
+    const splitErrorMessage = reply.error.message.split(' ')
+    const value = splitErrorMessage[splitErrorMessage.length - 1]
+    if (/minimal amount:/.test(reply.error.message)) {
+      log.warn(`${pluginId} SwapBelowLimitError ${JSON.stringify(request)}`)
+      throw new SwapBelowLimitError(swapInfo, value)
+    }
+    if (/maximal amount:/.test(reply.error.message)) {
+      log.warn(`${pluginId} SwapAboveLimitError ${JSON.stringify(request)}`)
+      throw new SwapAboveLimitError(swapInfo, value)
     }
     throw new Error('Changelly error: ' + JSON.stringify(reply.error))
   }
@@ -169,11 +183,13 @@ export function makeChangellyPlugin(
       userSettings: Object | void,
       opts: { promoCode?: string }
     ): Promise<EdgeSwapQuote> {
+      log.warn(`${pluginId} swap requested ${JSON.stringify(request)}`)
       if (
         // if either currencyCode is invalid *and* doesn't have a transcription
         INVALID_CURRENCY_CODES[request.fromCurrencyCode] ||
         INVALID_CURRENCY_CODES[request.toCurrencyCode]
       ) {
+        log.warn(`${pluginId} SwapCurrencyError ${JSON.stringify(request)}`)
         throw new SwapCurrencyError(
           swapInfo,
           request.fromCurrencyCode,
@@ -186,8 +202,14 @@ export function makeChangellyPlugin(
         const fixedResult = await fixedPromise
         return fixedResult
       } catch (e) {
-        const estimateResult = await estimatePromise
-        return estimateResult
+        log.warn(`${pluginId} fixed rate failed with ${e.name} error`)
+        try {
+          const estimateResult = await estimatePromise
+          return estimateResult
+        } catch (e) {
+          log.warn(`${pluginId} estimated rate failed with ${e.name} error`)
+          throw e
+        }
       }
     },
 
@@ -264,7 +286,7 @@ export function makeChangellyPlugin(
         },
         promoCode
       )
-      checkReply(sendReply, request)
+      checkReply(sendReply, request, log)
       const quoteInfo: FixedQuoteInfo = sendReply.result
       const spendInfoAmount = await request.fromWallet.denominationToNative(
         quoteInfo.amountExpectedFrom,
@@ -309,7 +331,7 @@ export function makeChangellyPlugin(
       }
       const tx: EdgeTransaction = await request.fromWallet.makeSpend(spendInfo)
 
-      return makeSwapPluginQuote(
+      const out = makeSwapPluginQuote(
         request,
         amountExpectedFromNative,
         amountExpectedToTo,
@@ -320,6 +342,8 @@ export function makeChangellyPlugin(
         new Date(Date.now() + expirationFixedMs),
         quoteInfo.id
       )
+      log.warn(`${pluginId} swap quote ${JSON.stringify(out)}`)
+      return out
     },
 
     async getEstimate(
@@ -387,7 +411,7 @@ export function makeChangellyPlugin(
           params: quoteParams
         })
       ])
-      checkReply(quoteReplies[0], request)
+      checkReply(quoteReplies[0], request, log)
 
       // Check the minimum:
       const nativeMin = await request.fromWallet.denominationToNative(
@@ -395,10 +419,15 @@ export function makeChangellyPlugin(
         request.fromCurrencyCode
       )
       if (lt(request.nativeAmount, nativeMin)) {
+        log.warn(
+          `${pluginId} SwapBelowLimitError\n${JSON.stringify(
+            swapInfo
+          )}\n${nativeMin}`
+        )
         throw new SwapBelowLimitError(swapInfo, nativeMin)
       }
 
-      checkReply(quoteReplies[1], request)
+      checkReply(quoteReplies[1], request, log)
 
       // Calculate the amounts:
       let fromAmount, fromNativeAmount, toNativeAmount
@@ -436,7 +465,7 @@ export function makeChangellyPlugin(
         },
         promoCode
       )
-      checkReply(sendReply, request)
+      checkReply(sendReply, request, log)
       const quoteInfo: QuoteInfo = sendReply.result
       // Make the transaction:
       const spendInfo: EdgeSpendInfo = {
@@ -463,7 +492,7 @@ export function makeChangellyPlugin(
       log('spendInfo', spendInfo)
       const tx: EdgeTransaction = await request.fromWallet.makeSpend(spendInfo)
 
-      return makeSwapPluginQuote(
+      const out = makeSwapPluginQuote(
         request,
         fromNativeAmount,
         toNativeAmount,
@@ -474,6 +503,8 @@ export function makeChangellyPlugin(
         new Date(Date.now() + expirationMs),
         quoteInfo.id
       )
+      log.warn(`${pluginId} swap quote ${JSON.stringify(out)}`)
+      return out
     }
   }
 

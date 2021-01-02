@@ -33,7 +33,9 @@ export function makeTransferPlugin(
       request: EdgeSwapRequest,
       userSettings: Object | void
     ): Promise<EdgeSwapQuote> {
+      log.warn(`${pluginId} swap requested ${JSON.stringify(request)}`)
       if (request.fromCurrencyCode !== request.toCurrencyCode) {
+        log.warn(`${pluginId} SwapCurrencyError ${JSON.stringify(request)}`)
         throw new SwapCurrencyError(
           swapInfo,
           request.fromCurrencyCode,
@@ -63,7 +65,7 @@ export function makeTransferPlugin(
         toAddress,
         'transfer'
       )
-      log(quote)
+      log.warn(`${pluginId} swap quote ${JSON.stringify(out)}`)
       return quote
     }
   }

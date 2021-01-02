@@ -99,6 +99,7 @@ export function makeChangeNowPlugin(
       userSettings: Object | void,
       opts: { promoCode?: string }
     ): Promise<EdgeSwapQuote> {
+      log.warn(`${pluginId} swap requested ${JSON.stringify(request)}`)
       const { promoCode } = opts
 
       if (
@@ -106,6 +107,7 @@ export function makeChangeNowPlugin(
         INVALID_CURRENCY_CODES[request.fromCurrencyCode] ||
         INVALID_CURRENCY_CODES[request.toCurrencyCode]
       ) {
+        log.warn(`${pluginId} SwapCurrencyError ${JSON.stringify(request)}`)
         throw new SwapCurrencyError(
           swapInfo,
           request.fromCurrencyCode,
@@ -190,6 +192,9 @@ export function makeChangeNowPlugin(
                   break
                 }
                 if (quoteReply.error) {
+                  log.warn(
+                    `${pluginId} SwapCurrencyError ${JSON.stringify(request)}`
+                  )
                   throw new SwapCurrencyError(
                     swapInfo,
                     request.fromCurrencyCode,
@@ -257,7 +262,7 @@ export function makeChangeNowPlugin(
               const tx: EdgeTransaction = await request.fromWallet.makeSpend(
                 spendInfo
               )
-              return makeSwapPluginQuote(
+              const out = makeSwapPluginQuote(
                 request,
                 fromNativeAmount,
                 toAmount,
@@ -268,11 +273,14 @@ export function makeChangeNowPlugin(
                 sendReply.validUntil,
                 sendReply.id
               )
+              log.warn(`${pluginId} swap quote ${JSON.stringify(out)}`)
+              return out
             }
           }
         }
       }
       if (pairsToUse.length === 0) {
+        log.warn(`${pluginId} SwapCurrencyError ${JSON.stringify(request)}`)
         throw new SwapCurrencyError(
           swapInfo,
           request.fromCurrencyCode,
@@ -282,6 +290,7 @@ export function makeChangeNowPlugin(
 
       const min = await get(`min-amount/${quoteParams.from}_${quoteParams.to}`)
       if (min.minAmount == null) {
+        log.warn(`${pluginId} SwapCurrencyError ${JSON.stringify(request)}`)
         throw new SwapCurrencyError(
           swapInfo,
           request.fromCurrencyCode,
@@ -301,6 +310,11 @@ export function makeChangeNowPlugin(
       if (quoteReply.error) {
         log('reply error ', quoteReply.error)
         if (quoteReply.error === 'deposit_too_small') {
+          log.warn(
+            `${pluginId} SwapBelowLimitError\n${JSON.stringify(
+              swapInfo
+            )}\n${nativeMin}`
+          )
           throw new SwapBelowLimitError(swapInfo, nativeMin)
         }
       }
@@ -318,6 +332,11 @@ export function makeChangeNowPlugin(
       log('estQuery quoteReply  ', quoteReply)
 
       if (lt(fromNativeAmount, nativeMin)) {
+        log.warn(
+          `${pluginId} SwapBelowLimitError\n${JSON.stringify(
+            swapInfo
+          )}\n${nativeMin}`
+        )
         throw new SwapBelowLimitError(swapInfo, nativeMin)
       }
 
@@ -366,7 +385,7 @@ export function makeChangeNowPlugin(
       log('spendInfo', spendInfo)
       const tx: EdgeTransaction = await request.fromWallet.makeSpend(spendInfo)
 
-      return makeSwapPluginQuote(
+      const out = makeSwapPluginQuote(
         request,
         fromNativeAmount,
         toAmount,
@@ -377,6 +396,8 @@ export function makeChangeNowPlugin(
         new Date(Date.now() + 1000 * 60 * 20),
         sendReply.id
       )
+      log.warn(`${pluginId} swap quote ${JSON.stringify(out)}`)
+      return out
     }
   }
 

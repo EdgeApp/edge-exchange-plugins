@@ -83,11 +83,12 @@ type Token = {
   iconUrl: string
 }
 
-function checkReply(reply: Object, request: EdgeSwapRequest) {
+function checkReply(reply: Object, request: EdgeSwapRequest, log: EdgeLog) {
   if (reply.success === false) {
     const code = reply.response.code
     // unsupported tokens
     if (code === 1203) {
+      log.warn(`${pluginId} SwapCurrencyError ${JSON.stringify(request)}`)
       throw new SwapCurrencyError(
         swapInfo,
         request.fromCurrencyCode,
@@ -145,11 +146,13 @@ export function makeTotlePlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
       request: EdgeSwapRequest,
       userSettings: Object | void
     ): Promise<EdgeSwapQuote> {
+      log.warn(`${pluginId} swap requested ${JSON.stringify(request)}`)
       const tokens: Array<Token> = await fetchTokens()
 
       const fromToken = tokens.find(t => t.symbol === request.fromCurrencyCode)
       const toToken = tokens.find(t => t.symbol === request.toCurrencyCode)
       if (!fromToken || !toToken || fromToken.symbol === toToken.symbol) {
+        log.warn(`${pluginId} SwapCurrencyError ${JSON.stringify(request)}`)
         throw new SwapCurrencyError(
           swapInfo,
           request.fromCurrencyCode,
@@ -181,7 +184,7 @@ export function makeTotlePlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
           destinationAddress: userToAddress
         }
       })
-      checkReply(reply, request)
+      checkReply(reply, request, log)
 
       const { summary, transactions }: QuoteInfo = reply.response
 

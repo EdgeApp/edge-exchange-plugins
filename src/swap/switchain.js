@@ -85,7 +85,7 @@ const dummyAddresses = {
 export function makeSwitchainPlugin(
   opts: EdgeCorePluginOptions
 ): EdgeSwapPlugin {
-  const { initOptions, io } = opts
+  const { initOptions, io, log } = opts
 
   if (!initOptions.apiKey) {
     throw new Error('No Switchain API key provided.')
@@ -165,6 +165,7 @@ export function makeSwitchainPlugin(
       userSettings: Object | void,
       opts: { promoCode?: string }
     ): Promise<EdgeSwapQuote> {
+      log.warn(`${pluginId} swap requested ${JSON.stringify(request)}`)
       const {
         fromWallet,
         nativeAmount,
@@ -176,6 +177,7 @@ export function makeSwitchainPlugin(
       const { promoCode } = opts
 
       if (toCurrencyCode === fromCurrencyCode) {
+        log.warn(`${pluginId} SwapCurrencyError ${JSON.stringify(request)}`)
         throw new SwapCurrencyError(swapInfo, fromCurrencyCode, toCurrencyCode)
       }
 
@@ -233,19 +235,39 @@ export function makeSwitchainPlugin(
       // check for min / max limits
       if (quoteForFrom) {
         if (lt(nativeAmount, nativeMin)) {
+          log.warn(
+            `${pluginId} SwapBelowLimitError\n${JSON.stringify(
+              swapInfo
+            )}\n${nativeMin}`
+          )
           throw new SwapBelowLimitError(swapInfo, nativeMin)
         }
         if (gt(nativeAmount, nativeMax)) {
+          log.warn(
+            `${pluginId} SwapAboveLimitError\n${JSON.stringify(
+              swapInfo
+            )}\n${nativeMax}`
+          )
           throw new SwapAboveLimitError(swapInfo, nativeMax)
         }
       } else {
         const toAmountInFrom = div(toAmount, quote, 8)
 
         if (lt(toAmountInFrom, minLimit)) {
+          log.warn(
+            `${pluginId} SwapBelowLimitError\n${JSON.stringify(
+              swapInfo
+            )}\n${nativeMin}`
+          )
           throw new SwapBelowLimitError(swapInfo, nativeMin)
         }
 
         if (gt(toAmountInFrom, maxLimit)) {
+          log.warn(
+            `${pluginId} SwapAboveLimitError\n${JSON.stringify(
+              swapInfo
+            )}\n${nativeMax}`
+          )
           throw new SwapAboveLimitError(swapInfo, nativeMax)
         }
       }

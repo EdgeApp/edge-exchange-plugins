@@ -101,6 +101,11 @@ export function makeFaastPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
       replyJson != null &&
       /geo/.test(replyJson.error)
     ) {
+      log.warn(
+        `${pluginId} SwapPermissionError\n${JSON.stringify(
+          swapInfo
+        )}\ngeoRestriction`
+      )
       throw new SwapPermissionError(swapInfo, 'geoRestriction')
     }
 
@@ -143,6 +148,7 @@ export function makeFaastPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
       request: EdgeSwapRequest,
       userSettings: Object | void
     ): Promise<EdgeSwapQuote> {
+      log.warn(`${pluginId} swap requested ${JSON.stringify(request)}`)
       const {
         fromCurrencyCode,
         fromWallet,
@@ -156,6 +162,7 @@ export function makeFaastPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
         INVALID_CURRENCY_CODES.includes(toCurrencyCode) ||
         INVALID_CURRENCY_CODES.includes(fromCurrencyCode)
       ) {
+        log.warn(`${pluginId} SwapCurrencyError ${JSON.stringify(request)}`)
         throw new SwapCurrencyError(swapInfo, fromCurrencyCode, toCurrencyCode)
       }
 
@@ -172,6 +179,7 @@ export function makeFaastPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
         ])
       } catch (e) {
         if (/not supported/.test(e.message)) {
+          log.warn(`${pluginId} SwapCurrencyError ${JSON.stringify(request)}`)
           throw new SwapCurrencyError(
             swapInfo,
             fromCurrencyCode,
@@ -181,6 +189,7 @@ export function makeFaastPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
         throw e
       }
       if (!(fromCurrency.deposit && toCurrency.receive)) {
+        log.warn(`${pluginId} SwapCurrencyError ${JSON.stringify(request)}`)
         throw new SwapCurrencyError(swapInfo, fromCurrencyCode, toCurrencyCode)
       }
 
@@ -189,6 +198,11 @@ export function makeFaastPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
         (geoInfo.restricted &&
           (fromCurrency.restricted || toCurrency.restricted))
       ) {
+        log.warn(
+          `${pluginId} SwapPermissionError\n${JSON.stringify(
+            swapInfo
+          )}\ngeoRestriction`
+        )
         throw new SwapPermissionError(swapInfo, 'geoRestriction')
       }
 
@@ -205,6 +219,7 @@ export function makeFaastPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
         post('/address', { address: toAddress, currency: toCurrencyCode })
       ])
       if (!fromAddressData.valid || !toAddressData.valid) {
+        log.warn(`${pluginId} SwapCurrencyError ${JSON.stringify(request)}`)
         throw new SwapCurrencyError(swapInfo, fromCurrencyCode, toCurrencyCode)
       }
 
@@ -238,6 +253,7 @@ export function makeFaastPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
         )
       } catch (e) {
         if (/not currently supported/.test(e.message)) {
+          log.warn(`${pluginId} SwapCurrencyError ${JSON.stringify(request)}`)
           throw new SwapCurrencyError(
             swapInfo,
             fromCurrencyCode,
@@ -281,9 +297,19 @@ export function makeFaastPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
         ])
       }
       if (nativeMin != null && lt(nativeAmount, nativeMin)) {
+        log.warn(
+          `${pluginId} SwapBelowLimitError\n${JSON.stringify(
+            swapInfo
+          )}\n${nativeMin}`
+        )
         throw new SwapBelowLimitError(swapInfo, nativeMin)
       }
       if (nativeMax != null && gt(nativeAmount, nativeMax)) {
+        log.warn(
+          `${pluginId} SwapAboveLimitError\n${JSON.stringify(
+            swapInfo
+          )}\n${nativeMax}`
+        )
         throw new SwapAboveLimitError(swapInfo, nativeMax)
       }
 
@@ -303,9 +329,19 @@ export function makeFaastPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
         // TODO: Using the nativeAmount here is technically a bug,
         // since we don't know the actual limit in this case:
         if (/amount less than/.test(e.message)) {
+          log.warn(
+            `${pluginId} SwapBelowLimitError\n${JSON.stringify(swapInfo)}\n${
+              nativeMin || nativeAmount
+            }`
+          )
           throw new SwapBelowLimitError(swapInfo, nativeMin || nativeAmount)
         }
         if (/is greater/.test(e.message)) {
+          log.warn(
+            `${pluginId} SwapAboveLimitError\n${JSON.stringify(swapInfo)}\n${
+              nativeMax || nativeAmount
+            }`
+          )
           throw new SwapAboveLimitError(swapInfo, nativeMax || nativeAmount)
         }
         throw e
@@ -348,7 +384,7 @@ export function makeFaastPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
       const tx: EdgeTransaction = await fromWallet.makeSpend(spendInfo)
 
       // Convert that to the output format:
-      return makeSwapPluginQuote(
+      const out = makeSwapPluginQuote(
         request,
         fromNativeAmount,
         toNativeAmount,
@@ -359,6 +395,8 @@ export function makeFaastPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
         new Date(quoteData.price_locked_until),
         quoteData.swap_id
       )
+      log.warn(`${pluginId} swap quote ${JSON.stringify(out)}`)
+      return out
     }
   }
 

@@ -2,20 +2,19 @@
 
 import { asBoolean, asObject, asOptional, asString } from 'cleaners'
 import {
-  SwapAboveLimitError,
-  SwapBelowLimitError,
-  SwapPermissionError
-} from 'edge-core-js'
-import {
   type EdgeCorePluginOptions,
   type EdgeCurrencyWallet,
   type EdgeFetchFunction,
+  type EdgeLog,
   type EdgeSpendInfo,
   type EdgeSwapInfo,
   type EdgeSwapPlugin,
   type EdgeSwapQuote,
   type EdgeSwapRequest,
-  SwapCurrencyError
+  SwapAboveLimitError,
+  SwapBelowLimitError,
+  SwapCurrencyError,
+  SwapPermissionError
 } from 'edge-core-js/types'
 
 import { makeSwapPluginQuote } from '../swap-helpers.js'
@@ -58,7 +57,8 @@ function getSafeCurrencyCode(request: EdgeSwapRequest) {
 async function checkQuoteError(
   rate: Rate,
   request: EdgeSwapRequest,
-  quoteErrorMessage: string
+  quoteErrorMessage: string,
+  log: EdgeLog
 ) {
   const { fromCurrencyCode, fromWallet } = request
 
@@ -67,6 +67,11 @@ async function checkQuoteError(
       rate.min,
       fromCurrencyCode
     )
+    log.warn(
+      `${pluginId} SwapBelowLimitError\n${JSON.stringify(
+        swapInfo
+      )}\n${nativeMin}`
+    )
     throw new SwapBelowLimitError(swapInfo, nativeMin)
   }
 
@@ -74,6 +79,11 @@ async function checkQuoteError(
     const nativeMax = await fromWallet.denominationToNative(
       rate.max,
       fromCurrencyCode
+    )
+    log.warn(
+      `${pluginId} SwapAboveLimitError\n${JSON.stringify(
+        swapInfo
+      )}\n${nativeMax}`
     )
     throw new SwapAboveLimitError(swapInfo, nativeMax)
   }
@@ -111,13 +121,23 @@ const createSideshiftApi = (baseUrl: string, fetch: EdgeFetchFunction) => {
   }
 }
 
-const createFetchSwapQuote = (api: SideshiftApi, affiliateId: string) =>
+const createFetchSwapQuote = (
+  api: SideshiftApi,
+  affiliateId: string,
+  log: EdgeLog
+) =>
   async function fetchSwapQuote(
     request: EdgeSwapRequest
   ): Promise<EdgeSwapQuote> {
+    log.warn(`${pluginId} swap requested ${JSON.stringify(request)}`)
     const permissions = asPermissions(await api.get<Permission>('/permissions'))
 
     if (!permissions.createOrder || !permissions.createQuote) {
+      log.warn(
+        `${pluginId} SwapPermissionError\n${JSON.stringify(
+          swapInfo
+        )}\ngeoRestriction`
+      )
       throw new SwapPermissionError(swapInfo, 'geoRestriction')
     }
 
@@ -137,6 +157,7 @@ const createFetchSwapQuote = (api: SideshiftApi, affiliateId: string) =>
     )
 
     if (rate.error) {
+      log.warn(`${pluginId} SwapCurrencyError ${JSON.stringify(request)}`)
       throw new SwapCurrencyError(
         swapInfo,
         request.fromCurrencyCode,
@@ -172,7 +193,7 @@ const createFetchSwapQuote = (api: SideshiftApi, affiliateId: string) =>
     )
 
     if (fixedQuote.error) {
-      await checkQuoteError(rate, request, fixedQuote.error.message)
+      await checkQuoteError(rate, request, fixedQuote.error.message, log)
     }
 
     const orderRequest = asOrderRequest({
@@ -227,7 +248,7 @@ const createFetchSwapQuote = (api: SideshiftApi, affiliateId: string) =>
 
     const tx = await request.fromWallet.makeSpend(spendInfo)
 
-    return makeSwapPluginQuote(
+    const out = makeSwapPluginQuote(
       request,
       amountExpectedFromNative,
       amountExpectedToNative,
@@ -238,16 +259,18 @@ const createFetchSwapQuote = (api: SideshiftApi, affiliateId: string) =>
       new Date(order.expiresAtISO),
       order.id
     )
+    log.warn(`${pluginId} swap quote ${JSON.stringify(out)}`)
+    return out
   }
 
 export function makeSideshiftPlugin(
   opts: EdgeCorePluginOptions
 ): EdgeSwapPlugin {
-  const { io, initOptions } = opts
+  const { io, initOptions, log } = opts
 
   const api = createSideshiftApi(SIDESHIFT_BASE_URL, io.fetchCors || io.fetch)
 
-  const fetchSwapQuote = createFetchSwapQuote(api, initOptions.affiliateId)
+  const fetchSwapQuote = createFetchSwapQuote(api, initOptions.affiliateId, log)
 
   return {
     swapInfo,

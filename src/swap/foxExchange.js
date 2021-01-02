@@ -96,6 +96,7 @@ export function makeFoxExchangePlugin(
       request: EdgeSwapRequest,
       userSettings: Object | void
     ): Promise<EdgeSwapQuote> {
+      log.warn(`${pluginId} swap requested ${JSON.stringify(request)}`)
       async function post(path: string, data: Object) {
         log(`request to ${path}`, data)
         const body = JSON.stringify(data)
@@ -119,20 +120,36 @@ export function makeFoxExchangePlugin(
             json.code === 'invalid_symbol' ||
             json.code === 'trade_pair_disabled'
           ) {
+            log.warn(`${pluginId} SwapCurrencyError ${JSON.stringify(request)}`)
             throw new SwapCurrencyError(
               swapInfo,
               request.fromCurrencyCode,
               request.toCurrencyCode
             )
           } else if (json.code === 'region_lock') {
+            log.warn(
+              `${pluginId} SwapPermissionError\n${JSON.stringify(
+                swapInfo
+              )}\ngeoRestriction`
+            )
             throw new SwapPermissionError(swapInfo, 'geoRestriction')
           } else if (json.code === 'min_limit_breached') {
             // TODO: Using the nativeAmount here is technically a bug,
             // since we don't know the actual limit in this case:
+            log.warn(
+              `${pluginId} SwapBelowLimitError\n${JSON.stringify(swapInfo)}\n${
+                request.nativeAmount
+              }`
+            )
             throw new SwapBelowLimitError(swapInfo, request.nativeAmount)
           } else if (json.code === 'max_limit_breached') {
             // TODO: Using the nativeAmount here is technically a bug,
             // since we don't know the actual limit in this case:
+            log.warn(
+              `${pluginId} SwapAboveLimitError\n${JSON.stringify(swapInfo)}\n${
+                request.nativeAmount
+              }`
+            )
             throw new SwapAboveLimitError(swapInfo, request.nativeAmount)
           }
 
@@ -179,26 +196,33 @@ export function makeFoxExchangePlugin(
             rateResp.limitMinDepositCoin &&
             rateReq.depositCoinAmount < rateResp.limitMinDepositCoin
           ) {
-            throw new SwapBelowLimitError(
-              swapInfo,
-              await request.fromWallet.denominationToNative(
-                String(rateResp.limitMinDepositCoin),
-                request.fromCurrencyCode
-              )
+            const nativeMin = await request.fromWallet.denominationToNative(
+              String(rateResp.limitMinDepositCoin),
+              request.fromCurrencyCode
             )
+            log.warn(
+              `${pluginId} SwapBelowLimitError\n${JSON.stringify(
+                swapInfo
+              )}\n${nativeMin}`
+            )
+            throw new SwapBelowLimitError(swapInfo, nativeMin)
           } else if (
             rateReq.depositCoinAmount &&
             rateResp.limitMaxDepositCoin &&
             rateReq.depositCoinAmount > rateResp.limitMaxDepositCoin
           ) {
-            throw new SwapAboveLimitError(
-              swapInfo,
-              await request.fromWallet.denominationToNative(
-                String(rateResp.limitMaxDepositCoin),
-                request.fromCurrencyCode
-              )
+            const nativeMax = await request.fromWallet.denominationToNative(
+              String(rateResp.limitMaxDepositCoin),
+              request.fromCurrencyCode
             )
+            log.warn(
+              `${pluginId} SwapAboveLimitError\n${JSON.stringify(
+                swapInfo
+              )}\n${nativeMax}`
+            )
+            throw new SwapAboveLimitError(swapInfo, nativeMax)
           } else {
+            log.warn(`${pluginId} SwapCurrencyError ${JSON.stringify(request)}`)
             throw new SwapCurrencyError(
               swapInfo,
               request.fromCurrencyCode,
@@ -213,26 +237,33 @@ export function makeFoxExchangePlugin(
             rateResp.limitMinDestinationCoin &&
             rateReq.destinationCoinAmount < rateResp.limitMinDestinationCoin
           ) {
-            throw new SwapBelowLimitError(
-              swapInfo,
-              await request.toWallet.denominationToNative(
-                String(rateResp.limitMinDestinationCoin),
-                request.toCurrencyCode
-              )
+            const nativeMin = await request.toWallet.denominationToNative(
+              String(rateResp.limitMinDestinationCoin),
+              request.toCurrencyCode
             )
+            log.warn(
+              `${pluginId} SwapBelowLimitError\n${JSON.stringify(
+                swapInfo
+              )}\n${nativeMin}`
+            )
+            throw new SwapBelowLimitError(swapInfo, nativeMin)
           } else if (
             rateReq.destinationCoinAmount &&
             rateResp.limitMaxDestinationCoin &&
             rateReq.destinationCoinAmount > rateResp.limitMaxDestinationCoin
           ) {
-            throw new SwapAboveLimitError(
-              swapInfo,
-              await request.toWallet.denominationToNative(
-                String(rateResp.limitMaxDestinationCoin),
-                request.toCurrencyCode
-              )
+            const nativeMax = await request.toWallet.denominationToNative(
+              String(rateResp.limitMaxDestinationCoin),
+              request.toCurrencyCode
             )
+            log.warn(
+              `${pluginId} SwapAboveLimitError\n${JSON.stringify(
+                swapInfo
+              )}\n${nativeMax}`
+            )
+            throw new SwapAboveLimitError(swapInfo, nativeMax)
           } else {
+            log.warn(`${pluginId} SwapCurrencyError ${JSON.stringify(request)}`)
             throw new SwapCurrencyError(
               swapInfo,
               request.fromCurrencyCode,

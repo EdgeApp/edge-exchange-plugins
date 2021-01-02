@@ -74,6 +74,7 @@ export function makeGodexPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
     const response = await fetchCors(url, { method: 'POST', body, headers })
     if (!response.ok) {
       if (response.status === 422) {
+        log.warn(`${pluginId} SwapCurrencyError ${JSON.stringify(request)}`)
         throw new SwapCurrencyError(
           swapInfo,
           request.fromCurrencyCode,
@@ -93,6 +94,7 @@ export function makeGodexPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
       userSettings: Object | void,
       opts: { promoCode?: string }
     ): Promise<EdgeSwapQuote> {
+      log.warn(`${pluginId} swap requested ${JSON.stringify(request)}`)
       // Grab addresses:
       const [fromAddress, toAddress] = await Promise.all([
         getAddress(request.fromWallet, request.fromCurrencyCode),
@@ -151,6 +153,11 @@ export function makeGodexPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
         request.fromCurrencyCode
       )
       if (lt(fromNativeAmount, nativeMin)) {
+        log.warn(
+          `${pluginId} SwapBelowLimitError\n${JSON.stringify(
+            swapInfo
+          )}\n${nativeMin}`
+        )
         throw new SwapBelowLimitError(swapInfo, nativeMin)
       }
       const { promoCode } = opts
@@ -208,7 +215,7 @@ export function makeGodexPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
       const tx: EdgeTransaction = await request.fromWallet.makeSpend(spendInfo)
 
       // Convert that to the output format:
-      return makeSwapPluginQuote(
+      const out = makeSwapPluginQuote(
         request,
         fromNativeAmount,
         toNativeAmount,
@@ -219,6 +226,8 @@ export function makeGodexPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
         new Date(Date.now() + expirationMs),
         quoteInfo.transaction_id
       )
+      log.warn(`${pluginId} swap quote ${JSON.stringify(out)}`)
+      return out
     }
   }
 
