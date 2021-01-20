@@ -208,7 +208,8 @@ const createFetchSwapQuote = (api: SideshiftApi, affiliateId: string) =>
       spendTargets: [
         {
           nativeAmount: spendInfoAmount,
-          publicAddress: order.depositAddress.address
+          publicAddress: order.depositAddress.address,
+          uniqueIdentifier: order.depositAddress.memo
         }
       ],
       networkFeeOption:
@@ -306,7 +307,8 @@ const asOrderRequest = asObject({
 const asOrder = asObject({
   expiresAtISO: asString,
   depositAddress: asObject({
-    address: asString
+    address: asString,
+    memo: asOptional(asString)
   }),
   id: asString,
   orderId: asString,
