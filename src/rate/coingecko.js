@@ -15,22 +15,7 @@ const asGeckoUsdReply = asObject({
 const coinGeckoMap = {
   TLOS: 'telos',
   FIRO: 'zcoin',
-  ANT: 'aragon',
-  AYFI: 'ayfi',
-  ALINK: 'aave-link',
-  ADAI: 'aave-dai',
-  ABAT: 'aave-bat',
-  AETH: 'aave-eth',
-  AWBTC: 'aave-wbtc',
-  ASNX: 'aave-snx',
-  AREN: 'aave-ren',
-  AUSDT: 'aave-usdt',
-  AMKR: 'aave-mkr',
-  AMANA: 'aave-mana',
-  AZRX: 'aave-zrx',
-  AKNC: 'aave-knc',
-  AUSDC: 'aave-usdc',
-  ASUSD: 'aave-susd'
+  ANT: 'aragon'
 }
 
 export function makeCoinGeckoPlugin(
