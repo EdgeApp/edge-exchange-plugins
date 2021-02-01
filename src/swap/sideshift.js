@@ -217,7 +217,7 @@ const createFetchSwapQuote = (api: SideshiftApi, affiliateId: string) =>
         orderId: order.orderId,
         isEstimate,
         payoutAddress: settleAddress,
-        payoutCurrencyCode: safeToCurrencyCode,
+        payoutCurrencyCode: safeToCurrencyCode.toUpperCase(),
         payoutNativeAmount: amountExpectedToNative,
         payoutWalletId: request.toWallet.id,
         plugin: { ...swapInfo },
