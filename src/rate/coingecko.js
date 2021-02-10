@@ -15,7 +15,8 @@ const asGeckoUsdReply = asObject({
 const coinGeckoMap = {
   TLOS: 'telos',
   FIRO: 'zcoin',
-  ANT: 'aragon'
+  ANT: 'aragon',
+  TBTC: 'tbtc'
 }
 
 export function makeCoinGeckoPlugin(
