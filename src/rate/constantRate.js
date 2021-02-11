@@ -18,7 +18,7 @@ export function makeConstantRatePlugin(
       // Grab all the pairs which are in USD:
       const pairs = [
         {
-          fromCurrency: 'TBTC',
+          fromCurrency: 'TESTBTC',
           toCurrency: 'iso:USD',
           rate: 0.01
         },

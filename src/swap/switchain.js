@@ -180,7 +180,7 @@ export function makeSwitchainPlugin(
       }
 
       // convert TBTC to BTC for testing purposes
-      if (fromCurrencyCode.toUpperCase() === 'TBTC') {
+      if (fromCurrencyCode.toUpperCase() === 'TESTBTC') {
         fromCurrencyCode = 'BTC'
         apiUrl = 'https://api-testnet.switchain.com/rest/v1'
       } else {
