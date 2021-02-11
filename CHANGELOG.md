@@ -1,5 +1,11 @@
 # edge-exchange-plugins
 
+# 0.11.19 (2021-02-11)
+
+- Move aTokens to constantRate plugin
+- Rename TBTC to TESTBTC
+- Sideshift: add uniqueIdentifier to swaps
+
 # 0.11.18 (2021-01-01)
 
 - Coingecko: Initialize `rates` in for-loop
