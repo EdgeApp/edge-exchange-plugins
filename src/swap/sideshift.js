@@ -33,6 +33,7 @@ const swapInfo: EdgeSwapInfo = {
   displayName: 'SideShift.ai',
   supportEmail: 'help@sideshift.ai'
 }
+const ORDER_STATUS_URL = 'https://sideshift.ai/orders/'
 
 async function getAddress(
   wallet: EdgeCurrencyWallet,
@@ -236,6 +237,7 @@ const createFetchSwapQuote = (api: SideshiftApi, affiliateId: string) =>
         request.fromCurrencyCode.toUpperCase() === 'BTC' ? 'high' : 'standard',
       swapData: {
         orderId: order.orderId,
+        orderUri: ORDER_STATUS_URL + order.orderId,
         isEstimate,
         payoutAddress: settleAddress,
         payoutCurrencyCode: safeToCurrencyCode.toUpperCase(),
