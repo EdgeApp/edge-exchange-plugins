@@ -1,9 +1,10 @@
 // @flow
 
-import { asBoolean, asObject, asOptional, asString } from 'cleaners'
+import { asBoolean, asEither, asObject, asOptional, asString } from 'cleaners'
 import {
   SwapAboveLimitError,
   SwapBelowLimitError,
+  SwapCurrencyError,
   SwapPermissionError
 } from 'edge-core-js'
 import {
@@ -14,8 +15,7 @@ import {
   type EdgeSwapInfo,
   type EdgeSwapPlugin,
   type EdgeSwapQuote,
-  type EdgeSwapRequest,
-  SwapCurrencyError
+  type EdgeSwapRequest
 } from 'edge-core-js/types'
 
 import { makeSwapPluginQuote } from '../swap-helpers.js'
@@ -60,7 +60,7 @@ async function checkQuoteError(
   request: EdgeSwapRequest,
   quoteErrorMessage: string
 ) {
-  const { fromCurrencyCode, fromWallet } = request
+  const { fromCurrencyCode, fromWallet, toCurrencyCode } = request
 
   if (quoteErrorMessage === 'Amount too low') {
     const nativeMin = await fromWallet.denominationToNative(
@@ -76,6 +76,20 @@ async function checkQuoteError(
       fromCurrencyCode
     )
     throw new SwapAboveLimitError(swapInfo, nativeMax)
+  }
+
+  if (
+    quoteErrorMessage === 'Deposit method disabled' ||
+    quoteErrorMessage === 'Settle method disabled'
+  ) {
+    throw new SwapCurrencyError(swapInfo, fromCurrencyCode, toCurrencyCode)
+  }
+
+  if (
+    quoteErrorMessage ===
+    'Not allowed to create orders. See https://sideshift.ai/country-blocked'
+  ) {
+    throw new SwapPermissionError(swapInfo, 'geoRestriction')
   }
 }
 
@@ -173,6 +187,7 @@ const createFetchSwapQuote = (api: SideshiftApi, affiliateId: string) =>
 
     if (fixedQuote.error) {
       await checkQuoteError(rate, request, fixedQuote.error.message)
+      throw new Error(`SideShift.ai error ${fixedQuote.error.message}`)
     }
 
     const orderRequest = asOrderRequest({
@@ -185,6 +200,11 @@ const createFetchSwapQuote = (api: SideshiftApi, affiliateId: string) =>
     const order = asOrder(
       await api.post<typeof asOrder>('/orders', orderRequest)
     )
+
+    if (order.error) {
+      await checkQuoteError(rate, request, order.error.message)
+      throw new Error(`SideShift.ai error ${order.error.message}`)
+    }
 
     const spendInfoAmount = await request.fromWallet.denominationToNative(
       order.depositAmount,
@@ -291,27 +311,31 @@ const asFixedQuoteRequest = asObject({
   depositAmount: asString
 })
 
-const asFixedQuote = asObject({
-  id: asString,
-  error: asOptional(asObject({ message: asString }))
-})
+const asFixedQuote = asEither(
+  asObject({
+    id: asString
+  }),
+  asObject({ error: asObject({ message: asString }) })
+)
 
 const asOrderRequest = asObject({
   type: asString,
   quoteId: asString,
   affiliateId: asString,
-  sessionSecret: asOptional(asString),
   settleAddress: asString
 })
 
-const asOrder = asObject({
-  expiresAtISO: asString,
-  depositAddress: asObject({
-    address: asString,
-    memo: asOptional(asString)
+const asOrder = asEither(
+  asObject({
+    expiresAtISO: asString,
+    depositAddress: asObject({
+      address: asString,
+      memo: asOptional(asString)
+    }),
+    id: asString,
+    orderId: asString,
+    settleAmount: asString,
+    depositAmount: asString
   }),
-  id: asString,
-  orderId: asString,
-  settleAmount: asString,
-  depositAmount: asString
-})
+  asObject({ error: asObject({ message: asString }) })
+)
