@@ -80,18 +80,16 @@ async function checkQuoteError(
   }
 
   if (
-    quoteErrorMessage === 'Deposit method disabled' ||
-    quoteErrorMessage === 'Settle method disabled'
+    /method/i.test(quoteErrorMessage) &&
+    /disabled/i.test(quoteErrorMessage)
   ) {
     throw new SwapCurrencyError(swapInfo, fromCurrencyCode, toCurrencyCode)
   }
 
-  if (
-    quoteErrorMessage ===
-    'Not allowed to create orders. See https://sideshift.ai/country-blocked'
-  ) {
+  if (/country-blocked/i.test(quoteErrorMessage)) {
     throw new SwapPermissionError(swapInfo, 'geoRestriction')
   }
+  throw new Error(`SideShift.ai error ${quoteErrorMessage}`)
 }
 
 const createSideshiftApi = (baseUrl: string, fetch: EdgeFetchFunction) => {
@@ -187,8 +185,7 @@ const createFetchSwapQuote = (api: SideshiftApi, affiliateId: string) =>
     )
 
     if (fixedQuote.error) {
-      await checkQuoteError(rate, request, fixedQuote.error.message)
-      throw new Error(`SideShift.ai error ${fixedQuote.error.message}`)
+      throw checkQuoteError(rate, request, fixedQuote.error.message)
     }
 
     const orderRequest = asOrderRequest({
@@ -203,8 +200,7 @@ const createFetchSwapQuote = (api: SideshiftApi, affiliateId: string) =>
     )
 
     if (order.error) {
-      await checkQuoteError(rate, request, order.error.message)
-      throw new Error(`SideShift.ai error ${order.error.message}`)
+      throw checkQuoteError(rate, request, order.error.message)
     }
 
     const spendInfoAmount = await request.fromWallet.denominationToNative(
