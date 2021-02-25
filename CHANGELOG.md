@@ -1,5 +1,10 @@
 # edge-exchange-plugins
 
+# 0.11.20 (2021-02-25)
+
+- Sideshift: Add order status URL
+- Sideshift: Throw appropriate error messages instead of relying on cleaners
+
 # 0.11.19 (2021-02-11)
 
 - Move aTokens to constantRate plugin
