@@ -45,6 +45,7 @@ export function makeNomicsPlugin(opts: EdgeCorePluginOptions): EdgeRatePlugin {
           const reply = await fetchCors(
             `https://api.nomics.com/v1/currencies/ticker?key=${apiKey}&ids=${pair.fromCurrency}&convert=${fiatCode[1]}`
           )
+          if (reply.status === 429) continue
           const jsonData = await reply.json()
           const rate = Number(asNomicsResponse(jsonData)[0].price)
           pairs.push({
@@ -53,7 +54,7 @@ export function makeNomicsPlugin(opts: EdgeCorePluginOptions): EdgeRatePlugin {
             rate
           })
         } catch (e) {
-          log(
+          log.warn(
             `Issue with Nomics rate data structure for ${pair.fromCurrency}/${pair.toCurrency} pair. Error: ${e}`
           )
         }

@@ -42,7 +42,7 @@ export function makeCoinbasePlugin(
           })
         }
       } catch (e) {
-        log(`Issue with Coinbase rate data structure ${e}`)
+        log.warn(`Issue with Coinbase rate data structure ${e}`)
       }
       return pairs
     }

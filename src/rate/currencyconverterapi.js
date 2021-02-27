@@ -59,7 +59,10 @@ export function makeCurrencyconverterapiPlugin(
             rate
           })
         } catch (e) {
-          log(`Failed to get ${isoCode} rate from currencyconverterapi.com`, e)
+          log.warn(
+            `Failed to get ${isoCode} rate from currencyconverterapi.com`,
+            e
+          )
         }
       }
       return pairs

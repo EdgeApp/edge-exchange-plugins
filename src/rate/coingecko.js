@@ -70,7 +70,7 @@ export function makeCoinGeckoPlugin(
             })
           }
         } catch (e) {
-          log(`Issue with Coingecko rate data structure ${e}`)
+          log.warn(`Issue with Coingecko rate data structure ${e}`)
         }
       }
       return pairs
