@@ -44,13 +44,7 @@ export function makeBitMaxPlugin(opts: EdgeCorePluginOptions): EdgeRatePlugin {
           break
         }
       }
-      return [
-        {
-          fromCurrency: 'FIO',
-          toCurrency: 'USDT',
-          rate: 0.001
-        }
-      ]
+      return []
     }
   }
 }

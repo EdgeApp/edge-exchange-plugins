@@ -16,7 +16,8 @@ const coinGeckoMap = {
   TLOS: 'telos',
   FIRO: 'zcoin',
   ANT: 'aragon',
-  TBTC: 'tbtc'
+  TBTC: 'tbtc',
+  FIO: 'fio-protocol'
 }
 
 export function makeCoinGeckoPlugin(
