@@ -40,17 +40,11 @@ export function makeBitMaxPlugin(opts: EdgeCorePluginOptions): EdgeRatePlugin {
             }
           ]
         } catch (e) {
-          log(`Issue with Bitmax rate data structure ${e}`)
+          log.warn(`Issue with Bitmax rate data structure ${e}`)
           break
         }
       }
-      return [
-        {
-          fromCurrency: 'FIO',
-          toCurrency: 'USDT',
-          rate: 0.001
-        }
-      ]
+      return []
     }
   }
 }

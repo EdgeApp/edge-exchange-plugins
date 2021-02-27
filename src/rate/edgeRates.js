@@ -48,7 +48,7 @@ export function makeEdgeRatesPlugin(
             rate
           })
         } catch (e) {
-          log(
+          log.warn(
             `Issue with EdgeRates rate data structure for ${pair.fromCurrency}/${pair.toCurrency} pair. Error: ${e}`
           )
         }

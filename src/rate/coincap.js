@@ -61,7 +61,7 @@ export function makeCoincapPlugin(opts: EdgeCorePluginOptions): EdgeRatePlugin {
             rate
           })
         } catch (e) {
-          log(`Issue with Coincap rate data structure ${e}`)
+          log.warn(`Issue with Coincap rate data structure ${e}`)
         }
       }
       return pairs
