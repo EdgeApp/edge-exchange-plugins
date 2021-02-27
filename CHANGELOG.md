@@ -1,5 +1,11 @@
 # edge-exchange-plugins
 
+# 0.11.21 (2021-02-27)
+
+- Coingecko: Add FIO
+- Bitmax: Remove FIO fallback value
+- Log issues with API responses as warnings
+
 # 0.11.20 (2021-02-25)
 
 - Sideshift: Add order status URL
