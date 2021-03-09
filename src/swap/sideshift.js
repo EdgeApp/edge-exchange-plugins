@@ -185,7 +185,8 @@ const createFetchSwapQuote = (api: SideshiftApi, affiliateId: string) =>
     )
 
     if (fixedQuote.error) {
-      throw checkQuoteError(rate, request, fixedQuote.error.message)
+      await checkQuoteError(rate, request, fixedQuote.error.message)
+      throw new Error(`SideShift.ai error ${fixedQuote.error.message}`)
     }
 
     const orderRequest = asOrderRequest({
@@ -200,7 +201,8 @@ const createFetchSwapQuote = (api: SideshiftApi, affiliateId: string) =>
     )
 
     if (order.error) {
-      throw checkQuoteError(rate, request, order.error.message)
+      await checkQuoteError(rate, request, order.error.message)
+      throw new Error(`SideShift.ai error ${order.error.message}`)
     }
 
     const spendInfoAmount = await request.fromWallet.denominationToNative(
