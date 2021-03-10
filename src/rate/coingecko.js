@@ -17,7 +17,28 @@ const coinGeckoMap = {
   FIRO: 'zcoin',
   ANT: 'aragon',
   TBTC: 'tbtc',
-  FIO: 'fio-protocol'
+  FIO: 'fio-protocol',
+  VTC: 'vertcoin',
+  SMART: 'smartcash',
+  GRS: 'groestlcoin',
+  FUN: 'funfair',
+  BADGER: 'badger-dao',
+  CREAM: 'cream-2',
+  CVP: 'concentrated-voting-power',
+  DOUGH: 'piedao-dough-v2',
+  ETHBNT: 'ethbnt',
+  SUSD: 'nusd',
+  USDS: 'stableusd',
+  TUSD: 'true-usd',
+  GUSD: 'gemini-dollar',
+  YETI: 'yearn-ecosystem-token-index',
+  PAX: 'paxos-standard',
+  RBTC: 'rootstock',
+  RIF: 'rif-token',
+  FTC: 'feathercoin',
+  GLM: 'golem',
+  GNO: 'gnosis',
+  STORJ: 'storj'
 }
 
 export function makeCoinGeckoPlugin(
