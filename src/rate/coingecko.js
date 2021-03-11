@@ -6,11 +6,7 @@ import {
   type EdgeRatePlugin
 } from 'edge-core-js/types'
 
-const asGeckoUsdReply = asObject({
-  market_data: asObject({
-    current_price: asMap(asNumber)
-  })
-})
+const asGeckoBulkUsdReply = asMap(asObject({ usd: asNumber }))
 
 const coinGeckoMap = {
   TLOS: 'telos',
@@ -38,7 +34,84 @@ const coinGeckoMap = {
   FTC: 'feathercoin',
   GLM: 'golem',
   GNO: 'gnosis',
-  STORJ: 'storj'
+  STORJ: 'storj',
+  BTC: 'bitcoin',
+  ETH: 'ethereum',
+  BCH: 'bitcoin-cash',
+  BNB: 'binancecoin',
+  EOS: 'eos',
+  ETC: 'ethereum-classic',
+  XLM: 'stellar',
+  XTZ: 'tezos',
+  XRP: 'ripple',
+  BTG: 'bitcoin-gold',
+  BSV: 'bitcoin-cash-sv',
+  DASH: 'dash',
+  DGB: 'digibyte',
+  DOGE: 'dogecoin',
+  EBST: 'eboost',
+  LTC: 'litecoin',
+  QTUM: 'qtum',
+  RVN: 'ravencoin',
+  UFO: 'ufocoin',
+  XMR: 'monero',
+  REP: 'augur',
+  REPV2: '',
+  DAI: 'dai',
+  SAI: 'sai',
+  WINGS: 'wings',
+  USDT: 'tether',
+  IND: 'indorse',
+  HUR: 'hurify',
+  BAT: 'basic-attention-token',
+  BNT: 'bounty0x',
+  KNC: 'kyber-network',
+  POLY: 'polymath-network',
+  USDC: 'usd-coin',
+  ZRX: '0x',
+  OMG: 'omisego',
+  NMR: 'numeraire',
+  MKR: 'maker',
+  SALT: 'salt',
+  MANA: 'decentraland',
+  NEXO: 'nexo',
+  KIN: 'kin',
+  LINK: 'chainlink',
+  BRZ: 'brz',
+  CREP: 'compound-augur',
+  CUSDC: 'compound-usd-coin',
+  CETH: 'compound-ether',
+  CBAT: 'compound-basic-attention-token',
+  CZRX: 'compound-0x',
+  CWBTC: 'compound-wrapped-btc',
+  CSAI: 'compound-sai',
+  CDAI: 'cdai',
+  OXT: 'orchid-protocol',
+  COMP: 'compound-governance-token',
+  MET: 'metronome',
+  SNX: 'havven',
+  SBTC: 'sbtc',
+  AAVE: 'aave',
+  WBTC: 'wrapped-bitcoin',
+  YFI: 'yearn-finance',
+  CRV: 'curve-dao-token',
+  BAL: 'balancer',
+  SUSHI: 'sushi',
+  UMA: 'uma',
+  IDLE: 'idle',
+  NXM: 'nxm',
+  PICKLE: 'pickle-finance',
+  ROOK: 'rook',
+  INDEX: 'index-cooperative',
+  WETH: 'weth',
+  RENBTC: 'renbtc',
+  RENBCH: 'renbch',
+  RENZEC: 'renzec',
+  DPI: 'defipulse-index',
+  BAND: 'band-protocol',
+  REN: 'republic-protocol',
+  AMPL: 'ampleforth',
+  OCEAN: 'ocean-protocol'
 }
 
 export function makeCoinGeckoPlugin(
@@ -54,45 +127,33 @@ export function makeCoinGeckoPlugin(
 
     async fetchRates(pairsHint) {
       const pairs = []
+      const query = []
       for (const pair of pairsHint) {
         // Coingecko is only used to query specific currencies
-        if (coinGeckoMap[pair.fromCurrency] == null) continue
-        try {
-          const reply = await io.fetch(
-            `https://api.coingecko.com/api/v3/coins/${
-              coinGeckoMap[pair.fromCurrency]
-            }?localization=false&tickers=false&market_data=true&community_data=false&developer_data=false&sparkline=false`
+        if (coinGeckoMap[pair.fromCurrency])
+          query.push(coinGeckoMap[pair.fromCurrency])
+      }
+      try {
+        const reply = await io.fetch(
+          `https://api.coingecko.com/api/v3/simple/price?ids=${query.join(
+            ','
+          )}&vs_currencies=usd`
+        )
+        const json = await reply.json()
+        const rates = asGeckoBulkUsdReply(json)
+        Object.keys(rates).forEach(rate => {
+          const fromCurrency = Object.keys(coinGeckoMap).find(
+            key => typeof key === 'string' && coinGeckoMap[key] === rate
           )
-          const json = await reply.json()
-          const rates = asGeckoUsdReply(json)
-          const fiatCode = pair.toCurrency.split(':')
-          let toCurrency
-          let rate
-          if (
-            rates.market_data.current_price[fiatCode[1].toLowerCase()] != null
-          ) {
-            toCurrency = pair.toCurrency
-            rate = rates.market_data.current_price[fiatCode[1].toLowerCase()]
-          } else {
-            // Save BTC value if requested fiat isn't provided
-            toCurrency = 'BTC'
-            rate = rates.market_data.current_price.btc
-          }
-          pairs.push({
-            fromCurrency: pair.fromCurrency,
-            toCurrency,
-            rate
-          })
-          if (pair.fromCurrency === 'ANT') {
+          if (fromCurrency)
             pairs.push({
-              fromCurrency: 'ANTV1',
-              toCurrency,
-              rate
+              fromCurrency,
+              toCurrency: 'iso:USD',
+              rate: rates[rate].usd
             })
-          }
-        } catch (e) {
-          log.warn(`Issue with Coingecko rate data structure ${e}`)
-        }
+        })
+      } catch (e) {
+        log.warn(`Issue with Coingecko rate data structure ${e}`)
       }
       return pairs
     }

@@ -116,6 +116,11 @@ export function makeConstantRatePlugin(
           fromCurrency: 'AUNI',
           toCurrency: 'UNI',
           rate: 1
+        },
+        {
+          fromCurrency: 'ANT',
+          toCurrency: 'ANTV1',
+          rate: 1
         }
       ]
       return pairs
