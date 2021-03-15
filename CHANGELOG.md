@@ -1,5 +1,10 @@
 # edge-exchange-plugins
 
+# 0.11.22 (2021-03-15)
+
+- Convert Coingecko to handle bulk queries
+- Fix Sideshift error handling
+
 # 0.11.21 (2021-02-27)
 
 - Coingecko: Add FIO
