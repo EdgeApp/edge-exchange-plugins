@@ -56,7 +56,6 @@ const coinGeckoMap = {
   UFO: 'ufocoin',
   XMR: 'monero',
   REP: 'augur',
-  REPV2: '',
   DAI: 'dai',
   SAI: 'sai',
   WINGS: 'wings',

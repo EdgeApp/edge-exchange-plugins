@@ -48,13 +48,6 @@ export function makeCoincapPlugin(opts: EdgeCorePluginOptions): EdgeRatePlugin {
           )
           const json = await reply.json()
           const rate = parseFloat(asCoincapResponse(json).data.priceUsd)
-          if (pair.fromCurrency === 'REP') {
-            pairs.push({
-              fromCurrency: 'REPV2',
-              toCurrency: 'iso:USD',
-              rate
-            })
-          }
           pairs.push({
             fromCurrency: pair.fromCurrency,
             toCurrency: 'iso:USD',
