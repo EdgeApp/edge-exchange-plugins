@@ -1,5 +1,9 @@
 # edge-exchange-plugins
 
+# 0.11.23 (2021-03-19)
+
+- Move REPV2 to constantRate plugin
+
 # 0.11.22 (2021-03-15)
 
 - Convert Coingecko to handle bulk queries
