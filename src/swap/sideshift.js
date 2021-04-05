@@ -128,12 +128,6 @@ const createFetchSwapQuote = (api: SideshiftApi, affiliateId: string) =>
   async function fetchSwapQuote(
     request: EdgeSwapRequest
   ): Promise<EdgeSwapQuote> {
-    const permissions = asPermissions(await api.get<Permission>('/permissions'))
-
-    if (!permissions.createOrder || !permissions.createQuote) {
-      throw new SwapPermissionError(swapInfo, 'geoRestriction')
-    }
-
     const [depositAddress, settleAddress] = await Promise.all([
       getAddress(request.fromWallet, request.fromCurrencyCode),
       getAddress(request.toWallet, request.toCurrencyCode)
@@ -155,6 +149,12 @@ const createFetchSwapQuote = (api: SideshiftApi, affiliateId: string) =>
         request.fromCurrencyCode,
         request.toCurrencyCode
       )
+    }
+
+    const permissions = asPermissions(await api.get<Permission>('/permissions'))
+
+    if (!permissions.createOrder || !permissions.createQuote) {
+      throw new SwapPermissionError(swapInfo, 'geoRestriction')
     }
 
     const quoteAmount = await (request.quoteFor === 'from'
@@ -290,20 +290,23 @@ interface Rate {
   rate: string;
   min: string;
   max: string;
-  error: { message: string } | typeof undefined;
 }
+
+const asError = asObject({ error: asObject({ message: asString }) })
 
 const asPermissions = asObject({
   createOrder: asBoolean,
   createQuote: asBoolean
 })
 
-const asRate = asObject({
-  rate: asString,
-  min: asString,
-  max: asString,
-  error: asOptional(asObject({ message: asString }))
-})
+const asRate = asEither(
+  asObject({
+    rate: asString,
+    min: asString,
+    max: asString
+  }),
+  asError
+)
 
 const asFixedQuoteRequest = asObject({
   depositMethod: asString,
@@ -315,7 +318,7 @@ const asFixedQuote = asEither(
   asObject({
     id: asString
   }),
-  asObject({ error: asObject({ message: asString }) })
+  asError
 )
 
 const asOrderRequest = asObject({
@@ -337,5 +340,5 @@ const asOrder = asEither(
     settleAmount: asString,
     depositAmount: asString
   }),
-  asObject({ error: asObject({ message: asString }) })
+  asError
 )
