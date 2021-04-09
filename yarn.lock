@@ -1509,7 +1509,7 @@ class-utils@^0.3.5:
     isobject "^3.0.0"
     static-extend "^0.1.1"
 
-cleaners@^0.3.1, cleaners@^0.3.9:
+cleaners@^0.3.8, cleaners@^0.3.9:
   version "0.3.9"
   resolved "https://registry.yarnpkg.com/cleaners/-/cleaners-0.3.9.tgz#e9d2b7ebbbf62c0ae9f7bf1f1cf0aa5544acb3fa"
   integrity sha512-DAddE949KDyTFcb6LdVpEd4BBHa55wNfm63tE0AYT2hDZyg0IR6lwOqjPhP/6GwF1z9FWeKqjw20T27/UHjM+Q==
@@ -1912,15 +1912,15 @@ duplexify@^3.4.2, duplexify@^3.6.0:
     readable-stream "^2.0.0"
     stream-shift "^1.0.0"
 
-edge-core-js@^0.17.17:
-  version "0.17.17"
-  resolved "https://registry.yarnpkg.com/edge-core-js/-/edge-core-js-0.17.17.tgz#d325f740789eb8761bef7e47b58f20acce756f8f"
-  integrity sha512-df/2WdQjcXGoMHiUVXHntnYEUwkWugXi/scqq4NLRiCXRDykaFe7aKJtaasDerorjPbk69gYwcl7M+avPXapVw==
+edge-core-js@^0.17.29:
+  version "0.17.29"
+  resolved "https://registry.yarnpkg.com/edge-core-js/-/edge-core-js-0.17.29.tgz#1541f7376d222be9ad0dbb156c944c8b130b1905"
+  integrity sha512-svG6q2xHYanKEGLvXuYO5nn+rLkU1d4VpTHQLtN/kNagMPJmNjHrXByP/wXsPms2RTNO7hSFnrL6aYNaSj4lHg==
   dependencies:
     aes-js "^3.1.0"
     base-x "^1.0.4"
     biggystring "^3.0.2"
-    cleaners "^0.3.1"
+    cleaners "^0.3.8"
     currency-codes "^1.1.2"
     disklet "^0.4.5"
     elliptic "^6.4.0"
@@ -1937,6 +1937,7 @@ edge-core-js@^0.17.17:
     rfc4648 "^1.4.0"
     scrypt-js "^2.0.3"
     yaob "^0.3.6"
+    yavent "^0.1.1"
 
 electron-to-chromium@^1.3.390:
   version "1.3.392"
@@ -5623,3 +5624,8 @@ yargs@13.2.4:
     which-module "^2.0.0"
     y18n "^4.0.0"
     yargs-parser "^13.1.0"
+
+yavent@^0.1.1:
+  version "0.1.2"
+  resolved "https://registry.yarnpkg.com/yavent/-/yavent-0.1.2.tgz#eb826c8c5e344e86e1398a463a3d5092f919edeb"
+  integrity sha512-hd1tUDabbB6dUoOcHLB1rRlydNC9DGKGMMwotnEvWdNyFNgSN7k4djW6Db6MtGPctGgiJyhDr26PFF1APfqoqA==
