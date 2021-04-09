@@ -13,6 +13,8 @@
     "William Swanson <william@edgesecure.co>",
     "Paul Puey <paul@edgesecure.co>"
   ],
+  "main": "index.js",
+  "module": "lib/index.js",
   "files": [
     "CHANGELOG.md",
     "index.js",
@@ -21,8 +23,6 @@
     "package.json",
     "README.md"
   ],
-  "main": "index.js",
-  "module": "lib/index.js",
   "scripts": {
     "build": "rimraf lib && sucrase ./src -q -d ./lib -t flow && webpack",
     "fix": "npm run lint -- --fix",
