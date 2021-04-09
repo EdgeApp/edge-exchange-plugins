@@ -145,7 +145,7 @@ export function makeTotlePlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
       request: EdgeSwapRequest,
       userSettings: Object | void
     ): Promise<EdgeSwapQuote> {
-      const tokens: Array<Token> = await fetchTokens()
+      const tokens: Token[] = await fetchTokens()
 
       const fromToken = tokens.find(t => t.symbol === request.fromCurrencyCode)
       const toToken = tokens.find(t => t.symbol === request.toCurrencyCode)
@@ -263,7 +263,7 @@ function makeTotleSwapPluginQuote(
   request: EdgeSwapRequest,
   fromNativeAmount: string,
   toNativeAmount: string,
-  txs: Array<EdgeTransaction>,
+  txs: EdgeTransaction[],
   destinationAddress: string,
   isEstimate: boolean,
   expirationDate?: Date,
