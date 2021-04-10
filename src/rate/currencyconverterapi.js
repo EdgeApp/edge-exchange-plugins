@@ -1,15 +1,18 @@
 // @flow
 
+import { asMap, asNumber } from 'cleaners'
 import {
   type EdgeCorePluginOptions,
   type EdgeRatePlugin
 } from 'edge-core-js/types'
 
+const asCurrencyConverterResponse = asMap(asNumber)
+
 const checkAndPush = (isoCc, ccArray) => {
   if (isoCc !== 'iso:USD' && isoCc.slice(0, 4) === 'iso:') {
     const cc = isoCc.slice(4).toUpperCase()
-    if (!ccArray.includes(cc)) {
-      ccArray.push(cc)
+    if (!ccArray.includes(`USD_${cc}`)) {
+      ccArray.push(`USD_${cc}`)
     }
   }
 }
@@ -43,27 +46,21 @@ export function makeCurrencyconverterapiPlugin(
       }
 
       const pairs = []
-      for (const isoCode of isoCodesWanted) {
-        try {
-          const query = `USD_${isoCode}`
-          const response = await fetchCors(
-            `https://api.currencyconverterapi.com/api/v6/convert?q=${query}&compact=ultra&apiKey=${apiKey}`
-          )
-          if (!response.ok) continue
-          const json = await response.json()
-          if (json == null || json[query] == null) continue
-          const rate = json[query]
+      const query = isoCodesWanted.join(',')
+      try {
+        const response = await fetchCors(
+          `https://api.currconv.com/api/v7/convert?q=${query}&compact=ultra&apiKey=${apiKey}`
+        )
+        const responseJson = asCurrencyConverterResponse(await response.json())
+        for (const rate of Object.keys(responseJson)) {
           pairs.push({
             fromCurrency: 'iso:USD',
-            toCurrency: `iso:${isoCode}`,
-            rate
+            toCurrency: `iso:${rate.split('_')[1]}`,
+            rate: responseJson[rate]
           })
-        } catch (e) {
-          log.warn(
-            `Failed to get ${isoCode} rate from currencyconverterapi.com`,
-            e
-          )
         }
+      } catch (e) {
+        log.warn(`Failed to get ${query} from currencyconverterapi.com`, e)
       }
       return pairs
     }
