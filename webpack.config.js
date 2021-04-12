@@ -1,4 +1,5 @@
 const path = require('path')
+const webpack = require('webpack')
 
 const babelOptions = {
   // For debugging, just remove "@babel/preset-env":
@@ -22,5 +23,17 @@ module.exports = {
   output: {
     filename: 'edge-exchange-plugins.js',
     path: path.join(path.resolve(__dirname), 'lib/react-native')
-  }
+  },
+  plugins: [
+    new webpack.ProvidePlugin({ Buffer: ['buffer', 'Buffer'] }),
+    new webpack.ProvidePlugin({ process: ['process'] })
+  ],
+  resolve: {
+    fallback: {
+      assert: require.resolve('assert/'),
+      buffer: require.resolve('buffer/'),
+      stream: require.resolve('stream-browserify')
+    }
+  },
+  target: ['web', 'es5']
 }
