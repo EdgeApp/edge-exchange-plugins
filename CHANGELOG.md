@@ -1,5 +1,12 @@
 # edge-exchange-plugins
 
+# 0.11.24 (2021-04-12)
+
+- Sideshift: Move permission check after currency check
+- Upgrade eslint-config-standard-kit to v0.15.1
+- Upgrade to edge-core-js v0.17.29
+- Upgrade to Webpack 5
+
 # 0.11.23 (2021-03-19)
 
 - Move REPV2 to constantRate plugin
