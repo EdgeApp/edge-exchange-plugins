@@ -193,7 +193,8 @@ const createFetchSwapQuote = (api: SideshiftApi, affiliateId: string) =>
       type: 'fixed',
       quoteId: fixedQuote.id,
       affiliateId,
-      settleAddress
+      settleAddress,
+      refundAddress: depositAddress
     })
 
     const order = asOrder(
@@ -325,7 +326,8 @@ const asOrderRequest = asObject({
   type: asString,
   quoteId: asString,
   affiliateId: asString,
-  settleAddress: asString
+  settleAddress: asString,
+  refundAddress: asString
 })
 
 const asOrder = asEither(
