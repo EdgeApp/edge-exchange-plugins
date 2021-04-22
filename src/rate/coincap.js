@@ -1,6 +1,6 @@
 // @flow
 
-import { asArray, asObject, asString } from 'cleaners'
+import { asArray, asNumber, asObject, asOptional, asString } from 'cleaners'
 import {
   type EdgeCorePluginOptions,
   type EdgeRatePlugin
@@ -13,6 +13,11 @@ const asCoincapResponse = asObject({
       priceUsd: asString
     })
   )
+})
+
+const asCoincapError = asObject({
+  error: asOptional(asString),
+  timestamp: asNumber
 })
 
 const asCoincapAssets = asArray(
@@ -70,6 +75,14 @@ export function makeCoincapPlugin(opts: EdgeCorePluginOptions): EdgeRatePlugin {
             `https://api.coincap.io/v2/assets?ids=${query}`
           )
           const json = await reply.json()
+          const { error } = asCoincapError(json)
+          if ((error != null && error !== '') || reply.ok === false) {
+            throw new Error(
+              `CoincapHistorical returned code ${JSON.stringify(
+                error ?? reply.status
+              )}`
+            )
+          }
           asCoincapResponse(json).data.forEach(rate =>
             pairs.push({
               fromCurrency: rate.symbol,
