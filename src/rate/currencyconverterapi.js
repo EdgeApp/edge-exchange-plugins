@@ -1,15 +1,22 @@
 // @flow
 
+import { asMap, asNumber, asObject, asOptional, asString } from 'cleaners'
 import {
   type EdgeCorePluginOptions,
   type EdgeRatePlugin
 } from 'edge-core-js/types'
 
+const asCurrencyConverterResponse = asObject({
+  status: asOptional(asNumber),
+  error: asOptional(asString),
+  ...asMap(asNumber)
+})
+
 const checkAndPush = (isoCc, ccArray) => {
   if (isoCc !== 'iso:USD' && isoCc.slice(0, 4) === 'iso:') {
     const cc = isoCc.slice(4).toUpperCase()
-    if (!ccArray.includes(cc)) {
-      ccArray.push(cc)
+    if (!ccArray.includes(`USD_${cc}`)) {
+      ccArray.push(`USD_${cc}`)
     }
   }
 }
@@ -43,27 +50,34 @@ export function makeCurrencyconverterapiPlugin(
       }
 
       const pairs = []
-      for (const isoCode of isoCodesWanted) {
-        try {
-          const query = `USD_${isoCode}`
-          const response = await fetchCors(
-            `https://api.currencyconverterapi.com/api/v6/convert?q=${query}&compact=ultra&apiKey=${apiKey}`
-          )
-          if (!response.ok) continue
-          const json = await response.json()
-          if (json == null || json[query] == null) continue
-          const rate = json[query]
-          pairs.push({
-            fromCurrency: 'iso:USD',
-            toCurrency: `iso:${isoCode}`,
-            rate
-          })
-        } catch (e) {
-          log.warn(
-            `Failed to get ${isoCode} rate from currencyconverterapi.com`,
-            e
+      const query = isoCodesWanted.join(',')
+      try {
+        const response = await fetchCors(
+          `https://api.currconv.com/api/v7/convert?q=${query}&compact=ultra&apiKey=${apiKey}`
+        )
+        const { status, error, ...rates } = asCurrencyConverterResponse(
+          await response.json()
+        )
+        if (
+          (status != null && status !== 200) ||
+          (error != null && error !== '') ||
+          response.ok === false
+        ) {
+          throw new Error(
+            `CurrencyConvertor returned with status: ${JSON.stringify(
+              status ?? response.status
+            )} and error: ${JSON.stringify(error)}`
           )
         }
+        for (const rate of Object.keys(rates)) {
+          pairs.push({
+            fromCurrency: 'iso:USD',
+            toCurrency: `iso:${rate.split('_')[1]}`,
+            rate: rates[rate]
+          })
+        }
+      } catch (e) {
+        log.warn(`Failed to get ${query} from currencyconverterapi.com`, e)
       }
       return pairs
     }
