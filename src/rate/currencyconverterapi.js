@@ -1,12 +1,16 @@
 // @flow
 
-import { asMap, asNumber } from 'cleaners'
+import { asMap, asNumber, asObject, asOptional, asString } from 'cleaners'
 import {
   type EdgeCorePluginOptions,
   type EdgeRatePlugin
 } from 'edge-core-js/types'
 
-const asCurrencyConverterResponse = asMap(asNumber)
+const asCurrencyConverterResponse = asObject({
+  status: asOptional(asNumber),
+  error: asOptional(asString),
+  ...asMap(asNumber)
+})
 
 const checkAndPush = (isoCc, ccArray) => {
   if (isoCc !== 'iso:USD' && isoCc.slice(0, 4) === 'iso:') {
@@ -51,12 +55,25 @@ export function makeCurrencyconverterapiPlugin(
         const response = await fetchCors(
           `https://api.currconv.com/api/v7/convert?q=${query}&compact=ultra&apiKey=${apiKey}`
         )
-        const responseJson = asCurrencyConverterResponse(await response.json())
-        for (const rate of Object.keys(responseJson)) {
+        const { status, error, ...rates } = asCurrencyConverterResponse(
+          await response.json()
+        )
+        if (
+          (status != null && status !== 200) ||
+          (error != null && error !== '') ||
+          response.ok === false
+        ) {
+          throw new Error(
+            `CurrencyConvertor returned with status: ${JSON.stringify(
+              status ?? response.status
+            )} and error: ${JSON.stringify(error)}`
+          )
+        }
+        for (const rate of Object.keys(rates)) {
           pairs.push({
             fromCurrency: 'iso:USD',
             toCurrency: `iso:${rate.split('_')[1]}`,
-            rate: responseJson[rate]
+            rate: rates[rate]
           })
         }
       } catch (e) {
