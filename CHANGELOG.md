@@ -1,5 +1,10 @@
 # edge-exchange-plugins
 
+# 0.11.25 (2021-04-27)
+
+- Convert Nomics, Coincap, and Currencyconverter API to use bulk requests
+- Sideshift: Add refund address
+
 # 0.11.24 (2021-04-12)
 
 - Sideshift: Move permission check after currency check
