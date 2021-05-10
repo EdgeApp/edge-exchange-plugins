@@ -126,6 +126,11 @@ export function makeConstantRatePlugin(
           fromCurrency: 'REPV2',
           toCurrency: 'REP',
           rate: 1
+        },
+        {
+          fromCurrency: 'FUSDT',
+          toCurrency: 'USDT',
+          rate: 1
         }
       ]
       return pairs
