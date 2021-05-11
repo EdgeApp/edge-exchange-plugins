@@ -1,5 +1,9 @@
 # edge-exchange-plugins
 
+# 0.11.26 (2021-05-11)
+
+- Add constant rate for fUSDT to USDT
+
 # 0.11.25 (2021-04-27)
 
 - Convert Nomics, Coincap, and Currencyconverter API to use bulk requests
