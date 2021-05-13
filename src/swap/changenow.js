@@ -49,6 +49,10 @@ const INVALID_CURRENCY_CODES = {
   // edgeCurrenvyCode: exchangeCurrencyCode
 }
 
+const ERC20_ONLY_CURRENCY_CODES = {
+  FTM: true
+}
+
 async function getAddress(
   wallet: EdgeCurrencyWallet,
   currencyCode: string
@@ -112,6 +116,32 @@ export function makeChangeNowPlugin(
           request.toCurrencyCode
         )
       }
+
+      // Throw a currency error if the user selected a mainnet token that ChangeNow only supports as an ERC20
+      if (ERC20_ONLY_CURRENCY_CODES[request.fromCurrencyCode] === true) {
+        if (
+          request.fromCurrencyCode ===
+          request.fromWallet.currencyInfo.currencyCode
+        ) {
+          throw new SwapCurrencyError(
+            swapInfo,
+            request.fromCurrencyCode,
+            request.toCurrencyCode
+          )
+        }
+      }
+      if (ERC20_ONLY_CURRENCY_CODES[request.toCurrencyCode] === true) {
+        if (
+          request.toCurrencyCode === request.toWallet.currencyInfo.currencyCode
+        ) {
+          throw new SwapCurrencyError(
+            swapInfo,
+            request.fromCurrencyCode,
+            request.toCurrencyCode
+          )
+        }
+      }
+
       // Grab addresses:
       const [fromAddress, toAddress] = await Promise.all([
         getAddress(request.fromWallet, request.fromCurrencyCode),
