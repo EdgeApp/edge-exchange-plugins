@@ -170,7 +170,9 @@ export function makeGodexPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
             withdrawal_extra_id: null,
             affiliate_id: initOptions.apiKey,
             type: 'edge',
-            isEstimate: false
+            isEstimate: false,
+            coin_from_network: request.fromWallet.currencyInfo.currencyCode,
+            coin_to_network: request.toWallet.currencyInfo.currencyCode
           }
         }
       )
