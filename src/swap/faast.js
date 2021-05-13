@@ -184,6 +184,16 @@ export function makeFaastPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
         throw new SwapCurrencyError(swapInfo, fromCurrencyCode, toCurrencyCode)
       }
 
+      // Fox indicates mainnet using an optional validate field. Throw an error if it doesn't match wallet mainnet.
+      if (
+        (fromCurrency.validate != null &&
+          fromCurrency.validate !== fromWallet.currencyInfo.currencyCode) ||
+        (toCurrency.validate != null &&
+          toCurrency.validate !== toWallet.currencyInfo.currencyCode)
+      ) {
+        throw new SwapCurrencyError(swapInfo, fromCurrencyCode, toCurrencyCode)
+      }
+
       if (
         geoInfo.blocked ||
         (geoInfo.restricted &&
