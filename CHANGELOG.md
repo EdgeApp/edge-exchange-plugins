@@ -1,5 +1,9 @@
 # edge-exchange-plugins
 
+# 0.11.27 (2021-05-13)
+
+- ChangeNow: Add ERC20-only filter to prevent trading for mainnet tokens when only the ETH ERC20 token is available
+
 # 0.11.26 (2021-05-11)
 
 - Add constant rate for fUSDT to USDT
