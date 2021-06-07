@@ -33,7 +33,7 @@ async function showRate(
   }
 }
 
-showRate(edgeCorePlugins.coinbase, 'iso:USD', 'BTC')
+showRate(edgeCorePlugins.edgeRates, 'iso:USD', 'BTC')
 
 // Uncomment and insert key to test:
 // showRate(edgeCorePlugins['currencyconverterapi'], 'iso:USD', 'iso:IRR', {
