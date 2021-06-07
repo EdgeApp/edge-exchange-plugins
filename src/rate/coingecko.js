@@ -110,7 +110,10 @@ const coinGeckoMap = {
   BAND: 'band-protocol',
   REN: 'republic-protocol',
   AMPL: 'ampleforth',
-  OCEAN: 'ocean-protocol'
+  OCEAN: 'ocean-protocol',
+  COMBO: 'furucombo',
+  FTM: 'fantom',
+  UNI: 'uniswap'
 }
 
 export function makeCoinGeckoPlugin(
