@@ -113,7 +113,23 @@ const coinGeckoMap = {
   OCEAN: 'ocean-protocol',
   COMBO: 'furucombo',
   FTM: 'fantom',
-  UNI: 'uniswap'
+  UNI: 'uniswap',
+  'ETH2X-FLI': 'eth-2x-flexible-leverage-index',
+  'BTC2X-FLI': 'btc-2x-flexible-leverage-index',
+  MVI: 'metaverse-index',
+  PLAY: 'metaverse-nft-index',
+  'DEFI+L': 'piedao-defi-large-cap',
+  YPIE: 'piedao-yearn-ecosystem-pie',
+  BCP: 'piedao-balanced-crypto-pie',
+  'DEFI++': 'piedao-defi',
+  'DEFI+S': 'piedao-defi-small-cap',
+  ASSY: 'assy-index',
+  TCAP: 'total-crypto-market-cap-token',
+  STETH: 'staked-ether',
+  RUNE: 'thorchain-erc20',
+  RENFIL: 'renfil',
+  RENDOGE: 'rendoge',
+  BDI: 'basketdao-defi-index'
 }
 
 export function makeCoinGeckoPlugin(
