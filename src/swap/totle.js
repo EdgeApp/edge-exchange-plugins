@@ -2,6 +2,17 @@
 
 import { div, mul } from 'biggystring'
 import {
+  asArray,
+  asBoolean,
+  asEither,
+  asNumber,
+  asObject,
+  asOptional,
+  asString,
+  asUnknown,
+  asValue
+} from 'cleaners'
+import {
   type EdgeCorePluginOptions,
   type EdgeLog,
   type EdgeSpendInfo,
@@ -29,81 +40,86 @@ const swapUri = 'https://api.totle.com/swap'
 const tokenUri = 'https://api.totle.com/tokens'
 const expirationMs = 1000 * 60 * 20
 
-interface TotleErrorResponse {
-  success: false;
-  response: {
-    id: string,
-    code: number,
-    message: string,
-    info: string,
-    name?: string,
-    link?: string
-  };
-}
+const asTotleErrorResponse = asObject({
+  success: asValue(false),
+  response: asObject({
+    id: asString,
+    code: asNumber,
+    message: asString,
+    info: asString,
+    name: asOptional(asString),
+    link: asOptional(asString)
+  })
+})
 
-interface TotleSwapResponse {
-  success: true;
-  response: {
-    id: string,
-    summary: {
-      baseAsset: {
-        address: string,
-        symbol: string,
-        decimals: string
-      },
-      sourceAsset: {
-        address: string,
-        symbol: string,
-        decimals: string
-      },
-      sourceAmount: string,
-      destinationAsset: {
-        address: string,
-        symbol: string,
-        decimals: string
-      },
-      destinationAmount: string,
-      notes: [],
-      rate: string,
-      guaranteedRate: string,
-      market: {
-        rate: string,
-        slippage: string
-      }
-    },
-    transactions: [
-      {
-        type: 'swap' | 'approve',
-        id: string,
-        tx: {
-          to: string,
-          from: string,
-          value: string,
-          data: string,
-          gasPrice: string,
-          gas: string,
-          nonce?: string
-        }
-      }
-    ]
-  };
-}
+const asTotleSwapResponse = asObject({
+  success: asValue(true),
+  response: asObject({
+    id: asString,
+    summary: asObject({
+      baseAsset: asObject({
+        address: asString,
+        symbol: asString,
+        decimals: asString
+      }),
+      sourceAsset: asObject({
+        address: asString,
+        symbol: asString,
+        decimals: asString
+      }),
+      sourceAmount: asString,
+      destinationAsset: asObject({
+        address: asString,
+        symbol: asString,
+        decimals: asString
+      }),
+      destinationAmount: asString,
+      notes: asOptional(asArray(asUnknown)),
+      rate: asString,
+      guaranteedRate: asString,
+      market: asObject({
+        rate: asString,
+        slippage: asString
+      })
+    }),
+    transactions: asArray(
+      asObject({
+        type: asEither(asValue('swap'), asValue('approve')),
+        id: asString,
+        tx: asObject({
+          to: asString,
+          from: asString,
+          value: asString,
+          data: asString,
+          gasPrice: asString,
+          gas: asString,
+          nonce: asOptional(asString)
+        })
+      })
+    )
+  })
+})
 
-type Token = {
-  name: string,
-  symbol: string,
-  decimals: number,
-  address: string,
-  tradable: boolean,
-  iconUrl: string
-}
+type TotleSwapResponse = $Call<typeof asTotleSwapResponse>
 
-interface TotleTokensResponse {
-  tokens: Token[];
-}
+// /swap
+const asTotleSwapReply = asEither(asTotleSwapResponse, asTotleErrorResponse)
+type TotleSwapReply = $Call<typeof asTotleSwapReply>
 
-type TotleSwapReply = TotleSwapResponse | TotleErrorResponse
-type TotleTokensReply = TotleTokensResponse
+// /tokens
+const asToken = asObject({
+  name: asString,
+  symbol: asString,
+  decimals: asNumber,
+  address: asString,
+  tradable: asBoolean,
+  iconUrl: asString
+})
+type Token = $Call<typeof asToken>
+
+const asTotleTokensResponse = asObject({
+  tokens: asArray(asToken)
+})
 
 function checkSwapReply(
   reply: TotleSwapReply,
@@ -153,7 +169,7 @@ export function makeTotlePlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
     if (!response.ok) {
       throw new Error(`Totle returned error code ${response.status}`)
     }
-    const reply: TotleSwapReply = await response.json()
+    const reply = asTotleSwapReply(await response.json())
     log('swap reply:', reply)
     return reply
   }
@@ -163,7 +179,7 @@ export function makeTotlePlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
     if (!response.ok) {
       throw new Error(`Totle returned error code ${response.status}`)
     }
-    const reply: TotleTokensReply = await response.json()
+    const reply = asTotleTokensResponse(await response.json())
     const { tokens } = reply
     log('token reply:', tokens)
     return tokens
