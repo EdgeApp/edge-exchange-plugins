@@ -1,5 +1,9 @@
 # edge-exchange-plugins
 
+# 0.11.29 (2021-07-01)
+
+- Totle: Fix error response handling
+
 # 0.11.28 (2021-05-25)
 
 Godex: Add the mainnet currencycodes to the transaction request
