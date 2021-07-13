@@ -1,5 +1,9 @@
 # edge-exchange-plugins
 
+# 0.11.30 (2021-07-12)
+
+- Totle: Patch error response handling
+
 # 0.11.29 (2021-07-01)
 
 - Totle: Fix error response handling
