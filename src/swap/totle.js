@@ -9,7 +9,6 @@ import {
   asObject,
   asOptional,
   asString,
-  asUnknown,
   asValue
 } from 'cleaners'
 import {
@@ -55,37 +54,16 @@ const asTotleErrorResponse = asObject({
 const asTotleSwapResponse = asObject({
   success: asValue(true),
   response: asObject({
-    id: asString,
-    summary: asObject({
-      baseAsset: asObject({
-        address: asString,
-        symbol: asString,
-        decimals: asString
-      }),
-      sourceAsset: asObject({
-        address: asString,
-        symbol: asString,
-        decimals: asString
-      }),
-      sourceAmount: asString,
-      destinationAsset: asObject({
-        address: asString,
-        symbol: asString,
-        decimals: asString
-      }),
-      destinationAmount: asString,
-      notes: asOptional(asArray(asUnknown)),
-      rate: asString,
-      guaranteedRate: asString,
-      market: asObject({
-        rate: asString,
-        slippage: asString
+    summary: asArray(
+      asObject({
+        destinationAmount: asString,
+        guaranteedRate: asString,
+        sourceAmount: asString
       })
-    }),
+    ),
     transactions: asArray(
       asObject({
         type: asEither(asValue('swap'), asValue('approve')),
-        id: asString,
         tx: asObject({
           to: asString,
           from: asString,
@@ -93,7 +71,7 @@ const asTotleSwapResponse = asObject({
           data: asString,
           gasPrice: asString,
           gas: asString,
-          nonce: asOptional(asString)
+          nonce: asOptional(asNumber)
         })
       })
     )
