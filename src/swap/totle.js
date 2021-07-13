@@ -9,7 +9,6 @@ import {
   asObject,
   asOptional,
   asString,
-  asUnknown,
   asValue
 } from 'cleaners'
 import {
@@ -55,37 +54,16 @@ const asTotleErrorResponse = asObject({
 const asTotleSwapResponse = asObject({
   success: asValue(true),
   response: asObject({
-    id: asString,
-    summary: asObject({
-      baseAsset: asObject({
-        address: asString,
-        symbol: asString,
-        decimals: asString
-      }),
-      sourceAsset: asObject({
-        address: asString,
-        symbol: asString,
-        decimals: asString
-      }),
-      sourceAmount: asString,
-      destinationAsset: asObject({
-        address: asString,
-        symbol: asString,
-        decimals: asString
-      }),
-      destinationAmount: asString,
-      notes: asOptional(asArray(asUnknown)),
-      rate: asString,
-      guaranteedRate: asString,
-      market: asObject({
-        rate: asString,
-        slippage: asString
+    summary: asArray(
+      asObject({
+        destinationAmount: asString,
+        guaranteedRate: asString,
+        sourceAmount: asString
       })
-    }),
+    ),
     transactions: asArray(
       asObject({
         type: asEither(asValue('swap'), asValue('approve')),
-        id: asString,
         tx: asObject({
           to: asString,
           from: asString,
@@ -93,7 +71,7 @@ const asTotleSwapResponse = asObject({
           data: asString,
           gasPrice: asString,
           gas: asString,
-          nonce: asOptional(asString)
+          nonce: asOptional(asNumber)
         })
       })
     )
@@ -169,7 +147,8 @@ export function makeTotlePlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
     if (!response.ok) {
       throw new Error(`Totle returned error code ${response.status}`)
     }
-    const reply = asTotleSwapReply(await response.json())
+    const responseBody = await response.json()
+    const reply = asTotleSwapReply(responseBody)
     log('swap reply:', reply)
     return reply
   }
@@ -229,46 +208,41 @@ export function makeTotlePlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
         }
       })
       const swapResponse = checkSwapReply(reply, request)
-      const { summary, transactions } = swapResponse.response
+      const { summary: summaries, transactions } = swapResponse.response
+      const summary = summaries[0]
 
-      let fromNativeAmount: string = summary[0].sourceAmount // string with many zeroes
-      let toNativeAmount: string = summary[0].destinationAmount // string with many zeroes
+      let fromNativeAmount: string = summary.sourceAmount // string with many zeroes
+      let toNativeAmount: string = summary.destinationAmount // string with many zeroes
       const fromMultiplier = '1' + '0'.repeat(fromToken.decimals)
       const toMultiplier = '1' + '0'.repeat(toToken.decimals)
       const isSourceRequest = request.quoteFor === 'from'
       if (isSourceRequest) {
         const fromExchangeAmount = div(fromNativeAmount, fromMultiplier, 10)
-        const toExchangeAmount = mul(
-          fromExchangeAmount,
-          summary[0].guaranteedRate
-        )
+        const toExchangeAmount = mul(fromExchangeAmount, summary.guaranteedRate)
         toNativeAmount = mul(toExchangeAmount, toMultiplier)
       } else {
         const toExchangeAmount = div(toNativeAmount, toMultiplier, 10)
-        const fromExchangeAmount = mul(
-          toExchangeAmount,
-          summary[0].guaranteedRate
-        )
+        const fromExchangeAmount = mul(toExchangeAmount, summary.guaranteedRate)
         fromNativeAmount = mul(fromExchangeAmount, fromMultiplier)
       }
 
       const txs = []
-      for (const tx of transactions) {
+      for (const swapTansaction of transactions) {
         // Make the transaction:
         const spendInfo: EdgeSpendInfo = {
           currencyCode: request.fromCurrencyCode,
           spendTargets: [
             {
-              nativeAmount: tx.tx.value,
-              publicAddress: tx.tx.to,
-              uniqueIdentifier: tx.id,
-              otherParams: { data: tx.tx.data }
+              nativeAmount: swapTansaction.tx.value,
+              publicAddress: swapTansaction.tx.to,
+              uniqueIdentifier: swapTansaction.id,
+              otherParams: { data: swapTansaction.tx.data }
             }
           ],
           networkFeeOption: 'custom',
           customNetworkFee: {
-            gasLimit: tx.tx.gas,
-            gasPrice: String(parseInt(tx.tx.gasPrice) / 1000000000)
+            gasLimit: swapTansaction.tx.gas,
+            gasPrice: String(parseInt(swapTansaction.tx.gasPrice) / 1000000000)
           },
           swapData: {
             isEstimate: false,
@@ -280,11 +254,11 @@ export function makeTotlePlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
           }
         }
 
-        const transaction: EdgeTransaction = await request.fromWallet.makeSpend(
+        const edgeTransaction: EdgeTransaction = await request.fromWallet.makeSpend(
           spendInfo
         )
 
-        txs.push(transaction)
+        txs.push(edgeTransaction)
       }
 
       const quote = makeTotleSwapPluginQuote(
