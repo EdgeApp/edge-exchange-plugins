@@ -1,5 +1,9 @@
 # edge-exchange-plugins
 
+# 0.11.31 (2021-07-28)
+
+- Bitmax: Update url to ascendex.com
+
 # 0.11.30 (2021-07-12)
 
 - Totle: Patch error response handling
