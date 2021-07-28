@@ -24,7 +24,7 @@ export function makeBitMaxPlugin(opts: EdgeCorePluginOptions): EdgeRatePlugin {
         if (pair.fromCurrency !== 'FIO') continue
         try {
           const response = await fetchCors(
-            'https://bitmax.io/api/pro/v1/ticker?symbol=FIO/USDT'
+            'https://ascendex.com/api/pro/v1/ticker?symbol=FIO/USDT'
           )
           const json = await response.json()
           if (!response.ok || json.reason === 'DATA_NOT_AVAILABLE') {
