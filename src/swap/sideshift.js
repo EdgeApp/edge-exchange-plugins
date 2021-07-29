@@ -18,7 +18,7 @@ import {
   type EdgeSwapRequest
 } from 'edge-core-js/types'
 
-import { makeSwapPluginQuote } from '../swap-helpers.js'
+import { ensureInFuture, makeSwapPluginQuote } from '../swap-helpers.js'
 
 // Invalid currency codes should *not* have transcribed codes
 // because currency codes with transcribed versions are NOT invalid
@@ -257,7 +257,7 @@ const createFetchSwapQuote = (api: SideshiftApi, affiliateId: string) =>
       settleAddress,
       pluginId,
       isEstimate,
-      new Date(order.expiresAtISO),
+      ensureInFuture(new Date(order.expiresAtISO)),
       order.id
     )
   }

@@ -19,7 +19,7 @@ import {
   SwapPermissionError
 } from 'edge-core-js/types'
 
-import { makeSwapPluginQuote } from '../swap-helpers.js'
+import { ensureInFuture, makeSwapPluginQuote } from '../swap-helpers.js'
 
 const pluginId = 'shapeshift'
 const swapInfo: EdgeSwapInfo = {
@@ -299,7 +299,7 @@ export function makeShapeshiftPlugin(
         toAddress,
         'shapeshift',
         false,
-        new Date(exchangeData.expiration * 1000),
+        ensureInFuture(new Date(exchangeData.expiration * 1000)),
         exchangeData.orderId
       )
     }

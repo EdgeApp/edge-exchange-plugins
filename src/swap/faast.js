@@ -17,7 +17,7 @@ import {
   SwapPermissionError
 } from 'edge-core-js/types'
 
-import { makeSwapPluginQuote } from '../swap-helpers.js'
+import { ensureInFuture, makeSwapPluginQuote } from '../swap-helpers.js'
 
 const INVALID_CURRENCY_CODES = []
 
@@ -366,7 +366,7 @@ export function makeFaastPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
         toAddressData.standardized,
         'faast',
         false,
-        new Date(quoteData.price_locked_until),
+        ensureInFuture(new Date(quoteData.price_locked_until)),
         quoteData.swap_id
       )
     }

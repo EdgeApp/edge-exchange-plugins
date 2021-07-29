@@ -7,6 +7,18 @@ import {
   type EdgeTransaction
 } from 'edge-core-js/types'
 
+/**
+ * Ensures that a date is in the future by at least the given amount.
+ */
+export function ensureInFuture(
+  date?: Date,
+  marginSeconds: number = 30
+): Date | void {
+  if (date == null) return
+  const target = Date.now() + marginSeconds * 1000
+  return target < date.valueOf() ? date : new Date(target)
+}
+
 export function makeSwapPluginQuote(
   request: EdgeSwapRequest,
   fromNativeAmount: string,

@@ -23,7 +23,7 @@ import {
   SwapCurrencyError
 } from 'edge-core-js/types'
 
-import { makeSwapPluginQuote } from '../swap-helpers.js'
+import { ensureInFuture, makeSwapPluginQuote } from '../swap-helpers.js'
 
 const pluginId = 'changenow'
 const swapInfo: EdgeSwapInfo = {
@@ -295,7 +295,7 @@ export function makeChangeNowPlugin(
                 toAddress,
                 pluginId,
                 false,
-                sendReply.validUntil,
+                ensureInFuture(sendReply.validUntil),
                 sendReply.id
               )
             }
