@@ -1,16 +1,17 @@
 // @flow
 
-import { asMap, asNumber, asObject, asOptional, asString } from 'cleaners'
+import { asNumber, asObject, asOptional, asString } from 'cleaners'
 import {
   type EdgeCorePluginOptions,
   type EdgeRatePlugin
 } from 'edge-core-js/types'
 
+const asRates = asObject(asNumber)
+
 const asCurrencyConverterResponse = asObject({
   status: asOptional(asNumber),
-  error: asOptional(asString),
-  ...asMap(asNumber)
-})
+  error: asOptional(asString)
+}).withRest
 
 const checkAndPush = (isoCc, ccArray) => {
   if (isoCc !== 'iso:USD' && isoCc.slice(0, 4) === 'iso:') {
@@ -69,7 +70,7 @@ export function makeCurrencyconverterapiPlugin(
             )} and error: ${JSON.stringify(error)}`
           )
         }
-        for (const rate of Object.keys(rates)) {
+        for (const rate of Object.keys(asRates(rates))) {
           pairs.push({
             fromCurrency: 'iso:USD',
             toCurrency: `iso:${rate.split('_')[1]}`,
@@ -77,7 +78,10 @@ export function makeCurrencyconverterapiPlugin(
           })
         }
       } catch (e) {
-        log.warn(`Failed to get ${query} from currencyconverterapi.com`, e)
+        log.warn(
+          `Failed to get ${query} from currencyconverterapi.com`,
+          e.message
+        )
       }
       return pairs
     }
