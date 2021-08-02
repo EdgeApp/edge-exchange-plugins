@@ -1,5 +1,10 @@
 # edge-exchange-plugins
 
+# 0.11.32 (2021-08-02)
+
+- Swap: Ensure all quotes expire in the future
+- Currency Converter: Fix response cleaner
+
 # 0.11.31 (2021-07-28)
 
 - Bitmax: Update url to ascendex.com
