@@ -53,6 +53,11 @@ const dontUseLegacy = {
   DGB: true
 }
 
+// Network names that don't match parent network currency code
+const networks = {
+  RBTC: 'RSK'
+}
+
 async function getAddress(wallet: EdgeCurrencyWallet, currencyCode: string) {
   const addressInfo = await wallet.getReceiveAddress({ currencyCode })
   return addressInfo.legacyAddress && !dontUseLegacy[currencyCode]
@@ -171,8 +176,12 @@ export function makeGodexPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
             affiliate_id: initOptions.apiKey,
             type: 'edge',
             isEstimate: false,
-            coin_from_network: request.fromWallet.currencyInfo.currencyCode,
-            coin_to_network: request.toWallet.currencyInfo.currencyCode
+            coin_from_network:
+              networks[request.fromWallet.currencyInfo.currencyCode] ??
+              request.fromWallet.currencyInfo.currencyCode,
+            coin_to_network:
+              networks[request.toWallet.currencyInfo.currencyCode] ??
+              request.toWallet.currencyInfo.currencyCode
           }
         }
       )
