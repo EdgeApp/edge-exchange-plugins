@@ -20,7 +20,9 @@ import utf8Codec from 'utf8'
 
 import { makeSwapPluginQuote } from '../swap-helpers.js'
 
-const INVALID_CURRENCY_CODES = {}
+const INVALID_CURRENCY_CODES = {
+  FTM: true
+}
 
 // Invalid currency codes should *not* have transcribed codes
 // because currency codes with transcribed versions are NOT invalid

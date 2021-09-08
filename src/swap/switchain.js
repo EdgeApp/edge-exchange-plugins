@@ -68,6 +68,10 @@ type SwitchainOrderCreationBody = {
   promotionCode?: string
 }
 
+const INVALID_CURRENCY_CODES = {
+  FTM: true
+}
+
 const dontUseLegacy = {
   DGB: true,
   LTC: true
@@ -174,6 +178,13 @@ export function makeSwitchainPlugin(
       } = request
       let { fromCurrencyCode } = request
       const { promoCode } = opts
+
+      if (
+        INVALID_CURRENCY_CODES[fromCurrencyCode] ||
+        INVALID_CURRENCY_CODES[toCurrencyCode]
+      ) {
+        throw new SwapCurrencyError(swapInfo, fromCurrencyCode, toCurrencyCode)
+      }
 
       if (toCurrencyCode === fromCurrencyCode) {
         throw new SwapCurrencyError(swapInfo, fromCurrencyCode, toCurrencyCode)
