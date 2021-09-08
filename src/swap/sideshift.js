@@ -26,6 +26,9 @@ const CURRENCY_CODE_TRANSCRIPTION = {
   // Edge currencyCode: exchangeCurrencyCode
   USDT: 'usdtErc20'
 }
+const INVALID_CURRENCY_CODES = {
+  FTM: true
+}
 const SIDESHIFT_BASE_URL = 'https://sideshift.ai/api/v1'
 const pluginId = 'sideshift'
 const swapInfo: EdgeSwapInfo = {
@@ -128,6 +131,17 @@ const createFetchSwapQuote = (api: SideshiftApi, affiliateId: string) =>
   async function fetchSwapQuote(
     request: EdgeSwapRequest
   ): Promise<EdgeSwapQuote> {
+    if (
+      INVALID_CURRENCY_CODES[request.fromCurrencyCode] ||
+      INVALID_CURRENCY_CODES[request.toCurrencyCode]
+    ) {
+      throw new SwapCurrencyError(
+        swapInfo,
+        request.fromCurrencyCode,
+        request.toCurrencyCode
+      )
+    }
+
     const [depositAddress, settleAddress] = await Promise.all([
       getAddress(request.fromWallet, request.fromCurrencyCode),
       getAddress(request.toWallet, request.toCurrencyCode)

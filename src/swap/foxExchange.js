@@ -62,6 +62,10 @@ type OrderInfo = {
   frontendTimeout: number
 }
 
+const INVALID_CURRENCY_CODES = {
+  FTM: true
+}
+
 const dontUseLegacy = {
   DGB: true,
   LTC: true,
@@ -141,6 +145,17 @@ export function makeFoxExchangePlugin(
         }
 
         return json.data
+      }
+
+      if (
+        INVALID_CURRENCY_CODES[request.fromCurrencyCode] ||
+        INVALID_CURRENCY_CODES[request.toCurrencyCode]
+      ) {
+        throw new SwapCurrencyError(
+          swapInfo,
+          request.fromCurrencyCode,
+          request.toCurrencyCode
+        )
       }
 
       try {
