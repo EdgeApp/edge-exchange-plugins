@@ -110,6 +110,7 @@ const coinGeckoMap = {
   BAND: 'band-protocol',
   REN: 'republic-protocol',
   AMPL: 'ampleforth',
+  HBAR: 'hedera-hashgraph',
   OCEAN: 'ocean-protocol'
 }
 
