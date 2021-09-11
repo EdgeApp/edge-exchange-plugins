@@ -48,18 +48,13 @@ export function makeNomicsPlugin(opts: EdgeCorePluginOptions): EdgeRatePlugin {
           const reply = await fetchCors(
             `https://api.nomics.com/v1/currencies/ticker?key=${apiKey}&ids=${query}&convert=USD`
           )
-          const replyJson = await reply.json()
           if (
             reply.status === 429 ||
             reply.status === 401 ||
             reply.ok === false
           )
-            throw new Error(
-              `Nomics returned with status: ${JSON.stringify(
-                reply.status
-              )} and error: ${JSON.stringify(replyJson)}`
-            )
-          asNomicsResponse(replyJson).forEach(rate => {
+            throw new Error(`Nomics returned with status: ${reply.status}`)
+          asNomicsResponse(await reply.json()).forEach(rate => {
             // When Nomics considers a coin "dead" they don't return a price
             if (rate.price)
               pairs.push({
@@ -70,9 +65,7 @@ export function makeNomicsPlugin(opts: EdgeCorePluginOptions): EdgeRatePlugin {
           })
         } catch (e) {
           log.warn(
-            `Issue with Nomics rate data structure. Querystrings ${JSON.stringify(
-              queryStrings
-            )} Error: ${e}`
+            `Issue with Nomics rate data structure. Error: ${e.message ?? ''}`
           )
         }
       }
