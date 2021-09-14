@@ -13,8 +13,6 @@ import { makeNomicsPlugin } from './rate/nomics.js'
 import { makeWazirxPlugin } from './rate/wazirx'
 import { makeChangellyPlugin } from './swap/changelly.js'
 import { makeChangeNowPlugin } from './swap/changenow.js'
-import { makeCoinSwitchPlugin } from './swap/coinswitch.js'
-import { makeFaastPlugin } from './swap/faast.js'
 import { makeFoxExchangePlugin } from './swap/foxExchange.js'
 import { makeGodexPlugin } from './swap/godex.js'
 import { makeShapeshiftPlugin } from './swap/shapeshift.js'
@@ -40,8 +38,6 @@ const edgeCorePlugins = {
   // Swap plugins:
   changelly: makeChangellyPlugin,
   changenow: makeChangeNowPlugin,
-  coinswitch: makeCoinSwitchPlugin,
-  faast: makeFaastPlugin,
   foxExchange: makeFoxExchangePlugin,
   godex: makeGodexPlugin,
   shapeshift: makeShapeshiftPlugin,
