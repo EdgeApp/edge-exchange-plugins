@@ -1,5 +1,10 @@
 # edge-exchange-plugins
 
+# 0.11.34 (2021-09-17)
+
+- Coingecko: add HBAR
+- Nomics: Fix error handling
+
 # 0.11.33 (2021-09-08)
 
 - Disable FTM trading on all plugins that do not identify the version of FTM is supported (ERC20 or mainnet). Plugins will be updated as mainnet identification is added.
