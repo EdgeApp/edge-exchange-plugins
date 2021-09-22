@@ -1,5 +1,9 @@
 # edge-exchange-plugins
 
+# 0.11.35 (2021-09-22)
+
+- Remove inactive swap plugins Faast and Coinswitch
+
 # 0.11.34 (2021-09-17)
 
 - Coingecko: add HBAR
