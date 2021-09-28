@@ -2,12 +2,6 @@
 
 import { asBoolean, asEither, asObject, asOptional, asString } from 'cleaners'
 import {
-  SwapAboveLimitError,
-  SwapBelowLimitError,
-  SwapCurrencyError,
-  SwapPermissionError
-} from 'edge-core-js'
-import {
   type EdgeCorePluginOptions,
   type EdgeCurrencyWallet,
   type EdgeFetchFunction,
@@ -15,7 +9,11 @@ import {
   type EdgeSwapInfo,
   type EdgeSwapPlugin,
   type EdgeSwapQuote,
-  type EdgeSwapRequest
+  type EdgeSwapRequest,
+  SwapAboveLimitError,
+  SwapBelowLimitError,
+  SwapCurrencyError,
+  SwapPermissionError
 } from 'edge-core-js/types'
 
 import { ensureInFuture, makeSwapPluginQuote } from '../swap-helpers.js'
