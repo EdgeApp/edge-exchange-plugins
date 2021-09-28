@@ -1,5 +1,9 @@
 # edge-exchange-plugins
 
+# 0.11.36 (2021-09-28)
+
+- Move edge-core-js to devDependencies
+
 # 0.11.35 (2021-09-22)
 
 - Remove inactive swap plugins Faast and Coinswitch
