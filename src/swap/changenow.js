@@ -40,14 +40,17 @@ const dontUseLegacy = {
 }
 
 const CURRENCY_CODE_TRANSCRIPTION = {
-  USDT: 'USDTERC20'
+  ETH: {
+    USDT: 'USDTERC20'
+  },
+  FTM: {
+    FTM: 'FTMMAINNET'
+  }
 }
 
 // Invalid currency codes should *not* have transcribed codes
 // because currency codes with transcribed versions are NOT invalid
-const INVALID_CURRENCY_CODES = {
-  FTM: true
-}
+const INVALID_CURRENCY_CODES = {}
 
 async function getAddress(
   wallet: EdgeCurrencyWallet,
@@ -122,12 +125,17 @@ export function makeChangeNowPlugin(
       // transcribe currencyCodes if necessary
       let safeFromCurrencyCode = request.fromCurrencyCode
       let safeToCurrencyCode = request.toCurrencyCode
-      if (CURRENCY_CODE_TRANSCRIPTION[request.fromCurrencyCode]) {
+      const fromMainnet = request.fromWallet.currencyInfo.currencyCode
+      const toMainnet = request.toWallet.currencyInfo.currencyCode
+      if (
+        CURRENCY_CODE_TRANSCRIPTION[fromMainnet]?.[request.fromCurrencyCode]
+      ) {
         safeFromCurrencyCode =
-          CURRENCY_CODE_TRANSCRIPTION[request.fromCurrencyCode]
+          CURRENCY_CODE_TRANSCRIPTION[fromMainnet][request.fromCurrencyCode]
       }
-      if (CURRENCY_CODE_TRANSCRIPTION[request.toCurrencyCode]) {
-        safeToCurrencyCode = CURRENCY_CODE_TRANSCRIPTION[request.toCurrencyCode]
+      if (CURRENCY_CODE_TRANSCRIPTION[toMainnet]?.[request.toCurrencyCode]) {
+        safeToCurrencyCode =
+          CURRENCY_CODE_TRANSCRIPTION[toMainnet][request.toCurrencyCode]
       }
 
       // get the markets
