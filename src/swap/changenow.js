@@ -46,10 +46,6 @@ const CURRENCY_CODE_TRANSCRIPTION = {
 // Invalid currency codes should *not* have transcribed codes
 // because currency codes with transcribed versions are NOT invalid
 const INVALID_CURRENCY_CODES = {
-  // edgeCurrenvyCode: exchangeCurrencyCode
-}
-
-const ERC20_ONLY_CURRENCY_CODES = {
   FTM: true
 }
 
@@ -115,31 +111,6 @@ export function makeChangeNowPlugin(
           request.fromCurrencyCode,
           request.toCurrencyCode
         )
-      }
-
-      // Throw a currency error if the user selected a mainnet token that ChangeNow only supports as an ERC20
-      if (ERC20_ONLY_CURRENCY_CODES[request.fromCurrencyCode] === true) {
-        if (
-          request.fromCurrencyCode ===
-          request.fromWallet.currencyInfo.currencyCode
-        ) {
-          throw new SwapCurrencyError(
-            swapInfo,
-            request.fromCurrencyCode,
-            request.toCurrencyCode
-          )
-        }
-      }
-      if (ERC20_ONLY_CURRENCY_CODES[request.toCurrencyCode] === true) {
-        if (
-          request.toCurrencyCode === request.toWallet.currencyInfo.currencyCode
-        ) {
-          throw new SwapCurrencyError(
-            swapInfo,
-            request.fromCurrencyCode,
-            request.toCurrencyCode
-          )
-        }
       }
 
       // Grab addresses:

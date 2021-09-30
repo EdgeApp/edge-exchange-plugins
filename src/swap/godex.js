@@ -53,6 +53,10 @@ const dontUseLegacy = {
   DGB: true
 }
 
+const INVALID_CURRENCY_CODES = {
+  FTM: true
+}
+
 // Network names that don't match parent network currency code
 const networks = {
   RBTC: 'RSK'
@@ -98,6 +102,17 @@ export function makeGodexPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
       userSettings: Object | void,
       opts: { promoCode?: string }
     ): Promise<EdgeSwapQuote> {
+      if (
+        INVALID_CURRENCY_CODES[request.fromCurrencyCode] ||
+        INVALID_CURRENCY_CODES[request.toCurrencyCode]
+      ) {
+        throw new SwapCurrencyError(
+          swapInfo,
+          request.fromCurrencyCode,
+          request.toCurrencyCode
+        )
+      }
+
       // Grab addresses:
       const [fromAddress, toAddress] = await Promise.all([
         getAddress(request.fromWallet, request.fromCurrencyCode),
