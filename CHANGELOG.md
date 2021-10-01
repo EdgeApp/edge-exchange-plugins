@@ -1,5 +1,10 @@
 # edge-exchange-plugins
 
+# 0.11.37 (2021-10-01)
+
+- Changenow: Add Fantom mainnet support
+- Godex: Disable Fantom trading
+
 # 0.11.36 (2021-09-28)
 
 - Move edge-core-js to devDependencies
