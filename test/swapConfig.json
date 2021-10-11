@@ -1,0 +1,49 @@
+{
+  "dbFullpath": "http://admin:Fuckb1tchesgetmoney@localhost:5984",
+  "httpHost": "127.0.0.1",
+  "httpPort": 8008,
+  "timeBetweenCyclesInMinutes": 10,
+  "apiKey": "1bf05e47064256154bc1c1e686677b16e60bb5d2",
+  "appId": "",
+  "username": "xkslpe38q",
+  "password": "1bh8OEi13K1nEspI",
+  "ratesServerAddress": "https://rates1.edge.app/",
+  "plugins": {
+    "bitcoin": true,
+    "bitcoincash": true,
+    "bitcoinsv": true,
+    "dash": true,
+    "dogecoin": true,
+    "litecoin": true,
+    "changelly": {
+      "apiKey": "4ac2abc529b84dd9bbfcb5653c644c80",
+      "secret": "26d6f2cf7f3086a850fd3006bf37aceb184ee4f50c3f146373ebba65ecca711b"
+    },
+    "changenow": {
+      "apiKey": "19556aef5cd0a1e8090d30540f93b456b76cda1aecf2c864cb66d89b7815c941"
+    },
+    "coinswitch": {
+      "apiKey": "j1ZgpTmOqg1eMtli4fH3v73OznsYxFdy8thjNeYs"
+    },
+    "faast": {
+      "affiliateId": "edgeFaastAffiliateIdap10chdu47rytdj3ur",
+      "affiliateMargin": 0.5
+    },
+    "foxExchange": {
+      "apiKey": "081464BD60708DEB"
+    },
+    "godex": {
+      "apiKey": "Ah81WLyIalYT06a2"
+    },
+    "sideshift": {
+      "affiliateId": "UNKxZRujL"
+    },
+    "switchain": {
+      "apiKey": "d9a1184e-fb05-3205-8b48-d066909bbb48"
+    },
+    "totle": {
+      "apiKey": "35829964-4597-4552-a07d-ee36449fdf7a",
+      "partnerContract": "0xf88d104ce15f77c9d48fd915bf23071d56190e03"
+    }
+  }
+}

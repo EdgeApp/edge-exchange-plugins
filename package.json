@@ -30,7 +30,8 @@
     "lint": "eslint .",
     "precommit": "lint-staged && flow && npm test && npm run build",
     "prepare": "npm run build",
-    "test": "node -r sucrase/register test/demo.js"
+    "test": "mocha -r sucrase/register 'test/**/*.test.ts'",
+    "posttest": "nyc report --reporter=cobertura --reporter=html"
   },
   "husky": {
     "hooks": {
@@ -42,10 +43,15 @@
   },
   "dependencies": {
     "biggystring": "^3.0.2",
-    "cleaners": "^0.3.9",
+    "chai": "^4.3.4",
+    "chai-as-promised": "^7.1.1",
+    "cleaners": "^0.3.12",
     "esm": "^3.2.4",
     "hashjs": "^1.2.0",
     "iso4217": "^0.2.0",
+    "mocha": "^9.1.2",
+    "sinon": "^11.1.2",
+    "sinon-chai": "^3.7.0",
     "utf8": "^3.0.0"
   },
   "devDependencies": {
@@ -58,7 +64,10 @@
     "babel-eslint": "^10.1.0",
     "babel-loader": "^8.2.2",
     "buffer": "^6.0.3",
-    "edge-core-js": "^0.17.29",
+    "cleaner-config": "^0.1.7",
+    "edge-core-js": "^0.18.9",
+    "edge-currency-accountbased": "^0.7.74",
+    "edge-currency-bitcoin": "^4.9.18",
     "eslint": "^7.14.0",
     "eslint-config-standard-kit": "0.15.1",
     "eslint-plugin-flowtype": "^5.2.0",
@@ -73,6 +82,7 @@
     "prettier": "^2.2.0",
     "process": "^0.11.10",
     "rimraf": "^2.6.2",
+    "scrypt": "https://codeload.github.com/barrysteyn/node-scrypt/tar.gz/fb60a8d3c158fe115a624b5ffa7480f3a24b03fb",
     "stream-browserify": "^3.0.0",
     "sucrase": "^3.9.5",
     "webpack": "^5.28.0",

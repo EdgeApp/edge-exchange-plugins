@@ -113,6 +113,10 @@ type FixedQuoteInfo = {
   refundExtraId: string | null,
   status: string
 }
+type State = {
+  fromAddressDebug?: string,
+  toAddressDebug?: string
+}
 
 const asFixedRateQuote = asObject({
   result: asObject({
@@ -170,6 +174,9 @@ export function makeChangellyPlugin(
       .stringify(hmacSha512(parseUtf8(body), secret))
       .toLowerCase()
 
+    // eslint-disable-next-line no-console
+    console.log(`====sign: ${sign}`)
+
     const headers: { [header: string]: string } = {
       'Content-Type': 'application/json',
       'api-key': apiKey,
@@ -189,7 +196,9 @@ export function makeChangellyPlugin(
     async fetchSwapQuote(
       request: EdgeSwapRequest,
       userSettings: Object | void,
-      opts: { promoCode?: string }
+      opts: {
+        promoCode?: string
+      }
     ): Promise<EdgeSwapQuote> {
       checkInvalidCodes(INVALID_CURRENCY_CODES, request, swapInfo)
 
@@ -329,14 +338,20 @@ export function makeChangellyPlugin(
     async getEstimate(
       request: EdgeSwapRequest,
       userSettings: Object | void,
-      opts: { promoCode?: string }
+      opts: {
+        promoCode?: string
+      }
     ): Promise<EdgeSwapQuote> {
       const { promoCode } = opts
+      const { fromAddressDebug, toAddressDebug } = this.State
       // Grab addresses:
-      const [fromAddress, toAddress] = await Promise.all([
-        getAddress(request.fromWallet, request.fromCurrencyCode),
-        getAddress(request.toWallet, request.toCurrencyCode)
-      ])
+      const [fromAddress, toAddress] =
+        fromAddressDebug == null || toAddressDebug == null
+          ? await Promise.all([
+              getAddress(request.fromWallet, request.fromCurrencyCode),
+              getAddress(request.toWallet, request.toCurrencyCode)
+            ])
+          : [fromAddressDebug, toAddressDebug]
 
       // Convert the native amount to a denomination:
       const quoteAmount =
@@ -478,6 +493,20 @@ export function makeChangellyPlugin(
         new Date(Date.now() + expirationMs),
         quoteInfo.id
       )
+    },
+
+    async testFetchSwapQuote(
+      request: EdgeSwapRequest,
+      userSettings: Object | void,
+      opts: {
+        promoCode?: string
+      },
+      fromAddress: string,
+      toAddress: string
+    ): Promise<EdgeSwapQuote> {
+      this.State.fromAddressDebug = fromAddress
+      this.State.toAddressDebug = toAddress
+      return this.fetchSwapQuote(request, userSettings, opts)
     }
   }
 

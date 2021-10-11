@@ -6,3 +6,7 @@ package-lock.json
 # Editors:
 .idea/
 .vscode/
+
+# Unit Test:
+edge/
+serverConfig.json

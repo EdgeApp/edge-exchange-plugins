@@ -1,0 +1,14 @@
+{
+  "dbFullpath": "http://username:password@localhost:5984",
+  "dbName": "swap_info",
+  "httpHost": "127.0.0.1",
+  "httpPort": 8008,
+  "timeBetweenCyclesInMinutes": 10,
+  "apiKey": "",
+  "appId": "",
+  "username": "",
+  "password": "",
+  "ratesServerAddress": "https://rates1.edge.app",
+  "currencyPairPrefix": "iso:USD_",
+  "plugins": {}
+}
