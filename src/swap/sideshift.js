@@ -242,9 +242,10 @@ const createFetchSwapQuote = (api: SideshiftApi, affiliateId: string) =>
 
     const isEstimate = false
 
-    const destinationTag = order.depositAddress.destinationTag
-      ? order.depositAddress.destinationTag.toString()
-      : undefined
+    const destinationTag =
+      order.depositAddress.destinationTag != null
+        ? `${order.depositAddress.destinationTag}`
+        : undefined
 
     const spendInfo: EdgeSpendInfo = {
       currencyCode: request.fromCurrencyCode,
