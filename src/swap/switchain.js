@@ -90,7 +90,7 @@ export function makeSwitchainPlugin(
   opts: EdgeCorePluginOptions
 ): EdgeSwapPlugin {
   const { initOptions, io } = opts
-
+  const { fetchCors = io.fetch } = io
   if (!initOptions.apiKey) {
     throw new Error('No Switchain API key provided.')
   }
@@ -132,7 +132,7 @@ export function makeSwitchainPlugin(
       queryParams = `?${new URLSearchParams(queryStringList).toString()}`
     }
     const uri = `${apiUrl}${path}${queryParams}`
-    const reply: EdgeFetchResponse = await io.fetch(uri, requestOpts)
+    const reply: EdgeFetchResponse = await fetchCors(uri, requestOpts)
 
     let replyJson:
       | SwitchainOfferResponse

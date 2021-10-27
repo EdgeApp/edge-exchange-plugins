@@ -279,7 +279,7 @@ export function makeSideshiftPlugin(
 ): EdgeSwapPlugin {
   const { io, initOptions } = opts
 
-  const api = createSideshiftApi(SIDESHIFT_BASE_URL, io.fetchCors || io.fetch)
+  const api = createSideshiftApi(SIDESHIFT_BASE_URL, io.fetchCors ?? io.fetch)
 
   const fetchSwapQuote = createFetchSwapQuote(api, initOptions.affiliateId)
 

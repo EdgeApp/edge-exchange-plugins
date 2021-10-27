@@ -31,7 +31,7 @@ const currencyMap = {}
 
 export function makeCoincapPlugin(opts: EdgeCorePluginOptions): EdgeRatePlugin {
   const { io, log } = opts
-  const fetch = io.fetchCors || io.fetch
+  const fetch = io.fetchCors ?? io.fetch
 
   return {
     rateInfo: {

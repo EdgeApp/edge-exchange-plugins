@@ -64,6 +64,7 @@ export function makeShapeshiftPlugin(
   opts: EdgeCorePluginOptions
 ): EdgeSwapPlugin {
   const { initOptions, io, log } = opts
+  const { fetchCors = io.fetch } = io
 
   if (initOptions.apiKey == null) {
     throw new Error('No Shapeshift API key provided')
@@ -121,13 +122,13 @@ export function makeShapeshiftPlugin(
 
   async function get(path) {
     const uri = `${API_PREFIX}${path}`
-    const reply = await io.fetch(uri)
+    const reply = await fetchCors(uri)
     return checkReply(uri, reply)
   }
 
   async function post(path, body, accessToken: string): Object {
     const uri = `${API_PREFIX}${path}`
-    const reply = await io.fetch(uri, {
+    const reply = await fetchCors(uri, {
       method: 'POST',
       headers: {
         Accept: 'application/json, text/plain, */*',

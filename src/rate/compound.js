@@ -13,7 +13,7 @@ export function makeCompoundPlugin(
   opts: EdgeCorePluginOptions
 ): EdgeRatePlugin {
   const { io } = opts
-
+  const { fetchCors = io.fetch } = io
   return {
     rateInfo: {
       pluginId: 'compound',
@@ -21,7 +21,9 @@ export function makeCompoundPlugin(
     },
 
     async fetchRates(pairsHint) {
-      const reply = await io.fetch('https://api.compound.finance/api/v2/ctoken')
+      const reply = await fetchCors(
+        'https://api.compound.finance/api/v2/ctoken'
+      )
       const json = await reply.json()
       if (!json || !json.cToken) return []
 
