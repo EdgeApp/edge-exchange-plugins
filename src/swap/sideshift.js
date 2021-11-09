@@ -22,7 +22,8 @@ import { ensureInFuture, makeSwapPluginQuote } from '../swap-helpers.js'
 // because currency codes with transcribed versions are NOT invalid
 const CURRENCY_CODE_TRANSCRIPTION = {
   // Edge currencyCode: exchangeCurrencyCode
-  USDT: 'usdtErc20'
+  USDT: 'usdtErc20',
+  ZEC: 'zaddr'
 }
 const INVALID_CURRENCY_CODES = {
   from: {

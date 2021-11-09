@@ -52,7 +52,9 @@ const CURRENCY_CODE_TRANSCRIPTION = {
 // because currency codes with transcribed versions are NOT invalid
 const INVALID_CURRENCY_CODES = {
   from: {},
-  to: {}
+  to: {
+    ZEC: true
+  }
 }
 
 async function getAddress(

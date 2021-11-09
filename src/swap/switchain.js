@@ -73,7 +73,8 @@ const INVALID_CURRENCY_CODES = {
     FTM: true
   },
   to: {
-    FTM: true
+    FTM: true,
+    ZEC: true
   }
 }
 
