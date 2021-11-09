@@ -21,7 +21,12 @@ import utf8Codec from 'utf8'
 import { makeSwapPluginQuote } from '../swap-helpers.js'
 
 const INVALID_CURRENCY_CODES = {
-  FTM: true
+  from: {
+    FTM: true
+  },
+  to: {
+    FTM: true
+  }
 }
 
 // Invalid currency codes should *not* have transcribed codes
@@ -173,8 +178,8 @@ export function makeChangellyPlugin(
     ): Promise<EdgeSwapQuote> {
       if (
         // if either currencyCode is invalid *and* doesn't have a transcription
-        INVALID_CURRENCY_CODES[request.fromCurrencyCode] ||
-        INVALID_CURRENCY_CODES[request.toCurrencyCode]
+        INVALID_CURRENCY_CODES.from[request.fromCurrencyCode] ||
+        INVALID_CURRENCY_CODES.to[request.toCurrencyCode]
       ) {
         throw new SwapCurrencyError(
           swapInfo,

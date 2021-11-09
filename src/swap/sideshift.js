@@ -25,7 +25,12 @@ const CURRENCY_CODE_TRANSCRIPTION = {
   USDT: 'usdtErc20'
 }
 const INVALID_CURRENCY_CODES = {
-  FTM: true
+  from: {
+    FTM: true
+  },
+  to: {
+    FTM: true
+  }
 }
 const SIDESHIFT_BASE_URL = 'https://sideshift.ai/api/v1'
 const pluginId = 'sideshift'
@@ -130,8 +135,8 @@ const createFetchSwapQuote = (api: SideshiftApi, affiliateId: string) =>
     request: EdgeSwapRequest
   ): Promise<EdgeSwapQuote> {
     if (
-      INVALID_CURRENCY_CODES[request.fromCurrencyCode] ||
-      INVALID_CURRENCY_CODES[request.toCurrencyCode]
+      INVALID_CURRENCY_CODES.from[request.fromCurrencyCode] ||
+      INVALID_CURRENCY_CODES.to[request.toCurrencyCode]
     ) {
       throw new SwapCurrencyError(
         swapInfo,

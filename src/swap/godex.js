@@ -54,7 +54,12 @@ const dontUseLegacy = {
 }
 
 const INVALID_CURRENCY_CODES = {
-  FTM: true
+  from: {
+    FTM: true
+  },
+  to: {
+    FTM: true
+  }
 }
 
 // Network names that don't match parent network currency code
@@ -103,8 +108,8 @@ export function makeGodexPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
       opts: { promoCode?: string }
     ): Promise<EdgeSwapQuote> {
       if (
-        INVALID_CURRENCY_CODES[request.fromCurrencyCode] ||
-        INVALID_CURRENCY_CODES[request.toCurrencyCode]
+        INVALID_CURRENCY_CODES.from[request.fromCurrencyCode] ||
+        INVALID_CURRENCY_CODES.to[request.toCurrencyCode]
       ) {
         throw new SwapCurrencyError(
           swapInfo,

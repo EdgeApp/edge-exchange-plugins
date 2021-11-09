@@ -69,7 +69,12 @@ type SwitchainOrderCreationBody = {
 }
 
 const INVALID_CURRENCY_CODES = {
-  FTM: true
+  from: {
+    FTM: true
+  },
+  to: {
+    FTM: true
+  }
 }
 
 const dontUseLegacy = {
@@ -180,8 +185,8 @@ export function makeSwitchainPlugin(
       const { promoCode } = opts
 
       if (
-        INVALID_CURRENCY_CODES[fromCurrencyCode] ||
-        INVALID_CURRENCY_CODES[toCurrencyCode]
+        INVALID_CURRENCY_CODES.from[fromCurrencyCode] ||
+        INVALID_CURRENCY_CODES.to[toCurrencyCode]
       ) {
         throw new SwapCurrencyError(swapInfo, fromCurrencyCode, toCurrencyCode)
       }
