@@ -15,7 +15,6 @@ import { makeChangellyPlugin } from './swap/changelly.js'
 import { makeChangeNowPlugin } from './swap/changenow.js'
 import { makeFoxExchangePlugin } from './swap/foxExchange.js'
 import { makeGodexPlugin } from './swap/godex.js'
-import { makeShapeshiftPlugin } from './swap/shapeshift.js'
 import { makeSideshiftPlugin } from './swap/sideshift.js'
 import { makeSwitchainPlugin } from './swap/switchain.js'
 import { makeTotlePlugin } from './swap/totle.js'
@@ -40,7 +39,6 @@ const edgeCorePlugins = {
   changenow: makeChangeNowPlugin,
   foxExchange: makeFoxExchangePlugin,
   godex: makeGodexPlugin,
-  shapeshift: makeShapeshiftPlugin,
   sideshift: makeSideshiftPlugin,
   switchain: makeSwitchainPlugin,
   totle: makeTotlePlugin,

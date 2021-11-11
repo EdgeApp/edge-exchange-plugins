@@ -50,7 +50,12 @@ const CURRENCY_CODE_TRANSCRIPTION = {
 
 // Invalid currency codes should *not* have transcribed codes
 // because currency codes with transcribed versions are NOT invalid
-const INVALID_CURRENCY_CODES = {}
+const INVALID_CURRENCY_CODES = {
+  from: {},
+  to: {
+    ZEC: true
+  }
+}
 
 async function getAddress(
   wallet: EdgeCurrencyWallet,
@@ -106,8 +111,8 @@ export function makeChangeNowPlugin(
 
       if (
         // if either currencyCode is invalid *and* doesn't have a transcription
-        INVALID_CURRENCY_CODES[request.fromCurrencyCode] ||
-        INVALID_CURRENCY_CODES[request.toCurrencyCode]
+        INVALID_CURRENCY_CODES.from[request.fromCurrencyCode] ||
+        INVALID_CURRENCY_CODES.to[request.toCurrencyCode]
       ) {
         throw new SwapCurrencyError(
           swapInfo,
