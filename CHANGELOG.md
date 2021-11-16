@@ -1,5 +1,9 @@
 # edge-exchange-plugins
 
+# 0.11.38 (2021-11-16)
+
+- Prevent ZEC purchases from partners who don't support sending to shielded addresses
+
 # 0.11.37 (2021-10-01)
 
 - Changenow: Add Fantom mainnet support
