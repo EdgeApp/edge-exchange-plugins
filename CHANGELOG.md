@@ -1,5 +1,9 @@
 # edge-exchange-plugins
 
+# 0.11.39 (2021-11-24)
+
+- Use the correct "to" currency code for the shapeshift's tx metadata
+
 # 0.11.38 (2021-11-16)
 
 - Prevent ZEC purchases from partners who don't support sending to shielded addresses
