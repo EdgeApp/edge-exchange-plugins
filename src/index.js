@@ -17,7 +17,6 @@ import { makeFoxExchangePlugin } from './swap/foxExchange.js'
 import { makeGodexPlugin } from './swap/godex.js'
 import { makeSideshiftPlugin } from './swap/sideshift.js'
 import { makeSwitchainPlugin } from './swap/switchain.js'
-import { makeTotlePlugin } from './swap/totle.js'
 import { makeTransferPlugin } from './swap/transfer.js'
 
 const edgeCorePlugins = {
@@ -41,7 +40,6 @@ const edgeCorePlugins = {
   godex: makeGodexPlugin,
   sideshift: makeSideshiftPlugin,
   switchain: makeSwitchainPlugin,
-  totle: makeTotlePlugin,
   transfer: makeTransferPlugin
 }
 
