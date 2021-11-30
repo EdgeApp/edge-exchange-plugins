@@ -1,5 +1,9 @@
 # edge-exchange-plugins
 
+# 0.11.40 (2021-11-30)
+
+- Remove Totle
+
 # 0.11.39 (2021-11-24)
 
 - Use the correct "to" currency code for the shapeshift's tx metadata
