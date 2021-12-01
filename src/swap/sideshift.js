@@ -1,6 +1,13 @@
 // @flow
 
-import { asBoolean, asEither, asObject, asOptional, asString } from 'cleaners'
+import {
+  asBoolean,
+  asEither,
+  asNumber,
+  asObject,
+  asOptional,
+  asString
+} from 'cleaners'
 import {
   type EdgeCorePluginOptions,
   type EdgeCurrencyWallet,
@@ -241,13 +248,18 @@ const createFetchSwapQuote = (api: SideshiftApi, affiliateId: string) =>
 
     const isEstimate = false
 
+    const destinationTag =
+      order.depositAddress.destinationTag != null
+        ? `${order.depositAddress.destinationTag}`
+        : undefined
+
     const spendInfo: EdgeSpendInfo = {
       currencyCode: request.fromCurrencyCode,
       spendTargets: [
         {
           nativeAmount: spendInfoAmount,
           publicAddress: order.depositAddress.address,
-          uniqueIdentifier: order.depositAddress.memo
+          uniqueIdentifier: order.depositAddress.memo ?? destinationTag
         }
       ],
       networkFeeOption:
@@ -353,7 +365,8 @@ const asOrder = asEither(
     expiresAtISO: asString,
     depositAddress: asObject({
       address: asString,
-      memo: asOptional(asString)
+      memo: asOptional(asString),
+      destinationTag: asOptional(asNumber)
     }),
     id: asString,
     orderId: asString,
