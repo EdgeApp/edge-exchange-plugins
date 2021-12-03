@@ -189,14 +189,9 @@ export function makeChangellyPlugin(
         )
       }
       const fixedPromise = this.getFixedQuote(request, userSettings, opts)
-      const estimatePromise = this.getEstimate(request, userSettings, opts)
-      try {
-        const fixedResult = await fixedPromise
-        return fixedResult
-      } catch (e) {
-        const estimateResult = await estimatePromise
-        return estimateResult
-      }
+      // FIXME: Estimated swaps are temporarily disabled
+      const fixedResult = await fixedPromise
+      return fixedResult
     },
 
     async getFixedQuote(
