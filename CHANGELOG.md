@@ -1,5 +1,10 @@
 # edge-exchange-plugins
 
+# 0.12.0 (2021-12-03)
+
+- Add new swap partner Exolix
+- Changelly: Disable estimated swaps (temporarily)
+
 # 0.11.40 (2021-11-30)
 
 - Remove Totle
