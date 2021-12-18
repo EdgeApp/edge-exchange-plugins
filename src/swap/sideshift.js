@@ -29,8 +29,12 @@ import { ensureInFuture, makeSwapPluginQuote } from '../swap-helpers.js'
 // because currency codes with transcribed versions are NOT invalid
 const CURRENCY_CODE_TRANSCRIPTION = {
   // Edge currencyCode: exchangeCurrencyCode
-  USDT: 'usdtErc20',
-  ZEC: 'zaddr'
+  ETH: {
+    USDT: 'usdtErc20'
+  },
+  ZEC: {
+    ZEC: 'zaddr'
+  }
 }
 const INVALID_CURRENCY_CODES = {
   from: {
@@ -59,13 +63,18 @@ async function getAddress(
 
 function getSafeCurrencyCode(request: EdgeSwapRequest) {
   const { fromCurrencyCode, toCurrencyCode } = request
+  let safeFromCurrencyCode = request.fromCurrencyCode.toLowerCase()
+  let safeToCurrencyCode = request.toCurrencyCode.toLowerCase()
+  const fromMainnet = request.fromWallet.currencyInfo.currencyCode
+  const toMainnet = request.toWallet.currencyInfo.currencyCode
 
-  const safeFromCurrencyCode =
-    CURRENCY_CODE_TRANSCRIPTION[fromCurrencyCode] ||
-    fromCurrencyCode.toLowerCase()
-
-  const safeToCurrencyCode =
-    CURRENCY_CODE_TRANSCRIPTION[toCurrencyCode] || toCurrencyCode.toLowerCase()
+  if (CURRENCY_CODE_TRANSCRIPTION[fromMainnet]?.[fromCurrencyCode]) {
+    safeFromCurrencyCode =
+      CURRENCY_CODE_TRANSCRIPTION[fromMainnet][fromCurrencyCode]
+  }
+  if (CURRENCY_CODE_TRANSCRIPTION[toMainnet]?.[toCurrencyCode]) {
+    safeToCurrencyCode = CURRENCY_CODE_TRANSCRIPTION[toMainnet][toCurrencyCode]
+  }
 
   return { safeFromCurrencyCode, safeToCurrencyCode }
 }

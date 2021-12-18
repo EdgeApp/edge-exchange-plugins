@@ -20,6 +20,14 @@ import utf8Codec from 'utf8'
 
 import { makeSwapPluginQuote } from '../swap-helpers.js'
 
+// Invalid currency codes should *not* have transcribed codes
+// because currency codes with transcribed versions are NOT invalid
+const CURRENCY_CODE_TRANSCRIPTION = {
+  ETH: {
+    USDT: 'USDT20'
+  }
+}
+
 const INVALID_CURRENCY_CODES = {
   from: {
     FTM: true
@@ -28,13 +36,6 @@ const INVALID_CURRENCY_CODES = {
     FTM: true,
     ZEC: true
   }
-}
-
-// Invalid currency codes should *not* have transcribed codes
-// because currency codes with transcribed versions are NOT invalid
-const CURRENCY_CODE_TRANSCRIPTION = {
-  // Edge currencyCode: exchangeCurrencyCode
-  USDT: 'USDT20'
 }
 
 function hmacSha512(data: Uint8Array, key: Uint8Array): Uint8Array {
@@ -217,12 +218,17 @@ export function makeChangellyPlugin(
 
       let safeFromCurrencyCode = request.fromCurrencyCode
       let safeToCurrencyCode = request.toCurrencyCode
-      if (CURRENCY_CODE_TRANSCRIPTION[request.fromCurrencyCode]) {
+      const fromMainnet = request.fromWallet.currencyInfo.currencyCode
+      const toMainnet = request.toWallet.currencyInfo.currencyCode
+      if (
+        CURRENCY_CODE_TRANSCRIPTION[fromMainnet]?.[request.fromCurrencyCode]
+      ) {
         safeFromCurrencyCode =
-          CURRENCY_CODE_TRANSCRIPTION[request.fromCurrencyCode]
+          CURRENCY_CODE_TRANSCRIPTION[fromMainnet][request.fromCurrencyCode]
       }
-      if (CURRENCY_CODE_TRANSCRIPTION[request.toCurrencyCode]) {
-        safeToCurrencyCode = CURRENCY_CODE_TRANSCRIPTION[request.toCurrencyCode]
+      if (CURRENCY_CODE_TRANSCRIPTION[toMainnet]?.[request.toCurrencyCode]) {
+        safeToCurrencyCode =
+          CURRENCY_CODE_TRANSCRIPTION[toMainnet][request.toCurrencyCode]
       }
       const fixedRateQuoteResponse: FixedRateQuote = await call({
         jsonrpc: '2.0',
