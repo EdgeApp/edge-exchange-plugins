@@ -30,11 +30,22 @@ const CURRENCY_CODE_TRANSCRIPTION = {
 
 const INVALID_CURRENCY_CODES = {
   from: {
-    FTM: true
+    ETH: {
+      FTM: true
+    },
+    FTM: {
+      FTM: true
+    }
   },
   to: {
-    FTM: true,
-    ZEC: true
+    ETH: {
+      FTM: true,
+      ZEC: true
+    },
+    FTM: {
+      FTM: true,
+      ZEC: true
+    }
   }
 }
 
@@ -180,8 +191,11 @@ export function makeChangellyPlugin(
     ): Promise<EdgeSwapQuote> {
       if (
         // if either currencyCode is invalid *and* doesn't have a transcription
-        INVALID_CURRENCY_CODES.from[request.fromCurrencyCode] ||
-        INVALID_CURRENCY_CODES.to[request.toCurrencyCode]
+        INVALID_CURRENCY_CODES[request.fromWallet.currencyInfo.currencyCode]
+          .from[request.fromCurrencyCode] ||
+        INVALID_CURRENCY_CODES[request.toWallet.currencyInfo.currencyCode].to[
+          request.toCurrencyCode
+        ]
       ) {
         throw new SwapCurrencyError(
           swapInfo,

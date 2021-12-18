@@ -53,7 +53,12 @@ const CURRENCY_CODE_TRANSCRIPTION = {
 const INVALID_CURRENCY_CODES = {
   from: {},
   to: {
-    ZEC: true
+    ETH: {
+      ZEC: true
+    },
+    ZEC: {
+      ZEC: true
+    }
   }
 }
 
@@ -109,10 +114,12 @@ export function makeChangeNowPlugin(
     ): Promise<EdgeSwapQuote> {
       const { promoCode } = opts
 
+      const fromMainnet = request.fromWallet.currencyInfo.currencyCode
+      const toMainnet = request.toWallet.currencyInfo.currencyCode
       if (
         // if either currencyCode is invalid *and* doesn't have a transcription
-        INVALID_CURRENCY_CODES.from[request.fromCurrencyCode] ||
-        INVALID_CURRENCY_CODES.to[request.toCurrencyCode]
+        INVALID_CURRENCY_CODES[fromMainnet].from[request.fromCurrencyCode] ||
+        INVALID_CURRENCY_CODES[toMainnet].to[request.toCurrencyCode]
       ) {
         throw new SwapCurrencyError(
           swapInfo,
@@ -130,8 +137,6 @@ export function makeChangeNowPlugin(
       // transcribe currencyCodes if necessary
       let safeFromCurrencyCode = request.fromCurrencyCode
       let safeToCurrencyCode = request.toCurrencyCode
-      const fromMainnet = request.fromWallet.currencyInfo.currencyCode
-      const toMainnet = request.toWallet.currencyInfo.currencyCode
       if (
         CURRENCY_CODE_TRANSCRIPTION[fromMainnet]?.[request.fromCurrencyCode]
       ) {
