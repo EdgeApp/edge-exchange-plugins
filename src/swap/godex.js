@@ -55,10 +55,12 @@ const dontUseLegacy = {
 
 const INVALID_CURRENCY_CODES = {
   from: {
-    FTM: true
+    FTM: true,
+    MATIC: true
   },
   to: {
     FTM: true,
+    MATIC: true,
     ZEC: true
   }
 }
