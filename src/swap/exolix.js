@@ -14,9 +14,21 @@ import {
   SwapCurrencyError
 } from 'edge-core-js/types'
 
-import { makeSwapPluginQuote } from '../swap-helpers.js'
+import { checkInvalidCodes, makeSwapPluginQuote } from '../swap-helpers.js'
 
-const INVALID_CURRENCY_CODES = {}
+const INVALID_CURRENCY_CODES = {
+  from: {
+    ETH: ['MATIC'],
+    MATIC: 'allTokens',
+    FTM: 'allCodes'
+  },
+  to: {
+    ETH: ['MATIC'],
+    MATIC: 'allTokens',
+    FTM: 'allCodes',
+    ZEC: ['ZEC']
+  }
+}
 
 // Invalid currency codes should *not* have transcribed codes
 // because currency codes with transcribed versions are NOT invalid
@@ -96,17 +108,7 @@ export function makeExolixPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
       request: EdgeSwapRequest,
       userSettings: Object | void
     ): Promise<EdgeSwapQuote> {
-      if (
-        // if either currencyCode is invalid *and* doesn't have a transcription
-        INVALID_CURRENCY_CODES.from[request.fromCurrencyCode] ||
-        INVALID_CURRENCY_CODES.to[request.toCurrencyCode]
-      ) {
-        throw new SwapCurrencyError(
-          swapInfo,
-          request.fromCurrencyCode,
-          request.toCurrencyCode
-        )
-      }
+      checkInvalidCodes(INVALID_CURRENCY_CODES, request, swapInfo)
 
       const fixedPromise = this.getFixedQuote(request, userSettings)
 
