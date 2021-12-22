@@ -18,23 +18,33 @@ import hashjs from 'hash.js'
 import { base16 } from 'rfc4648'
 import utf8Codec from 'utf8'
 
-import { makeSwapPluginQuote } from '../swap-helpers.js'
+import {
+  type InvalidCurrencyCodes,
+  checkInvalidCodes,
+  makeSwapPluginQuote,
+  safeCurrencyCodes
+} from '../swap-helpers.js'
 
-const INVALID_CURRENCY_CODES = {
+const INVALID_CURRENCY_CODES: InvalidCurrencyCodes = {
   from: {
-    FTM: true
+    ETH: ['FTM', 'MATIC'],
+    MATIC: 'allTokens',
+    FTM: 'allCodes'
   },
   to: {
-    FTM: true,
-    ZEC: true
+    ETH: ['FTM', 'MATIC'],
+    MATIC: 'allTokens',
+    FTM: 'allCodes',
+    ZEC: ['ZEC']
   }
 }
 
 // Invalid currency codes should *not* have transcribed codes
 // because currency codes with transcribed versions are NOT invalid
 const CURRENCY_CODE_TRANSCRIPTION = {
-  // Edge currencyCode: exchangeCurrencyCode
-  USDT: 'USDT20'
+  ETH: {
+    USDT: 'USDT20'
+  }
 }
 
 function hmacSha512(data: Uint8Array, key: Uint8Array): Uint8Array {
@@ -177,17 +187,8 @@ export function makeChangellyPlugin(
       userSettings: Object | void,
       opts: { promoCode?: string }
     ): Promise<EdgeSwapQuote> {
-      if (
-        // if either currencyCode is invalid *and* doesn't have a transcription
-        INVALID_CURRENCY_CODES.from[request.fromCurrencyCode] ||
-        INVALID_CURRENCY_CODES.to[request.toCurrencyCode]
-      ) {
-        throw new SwapCurrencyError(
-          swapInfo,
-          request.fromCurrencyCode,
-          request.toCurrencyCode
-        )
-      }
+      checkInvalidCodes(INVALID_CURRENCY_CODES, request, swapInfo)
+
       const fixedPromise = this.getFixedQuote(request, userSettings, opts)
       // FIXME: Estimated swaps are temporarily disabled
       const fixedResult = await fixedPromise
@@ -215,15 +216,11 @@ export function makeChangellyPlugin(
               request.toCurrencyCode
             )
 
-      let safeFromCurrencyCode = request.fromCurrencyCode
-      let safeToCurrencyCode = request.toCurrencyCode
-      if (CURRENCY_CODE_TRANSCRIPTION[request.fromCurrencyCode]) {
-        safeFromCurrencyCode =
-          CURRENCY_CODE_TRANSCRIPTION[request.fromCurrencyCode]
-      }
-      if (CURRENCY_CODE_TRANSCRIPTION[request.toCurrencyCode]) {
-        safeToCurrencyCode = CURRENCY_CODE_TRANSCRIPTION[request.toCurrencyCode]
-      }
+      const { safeFromCurrencyCode, safeToCurrencyCode } = safeCurrencyCodes(
+        CURRENCY_CODE_TRANSCRIPTION,
+        request
+      )
+
       const fixedRateQuoteResponse: FixedRateQuote = await call({
         jsonrpc: '2.0',
         id: 'one',

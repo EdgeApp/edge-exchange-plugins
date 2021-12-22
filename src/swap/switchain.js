@@ -18,6 +18,8 @@ import {
   SwapCurrencyError
 } from 'edge-core-js/types'
 
+import { type InvalidCurrencyCodes, checkInvalidCodes } from '../swap-helpers'
+
 const pluginId = 'switchain'
 const swapInfo: EdgeSwapInfo = {
   pluginId,
@@ -68,13 +70,17 @@ type SwitchainOrderCreationBody = {
   promotionCode?: string
 }
 
-const INVALID_CURRENCY_CODES = {
+const INVALID_CURRENCY_CODES: InvalidCurrencyCodes = {
   from: {
-    FTM: true
+    ETH: ['MATIC'],
+    FTM: 'allCodes',
+    MATIC: 'allTokens'
   },
   to: {
-    FTM: true,
-    ZEC: true
+    ETH: ['MATIC'],
+    FTM: 'allCodes',
+    MATIC: 'allTokens',
+    ZEC: ['ZEC']
   }
 }
 
@@ -185,12 +191,7 @@ export function makeSwitchainPlugin(
       let { fromCurrencyCode } = request
       const { promoCode } = opts
 
-      if (
-        INVALID_CURRENCY_CODES.from[fromCurrencyCode] ||
-        INVALID_CURRENCY_CODES.to[toCurrencyCode]
-      ) {
-        throw new SwapCurrencyError(swapInfo, fromCurrencyCode, toCurrencyCode)
-      }
+      checkInvalidCodes(INVALID_CURRENCY_CODES, request, swapInfo)
 
       if (toCurrencyCode === fromCurrencyCode) {
         throw new SwapCurrencyError(swapInfo, fromCurrencyCode, toCurrencyCode)

@@ -1,10 +1,12 @@
 // @flow
 
 import {
+  type EdgeSwapInfo,
   type EdgeSwapQuote,
   type EdgeSwapRequest,
   type EdgeSwapResult,
-  type EdgeTransaction
+  type EdgeTransaction,
+  SwapCurrencyError
 } from 'edge-core-js/types'
 
 /**
@@ -60,6 +62,95 @@ export function makeSwapPluginQuote(
     },
 
     async close() {}
+  }
+  return out
+}
+
+const getCodes = (request: EdgeSwapRequest) => ({
+  fromMainnetCode: request.fromWallet.currencyInfo.currencyCode,
+  toMainnetCode: request.toWallet.currencyInfo.currencyCode,
+  fromCurrencyCode: request.fromCurrencyCode,
+  toCurrencyCode: request.toCurrencyCode
+})
+
+export type InvalidCurrencyCodes = {
+  from: { [code: string]: 'allCodes' | 'allTokens' | string[] },
+  to: { [code: string]: 'allCodes' | 'allTokens' | string[] }
+}
+
+/**
+ * Throws if either currency code has been disabled by the plugin
+ */
+export function checkInvalidCodes(
+  invalidCodes: InvalidCurrencyCodes,
+  request: EdgeSwapRequest,
+  swapInfo: EdgeSwapInfo
+): void {
+  const {
+    fromMainnetCode,
+    toMainnetCode,
+    fromCurrencyCode,
+    toCurrencyCode
+  } = getCodes(request)
+
+  function check(direction: string, main: string, token: string): boolean {
+    switch (invalidCodes[direction][main]) {
+      case undefined:
+        return false
+      case 'allCodes':
+        return true
+      case 'allTokens':
+        return main !== token
+      default:
+        return invalidCodes[direction][main].some(code => code === token)
+    }
+  }
+
+  if (
+    check('from', fromMainnetCode, fromCurrencyCode) ||
+    check('to', toMainnetCode, toCurrencyCode)
+  )
+    throw new SwapCurrencyError(
+      swapInfo,
+      request.fromCurrencyCode,
+      request.toCurrencyCode
+    )
+}
+
+export type CurrencyCodeTranscriptions = {
+  [code: string]: {
+    [code: string]: string
+  }
+}
+
+/**
+ * Transcribes requested currency codes into plugin compatible unique IDs
+ */
+export function safeCurrencyCodes(
+  transcriptionMap: CurrencyCodeTranscriptions,
+  request: EdgeSwapRequest
+): {
+  safeFromCurrencyCode: string,
+  safeToCurrencyCode: string
+} {
+  const {
+    fromMainnetCode,
+    toMainnetCode,
+    fromCurrencyCode,
+    toCurrencyCode
+  } = getCodes(request)
+
+  const out = {
+    safeFromCurrencyCode: fromCurrencyCode,
+    safeToCurrencyCode: toCurrencyCode
+  }
+  if (transcriptionMap[fromMainnetCode]?.[request.fromCurrencyCode]) {
+    out.safeFromCurrencyCode =
+      transcriptionMap[fromMainnetCode][request.fromCurrencyCode]
+  }
+  if (transcriptionMap[toMainnetCode]?.[request.toCurrencyCode]) {
+    out.safeToCurrencyCode =
+      transcriptionMap[toMainnetCode][request.toCurrencyCode]
   }
   return out
 }
