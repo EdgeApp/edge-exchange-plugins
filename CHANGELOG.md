@@ -1,5 +1,9 @@
 # edge-exchange-plugins
 
+# 0.12.1 (2021-12-21)
+
+- Move invalid code checking and currency code transcription into helper functions
+
 # 0.12.0 (2021-12-03)
 
 - Add new swap partner Exolix
