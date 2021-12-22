@@ -23,7 +23,12 @@ import {
   SwapCurrencyError
 } from 'edge-core-js/types'
 
-import { ensureInFuture, makeSwapPluginQuote } from '../swap-helpers.js'
+import {
+  type InvalidCurrencyCodes,
+  checkInvalidCodes,
+  ensureInFuture,
+  makeSwapPluginQuote
+} from '../swap-helpers.js'
 
 const pluginId = 'changenow'
 const swapInfo: EdgeSwapInfo = {
@@ -50,10 +55,15 @@ const CURRENCY_CODE_TRANSCRIPTION = {
 
 // Invalid currency codes should *not* have transcribed codes
 // because currency codes with transcribed versions are NOT invalid
-const INVALID_CURRENCY_CODES = {
-  from: {},
+const INVALID_CURRENCY_CODES: InvalidCurrencyCodes = {
+  from: {
+    ETH: ['MATIC'],
+    MATIC: 'allTokens'
+  },
   to: {
-    ZEC: true
+    ETH: ['MATIC'],
+    MATIC: 'allTokens',
+    ZEC: ['ZEC']
   }
 }
 
@@ -109,17 +119,7 @@ export function makeChangeNowPlugin(
     ): Promise<EdgeSwapQuote> {
       const { promoCode } = opts
 
-      if (
-        // if either currencyCode is invalid *and* doesn't have a transcription
-        INVALID_CURRENCY_CODES.from[request.fromCurrencyCode] ||
-        INVALID_CURRENCY_CODES.to[request.toCurrencyCode]
-      ) {
-        throw new SwapCurrencyError(
-          swapInfo,
-          request.fromCurrencyCode,
-          request.toCurrencyCode
-        )
-      }
+      checkInvalidCodes(INVALID_CURRENCY_CODES, request, swapInfo)
 
       // Grab addresses:
       const [fromAddress, toAddress] = await Promise.all([

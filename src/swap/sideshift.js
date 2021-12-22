@@ -23,7 +23,12 @@ import {
   SwapPermissionError
 } from 'edge-core-js/types'
 
-import { ensureInFuture, makeSwapPluginQuote } from '../swap-helpers.js'
+import {
+  type InvalidCurrencyCodes,
+  checkInvalidCodes,
+  ensureInFuture,
+  makeSwapPluginQuote
+} from '../swap-helpers.js'
 
 // Invalid currency codes should *not* have transcribed codes
 // because currency codes with transcribed versions are NOT invalid
@@ -36,12 +41,16 @@ const CURRENCY_CODE_TRANSCRIPTION = {
     ZEC: 'zaddr'
   }
 }
-const INVALID_CURRENCY_CODES = {
+const INVALID_CURRENCY_CODES: InvalidCurrencyCodes = {
   from: {
-    FTM: true
+    ETH: ['FTM', 'MATIC'],
+    FTM: 'allCodes',
+    MATIC: 'allTokens'
   },
   to: {
-    FTM: true
+    ETH: ['FTM', 'MATIC'],
+    FTM: 'allCodes',
+    MATIC: 'allTokens'
   }
 }
 const SIDESHIFT_BASE_URL = 'https://sideshift.ai/api/v1'
@@ -151,16 +160,7 @@ const createFetchSwapQuote = (api: SideshiftApi, affiliateId: string) =>
   async function fetchSwapQuote(
     request: EdgeSwapRequest
   ): Promise<EdgeSwapQuote> {
-    if (
-      INVALID_CURRENCY_CODES.from[request.fromCurrencyCode] ||
-      INVALID_CURRENCY_CODES.to[request.toCurrencyCode]
-    ) {
-      throw new SwapCurrencyError(
-        swapInfo,
-        request.fromCurrencyCode,
-        request.toCurrencyCode
-      )
-    }
+    checkInvalidCodes(INVALID_CURRENCY_CODES, request, swapInfo)
 
     const [depositAddress, settleAddress] = await Promise.all([
       getAddress(request.fromWallet, request.fromCurrencyCode),

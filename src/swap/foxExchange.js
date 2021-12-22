@@ -15,6 +15,8 @@ import {
   SwapPermissionError
 } from 'edge-core-js/types'
 
+import { type InvalidCurrencyCodes, checkInvalidCodes } from '../swap-helpers'
+
 const pluginId = 'foxExchange'
 const swapInfo: EdgeSwapInfo = {
   pluginId,
@@ -62,13 +64,17 @@ type OrderInfo = {
   frontendTimeout: number
 }
 
-const INVALID_CURRENCY_CODES = {
+const INVALID_CURRENCY_CODES: InvalidCurrencyCodes = {
   from: {
-    FTM: true
+    ETH: ['MATIC'],
+    FTM: 'allCodes',
+    MATIC: 'allTokens'
   },
   to: {
-    FTM: true,
-    ZEC: true
+    ETH: ['MATIC'],
+    FTM: 'allCodes',
+    MATIC: 'allTokens',
+    ZEC: ['ZEC']
   }
 }
 
@@ -153,16 +159,7 @@ export function makeFoxExchangePlugin(
         return json.data
       }
 
-      if (
-        INVALID_CURRENCY_CODES.from[request.fromCurrencyCode] ||
-        INVALID_CURRENCY_CODES.to[request.toCurrencyCode]
-      ) {
-        throw new SwapCurrencyError(
-          swapInfo,
-          request.fromCurrencyCode,
-          request.toCurrencyCode
-        )
-      }
+      checkInvalidCodes(INVALID_CURRENCY_CODES, request, swapInfo)
 
       try {
         const rateReq: RateRequest = {
