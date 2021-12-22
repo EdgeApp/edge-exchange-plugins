@@ -14,7 +14,11 @@ import {
   SwapCurrencyError
 } from 'edge-core-js/types'
 
-import { checkInvalidCodes, makeSwapPluginQuote } from '../swap-helpers.js'
+import {
+  checkInvalidCodes,
+  makeSwapPluginQuote,
+  safeCurrencyCodes
+} from '../swap-helpers.js'
 
 const INVALID_CURRENCY_CODES = {
   from: {
@@ -34,7 +38,9 @@ const INVALID_CURRENCY_CODES = {
 // because currency codes with transcribed versions are NOT invalid
 const CURRENCY_CODE_TRANSCRIPTION = {
   // Edge currencyCode: exchangeCurrencyCode
-  USDT: 'USDT20'
+  ETH: {
+    USDT: 'USDT20'
+  }
 }
 
 const pluginId = 'exolix'
@@ -136,17 +142,10 @@ export function makeExolixPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
               request.toCurrencyCode
             )
 
-      let safeFromCurrencyCode = request.fromCurrencyCode
-      let safeToCurrencyCode = request.toCurrencyCode
-
-      if (CURRENCY_CODE_TRANSCRIPTION[request.fromCurrencyCode]) {
-        safeFromCurrencyCode =
-          CURRENCY_CODE_TRANSCRIPTION[request.fromCurrencyCode]
-      }
-
-      if (CURRENCY_CODE_TRANSCRIPTION[request.toCurrencyCode]) {
-        safeToCurrencyCode = CURRENCY_CODE_TRANSCRIPTION[request.toCurrencyCode]
-      }
+      const { safeFromCurrencyCode, safeToCurrencyCode } = safeCurrencyCodes(
+        CURRENCY_CODE_TRANSCRIPTION,
+        request
+      )
 
       // Swap the currencies if we need a reverse quote:
       const quoteParams =

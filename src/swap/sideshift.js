@@ -27,7 +27,8 @@ import {
   type InvalidCurrencyCodes,
   checkInvalidCodes,
   ensureInFuture,
-  makeSwapPluginQuote
+  makeSwapPluginQuote,
+  safeCurrencyCodes
 } from '../swap-helpers.js'
 
 // Invalid currency codes should *not* have transcribed codes
@@ -68,24 +69,6 @@ async function getAddress(
 ): Promise<string> {
   const addressInfo = await wallet.getReceiveAddress({ currencyCode })
   return addressInfo.segwitAddress ?? addressInfo.publicAddress
-}
-
-function getSafeCurrencyCode(request: EdgeSwapRequest) {
-  const { fromCurrencyCode, toCurrencyCode } = request
-  let safeFromCurrencyCode = request.fromCurrencyCode.toLowerCase()
-  let safeToCurrencyCode = request.toCurrencyCode.toLowerCase()
-  const fromMainnet = request.fromWallet.currencyInfo.currencyCode
-  const toMainnet = request.toWallet.currencyInfo.currencyCode
-
-  if (CURRENCY_CODE_TRANSCRIPTION[fromMainnet]?.[fromCurrencyCode]) {
-    safeFromCurrencyCode =
-      CURRENCY_CODE_TRANSCRIPTION[fromMainnet][fromCurrencyCode]
-  }
-  if (CURRENCY_CODE_TRANSCRIPTION[toMainnet]?.[toCurrencyCode]) {
-    safeToCurrencyCode = CURRENCY_CODE_TRANSCRIPTION[toMainnet][toCurrencyCode]
-  }
-
-  return { safeFromCurrencyCode, safeToCurrencyCode }
 }
 
 async function checkQuoteError(
@@ -167,7 +150,8 @@ const createFetchSwapQuote = (api: SideshiftApi, affiliateId: string) =>
       getAddress(request.toWallet, request.toCurrencyCode)
     ])
 
-    const { safeFromCurrencyCode, safeToCurrencyCode } = getSafeCurrencyCode(
+    const { safeFromCurrencyCode, safeToCurrencyCode } = safeCurrencyCodes(
+      CURRENCY_CODE_TRANSCRIPTION,
       request
     )
 

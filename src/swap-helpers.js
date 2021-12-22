@@ -116,3 +116,41 @@ export function checkInvalidCodes(
       request.toCurrencyCode
     )
 }
+
+export type CurrencyCodeTranscriptions = {
+  [code: string]: {
+    [code: string]: string
+  }
+}
+
+/**
+ * Transcribes requested currency codes into plugin compatible unique IDs
+ */
+export function safeCurrencyCodes(
+  transcriptionMap: CurrencyCodeTranscriptions,
+  request: EdgeSwapRequest
+): {
+  safeFromCurrencyCode: string,
+  safeToCurrencyCode: string
+} {
+  const {
+    fromMainnetCode,
+    toMainnetCode,
+    fromCurrencyCode,
+    toCurrencyCode
+  } = getCodes(request)
+
+  const out = {
+    safeFromCurrencyCode: fromCurrencyCode,
+    safeToCurrencyCode: toCurrencyCode
+  }
+  if (transcriptionMap[fromMainnetCode]?.[request.fromCurrencyCode]) {
+    out.safeFromCurrencyCode =
+      transcriptionMap[fromMainnetCode][request.fromCurrencyCode]
+  }
+  if (transcriptionMap[toMainnetCode]?.[request.toCurrencyCode]) {
+    out.safeToCurrencyCode =
+      transcriptionMap[toMainnetCode][request.toCurrencyCode]
+  }
+  return out
+}

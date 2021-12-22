@@ -21,7 +21,8 @@ import utf8Codec from 'utf8'
 import {
   type InvalidCurrencyCodes,
   checkInvalidCodes,
-  makeSwapPluginQuote
+  makeSwapPluginQuote,
+  safeCurrencyCodes
 } from '../swap-helpers.js'
 
 const INVALID_CURRENCY_CODES: InvalidCurrencyCodes = {
@@ -215,20 +216,11 @@ export function makeChangellyPlugin(
               request.toCurrencyCode
             )
 
-      let safeFromCurrencyCode = request.fromCurrencyCode
-      let safeToCurrencyCode = request.toCurrencyCode
-      const fromMainnet = request.fromWallet.currencyInfo.currencyCode
-      const toMainnet = request.toWallet.currencyInfo.currencyCode
-      if (
-        CURRENCY_CODE_TRANSCRIPTION[fromMainnet]?.[request.fromCurrencyCode]
-      ) {
-        safeFromCurrencyCode =
-          CURRENCY_CODE_TRANSCRIPTION[fromMainnet][request.fromCurrencyCode]
-      }
-      if (CURRENCY_CODE_TRANSCRIPTION[toMainnet]?.[request.toCurrencyCode]) {
-        safeToCurrencyCode =
-          CURRENCY_CODE_TRANSCRIPTION[toMainnet][request.toCurrencyCode]
-      }
+      const { safeFromCurrencyCode, safeToCurrencyCode } = safeCurrencyCodes(
+        CURRENCY_CODE_TRANSCRIPTION,
+        request
+      )
+
       const fixedRateQuoteResponse: FixedRateQuote = await call({
         jsonrpc: '2.0',
         id: 'one',
