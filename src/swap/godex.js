@@ -61,12 +61,12 @@ const INVALID_CURRENCY_CODES: InvalidCurrencyCodes = {
   from: {
     ETH: ['MATIC'],
     FTM: 'allCodes',
-    MATIC: 'allTokens'
+    MATIC: 'allCodes'
   },
   to: {
     ETH: ['MATIC'],
     FTM: 'allCodes',
-    MATIC: 'allTokens',
+    MATIC: 'allCodes',
     ZEC: ['ZEC']
   }
 }

@@ -40,6 +40,9 @@ const CURRENCY_CODE_TRANSCRIPTION = {
   },
   ZEC: {
     ZEC: 'zaddr'
+  },
+  MATIC: {
+    MATIC: 'polygon'
   }
 }
 const INVALID_CURRENCY_CODES: InvalidCurrencyCodes = {

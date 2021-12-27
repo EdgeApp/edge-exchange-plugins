@@ -111,7 +111,8 @@ const coinGeckoMap = {
   REN: 'republic-protocol',
   AMPL: 'ampleforth',
   HBAR: 'hedera-hashgraph',
-  OCEAN: 'ocean-protocol'
+  OCEAN: 'ocean-protocol',
+  MATIC: 'matic-network'
 }
 
 export function makeCoinGeckoPlugin(
