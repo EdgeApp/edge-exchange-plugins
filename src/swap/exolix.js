@@ -23,12 +23,12 @@ import {
 const INVALID_CURRENCY_CODES = {
   from: {
     ETH: ['MATIC'],
-    MATIC: 'allTokens',
+    MATIC: 'allCodes',
     FTM: 'allCodes'
   },
   to: {
     ETH: ['MATIC'],
-    MATIC: 'allTokens',
+    MATIC: 'allCodes',
     FTM: 'allCodes',
     ZEC: ['ZEC']
   }

@@ -51,6 +51,9 @@ const CURRENCY_CODE_TRANSCRIPTION = {
   },
   FTM: {
     FTM: 'FTMMAINNET'
+  },
+  MATIC: {
+    MATIC: 'maticmainnet'
   }
 }
 
