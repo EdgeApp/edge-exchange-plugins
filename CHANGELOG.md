@@ -1,5 +1,9 @@
 # edge-exchange-plugins
 
+# 0.12.2 (2021-12-27)
+
+- Prevent MATIC ERC20 trading
+
 # 0.12.1 (2021-12-21)
 
 - Move invalid code checking and currency code transcription into helper functions
