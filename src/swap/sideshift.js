@@ -66,6 +66,8 @@ const swapInfo: EdgeSwapInfo = {
 }
 const ORDER_STATUS_URL = 'https://sideshift.ai/orders/'
 
+const LOWER_CASE_CODES = true
+
 async function getAddress(
   wallet: EdgeCurrencyWallet,
   currencyCode: string
@@ -155,7 +157,8 @@ const createFetchSwapQuote = (api: SideshiftApi, affiliateId: string) =>
 
     const { safeFromCurrencyCode, safeToCurrencyCode } = safeCurrencyCodes(
       CURRENCY_CODE_TRANSCRIPTION,
-      request
+      request,
+      LOWER_CASE_CODES
     )
 
     const rate = asRate(
