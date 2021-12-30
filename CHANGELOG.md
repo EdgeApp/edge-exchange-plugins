@@ -1,5 +1,9 @@
 # edge-exchange-plugins
 
+# 0.12.3 (2021-12-29)
+
+- Sideshift: Use lowercase currency codes in API requests
+
 # 0.12.2 (2021-12-27)
 
 - Prevent MATIC ERC20 trading
