@@ -1,5 +1,9 @@
 # edge-exchange-plugins
 
+# 0.12.4 (2021-12-31)
+
+- Sideshift: Fix currency code transcription
+
 # 0.12.3 (2021-12-29)
 
 - Sideshift: Use lowercase currency codes in API requests
