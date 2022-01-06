@@ -112,6 +112,7 @@ const coinGeckoMap = {
   AMPL: 'ampleforth',
   HBAR: 'hedera-hashgraph',
   OCEAN: 'ocean-protocol',
+  AVAX: 'avalanche-2',
   MATIC: 'matic-network'
 }
 
