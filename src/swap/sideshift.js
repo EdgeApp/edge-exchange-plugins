@@ -48,11 +48,13 @@ const CURRENCY_CODE_TRANSCRIPTION = {
 const INVALID_CURRENCY_CODES: InvalidCurrencyCodes = {
   from: {
     ETH: ['FTM', 'MATIC'],
+    AVAX: 'allTokens',
     FTM: 'allCodes',
     MATIC: 'allTokens'
   },
   to: {
     ETH: ['FTM', 'MATIC'],
+    AVAX: 'allTokens',
     FTM: 'allCodes',
     MATIC: 'allTokens'
   }
