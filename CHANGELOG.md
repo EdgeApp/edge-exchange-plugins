@@ -1,5 +1,10 @@
 # edge-exchange-plugins
 
+# 0.12.5 (2022-01-06)
+
+- ChangeNow: Upgrade to v2 API
+- Coingecko: Add AVAX
+
 # 0.12.4 (2021-12-31)
 
 - Sideshift: Fix currency code transcription
