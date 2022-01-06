@@ -66,7 +66,7 @@ export function makeSwapPluginQuote(
   return out
 }
 
-const getCodes = (request: EdgeSwapRequest) => ({
+export const getCodes = (request: EdgeSwapRequest) => ({
   fromMainnetCode: request.fromWallet.currencyInfo.currencyCode,
   toMainnetCode: request.toWallet.currencyInfo.currencyCode,
   fromCurrencyCode: request.fromCurrencyCode,

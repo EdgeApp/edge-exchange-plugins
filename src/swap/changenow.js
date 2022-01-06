@@ -1,10 +1,10 @@
 // @flow
 
-import { lt, mul } from 'biggystring'
+import { gt, lt } from 'biggystring'
 import {
   type Cleaner,
-  asArray,
   asDate,
+  asMaybe,
   asNumber,
   asObject,
   asOptional,
@@ -19,6 +19,7 @@ import {
   type EdgeSwapQuote,
   type EdgeSwapRequest,
   type EdgeTransaction,
+  SwapAboveLimitError,
   SwapBelowLimitError,
   SwapCurrencyError
 } from 'edge-core-js/types'
@@ -27,8 +28,8 @@ import {
   type InvalidCurrencyCodes,
   checkInvalidCodes,
   ensureInFuture,
-  makeSwapPluginQuote,
-  safeCurrencyCodes
+  getCodes,
+  makeSwapPluginQuote
 } from '../swap-helpers.js'
 
 const pluginId = 'changenow'
@@ -39,26 +40,12 @@ const swapInfo: EdgeSwapInfo = {
 }
 
 const orderUri = 'https://changenow.io/exchange/txs/'
-const uri = 'https://changenow.io/api/v1/'
+const uri = 'https://api.changenow.io/v2/'
 
 const dontUseLegacy = {
   DGB: true
 }
 
-const CURRENCY_CODE_TRANSCRIPTION = {
-  ETH: {
-    USDT: 'USDTERC20'
-  },
-  FTM: {
-    FTM: 'FTMMAINNET'
-  },
-  MATIC: {
-    MATIC: 'maticmainnet'
-  }
-}
-
-// Invalid currency codes should *not* have transcribed codes
-// because currency codes with transcribed versions are NOT invalid
 const INVALID_CURRENCY_CODES: InvalidCurrencyCodes = {
   from: {
     ETH: ['MATIC'],
@@ -84,7 +71,7 @@ async function getAddress(
 export function makeChangeNowPlugin(
   opts: EdgeCorePluginOptions
 ): EdgeSwapPlugin {
-  const { initOptions, io, log } = opts
+  const { initOptions, io } = opts
   const { fetch } = io
 
   if (initOptions.apiKey == null) {
@@ -92,25 +79,9 @@ export function makeChangeNowPlugin(
   }
   const { apiKey } = initOptions
 
-  async function get(route: string) {
-    const response = await fetch(uri + route)
-    return response.json()
-  }
-
-  async function post(route: string, body: any) {
-    log('call fixed:', route, body)
-
-    const response = await fetch(uri + route, {
-      method: 'POST',
-      body: JSON.stringify(body),
-      headers: { 'Content-Type': 'application/json' }
-    })
-    if (!response.ok) {
-      throw new Error(`ChangeNow call returned error code ${response.status}`)
-    }
-    const out = await response.json()
-    log('fixed reply:', out)
-    return out
+  const headers = {
+    'Content-Type': 'application/json',
+    'x-changenow-api-key': apiKey
   }
 
   const out: EdgeSwapPlugin = {
@@ -131,263 +102,239 @@ export function makeChangeNowPlugin(
         getAddress(request.toWallet, request.toCurrencyCode)
       ])
 
-      // transcribe currencyCodes if necessary
-      const { safeFromCurrencyCode, safeToCurrencyCode } = safeCurrencyCodes(
-        CURRENCY_CODE_TRANSCRIPTION,
-        request
-      )
+      const {
+        fromCurrencyCode,
+        toCurrencyCode,
+        fromMainnetCode,
+        toMainnetCode
+      } = getCodes(request)
+      const currencyString = `fromCurrency=${fromCurrencyCode}&toCurrency=${toCurrencyCode}&fromNetwork=${fromMainnetCode}&toNetwork=${toMainnetCode}`
 
-      // get the markets
-      const availablePairs = await get(`currencies-to/${safeFromCurrencyCode}`)
-      const fixedMarket = asFixedMarketReply(
-        await get(
-          `market-info/fixed-rate/${apiKey}` +
-            (promoCode != null ? `?promo=${promoCode}` : '')
+      const { nativeAmount, quoteFor } = request
+
+      async function createOrder(
+        flow: 'fixed-rate' | 'standard',
+        isSelling: boolean,
+        largeDenomAmount: string
+      ): Promise<ChangeNowResponse> {
+        const type = isSelling ? 'direct' : 'reverse'
+
+        // Get rateId and Date
+        const exchangeAmountResponse = await fetch(
+          uri +
+            `exchange/estimated-amount?flow=${flow}&useRateId=${String(
+              flow === 'fixed-rate'
+            )}&${
+              isSelling ? 'fromAmount' : 'toAmount'
+            }=${largeDenomAmount}&type=${type}&${currencyString}`,
+          { headers }
         )
-      )
+        const exchangeAmountResponseJson = await exchangeAmountResponse.json()
 
-      const quoteAmount =
-        request.quoteFor === 'from'
-          ? await request.fromWallet.nativeToDenomination(
-              request.nativeAmount,
-              request.fromCurrencyCode
-            )
-          : await request.toWallet.nativeToDenomination(
-              request.nativeAmount,
-              request.toCurrencyCode
-            )
+        const { rateId, validUntil } = asExchange(exchangeAmountResponseJson)
 
-      // Swap the currencies if we need a reverse quote:
-      const quoteParams =
-        request.quoteFor === 'from'
-          ? {
-              from: safeFromCurrencyCode.toLowerCase(),
-              to: safeToCurrencyCode.toLowerCase(),
-              amount: quoteAmount
-            }
-          : {
-              from: safeToCurrencyCode.toLowerCase(),
-              to: safeFromCurrencyCode.toLowerCase(),
-              amount: quoteAmount
-            }
-
-      const pairsToUse = []
-      let fromAmount, fromNativeAmount
-      let pairItem
-      let quoteReplyKeep = { estimatedAmount: '0' }
-      for (let i = 0; i < availablePairs.length; i++) {
-        const obj = availablePairs[i]
-        if (safeToCurrencyCode.toLowerCase() === obj.ticker) {
-          pairsToUse.push(obj)
-          if (obj.supportsFixedRate) {
-            let meetsFixedRateRange = true
-            for (let j = 0; j < fixedMarket.length; j++) {
-              const item = fixedMarket[j]
-              if (
-                item.from === quoteParams.from &&
-                item.to === quoteParams.to
-              ) {
-                pairItem = item
-                // lets get the quoteObject here
-                const quoteReply = await get(
-                  `exchange-amount/fixed-rate/${quoteParams.amount}/${quoteParams.from}_${quoteParams.to}?api_key=${apiKey}` +
-                    (promoCode != null ? `&promo=${promoCode}` : '')
-                )
-                if (quoteReply.error === 'out_of_range') {
-                  meetsFixedRateRange = false
-                  break
-                }
-                if (quoteReply.error) {
-                  throw new SwapCurrencyError(
-                    swapInfo,
-                    request.fromCurrencyCode,
-                    request.toCurrencyCode
-                  )
-                }
-                quoteReplyKeep = quoteReply
-              }
-            }
-            if (pairItem && meetsFixedRateRange) {
-              if (request.quoteFor === 'from') {
-                fromAmount = quoteAmount
-                fromNativeAmount = request.nativeAmount
-              } else {
-                fromAmount = mul(
-                  quoteReplyKeep.estimatedAmount.toString(),
-                  '1.02'
-                )
-                fromNativeAmount = await request.fromWallet.denominationToNative(
-                  fromAmount,
-                  request.fromCurrencyCode
-                )
-              }
-              const sendReply = asCreateOrderReply(
-                await post(`transactions/fixed-rate/${apiKey}`, {
-                  amount: fromAmount,
-                  from: safeFromCurrencyCode,
-                  to: safeToCurrencyCode,
-                  address: toAddress,
-                  extraId: null, // TODO: Do we need this for Monero?
-                  refundAddress: fromAddress,
-                  payload: { promoCode }
-                })
-              )
-              const toAmount = await request.toWallet.denominationToNative(
-                sendReply.amount.toString(),
-                request.toCurrencyCode
-              )
-              const spendInfo: EdgeSpendInfo = {
-                currencyCode: request.fromCurrencyCode,
-                spendTargets: [
-                  {
-                    nativeAmount: fromNativeAmount,
-                    publicAddress: sendReply.payinAddress,
-                    uniqueIdentifier: sendReply.payinExtraId
-                  }
-                ],
-                networkFeeOption:
-                  request.fromCurrencyCode.toUpperCase() === 'BTC'
-                    ? 'high'
-                    : 'standard',
-                swapData: {
-                  orderId: sendReply.id,
-                  orderUri: orderUri + sendReply.id,
-                  isEstimate: false,
-                  payoutAddress: toAddress,
-                  payoutCurrencyCode: request.toCurrencyCode,
-                  payoutNativeAmount: toAmount,
-                  payoutWalletId: request.toWallet.id,
-                  plugin: { ...swapInfo },
-                  refundAddress: fromAddress
-                }
-              }
-              log('spendInfo', spendInfo)
-              const tx: EdgeTransaction = await request.fromWallet.makeSpend(
-                spendInfo
-              )
-              return makeSwapPluginQuote(
-                request,
-                fromNativeAmount,
-                toAmount,
-                tx,
-                toAddress,
-                pluginId,
-                false,
-                ensureInFuture(sendReply.validUntil),
-                sendReply.id
-              )
-            }
-          }
-        }
-      }
-      if (pairsToUse.length === 0) {
-        throw new SwapCurrencyError(
-          swapInfo,
-          request.fromCurrencyCode,
-          request.toCurrencyCode
-        )
-      }
-
-      const min = await get(`min-amount/${quoteParams.from}_${quoteParams.to}`)
-      if (min.minAmount == null) {
-        throw new SwapCurrencyError(
-          swapInfo,
-          request.fromCurrencyCode,
-          request.toCurrencyCode
-        )
-      }
-      const [nativeMin] = await Promise.all([
-        request.fromWallet.denominationToNative(
-          min.minAmount.toString(),
-          request.fromCurrencyCode
-        )
-      ])
-
-      const quoteReply = await get(
-        `exchange-amount/${quoteParams.amount}/${quoteParams.from}_${quoteParams.to}`
-      )
-      if (quoteReply.error) {
-        log('reply error ', quoteReply.error)
-        if (quoteReply.error === 'deposit_too_small') {
-          throw new SwapBelowLimitError(swapInfo, nativeMin)
-        }
-      }
-      log('got reply  ', quoteReply)
-      if (request.quoteFor === 'from') {
-        fromAmount = quoteAmount
-        fromNativeAmount = request.nativeAmount
-      } else {
-        fromAmount = mul(quoteReply.estimatedAmount.toString(), '1.02')
-        fromNativeAmount = await request.fromWallet.denominationToNative(
-          fromAmount,
-          request.fromCurrencyCode
-        )
-      }
-      log('estQuery quoteReply  ', quoteReply)
-
-      if (lt(fromNativeAmount, nativeMin)) {
-        throw new SwapBelowLimitError(swapInfo, nativeMin)
-      }
-
-      const sendReply = asCreateOrderReply(
-        await post(`transactions/${apiKey}`, {
-          amount: fromAmount,
-          from: safeFromCurrencyCode.toLowerCase(),
-          to: safeToCurrencyCode.toLowerCase(),
+        // Create order
+        const orderBody = {
+          fromCurrency: fromCurrencyCode,
+          toCurrency: toCurrencyCode,
+          fromNetwork: fromMainnetCode,
+          toNetwork: toMainnetCode,
+          fromAmount: isSelling ? largeDenomAmount : '',
+          toAmount: isSelling ? '' : largeDenomAmount,
+          type,
           address: toAddress,
-          extraId: null, // TODO: Do we need this for Monero?
           refundAddress: fromAddress,
+          flow,
+          rateId,
           payload: { promoCode }
-        })
-      )
-      const toAmount = await request.toWallet.denominationToNative(
-        sendReply.amount.toString(),
-        request.toCurrencyCode
-      )
-
-      // Make the transaction:
-      const spendInfo: EdgeSpendInfo = {
-        currencyCode: request.fromCurrencyCode,
-        spendTargets: [
-          {
-            nativeAmount: fromNativeAmount,
-            publicAddress: sendReply.payinAddress,
-            uniqueIdentifier: sendReply.payinExtraId
-          }
-        ],
-        networkFeeOption:
-          request.fromCurrencyCode.toUpperCase() === 'BTC'
-            ? 'high'
-            : 'standard',
-        swapData: {
-          orderId: sendReply.id,
-          orderUri: orderUri + sendReply.id,
-          isEstimate: true,
-          payoutAddress: toAddress,
-          payoutCurrencyCode: request.toCurrencyCode,
-          payoutNativeAmount: toAmount,
-          payoutWalletId: request.toWallet.id,
-          plugin: { ...swapInfo },
-          refundAddress: fromAddress
         }
-      }
-      log('spendInfo', spendInfo)
-      const tx: EdgeTransaction = await request.fromWallet.makeSpend(spendInfo)
 
-      return makeSwapPluginQuote(
-        request,
-        fromNativeAmount,
-        toAmount,
-        tx,
-        toAddress,
-        pluginId,
-        true,
-        new Date(Date.now() + 1000 * 60 * 20),
-        sendReply.id
-      )
+        const orderResponse = await fetch(uri + 'exchange', {
+          method: 'POST',
+          body: JSON.stringify(orderBody),
+          headers
+        })
+        if (!orderResponse.ok) {
+          throw new Error(
+            `ChangeNow call returned error code ${orderResponse.status}`
+          )
+        }
+        const orderResponseJson = await orderResponse.json()
+
+        return { ...asOrder(orderResponseJson), validUntil }
+      }
+
+      async function swapSell(
+        flow: 'fixed-rate' | 'standard'
+      ): Promise<EdgeSwapQuote> {
+        const largeDenomAmount = await request.fromWallet.nativeToDenomination(
+          nativeAmount,
+          fromCurrencyCode
+        )
+
+        // Get min and max
+        const marketRangeResponse = await fetch(
+          uri + `exchange/range?flow=${flow}&${currencyString}`,
+          { headers }
+        )
+        const marketRangeResponseJson = await marketRangeResponse.json()
+
+        if (marketRangeResponseJson.error != null)
+          throw new SwapCurrencyError(
+            swapInfo,
+            fromCurrencyCode,
+            toCurrencyCode
+          )
+
+        const { minAmount, maxAmount } = asMarketRange(marketRangeResponseJson)
+
+        if (lt(largeDenomAmount, minAmount.toString())) {
+          const minNativeAmount = await request.fromWallet.denominationToNative(
+            minAmount.toString(),
+            fromCurrencyCode
+          )
+          throw new SwapBelowLimitError(swapInfo, minNativeAmount)
+        }
+
+        if (maxAmount != null && gt(largeDenomAmount, maxAmount.toString())) {
+          const maxNativeAmount = await request.fromWallet.denominationToNative(
+            maxAmount.toString(),
+            fromCurrencyCode
+          )
+          throw new SwapAboveLimitError(swapInfo, maxNativeAmount)
+        }
+
+        const {
+          toAmount,
+          payinAddress,
+          payinExtraId,
+          id,
+          validUntil
+        } = await createOrder(flow, true, largeDenomAmount)
+
+        const toNativeAmount = await request.toWallet.denominationToNative(
+          toAmount.toString(),
+          toCurrencyCode
+        )
+
+        const spendInfo: EdgeSpendInfo = {
+          currencyCode: fromCurrencyCode,
+          spendTargets: [
+            {
+              nativeAmount,
+              publicAddress: payinAddress,
+              uniqueIdentifier: payinExtraId
+            }
+          ],
+          networkFeeOption: fromCurrencyCode === 'BTC' ? 'high' : 'standard',
+          swapData: {
+            orderId: id,
+            orderUri: orderUri + id,
+            isEstimate: flow === 'standard',
+            payoutAddress: toAddress,
+            payoutCurrencyCode: toCurrencyCode,
+            payoutNativeAmount: toNativeAmount,
+            payoutWalletId: request.toWallet.id,
+            plugin: { ...swapInfo },
+            refundAddress: fromAddress
+          }
+        }
+        const tx: EdgeTransaction = await request.fromWallet.makeSpend(
+          spendInfo
+        )
+        return makeSwapPluginQuote(
+          request,
+          nativeAmount,
+          toNativeAmount,
+          tx,
+          toAddress,
+          pluginId,
+          flow === 'standard',
+          validUntil != null
+            ? ensureInFuture(validUntil)
+            : new Date(Date.now() + 1000 * 60 * 20),
+          id
+        )
+      }
+
+      async function swapBuy(flow: 'fixed-rate'): Promise<EdgeSwapQuote> {
+        // Skip min/max check when requesting a purchase amount
+        const largeDenomAmount = await request.toWallet.nativeToDenomination(
+          nativeAmount,
+          toCurrencyCode
+        )
+
+        const {
+          fromAmount,
+          payinAddress,
+          payinExtraId,
+          id,
+          validUntil
+        } = await createOrder(flow, false, largeDenomAmount)
+
+        const fromNativeAmount = await request.fromWallet.denominationToNative(
+          fromAmount.toString(),
+          fromCurrencyCode
+        )
+
+        const spendInfo: EdgeSpendInfo = {
+          currencyCode: fromCurrencyCode,
+          spendTargets: [
+            {
+              nativeAmount: fromNativeAmount,
+              publicAddress: payinAddress,
+              uniqueIdentifier: payinExtraId
+            }
+          ],
+          networkFeeOption: fromCurrencyCode === 'BTC' ? 'high' : 'standard',
+          swapData: {
+            orderId: id,
+            orderUri: orderUri + id,
+            isEstimate: false,
+            payoutAddress: toAddress,
+            payoutCurrencyCode: toCurrencyCode,
+            payoutNativeAmount: nativeAmount,
+            payoutWalletId: request.toWallet.id,
+            plugin: { ...swapInfo },
+            refundAddress: fromAddress
+          }
+        }
+
+        const tx: EdgeTransaction = await request.fromWallet.makeSpend(
+          spendInfo
+        )
+        return makeSwapPluginQuote(
+          request,
+          fromNativeAmount,
+          nativeAmount,
+          tx,
+          toAddress,
+          pluginId,
+          false,
+          validUntil != null
+            ? ensureInFuture(validUntil)
+            : new Date(Date.now() + 1000 * 60 * 20),
+          id
+        )
+      }
+
+      // Try them all
+      if (quoteFor === 'from') {
+        try {
+          return swapSell('fixed-rate')
+        } catch (e) {
+          try {
+            return swapSell('standard')
+          } catch (e2) {
+            // Should throw the fixed-rate error
+            throw e
+          }
+        }
+      } else {
+        return swapBuy('fixed-rate')
+      }
     }
   }
-
   return out
 }
 
@@ -403,27 +350,22 @@ export function asOptionalBlank<T>(
   }
 }
 
-const asFixedMarketReply = asArray(
-  asObject({
-    from: asString,
-    to: asString,
-    min: asNumber,
-    max: asNumber,
-    rate: asNumber,
-    minerFee: asNumber
-  })
-)
+const asMarketRange = asObject({
+  maxAmount: asMaybe(asNumber),
+  minAmount: asNumber
+})
 
-const asCreateOrderReply = asObject({
-  amount: asNumber,
-  fromCurrency: asString,
-  toCurrency: asString,
-  id: asString,
-  payinAddress: asString,
-  payinExtraId: asOptionalBlank(asString),
-  payoutAddress: asOptionalBlank(asString),
-  payoutExtraId: asOptionalBlank(asString),
-  refundAddress: asOptionalBlank(asString),
-  refundExtraId: asOptionalBlank(asString),
+const asExchange = asObject({
+  rateId: asOptional(asString),
   validUntil: asOptional(asDate)
 })
+
+const asOrder = asObject({
+  fromAmount: asNumber,
+  toAmount: asNumber,
+  payinAddress: asString,
+  payinExtraId: asOptionalBlank(asString),
+  id: asString
+})
+
+type ChangeNowResponse = $Call<typeof asOrder> & { validUntil?: Date }
