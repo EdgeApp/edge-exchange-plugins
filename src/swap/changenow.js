@@ -47,13 +47,8 @@ const dontUseLegacy = {
 }
 
 const INVALID_CURRENCY_CODES: InvalidCurrencyCodes = {
-  from: {
-    ETH: ['MATIC'],
-    MATIC: 'allTokens'
-  },
+  from: {},
   to: {
-    ETH: ['MATIC'],
-    MATIC: 'allTokens',
     ZEC: ['ZEC']
   }
 }
