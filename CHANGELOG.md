@@ -1,5 +1,10 @@
 # edge-exchange-plugins
 
+# 0.12.6 (2022-01-10)
+
+- ChangeNow: Restore MATIC trading
+- Prevent AVAX token trading on partners without mainnet identification
+
 # 0.12.5 (2022-01-06)
 
 - ChangeNow: Upgrade to v2 API
