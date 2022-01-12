@@ -61,13 +61,13 @@ const INVALID_CURRENCY_CODES: InvalidCurrencyCodes = {
   from: {
     ETH: ['MATIC'],
     AVAX: 'allTokens',
-    FTM: 'allCodes',
+    FTM: 'allTokens',
     MATIC: 'allCodes'
   },
   to: {
     ETH: ['MATIC'],
     AVAX: 'allTokens',
-    FTM: 'allCodes',
+    FTM: 'allTokens',
     MATIC: 'allCodes',
     ZEC: ['ZEC']
   }
@@ -75,7 +75,8 @@ const INVALID_CURRENCY_CODES: InvalidCurrencyCodes = {
 
 // Network names that don't match parent network currency code
 const networks = {
-  RBTC: 'RSK'
+  RBTC: 'RSK',
+  AVAX: 'AVAXC'
 }
 
 async function getAddress(wallet: EdgeCurrencyWallet, currencyCode: string) {
