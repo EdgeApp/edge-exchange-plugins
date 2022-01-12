@@ -1,5 +1,10 @@
 # edge-exchange-plugins
 
+# 0.12.7 (2022-01-11)
+
+- Godex: Restrict AVAX trading to the AVAXC network
+- Godex: Re-enable FTM trading
+
 # 0.12.6 (2022-01-10)
 
 - ChangeNow: Restore MATIC trading
