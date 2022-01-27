@@ -113,7 +113,20 @@ const coinGeckoMap = {
   HBAR: 'hedera-hashgraph',
   OCEAN: 'ocean-protocol',
   AVAX: 'avalanche-2',
-  MATIC: 'matic-network'
+  MATIC: 'matic-network',
+  PNG: 'pangolin',
+  PEFI: 'penguin-finance',
+  XAVA: 'avalaunch',
+  BIFI: 'beefy-finance',
+  YAK: 'yield-yak',
+  JOE: 'joe',
+  TIME: 'wonderland',
+  SPELL: 'spell-token',
+  FXS: 'frax-share',
+  MIM: 'magic-internet-money',
+  BUSD: 'binance-usd',
+  UNI: 'uniswap',
+  FTM: 'fantom'
 }
 
 export function makeCoinGeckoPlugin(
