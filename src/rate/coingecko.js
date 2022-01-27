@@ -63,7 +63,7 @@ const coinGeckoMap = {
   IND: 'indorse',
   HUR: 'hurify',
   BAT: 'basic-attention-token',
-  BNT: 'bounty0x',
+  BNT: 'bancor',
   KNC: 'kyber-network',
   POLY: 'polymath-network',
   USDC: 'usd-coin',
