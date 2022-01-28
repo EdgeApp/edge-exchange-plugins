@@ -1,5 +1,11 @@
 # edge-exchange-plugins
 
+# 0.12.8 (2022-01-28)
+
+- Coingecko: Add new tokens
+- Coingecko: Fix BNT unique ID
+- Add constant rates for AVAX wrapped tokens
+
 # 0.12.7 (2022-01-11)
 
 - Godex: Restrict AVAX trading to the AVAXC network
