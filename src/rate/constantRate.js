@@ -37,6 +37,7 @@ export function makeConstantRatePlugin(
           toCurrency: 'BTC',
           rate: 1
         },
+        // AAVE tokens
         {
           fromCurrency: 'AYFI',
           toCurrency: 'YFI',
@@ -117,6 +118,7 @@ export function makeConstantRatePlugin(
           toCurrency: 'UNI',
           rate: 1
         },
+        // Deprecated tokens
         {
           fromCurrency: 'ANT',
           toCurrency: 'ANTV1',
@@ -127,9 +129,56 @@ export function makeConstantRatePlugin(
           toCurrency: 'REP',
           rate: 1
         },
+        // FTM Frapped tokens
         {
           fromCurrency: 'FUSDT',
           toCurrency: 'USDT',
+          rate: 1
+        },
+        {
+          fromCurrency: 'FBTC',
+          toCurrency: 'BTC',
+          rate: 1
+        },
+        {
+          fromCurrency: 'FETH',
+          toCurrency: 'ETH',
+          rate: 1
+        },
+        // AVAX wrapped tokens:
+        {
+          fromCurrency: 'BUSD.e',
+          toCurrency: 'BUSD',
+          rate: 1
+        },
+        {
+          fromCurrency: 'DAI.e',
+          toCurrency: 'DAI',
+          rate: 1
+        },
+        {
+          fromCurrency: 'LINK.e',
+          toCurrency: 'LINK',
+          rate: 1
+        },
+        {
+          fromCurrency: 'UNI.e',
+          toCurrency: 'UNI',
+          rate: 1
+        },
+        {
+          fromCurrency: 'USDC.e',
+          toCurrency: 'USDC',
+          rate: 1
+        },
+        {
+          fromCurrency: 'USDT.e',
+          toCurrency: 'USDT',
+          rate: 1
+        },
+        {
+          fromCurrency: 'WBTC.e',
+          toCurrency: 'WBTC',
           rate: 1
         }
       ]
