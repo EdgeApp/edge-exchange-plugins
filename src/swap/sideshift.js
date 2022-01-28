@@ -43,6 +43,9 @@ const CURRENCY_CODE_TRANSCRIPTION = {
   },
   MATIC: {
     MATIC: 'polygon'
+  },
+  AVAX: {
+    AVAX: 'avaxc'
   }
 }
 const INVALID_CURRENCY_CODES: InvalidCurrencyCodes = {
