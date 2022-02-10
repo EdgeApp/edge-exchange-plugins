@@ -13,6 +13,10 @@ const asNomicsResponse = asArray(
   })
 )
 
+const UNIQUE_ID_MAP = {
+  BOO: 'BOO4'
+}
+
 export function makeNomicsPlugin(opts: EdgeCorePluginOptions): EdgeRatePlugin {
   const { io, initOptions, log } = opts
   const { fetchCors = io.fetch } = io
@@ -36,7 +40,9 @@ export function makeNomicsPlugin(opts: EdgeCorePluginOptions): EdgeRatePlugin {
       for (let i = 0; i < pairsHint.length; i++) {
         if (pairsHint[i].fromCurrency.indexOf('iso:') >= 0) continue
         if (filteredPairs.some(cc => cc === pairsHint[i].fromCurrency)) continue
-        filteredPairs.push(pairsHint[i].fromCurrency)
+        filteredPairs.push(
+          UNIQUE_ID_MAP[pairsHint[i].fromCurrency] ?? pairsHint[i].fromCurrency
+        )
         if (filteredPairs.length === 100 || i === pairsHint.length - 1) {
           queryStrings.push(filteredPairs.join(','))
           filteredPairs = []

@@ -126,6 +126,7 @@ const coinGeckoMap = {
   MIM: 'magic-internet-money',
   BUSD: 'binance-usd',
   UNI: 'uniswap',
+  BOO: 'spookyswap',
   FTM: 'fantom'
 }
 
