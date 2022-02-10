@@ -1,5 +1,10 @@
 # edge-exchange-plugins
 
+# 0.12.9 (2022-02-10)
+
+- Coingecko: Add BOO unique ID
+- Nomics: Add BOO unique ID
+
 # 0.12.8 (2022-01-28)
 
 - Coingecko: Add new tokens
