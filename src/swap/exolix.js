@@ -25,12 +25,14 @@ const INVALID_CURRENCY_CODES = {
     ETH: ['MATIC'],
     AVAX: 'allTokens',
     MATIC: 'allCodes',
+    CELO: 'allTokens',
     FTM: 'allCodes'
   },
   to: {
     ETH: ['MATIC'],
     AVAX: 'allTokens',
     MATIC: 'allCodes',
+    CELO: 'allTokens',
     FTM: 'allCodes',
     ZEC: ['ZEC']
   }
