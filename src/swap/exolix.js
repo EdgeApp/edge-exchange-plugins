@@ -16,34 +16,14 @@ import {
 
 import {
   checkInvalidCodes,
-  makeSwapPluginQuote,
-  safeCurrencyCodes
+  getCodes,
+  makeSwapPluginQuote
 } from '../swap-helpers.js'
 
 const INVALID_CURRENCY_CODES = {
-  from: {
-    ETH: ['MATIC'],
-    AVAX: 'allTokens',
-    MATIC: 'allCodes',
-    CELO: 'allTokens',
-    FTM: 'allCodes'
-  },
+  from: {},
   to: {
-    ETH: ['MATIC'],
-    AVAX: 'allTokens',
-    MATIC: 'allCodes',
-    CELO: 'allTokens',
-    FTM: 'allCodes',
     ZEC: ['ZEC']
-  }
-}
-
-// Invalid currency codes should *not* have transcribed codes
-// because currency codes with transcribed versions are NOT invalid
-const CURRENCY_CODE_TRANSCRIPTION = {
-  // Edge currencyCode: exchangeCurrencyCode
-  ETH: {
-    USDT: 'USDT20'
   }
 }
 
@@ -146,10 +126,17 @@ export function makeExolixPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
               request.toCurrencyCode
             )
 
-      const { safeFromCurrencyCode, safeToCurrencyCode } = safeCurrencyCodes(
-        CURRENCY_CODE_TRANSCRIPTION,
-        request
-      )
+      const {
+        fromCurrencyCode,
+        toCurrencyCode,
+        fromMainnetCode,
+        toMainnetCode
+      } = getCodes(request)
+
+      // The Exolix documentation doesn't detail this mainnetCode:currencyCode functionality
+      // but it's been verified by testing
+      const safeFromCurrencyCode = `${fromMainnetCode}:${fromCurrencyCode}`
+      const safeToCurrencyCode = `${toMainnetCode}:${toCurrencyCode}`
 
       // Swap the currencies if we need a reverse quote:
       const quoteParams =
