@@ -1,5 +1,11 @@
 # edge-exchange-plugins
 
+# 0.12.10 (2022-02-16)
+
+- Exolix: Update plugin to use mainchain:tokencode values in requests
+- Coingecko: Add Celo and Aave unique IDs
+- Godex: Disable DGB selling
+
 # 0.12.9 (2022-02-10)
 
 - Coingecko: Add BOO unique ID
