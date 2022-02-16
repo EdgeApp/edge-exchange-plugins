@@ -63,7 +63,8 @@ const INVALID_CURRENCY_CODES: InvalidCurrencyCodes = {
     AVAX: 'allTokens',
     CELO: 'allTokens',
     FTM: 'allTokens',
-    MATIC: 'allCodes'
+    MATIC: 'allCodes',
+    DGB: 'allCodes'
   },
   to: {
     ETH: ['MATIC'],
