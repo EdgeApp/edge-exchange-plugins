@@ -27,6 +27,7 @@ import {
   type InvalidCurrencyCodes,
   checkInvalidCodes,
   ensureInFuture,
+  handleMax,
   makeSwapPluginQuote,
   safeCurrencyCodes
 } from '../swap-helpers.js'
@@ -153,6 +154,7 @@ const createFetchSwapQuote = (api: SideshiftApi, affiliateId: string) =>
     request: EdgeSwapRequest
   ): Promise<EdgeSwapQuote> {
     checkInvalidCodes(INVALID_CURRENCY_CODES, request, swapInfo)
+    request = handleMax(request)
 
     const [depositAddress, settleAddress] = await Promise.all([
       getAddress(request.fromWallet, request.fromCurrencyCode),

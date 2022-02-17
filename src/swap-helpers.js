@@ -161,3 +161,19 @@ export function safeCurrencyCodes(
 
   return out
 }
+
+/**
+ * Turn a max quote into a "from" quote.
+ */
+export function handleMax(request: EdgeSwapRequest): EdgeSwapRequest {
+  if (request.quoteFor !== 'max') return request
+
+  const maxAmount = request.fromWallet.getMaxSpendable({
+    /* ... */
+  })
+  return {
+    ...request,
+    nativeAmount: maxAmount,
+    quoteFor: 'from'
+  }
+}
