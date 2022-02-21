@@ -46,7 +46,7 @@ const INVALID_CURRENCY_CODES: InvalidCurrencyCodes = {
 // Invalid currency codes should *not* have transcribed codes
 // because currency codes with transcribed versions are NOT invalid
 const CURRENCY_CODE_TRANSCRIPTION = {
-  ETH: {
+  ethereum: {
     USDT: 'USDT20'
   }
 }

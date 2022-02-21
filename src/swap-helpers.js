@@ -147,24 +147,20 @@ export function safeCurrencyCodes(
   safeFromCurrencyCode: string,
   safeToCurrencyCode: string
 } {
-  const {
-    fromMainnetCode,
-    toMainnetCode,
-    fromCurrencyCode,
-    toCurrencyCode
-  } = getCodes(request)
+  const { fromPluginId, toPluginId } = getPluginIds(request)
+  const { fromCurrencyCode, toCurrencyCode } = getCodes(request)
 
   const out = {
     safeFromCurrencyCode: fromCurrencyCode,
     safeToCurrencyCode: toCurrencyCode
   }
-  if (transcriptionMap[fromMainnetCode]?.[request.fromCurrencyCode]) {
+  if (transcriptionMap[fromPluginId]?.[request.fromCurrencyCode]) {
     out.safeFromCurrencyCode =
-      transcriptionMap[fromMainnetCode][request.fromCurrencyCode]
+      transcriptionMap[fromPluginId][request.fromCurrencyCode]
   }
-  if (transcriptionMap[toMainnetCode]?.[request.toCurrencyCode]) {
+  if (transcriptionMap[toPluginId]?.[request.toCurrencyCode]) {
     out.safeToCurrencyCode =
-      transcriptionMap[toMainnetCode][request.toCurrencyCode]
+      transcriptionMap[toPluginId][request.toCurrencyCode]
   }
 
   if (toLowerCase)

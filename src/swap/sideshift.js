@@ -35,13 +35,13 @@ import {
 // because currency codes with transcribed versions are NOT invalid
 const CURRENCY_CODE_TRANSCRIPTION = {
   // Edge currencyCode: exchangeCurrencyCode
-  ETH: {
+  ethereum: {
     USDT: 'usdtErc20'
   },
-  ZEC: {
+  zcash: {
     ZEC: 'zaddr'
   },
-  MATIC: {
+  polygon: {
     MATIC: 'polygon'
   }
 }
