@@ -23,7 +23,7 @@ import {
 const INVALID_CURRENCY_CODES = {
   from: {},
   to: {
-    ZEC: ['ZEC']
+    zcash: ['ZEC']
   }
 }
 

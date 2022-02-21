@@ -59,20 +59,20 @@ const dontUseLegacy = {
 
 const INVALID_CURRENCY_CODES: InvalidCurrencyCodes = {
   from: {
-    ETH: ['MATIC'],
-    AVAX: 'allTokens',
-    CELO: 'allTokens',
-    FTM: 'allTokens',
-    MATIC: 'allCodes',
-    DGB: 'allCodes'
+    ethereum: ['MATIC'],
+    avalanche: 'allTokens',
+    celo: 'allTokens',
+    fantom: 'allTokens',
+    polygon: 'allCodes',
+    digibyte: 'allCodes'
   },
   to: {
-    ETH: ['MATIC'],
-    AVAX: 'allTokens',
-    CELO: 'allTokens',
-    FTM: 'allTokens',
-    MATIC: 'allCodes',
-    ZEC: ['ZEC']
+    ethereum: ['MATIC'],
+    avalanche: 'allTokens',
+    celo: 'allTokens',
+    fantom: 'allTokens',
+    polygon: 'allCodes',
+    zcash: ['ZEC']
   }
 }
 

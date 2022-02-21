@@ -49,7 +49,7 @@ const dontUseLegacy = {
 const INVALID_CURRENCY_CODES: InvalidCurrencyCodes = {
   from: {},
   to: {
-    ZEC: ['ZEC']
+    zcash: ['ZEC']
   }
 }
 

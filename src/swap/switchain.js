@@ -72,19 +72,19 @@ type SwitchainOrderCreationBody = {
 
 const INVALID_CURRENCY_CODES: InvalidCurrencyCodes = {
   from: {
-    ETH: ['MATIC'],
-    AVAX: 'allTokens',
-    CELO: 'allTokens',
-    FTM: 'allCodes',
-    MATIC: 'allCodes'
+    ethereum: ['MATIC'],
+    avalanche: 'allTokens',
+    celo: 'allTokens',
+    fantom: 'allCodes',
+    polygon: 'allCodes'
   },
   to: {
-    ETH: ['MATIC'],
-    AVAX: 'allTokens',
-    CELO: 'allTokens',
-    FTM: 'allCodes',
-    MATIC: 'allCodes',
-    ZEC: ['ZEC']
+    ethereum: ['MATIC'],
+    avalanche: 'allTokens',
+    celo: 'allTokens',
+    fantom: 'allCodes',
+    polygon: 'allCodes',
+    zcash: ['ZEC']
   }
 }
 

@@ -27,19 +27,19 @@ import {
 
 const INVALID_CURRENCY_CODES: InvalidCurrencyCodes = {
   from: {
-    ETH: ['FTM', 'MATIC'],
-    AVAX: 'allTokens',
-    MATIC: 'allCodes',
-    CELO: 'allTokens',
-    FTM: 'allCodes'
+    ethereum: ['FTM', 'MATIC'],
+    avalanche: 'allTokens',
+    polygon: 'allCodes',
+    celo: 'allTokens',
+    fantom: 'allCodes'
   },
   to: {
-    ETH: ['FTM', 'MATIC'],
-    AVAX: 'allTokens',
-    MATIC: 'allCodes',
-    CELO: 'allTokens',
-    FTM: 'allCodes',
-    ZEC: ['ZEC']
+    ethereum: ['FTM', 'MATIC'],
+    avalanche: 'allTokens',
+    polygon: 'allCodes',
+    celo: 'allTokens',
+    fantom: 'allCodes',
+    zcash: ['ZEC']
   }
 }
 

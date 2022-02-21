@@ -47,18 +47,18 @@ const CURRENCY_CODE_TRANSCRIPTION = {
 }
 const INVALID_CURRENCY_CODES: InvalidCurrencyCodes = {
   from: {
-    ETH: ['FTM', 'MATIC'],
-    AVAX: 'allTokens',
-    CELO: 'allTokens',
-    FTM: 'allCodes',
-    MATIC: 'allTokens'
+    ethereum: ['FTM', 'MATIC'],
+    avalanche: 'allTokens',
+    celo: 'allTokens',
+    fantom: 'allCodes',
+    polygon: 'allTokens'
   },
   to: {
-    ETH: ['FTM', 'MATIC'],
-    AVAX: 'allTokens',
-    CELO: 'allTokens',
-    FTM: 'allCodes',
-    MATIC: 'allTokens'
+    ethereum: ['FTM', 'MATIC'],
+    avalanche: 'allTokens',
+    celo: 'allTokens',
+    fantom: 'allCodes',
+    polygon: 'allTokens'
   }
 }
 const SIDESHIFT_BASE_URL = 'https://sideshift.ai/api/v1'

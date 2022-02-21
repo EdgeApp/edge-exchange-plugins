@@ -73,6 +73,13 @@ export const getCodes = (request: EdgeSwapRequest) => ({
   toCurrencyCode: request.toCurrencyCode
 })
 
+const getPluginIds = (
+  request: EdgeSwapRequest
+): { fromPluginId: string, toPluginId: string } => ({
+  fromPluginId: request.fromWallet.currencyInfo.pluginId,
+  toPluginId: request.toWallet.currencyInfo.pluginId
+})
+
 export type InvalidCurrencyCodes = {
   from: { [code: string]: 'allCodes' | 'allTokens' | string[] },
   to: { [code: string]: 'allCodes' | 'allTokens' | string[] }
@@ -86,6 +93,7 @@ export function checkInvalidCodes(
   request: EdgeSwapRequest,
   swapInfo: EdgeSwapInfo
 ): void {
+  const { fromPluginId, toPluginId } = getPluginIds(request)
   const {
     fromMainnetCode,
     toMainnetCode,
@@ -93,8 +101,13 @@ export function checkInvalidCodes(
     toCurrencyCode
   } = getCodes(request)
 
-  function check(direction: string, main: string, token: string): boolean {
-    switch (invalidCodes[direction][main]) {
+  function check(
+    direction: string,
+    pluginId: string,
+    main: string,
+    token: string
+  ): boolean {
+    switch (invalidCodes[direction][pluginId]) {
       case undefined:
         return false
       case 'allCodes':
@@ -102,13 +115,13 @@ export function checkInvalidCodes(
       case 'allTokens':
         return main !== token
       default:
-        return invalidCodes[direction][main].some(code => code === token)
+        return invalidCodes[direction][pluginId].some(code => code === token)
     }
   }
 
   if (
-    check('from', fromMainnetCode, fromCurrencyCode) ||
-    check('to', toMainnetCode, toCurrencyCode)
+    check('from', fromPluginId, fromMainnetCode, fromCurrencyCode) ||
+    check('to', toPluginId, toMainnetCode, toCurrencyCode)
   )
     throw new SwapCurrencyError(
       swapInfo,
