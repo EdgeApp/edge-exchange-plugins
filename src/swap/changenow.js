@@ -126,6 +126,13 @@ export function makeChangeNowPlugin(
         )
         const exchangeAmountResponseJson = await exchangeAmountResponse.json()
 
+        if (exchangeAmountResponseJson.error != null)
+          throw new SwapCurrencyError(
+            swapInfo,
+            fromCurrencyCode,
+            toCurrencyCode
+          )
+
         const { rateId, validUntil } = asExchange(exchangeAmountResponseJson)
 
         // Create order
@@ -316,10 +323,10 @@ export function makeChangeNowPlugin(
       // Try them all
       if (quoteFor === 'from') {
         try {
-          return swapSell('fixed-rate')
+          return await swapSell('fixed-rate')
         } catch (e) {
           try {
-            return swapSell('standard')
+            return await swapSell('standard')
           } catch (e2) {
             // Should throw the fixed-rate error
             throw e
