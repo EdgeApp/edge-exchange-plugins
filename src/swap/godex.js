@@ -80,6 +80,7 @@ const INVALID_CURRENCY_CODES: InvalidCurrencyCodes = {
 // Network names that don't match parent network currency code
 const MAINNET_CODE_TRANSCRIPTION = {
   rsk: 'RSK',
+  binancesmartchain: 'BSC',
   avalanche: 'AVAXC'
 }
 

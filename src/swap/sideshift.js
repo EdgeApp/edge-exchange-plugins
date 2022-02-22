@@ -38,6 +38,9 @@ const CURRENCY_CODE_TRANSCRIPTION = {
   ethereum: {
     USDT: 'usdtErc20'
   },
+  binancesmartchain: {
+    BNB: 'bsc'
+  },
   zcash: {
     ZEC: 'zaddr'
   },
@@ -53,6 +56,7 @@ const INVALID_CURRENCY_CODES: InvalidCurrencyCodes = {
   from: {
     ethereum: ['FTM', 'MATIC'],
     avalanche: 'allTokens',
+    binancesmartchain: 'allTokens',
     celo: 'allTokens',
     fantom: 'allCodes',
     binance: 'allCodes',
@@ -61,6 +65,7 @@ const INVALID_CURRENCY_CODES: InvalidCurrencyCodes = {
   to: {
     ethereum: ['FTM', 'MATIC'],
     avalanche: 'allTokens',
+    binancesmartchain: 'allTokens',
     celo: 'allTokens',
     fantom: 'allCodes',
     binance: 'allCodes',

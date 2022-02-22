@@ -28,7 +28,7 @@ import {
   type InvalidCurrencyCodes,
   checkInvalidCodes,
   ensureInFuture,
-  getCodes,
+  getCodesWithMainnetTranscription,
   makeSwapPluginQuote
 } from '../swap-helpers.js'
 
@@ -51,6 +51,11 @@ const INVALID_CURRENCY_CODES: InvalidCurrencyCodes = {
   to: {
     zcash: ['ZEC']
   }
+}
+
+// Network names that don't match parent network currency code
+const MAINNET_CODE_TRANSCRIPTION = {
+  binancesmartchain: 'BSC'
 }
 
 async function getAddress(
@@ -102,7 +107,7 @@ export function makeChangeNowPlugin(
         toCurrencyCode,
         fromMainnetCode,
         toMainnetCode
-      } = getCodes(request)
+      } = getCodesWithMainnetTranscription(request, MAINNET_CODE_TRANSCRIPTION)
       const currencyString = `fromCurrency=${fromCurrencyCode}&toCurrency=${toCurrencyCode}&fromNetwork=${fromMainnetCode}&toNetwork=${toMainnetCode}`
 
       const { nativeAmount, quoteFor } = request
