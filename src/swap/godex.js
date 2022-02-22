@@ -17,6 +17,7 @@ import {
 import {
   type InvalidCurrencyCodes,
   checkInvalidCodes,
+  getCodesWithMainnetTranscription,
   makeSwapPluginQuote
 } from '../swap-helpers.js'
 
@@ -77,9 +78,9 @@ const INVALID_CURRENCY_CODES: InvalidCurrencyCodes = {
 }
 
 // Network names that don't match parent network currency code
-const networks = {
-  RBTC: 'RSK',
-  AVAX: 'AVAXC'
+const MAINNET_CODE_TRANSCRIPTION = {
+  rsk: 'RSK',
+  avalanche: 'AVAXC'
 }
 
 async function getAddress(wallet: EdgeCurrencyWallet, currencyCode: string) {
@@ -185,6 +186,10 @@ export function makeGodexPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
         throw new SwapBelowLimitError(swapInfo, nativeMin)
       }
       const { promoCode } = opts
+      const {
+        fromMainnetCode,
+        toMainnetCode
+      } = getCodesWithMainnetTranscription(request, MAINNET_CODE_TRANSCRIPTION)
       const sendReply = await call(
         uri + 'transaction' + (promoCode != null ? `?promo=${promoCode}` : ''),
         request,
@@ -202,12 +207,8 @@ export function makeGodexPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
             affiliate_id: initOptions.apiKey,
             type: 'edge',
             isEstimate: false,
-            coin_from_network:
-              networks[request.fromWallet.currencyInfo.currencyCode] ??
-              request.fromWallet.currencyInfo.currencyCode,
-            coin_to_network:
-              networks[request.toWallet.currencyInfo.currencyCode] ??
-              request.toWallet.currencyInfo.currencyCode
+            coin_from_network: fromMainnetCode,
+            coin_to_network: toMainnetCode
           }
         }
       )

@@ -66,7 +66,14 @@ export function makeSwapPluginQuote(
   return out
 }
 
-export const getCodes = (request: EdgeSwapRequest) => ({
+type AllCodes = {
+  fromMainnetCode: string,
+  toMainnetCode: string,
+  fromCurrencyCode: string,
+  toCurrencyCode: string
+}
+
+export const getCodes = (request: EdgeSwapRequest): AllCodes => ({
   fromMainnetCode: request.fromWallet.currencyInfo.currencyCode,
   toMainnetCode: request.toWallet.currencyInfo.currencyCode,
   fromCurrencyCode: request.fromCurrencyCode,
@@ -169,4 +176,32 @@ export function safeCurrencyCodes(
     })
 
   return out
+}
+
+export type MainnetPluginIdTranscriptionMap = {
+  [pluginId: string]: string
+}
+
+/**
+ * Returns all four codes with mainnet transcription
+ */
+export const getCodesWithMainnetTranscription = (
+  request: EdgeSwapRequest,
+  transcriptionMap: MainnetPluginIdTranscriptionMap
+): AllCodes => {
+  const {
+    fromCurrencyCode,
+    toCurrencyCode,
+    fromMainnetCode,
+    toMainnetCode
+  } = getCodes(request)
+  return {
+    fromMainnetCode:
+      transcriptionMap[request.fromWallet.currencyInfo.pluginId] ??
+      fromMainnetCode,
+    toMainnetCode:
+      transcriptionMap[request.toWallet.currencyInfo.pluginId] ?? toMainnetCode,
+    fromCurrencyCode: fromCurrencyCode,
+    toCurrencyCode: toCurrencyCode
+  }
 }
