@@ -27,14 +27,14 @@ import {
 
 const INVALID_CURRENCY_CODES: InvalidCurrencyCodes = {
   from: {
-    ethereum: ['FTM', 'MATIC'],
+    ethereum: ['BNB', 'FTM', 'MATIC'],
     avalanche: 'allTokens',
     polygon: 'allCodes',
     celo: 'allTokens',
     fantom: 'allCodes'
   },
   to: {
-    ethereum: ['FTM', 'MATIC'],
+    ethereum: ['BNB', 'FTM', 'MATIC'],
     avalanche: 'allTokens',
     polygon: 'allCodes',
     celo: 'allTokens',
