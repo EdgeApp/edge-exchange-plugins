@@ -41,6 +41,10 @@ const CURRENCY_CODE_TRANSCRIPTION = {
   zcash: {
     ZEC: 'zaddr'
   },
+  avalanche: {
+    AVAX: 'avaxc',
+    'USDT.e': 'usdtavaxc'
+  },
   polygon: {
     MATIC: 'polygon'
   }
@@ -51,6 +55,7 @@ const INVALID_CURRENCY_CODES: InvalidCurrencyCodes = {
     avalanche: 'allTokens',
     celo: 'allTokens',
     fantom: 'allCodes',
+    binance: 'allCodes',
     polygon: 'allTokens'
   },
   to: {
@@ -58,6 +63,7 @@ const INVALID_CURRENCY_CODES: InvalidCurrencyCodes = {
     avalanche: 'allTokens',
     celo: 'allTokens',
     fantom: 'allCodes',
+    binance: 'allCodes',
     polygon: 'allTokens'
   }
 }
