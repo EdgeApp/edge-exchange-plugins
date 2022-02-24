@@ -35,30 +35,41 @@ import {
 // because currency codes with transcribed versions are NOT invalid
 const CURRENCY_CODE_TRANSCRIPTION = {
   // Edge currencyCode: exchangeCurrencyCode
-  ETH: {
+  ethereum: {
     USDT: 'usdtErc20'
   },
-  ZEC: {
+  binancesmartchain: {
+    BNB: 'bsc'
+  },
+  zcash: {
     ZEC: 'zaddr'
   },
-  MATIC: {
+  avalanche: {
+    AVAX: 'avaxc',
+    'USDT.e': 'usdtavaxc'
+  },
+  polygon: {
     MATIC: 'polygon'
   }
 }
 const INVALID_CURRENCY_CODES: InvalidCurrencyCodes = {
   from: {
-    ETH: ['FTM', 'MATIC'],
-    AVAX: 'allTokens',
-    CELO: 'allTokens',
-    FTM: 'allCodes',
-    MATIC: 'allTokens'
+    ethereum: ['FTM', 'MATIC'],
+    avalanche: 'allTokens',
+    binancesmartchain: 'allTokens',
+    celo: 'allTokens',
+    fantom: 'allCodes',
+    binance: 'allCodes',
+    polygon: 'allTokens'
   },
   to: {
-    ETH: ['FTM', 'MATIC'],
-    AVAX: 'allTokens',
-    CELO: 'allTokens',
-    FTM: 'allCodes',
-    MATIC: 'allTokens'
+    ethereum: ['FTM', 'MATIC'],
+    avalanche: 'allTokens',
+    binancesmartchain: 'allTokens',
+    celo: 'allTokens',
+    fantom: 'allCodes',
+    binance: 'allCodes',
+    polygon: 'allTokens'
   }
 }
 const SIDESHIFT_BASE_URL = 'https://sideshift.ai/api/v1'

@@ -28,7 +28,7 @@ import {
   type InvalidCurrencyCodes,
   checkInvalidCodes,
   ensureInFuture,
-  getCodes,
+  getCodesWithMainnetTranscription,
   makeSwapPluginQuote
 } from '../swap-helpers.js'
 
@@ -49,8 +49,13 @@ const dontUseLegacy = {
 const INVALID_CURRENCY_CODES: InvalidCurrencyCodes = {
   from: {},
   to: {
-    ZEC: ['ZEC']
+    zcash: ['ZEC']
   }
+}
+
+// Network names that don't match parent network currency code
+const MAINNET_CODE_TRANSCRIPTION = {
+  binancesmartchain: 'BSC'
 }
 
 async function getAddress(
@@ -102,7 +107,7 @@ export function makeChangeNowPlugin(
         toCurrencyCode,
         fromMainnetCode,
         toMainnetCode
-      } = getCodes(request)
+      } = getCodesWithMainnetTranscription(request, MAINNET_CODE_TRANSCRIPTION)
       const currencyString = `fromCurrency=${fromCurrencyCode}&toCurrency=${toCurrencyCode}&fromNetwork=${fromMainnetCode}&toNetwork=${toMainnetCode}`
 
       const { nativeAmount, quoteFor } = request
@@ -125,6 +130,13 @@ export function makeChangeNowPlugin(
           { headers }
         )
         const exchangeAmountResponseJson = await exchangeAmountResponse.json()
+
+        if (exchangeAmountResponseJson.error != null)
+          throw new SwapCurrencyError(
+            swapInfo,
+            fromCurrencyCode,
+            toCurrencyCode
+          )
 
         const { rateId, validUntil } = asExchange(exchangeAmountResponseJson)
 
@@ -316,10 +328,10 @@ export function makeChangeNowPlugin(
       // Try them all
       if (quoteFor === 'from') {
         try {
-          return swapSell('fixed-rate')
+          return await swapSell('fixed-rate')
         } catch (e) {
           try {
-            return swapSell('standard')
+            return await swapSell('standard')
           } catch (e2) {
             // Should throw the fixed-rate error
             throw e

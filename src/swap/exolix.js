@@ -21,9 +21,12 @@ import {
 } from '../swap-helpers.js'
 
 const INVALID_CURRENCY_CODES = {
-  from: {},
+  from: {
+    binancesmartchain: 'allCodes'
+  },
   to: {
-    ZEC: ['ZEC']
+    binancesmartchain: 'allCodes',
+    zcash: ['ZEC']
   }
 }
 

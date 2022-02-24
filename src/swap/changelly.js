@@ -27,26 +27,28 @@ import {
 
 const INVALID_CURRENCY_CODES: InvalidCurrencyCodes = {
   from: {
-    ETH: ['FTM', 'MATIC'],
-    AVAX: 'allTokens',
-    MATIC: 'allCodes',
-    CELO: 'allTokens',
-    FTM: 'allCodes'
+    ethereum: ['BNB', 'FTM', 'MATIC'],
+    avalanche: 'allTokens',
+    binancesmartchain: 'allCodes',
+    polygon: 'allCodes',
+    celo: 'allTokens',
+    fantom: 'allCodes'
   },
   to: {
-    ETH: ['FTM', 'MATIC'],
-    AVAX: 'allTokens',
-    MATIC: 'allCodes',
-    CELO: 'allTokens',
-    FTM: 'allCodes',
-    ZEC: ['ZEC']
+    ethereum: ['BNB', 'FTM', 'MATIC'],
+    avalanche: 'allTokens',
+    binancesmartchain: 'allCodes',
+    polygon: 'allCodes',
+    celo: 'allTokens',
+    fantom: 'allCodes',
+    zcash: ['ZEC']
   }
 }
 
 // Invalid currency codes should *not* have transcribed codes
 // because currency codes with transcribed versions are NOT invalid
 const CURRENCY_CODE_TRANSCRIPTION = {
-  ETH: {
+  ethereum: {
     USDT: 'USDT20'
   }
 }
