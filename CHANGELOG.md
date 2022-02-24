@@ -1,5 +1,12 @@
 # edge-exchange-plugins
 
+# 0.12.11 (2022-02-23)
+
+- Add Binance Smart Chain to swap partners
+- Changenow: Fix corner case where standard flow was skipped
+- Use pluginIds instead of currency code keys in transcription and invalid-code maps
+- Add helper function and transcription maps for changing mainnet codes
+
 # 0.12.10 (2022-02-16)
 
 - Exolix: Update plugin to use mainchain:tokencode values in requests
