@@ -29,6 +29,7 @@ const INVALID_CURRENCY_CODES: InvalidCurrencyCodes = {
   from: {
     ethereum: ['BNB', 'FTM', 'MATIC'],
     avalanche: 'allTokens',
+    binance: 'allCodes',
     binancesmartchain: 'allTokens',
     polygon: 'allCodes',
     celo: 'allTokens',
@@ -37,6 +38,7 @@ const INVALID_CURRENCY_CODES: InvalidCurrencyCodes = {
   to: {
     ethereum: ['BNB', 'FTM', 'MATIC'],
     avalanche: 'allTokens',
+    binance: 'allCodes',
     binancesmartchain: 'allTokens',
     polygon: 'allCodes',
     celo: 'allTokens',
