@@ -1,5 +1,11 @@
 # edge-exchange-plugins
 
+# 0.12.12 (2022-03-02)
+
+- Changelly: Add BNB Smart Chain support
+- Disable BNB Beacon Chain in all swap plugins
+- Use pluginIds instead of currency codes in transfer plugin
+
 # 0.12.11 (2022-02-23)
 
 - Add Binance Smart Chain to swap partners
