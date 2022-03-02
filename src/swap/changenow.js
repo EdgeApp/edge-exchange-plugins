@@ -47,11 +47,8 @@ const dontUseLegacy = {
 }
 
 const INVALID_CURRENCY_CODES: InvalidCurrencyCodes = {
-  from: {
-    binance: 'allCodes'
-  },
+  from: {},
   to: {
-    binance: 'allCodes',
     zcash: ['ZEC']
   }
 }

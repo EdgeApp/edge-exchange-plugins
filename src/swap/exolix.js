@@ -22,11 +22,9 @@ import {
 
 const INVALID_CURRENCY_CODES = {
   from: {
-    binance: 'allCodes',
     binancesmartchain: 'allCodes'
   },
   to: {
-    binance: 'allCodes',
     binancesmartchain: 'allCodes',
     zcash: ['ZEC']
   }

@@ -74,7 +74,6 @@ const INVALID_CURRENCY_CODES: InvalidCurrencyCodes = {
   from: {
     ethereum: ['MATIC'],
     avalanche: 'allTokens',
-    binance: 'allCodes',
     binancesmartchain: 'allCodes',
     celo: 'allTokens',
     fantom: 'allCodes',
@@ -83,7 +82,6 @@ const INVALID_CURRENCY_CODES: InvalidCurrencyCodes = {
   to: {
     ethereum: ['MATIC'],
     avalanche: 'allTokens',
-    binance: 'allCodes',
     binancesmartchain: 'allCodes',
     celo: 'allTokens',
     fantom: 'allCodes',
