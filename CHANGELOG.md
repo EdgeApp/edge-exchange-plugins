@@ -1,5 +1,9 @@
 # edge-exchange-plugins
 
+# 0.12.13 (2022-03-02)
+
+- Re-enable BNB Beacon Chain
+
 # 0.12.12 (2022-03-02)
 
 - Changelly: Add BNB Smart Chain support
