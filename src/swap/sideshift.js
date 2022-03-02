@@ -255,7 +255,7 @@ const createFetchSwapQuote = (api: SideshiftApi, affiliateId: string) =>
       request.fromCurrencyCode
     )
 
-    const amountExpectedToNative = await request.fromWallet.denominationToNative(
+    const amountExpectedToNative = await request.toWallet.denominationToNative(
       order.settleAmount,
       request.toCurrencyCode
     )

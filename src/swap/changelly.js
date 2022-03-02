@@ -286,7 +286,7 @@ export function makeChangellyPlugin(
         sendReply.result.amountExpectedFrom,
         request.fromCurrencyCode
       )
-      const amountExpectedToTo = await request.fromWallet.denominationToNative(
+      const amountExpectedToTo = await request.toWallet.denominationToNative(
         sendReply.result.amountExpectedTo,
         request.toCurrencyCode
       )
