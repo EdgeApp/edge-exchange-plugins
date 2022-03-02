@@ -29,7 +29,8 @@ const INVALID_CURRENCY_CODES: InvalidCurrencyCodes = {
   from: {
     ethereum: ['BNB', 'FTM', 'MATIC'],
     avalanche: 'allTokens',
-    binancesmartchain: 'allCodes',
+    binance: 'allCodes',
+    binancesmartchain: 'allTokens',
     polygon: 'allCodes',
     celo: 'allTokens',
     fantom: 'allCodes'
@@ -37,7 +38,8 @@ const INVALID_CURRENCY_CODES: InvalidCurrencyCodes = {
   to: {
     ethereum: ['BNB', 'FTM', 'MATIC'],
     avalanche: 'allTokens',
-    binancesmartchain: 'allCodes',
+    binance: 'allCodes',
+    binancesmartchain: 'allTokens',
     polygon: 'allCodes',
     celo: 'allTokens',
     fantom: 'allCodes',
@@ -50,6 +52,9 @@ const INVALID_CURRENCY_CODES: InvalidCurrencyCodes = {
 const CURRENCY_CODE_TRANSCRIPTION = {
   ethereum: {
     USDT: 'USDT20'
+  },
+  binancesmartchain: {
+    BNB: 'BNBBSC'
   }
 }
 
