@@ -33,7 +33,6 @@ export function makeSwapPluginQuote(
   quoteId?: string
 ): EdgeSwapQuote {
   const { fromWallet } = request
-
   const out: EdgeSwapQuote = {
     fromNativeAmount,
     toNativeAmount,
