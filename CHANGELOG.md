@@ -1,5 +1,9 @@
 # edge-exchange-plugins
 
+# 0.12.14 (2022-03-02)
+
+- Fix calling denomination methods from wrong wallet
+
 # 0.12.13 (2022-03-02)
 
 - Re-enable BNB Beacon Chain
