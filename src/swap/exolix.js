@@ -189,7 +189,7 @@ export function makeExolixPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
         request.fromCurrencyCode
       )
 
-      const toNativeAmount = await request.fromWallet.denominationToNative(
+      const toNativeAmount = await request.toWallet.denominationToNative(
         quoteInfo.amount_to.toString(),
         request.toCurrencyCode
       )
