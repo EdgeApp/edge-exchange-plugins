@@ -47,6 +47,15 @@ export function makeSwapPluginQuote(
     quoteId,
     isEstimate,
     async approve(): Promise<EdgeSwapResult> {
+      this.warn(
+        '\x1b[34m\x1b[43m' +
+          `'makeSwapPluginQuote approve()': ${JSON.stringify(
+            'makeSwapPluginQuote approve()',
+            null,
+            2
+          )}` +
+          '\x1b[0m'
+      )
       const signedTransaction = await fromWallet.signTx(tx)
       const broadcastedTransaction = await fromWallet.broadcastTx(
         signedTransaction

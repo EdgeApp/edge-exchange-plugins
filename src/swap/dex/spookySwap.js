@@ -80,17 +80,15 @@ async function getAddress(
     ? addressInfo.legacyAddress
     : addressInfo.publicAddress
 }
-async function getPrices(pairAddress, provider) {
-  // const reserves = await wFTMBOOspLPContract.getReserves()
+
+// TODO: Token ordering t0/t1: FOR NOW: HACK: capture the current orderings for
+// the pairs we need to swap.
+async function getPrices(lpContract) {
+  const reserves = await lpContract.getReserves()
   // const resv0 = Number(reserves._reserve1)
   // console.log(resv0)
-  const wFTMBOOspLPContract = new ethers.Contract(
-    wFTMBOOspLPAddress,
-    uniswapV2PairABI,
-    provider
-  )
-  const getEthUsdPrice = await wFTMBOOspLPContract
-    .getReserves() // TODO: change this contract reference?
+  const getEthUsdPrice = await lpContract
+    .getReserves()
     .then(reserves => Number(reserves._reserve0) / Number(reserves._reserve1))
   return getEthUsdPrice
 }
@@ -117,9 +115,23 @@ export function makeSpookySwapPlugin(
         getAddress(request.toWallet, request.toCurrencyCode)
       ])
 
-      // TODO: Use fallback provider
-      const customHttpProvider = new ethers.providers.JsonRpcProvider(
-        'https://ftmrpc.ultimatenodes.io'
+      const rpcProviderUrls = [
+        // 'https://ftmrpc.ultimatenodes.io',
+        'https://rpcapi.fantom.network',
+        'https://rpc.fantom.network',
+        'https://rpc2.fantom.network',
+        'https://rpc3.fantom.network',
+        'https://rpc.ftm.tools'
+      ]
+
+      const providers = []
+      for (const address of rpcProviderUrls) {
+        providers.push(new ethers.providers.JsonRpcProvider(address))
+      }
+
+      const customHttpProvider = new ethers.providers.FallbackProvider(
+        providers,
+        1
       )
 
       const booContract = new ethers.Contract(
@@ -146,8 +158,18 @@ export function makeSpookySwapPlugin(
       )
 
       // Get price
-      const wFTMperBOO = await getPrices(wFTMBOOspLPAddress, customHttpProvider)
+      const wFTMBOOspLPContract = new ethers.Contract(
+        wFTMBOOspLPAddress,
+        uniswapV2PairABI,
+        customHttpProvider
+      )
+      const wFTMperBOO = await getPrices(wFTMBOOspLPContract)
       const lpRate = wFTMperBOO
+      log.warn(
+        '\x1b[34m\x1b[43m' +
+          `lpRate: ${JSON.stringify(lpRate, null, 2)}` +
+          '\x1b[0m'
+      )
 
       // Calculate amounts
       const currentBalanceBoo = await booContract.balanceOf(
@@ -158,7 +180,7 @@ export function makeSpookySwapPlugin(
       )
       log.warn(
         '\x1b[37m\x1b[41m' +
-          `currentBalanceFtm: ${JSON.stringify(currentBalanceFtm, null, 2)}` +
+          `currentBalanceWFtm: ${JSON.stringify(currentBalanceFtm, null, 2)}` +
           '\x1b[0m'
       )
       const amountToSwap = Math.floor(currentBalanceFtm / 2)
@@ -169,14 +191,14 @@ export function makeSpookySwapPlugin(
       )
       const slippage = Number(0.1)
 
-      const expectedwQuoteAmountOut =
+      const expectedQuoteAmountOut =
         (amountToSwap / lpRate) * (Number(1) - slippage)
-      const expectedwBaseAmountOut =
+      const expectedBaseAmountOut =
         amountToSwap * lpRate * (Number(1) - slippage)
-      const expectedAmountOut = expectedwQuoteAmountOut
+      const expectedAmountOut = Math.floor(expectedQuoteAmountOut)
 
       // TODO: determine ordering token0/1
-      const path = [wFTMAddress, TOMB_ADDRESS]
+      const path = [wFTMAddress, BOO_ADDRESS]
 
       // Create the transaction:
 
@@ -225,6 +247,8 @@ export function makeSpookySwapPlugin(
           {
             nativeAmount: amountToSwap.toString(),
             publicAddress: SPOOKY_ROUTER_ADDRESS, // TODO: right addr?
+
+            // TODO: not needed?
             otherParams: {
               data: routerTx.data
             }
@@ -240,25 +264,28 @@ export function makeSpookySwapPlugin(
           payoutWalletId: request.toWallet.id,
           plugin: { ...swapInfo },
           refundAddress: fromAddress
+        },
+        otherParams: {
+          data: routerTx.data
         }
       }
+
       log.warn(
         '\x1b[34m\x1b[43m' +
           `edgeSpendInfo: ${JSON.stringify(edgeSpendInfo, null, 2)}` +
           '\x1b[0m'
       )
 
-      // TODO: Maybe ditch the accountbased's makeSpend
-      // TODO: and make my own here if ab doesn't cooperate
+      // TODO: Maybe need to add an othermethods?
       const edgeUnsignedTx: EdgeTransaction = await request.fromWallet.makeSpend(
         edgeSpendInfo
       )
 
       log.warn('makeSwapPluginQuote')
       const test = amountToSwap.toString()
-      log.warn('test' + test)
+      log.warn('amountToSwap' + test)
       const test2 = expectedAmountOut.toString()
-      log.warn('test2' + test2)
+      log.warn('expectedAmountOut' + test2)
 
       // Convert that to the output format:
       return makeSwapPluginQuote(
