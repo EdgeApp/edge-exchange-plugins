@@ -9,6 +9,16 @@ import {
   SwapCurrencyError
 } from 'edge-core-js/types'
 
+export const convertToHex = (numberStr: string): string => {
+  const hexStr = '0x' + parseInt(numberStr).toString(16)
+  return hexStr
+}
+
+export const convertToDecimal = (hexStr: string): number => {
+  const num = parseInt('0x' + hexStr, 16)
+  return num
+}
+
 /**
  * Ensures that a date is in the future by at least the given amount.
  */
@@ -47,15 +57,6 @@ export function makeSwapPluginQuote(
     quoteId,
     isEstimate,
     async approve(): Promise<EdgeSwapResult> {
-      this.warn(
-        '\x1b[34m\x1b[43m' +
-          `'makeSwapPluginQuote approve()': ${JSON.stringify(
-            'makeSwapPluginQuote approve()',
-            null,
-            2
-          )}` +
-          '\x1b[0m'
-      )
       const signedTransaction = await fromWallet.signTx(tx)
       const broadcastedTransaction = await fromWallet.broadcastTx(
         signedTransaction

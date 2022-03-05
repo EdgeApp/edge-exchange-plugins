@@ -1,236 +1,245 @@
 // @flow
 
-import { lt } from 'biggystring'
+import { FallbackProvider } from '@ethersproject/providers'
+import { bns } from 'biggystring'
 import {
   type EdgeCorePluginOptions,
   type EdgeCurrencyWallet,
+  type EdgeMetaToken,
   type EdgeSpendInfo,
   type EdgeSwapInfo,
   type EdgeSwapPlugin,
   type EdgeSwapQuote,
   type EdgeSwapRequest,
-  type EdgeTransaction,
-  SwapBelowLimitError,
-  SwapCurrencyError
+  type EdgeTransaction
 } from 'edge-core-js/types'
 import { ethers } from 'ethers'
 
 import {
-  type InvalidCurrencyCodes,
-  checkInvalidCodes,
+  convertToDecimal,
+  convertToHex,
   makeSwapPluginQuote
 } from '../../swap-helpers.js'
+import { type CachedPairData } from './dexTypes.js'
 import {
-  BOO_ADDRESS,
-  BOO_CONTRACT_ABI,
-  SPOOKYSWAP_DEPOSIT_CONTRACT_ABI,
-  SPOOKYSWAP_DEPOSIT_CONTRACT_ADDRESS,
-  SPOOKYSWAP_FACTORY_ABI,
-  SPOOKYSWAP_FACTORY_ADDRESS,
+  cachedPairDatas,
   SPOOKYSWAP_ROUTER_ABI,
   SPOOKYSWAP_ROUTER_ADDRESS,
-  SPOOKYSWAP_WITHDRAW_CONTRACT_ABI,
-  SPOOKYSWAP_WITHDRAW_CONTRACT_ADDRESS,
-  TOMB_ADDRESS,
-  uniswapV2PairABI,
-  wFTM_BOO_MASTER_CONTRACT_ABI,
-  wFTM_BOO_MASTERCHEF_CONTRACT,
-  wFTMABI,
-  wFTMAddress,
-  wFTMBOOspLPAddress
+  uniswapV2PairABI
 } from './spookyContracts.js'
 
-const INVALID_CURRENCY_CODES = {
-  from: {},
-  to: {}
-}
-
-// Invalid currency codes should *not* have transcribed codes
-// because currency codes with transcribed versions are NOT invalid
-const CURRENCY_CODE_TRANSCRIPTION = {
-  // Edge currencyCode: exchangeCurrencyCode
-  ETH: {
-    USDT: 'USDT20'
-  }
-}
-
-const pluginId = 'spookySwap'
-
 const swapInfo: EdgeSwapInfo = {
-  pluginId,
+  pluginId: 'spookySwap',
   displayName: 'SpookySwap',
   supportEmail: '',
   supportUrl: 'https://discord.com/invite/weXbvPAH4Q'
 }
-const expirationMs = 1000 * 60 * 60
+const expirationMs = 1000 * 20 * 60
 
-const SPOOKY_ROUTER_ADDRESS = '0xF491e7B69E4244ad4002BC14e878a34207E38c29'
+const getAddress = async (wallet: EdgeCurrencyWallet): Promise<string> => {
+  const addressInfo = await wallet.getReceiveAddress()
 
-// TODO: what's the deal here?
-const dontUseLegacy = {}
-async function getAddress(
-  wallet: EdgeCurrencyWallet,
-  currencyCode: string
-): Promise<string> {
-  const addressInfo = await wallet.getReceiveAddress({
-    currencyCode
-  })
-
-  return addressInfo.legacyAddress && !dontUseLegacy[currencyCode]
+  return addressInfo.legacyAddress
     ? addressInfo.legacyAddress
     : addressInfo.publicAddress
 }
 
-// TODO: Token ordering t0/t1: FOR NOW: HACK: capture the current orderings for
-// the pairs we need to swap.
-async function getPrices(lpContract) {
-  const reserves = await lpContract.getReserves()
-  // const resv0 = Number(reserves._reserve1)
-  // console.log(resv0)
-  const getEthUsdPrice = await lpContract
-    .getReserves()
-    .then(reserves => Number(reserves._reserve0) / Number(reserves._reserve1))
-  return getEthUsdPrice
+/**
+ * Check first if the LP exists in our constants. TODO: Call RPC server if not saved.
+ */
+export const getLpContract = async (
+  tokenAddress0: string,
+  tokenAddress1: string,
+  pairDatas: CachedPairData[],
+  provider: FallbackProvider
+): Promise<ethers.Contract> => {
+  const lpAddress = pairDatas.find(pairData =>
+    pairData.tokenAddresses.every(pairTokenAddress => {
+      return (
+        tokenAddress0.toUpperCase() === pairTokenAddress.toUpperCase() ||
+        tokenAddress1.toUpperCase() === pairTokenAddress.toUpperCase()
+      )
+    })
+  )?.lpAddress
+
+  if (lpAddress == null)
+    throw new Error(
+      `Could not find LP contract for tokens: ${tokenAddress0} ${tokenAddress1}`
+    )
+
+  return new ethers.Contract(lpAddress, uniswapV2PairABI, provider)
 }
 
-export function convertToHex(number: number) {
-  const num = '0x' + number.toString(16)
-  return num
+/**
+ * Returns the exchange rate of
+ * tokenAddressToSwap * exchangeRate = expectedTokensOut
+ */
+export async function getRate(
+  tokenFrom: string,
+  tokenTo: string,
+  lpContract: ethers.Contract
+): Promise<number> {
+  const exchangeRate = await lpContract
+    .getReserves()
+    .then(reserves => Number(reserves._reserve0) / Number(reserves._reserve1))
+
+  // Check if the token being swapped is the 0 or 1 token index and invert the
+  // rate if needed.
+  // token1's address as a value literal is always less than token1's address value
+  return convertToDecimal(tokenFrom) > convertToDecimal(tokenTo)
+    ? 1 / exchangeRate
+    : exchangeRate
+}
+
+export const getMetaTokenAddress = (
+  metaTokens: EdgeMetaToken[],
+  tokenCurrencyCode: string
+): string => {
+  const metaToken = metaTokens.find(mt => mt.currencyCode === tokenCurrencyCode)
+
+  if (metaToken == null || metaToken?.contractAddress === undefined)
+    throw new Error('Could not find contract address for ' + tokenCurrencyCode)
+
+  return metaToken.contractAddress ?? ''
+}
+
+export const getRouterMethod = (
+  isFromNativeCurrency: boolean,
+  isToNativeCurrency: boolean
+): string => {
+  if (isFromNativeCurrency && isToNativeCurrency)
+    throw new Error('Cannot swap to the same native currency')
+
+  if (isFromNativeCurrency) return 'swapExactETHForTokens'
+  else if (isToNativeCurrency) return 'swapExactTokensForEth'
+  else return 'swapExactTokensForTokens'
 }
 
 export function makeSpookySwapPlugin(
   opts: EdgeCorePluginOptions
 ): EdgeSwapPlugin {
+  const { log } = opts
+
   const out: EdgeSwapPlugin = {
     swapInfo,
     async fetchSwapQuote(
       request: EdgeSwapRequest,
       userSettings: Object | void
     ): Promise<EdgeSwapQuote> {
-      const { log } = opts
+      log.warn(JSON.stringify(request, null, 2))
+      const { fromWallet, toWallet, fromCurrencyCode, toCurrencyCode } = request
+      const currencyInfo = fromWallet.currencyInfo
 
-      log.warn('fetchSwapQuote!!')
-      const [fromAddress, toAddress] = await Promise.all([
-        getAddress(request.fromWallet, request.fromCurrencyCode),
-        getAddress(request.toWallet, request.toCurrencyCode)
-      ])
+      // Sanity check: Both wallets should be of the same chain.
+      if (
+        fromWallet.currencyInfo.currencyCode !==
+        toWallet.currencyInfo.currencyCode
+      )
+        throw new Error('SpookySwap: Mismatched wallet chain')
 
-      const rpcProviderUrls = [
-        // 'https://ftmrpc.ultimatenodes.io',
-        'https://rpcapi.fantom.network',
-        'https://rpc.fantom.network',
-        'https://rpc2.fantom.network',
-        'https://rpc3.fantom.network',
-        'https://rpc.ftm.tools'
-      ]
-
+      // Create fallback providers
       const providers = []
-      for (const address of rpcProviderUrls) {
-        providers.push(new ethers.providers.JsonRpcProvider(address))
+      for (const rpcServer of currencyInfo.defaultSettings.otherSettings
+        .rpcServers) {
+        providers.push(new ethers.providers.JsonRpcProvider(rpcServer))
       }
 
-      const customHttpProvider = new ethers.providers.FallbackProvider(
+      // Only one provider is required for quorum
+      const fallbackProvider = new ethers.providers.FallbackProvider(
         providers,
         1
       )
 
-      const booContract = new ethers.Contract(
-        BOO_ADDRESS,
-        BOO_CONTRACT_ABI,
-        customHttpProvider
-      )
-      const wFTMContract = new ethers.Contract(
-        wFTMAddress,
-        wFTMABI,
-        customHttpProvider
-      )
-
-      const coreWallet = request.fromWallet
+      // Create Router
       const ethersWallet = new ethers.Wallet(
-        coreWallet.displayPrivateSeed,
-        customHttpProvider
+        fromWallet.displayPrivateSeed,
+        fallbackProvider
       )
-
       const spookySwapRouter = new ethers.Contract(
         SPOOKYSWAP_ROUTER_ADDRESS,
         SPOOKYSWAP_ROUTER_ABI,
         ethersWallet
       )
 
-      // Get price
-      const wFTMBOOspLPContract = new ethers.Contract(
-        wFTMBOOspLPAddress,
-        uniswapV2PairABI,
-        customHttpProvider
+      // Parse input/output token addresses. If either from or to swap sources
+      // are for the native currency, convert the address to the wrapped equivalent.
+      const nativeCurrencyCode = fromWallet.currencyInfo.currencyCode
+      const isFromNativeCurrency = fromCurrencyCode === nativeCurrencyCode
+      const isToNativeCurrency = toCurrencyCode === nativeCurrencyCode
+      const wrappedCurrencyCode = `W${nativeCurrencyCode}`
+      const metaTokens: EdgeMetaToken[] = fromWallet.currencyInfo.metaTokens
+
+      const fromTokenAddress = getMetaTokenAddress(
+        metaTokens,
+        isFromNativeCurrency ? wrappedCurrencyCode : fromCurrencyCode
       )
-      const wFTMperBOO = await getPrices(wFTMBOOspLPContract)
-      const lpRate = wFTMperBOO
+      const toTokenAddress = getMetaTokenAddress(
+        metaTokens,
+        isToNativeCurrency ? wrappedCurrencyCode : toCurrencyCode
+      )
       log.warn(
         '\x1b[34m\x1b[43m' +
-          `lpRate: ${JSON.stringify(lpRate, null, 2)}` +
+          `{fromTokenAddress, toTokenAddress}: ${JSON.stringify(
+            { fromTokenAddress, toTokenAddress },
+            null,
+            2
+          )}` +
+          '\x1b[0m'
+      )
+
+      // Get LP contract and rates
+      const lpContract = await getLpContract(
+        fromTokenAddress,
+        toTokenAddress,
+        cachedPairDatas,
+        fallbackProvider
+      )
+      const exchangeRate = await getRate(
+        fromTokenAddress,
+        toTokenAddress,
+        lpContract
+      )
+      log.warn(
+        '\x1b[34m\x1b[43m' +
+          `lpRate: ${JSON.stringify(exchangeRate, null, 2)}` +
           '\x1b[0m'
       )
 
       // Calculate amounts
-      const currentBalanceBoo = await booContract.balanceOf(
-        ethersWallet.address
-      )
-      const currentBalanceFtm = await wFTMContract.balanceOf(
-        ethersWallet.address
-      )
-      log.warn(
-        '\x1b[37m\x1b[41m' +
-          `currentBalanceWFtm: ${JSON.stringify(currentBalanceFtm, null, 2)}` +
-          '\x1b[0m'
-      )
-      const amountToSwap = Math.floor(currentBalanceFtm / 2)
-      log.warn(
-        '\x1b[34m\x1b[43mamountToSwap' +
-          `: ${JSON.stringify(amountToSwap, null, 2)}` +
-          '\x1b[0m'
-      )
-      const slippage = Number(0.1)
-
-      const expectedQuoteAmountOut =
-        (amountToSwap / lpRate) * (Number(1) - slippage)
-      const expectedBaseAmountOut =
-        amountToSwap * lpRate * (Number(1) - slippage)
-      const expectedAmountOut = Math.floor(expectedQuoteAmountOut)
-
-      // TODO: determine ordering token0/1
-      const path = [wFTMAddress, BOO_ADDRESS]
-
-      // Create the transaction:
-
-      log.warn(
-        '\x1b[37m\x1b[41m' +
-          `amountToSwap: ${JSON.stringify(amountToSwap, null, 2)}` +
-          '\x1b[0m'
+      const amountToSwap = request.nativeAmount
+      const minAmount = '0.95' // slippage
+      const expectedAmountOut = bns.mul(
+        bns.mul(amountToSwap, exchangeRate.toString()),
+        minAmount
       )
       log.warn(
         '\x1b[34m\x1b[43m' +
-          `convertToHex(amountToSwap): ${JSON.stringify(
-            convertToHex(amountToSwap),
+          `{amountToSwap, expectedAmountOut}: ${JSON.stringify(
+            { amountToSwap, expectedAmountOut },
             null,
             2
           )}` +
           '\x1b[0m'
       )
-      log.warn(
-        '\x1b[37m\x1b[41m' +
-          `expectedAmountOut: ${JSON.stringify(expectedAmountOut, null, 2)}` +
-          '\x1b[0m'
+
+      // Determine the router method
+      const routerMethod = getRouterMethod(
+        isFromNativeCurrency,
+        isToNativeCurrency
       )
       log.warn(
         '\x1b[34m\x1b[43m' +
-          `convertToHex(expectedAmountOut): ${JSON.stringify(
-            convertToHex(expectedAmountOut),
-            null,
-            2
-          )}` +
+          `routerMethod: ${JSON.stringify(routerMethod, null, 2)}` +
           '\x1b[0m'
       )
-      const routerTx = await spookySwapRouter.swapExactTokensForTokens(
+      const path =
+        convertToDecimal(fromTokenAddress) > convertToDecimal(toTokenAddress)
+          ? [fromTokenAddress, toTokenAddress]
+          : [toTokenAddress, fromTokenAddress]
+      const fromAddress = await getAddress(fromWallet)
+      const toAddress = await getAddress(toWallet)
+
+      const routerTx = await spookySwapRouter[routerMethod](
         convertToHex(amountToSwap),
         convertToHex(expectedAmountOut),
         path,
@@ -242,21 +251,23 @@ export function makeSpookySwapPlugin(
       // Convert to our spendInfo
       const edgeSpendInfo: EdgeSpendInfo = {
         pluginId: 'spookySwap',
-        currencyCode: request.toCurrencyCode,
+        currencyCode: request.fromCurrencyCode, // what is being sent out, only if token. Blank if not token
         spendTargets: [
           {
-            nativeAmount: amountToSwap.toString(),
-            publicAddress: SPOOKY_ROUTER_ADDRESS, // TODO: right addr?
+            nativeAmount: amountToSwap.toString(), // biggy/number string integer
+            publicAddress: SPOOKYSWAP_ROUTER_ADDRESS,
 
-            // TODO: not needed?
             otherParams: {
               data: routerTx.data
             }
           }
         ],
-        networkFeeOption: 'standard',
+        customNetworkFee: {
+          gasPrice: '700',
+          gasLimit: '360000'
+        },
+        networkFeeOption: 'custom',
         swapData: {
-          // TODO: Check GUI if this comes out accurate
           isEstimate: false,
           payoutAddress: toAddress,
           payoutCurrencyCode: request.toCurrencyCode,
@@ -264,9 +275,6 @@ export function makeSpookySwapPlugin(
           payoutWalletId: request.toWallet.id,
           plugin: { ...swapInfo },
           refundAddress: fromAddress
-        },
-        otherParams: {
-          data: routerTx.data
         }
       }
 
@@ -276,16 +284,9 @@ export function makeSpookySwapPlugin(
           '\x1b[0m'
       )
 
-      // TODO: Maybe need to add an othermethods?
       const edgeUnsignedTx: EdgeTransaction = await request.fromWallet.makeSpend(
         edgeSpendInfo
       )
-
-      log.warn('makeSwapPluginQuote')
-      const test = amountToSwap.toString()
-      log.warn('amountToSwap' + test)
-      const test2 = expectedAmountOut.toString()
-      log.warn('expectedAmountOut' + test2)
 
       // Convert that to the output format:
       return makeSwapPluginQuote(
