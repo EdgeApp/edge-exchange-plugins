@@ -36,7 +36,9 @@ const swapInfo: EdgeSwapInfo = {
 }
 const expirationMs = 1000 * 20 * 60
 
-const getAddress = async (wallet: EdgeCurrencyWallet): Promise<string> => {
+const getWalletAddress = async (
+  wallet: EdgeCurrencyWallet
+): Promise<string> => {
   const addressInfo = await wallet.getReceiveAddress()
 
   return addressInfo.legacyAddress
@@ -56,8 +58,8 @@ export const getLpContract = async (
   const lpAddress = pairDatas.find(pairData =>
     pairData.tokenAddresses.every(pairTokenAddress => {
       return (
-        tokenAddress0.toUpperCase() === pairTokenAddress.toUpperCase() ||
-        tokenAddress1.toUpperCase() === pairTokenAddress.toUpperCase()
+        tokenAddress0.toLowerCase() === pairTokenAddress.toLowerCase() ||
+        tokenAddress1.toLowerCase() === pairTokenAddress.toLowerCase()
       )
     })
   )?.lpAddress
@@ -71,24 +73,34 @@ export const getLpContract = async (
 }
 
 /**
- * Returns the exchange rate of
+ * Get the params that are dependent on token ordering.
+ * Returns:
+ * - The exchange rate of
  * tokenAddressToSwap * exchangeRate = expectedTokensOut
+ * - The swap path
  */
-export async function getRate(
-  tokenFrom: string,
-  tokenTo: string,
+export async function getRateAndPath(
+  fromTokenAddress: string,
+  toTokenAddress: string,
   lpContract: ethers.Contract
-): Promise<number> {
+): Promise<{ exchangeRate: number, path: string[] }> {
   const exchangeRate = await lpContract
     .getReserves()
     .then(reserves => Number(reserves._reserve0) / Number(reserves._reserve1))
 
   // Check if the token being swapped is the 0 or 1 token index and invert the
   // rate if needed.
-  // token1's address as a value literal is always less than token1's address value
-  return convertToDecimal(tokenFrom) > convertToDecimal(tokenTo)
-    ? 1 / exchangeRate
-    : exchangeRate
+  // token1's address as a value literal is always less than token1's address
+  // value
+  const isFromToken0 =
+    convertToDecimal(fromTokenAddress) > convertToDecimal(toTokenAddress)
+
+  return {
+    exchangeRate: isFromToken0 ? exchangeRate : 1 / exchangeRate,
+    path: isFromToken0
+      ? [fromTokenAddress, toTokenAddress]
+      : [toTokenAddress, fromTokenAddress]
+  }
 }
 
 export const getMetaTokenAddress = (
@@ -103,16 +115,83 @@ export const getMetaTokenAddress = (
   return metaToken.contractAddress ?? ''
 }
 
-export const getRouterMethod = (
+export const getRouterMethodName = (
   isFromNativeCurrency: boolean,
   isToNativeCurrency: boolean
-): string => {
+): { routerMethodName: string, isAmountInParam: boolean } => {
   if (isFromNativeCurrency && isToNativeCurrency)
-    throw new Error('Cannot swap to the same native currency')
+    throw new Error('Invalid swap: Cannot swap to the same native currency')
 
-  if (isFromNativeCurrency) return 'swapExactETHForTokens'
-  else if (isToNativeCurrency) return 'swapExactTokensForEth'
-  else return 'swapExactTokensForTokens'
+  // ABI: swapExactETHForTokens(
+  //    uint amountOutMin,
+  //    address[] calldata path,
+  //    address
+  //    to,
+  //    uint deadline)
+  //  external payable returns (uint[] memory amounts);
+  if (isFromNativeCurrency)
+    return {
+      routerMethodName: 'swapExactETHForTokensSupportingFeeOnTransferTokens',
+      isAmountInParam: false
+    }
+  // ABI: swapExactTokensForETHSupportingFeeOnTransferTokens(
+  //   uint amountIn,
+  //   uint amountOutMin,
+  //   address[] calldata path,
+  //   address to,
+  //   uint deadline
+  // ) external;
+  else if (isToNativeCurrency)
+    return {
+      routerMethodName: 'swapExactTokensForETHSupportingFeeOnTransferTokens',
+      isAmountInParam: true
+    }
+  // ABI: swapExactTokensForTokensSupportingFeeOnTransferTokens(
+  //   uint amountIn,
+  //   uint amountOutMin,
+  //   address[] calldata path,
+  //   address to,
+  //   uint deadline
+  // ) external;
+  else
+    return {
+      routerMethodName: 'swapExactTokensForTokensSupportingFeeOnTransferTokens',
+      isAmountInParam: true
+    }
+}
+
+export const getRouterTransaction = async (
+  router: ethers.Contract,
+  isFromNativeCurrency: boolean,
+  isToNativeCurrency: boolean,
+  amountOutMinNative: string,
+  amountInNative: string,
+  path: string[],
+  receiveAddress: string,
+  deadline: string
+) => {
+  const { routerMethodName, isAmountInParam } = getRouterMethodName(
+    isFromNativeCurrency,
+    isToNativeCurrency
+  )
+
+  if (isAmountInParam)
+    return await router[routerMethodName](
+      convertToHex(amountInNative),
+      convertToHex(amountOutMinNative),
+      path,
+      receiveAddress,
+      deadline,
+      { gasLimit: 360000 } // TODO: not needed?
+    )
+  else
+    return await router[routerMethodName](
+      convertToHex(amountOutMinNative),
+      path,
+      receiveAddress,
+      deadline,
+      { gasLimit: 360000 } // TODO: not needed?
+    )
 }
 
 export function makeSpookySwapPlugin(
@@ -150,17 +229,6 @@ export function makeSpookySwapPlugin(
         1
       )
 
-      // Create Router
-      const ethersWallet = new ethers.Wallet(
-        fromWallet.displayPrivateSeed,
-        fallbackProvider
-      )
-      const spookySwapRouter = new ethers.Contract(
-        SPOOKYSWAP_ROUTER_ADDRESS,
-        SPOOKYSWAP_ROUTER_ABI,
-        ethersWallet
-      )
-
       // Parse input/output token addresses. If either from or to swap sources
       // are for the native currency, convert the address to the wrapped equivalent.
       const nativeCurrencyCode = fromWallet.currencyInfo.currencyCode
@@ -177,15 +245,6 @@ export function makeSpookySwapPlugin(
         metaTokens,
         isToNativeCurrency ? wrappedCurrencyCode : toCurrencyCode
       )
-      log.warn(
-        '\x1b[34m\x1b[43m' +
-          `{fromTokenAddress, toTokenAddress}: ${JSON.stringify(
-            { fromTokenAddress, toTokenAddress },
-            null,
-            2
-          )}` +
-          '\x1b[0m'
-      )
 
       // Get LP contract and rates
       const lpContract = await getLpContract(
@@ -194,14 +253,14 @@ export function makeSpookySwapPlugin(
         cachedPairDatas,
         fallbackProvider
       )
-      const exchangeRate = await getRate(
+      const { exchangeRate, path } = await getRateAndPath(
         fromTokenAddress,
         toTokenAddress,
         lpContract
       )
       log.warn(
         '\x1b[34m\x1b[43m' +
-          `lpRate: ${JSON.stringify(exchangeRate, null, 2)}` +
+          `lpRate: ${JSON.stringify({ exchangeRate, path }, null, 2)}` +
           '\x1b[0m'
       )
 
@@ -213,39 +272,30 @@ export function makeSpookySwapPlugin(
         minAmount
       )
       log.warn(
-        '\x1b[34m\x1b[43m' +
-          `{amountToSwap, expectedAmountOut}: ${JSON.stringify(
+        `\x1b[34m\x1b[43m{amountToSwap, expectedAmountOut}: 
+          ${JSON.stringify(
             { amountToSwap, expectedAmountOut },
             null,
             2
-          )}` +
-          '\x1b[0m'
+          )}\x1b[0m`
       )
 
-      // Determine the router method
-      const routerMethod = getRouterMethod(
+      const fromAddress = await getWalletAddress(fromWallet)
+      const toAddress = await getWalletAddress(toWallet)
+      const spookySwapRouter = new ethers.Contract(
+        SPOOKYSWAP_ROUTER_ADDRESS,
+        SPOOKYSWAP_ROUTER_ABI,
+        new ethers.Wallet(fromWallet.displayPrivateSeed, fallbackProvider)
+      )
+      const routerTx = await getRouterTransaction(
+        spookySwapRouter,
         isFromNativeCurrency,
-        isToNativeCurrency
-      )
-      log.warn(
-        '\x1b[34m\x1b[43m' +
-          `routerMethod: ${JSON.stringify(routerMethod, null, 2)}` +
-          '\x1b[0m'
-      )
-      const path =
-        convertToDecimal(fromTokenAddress) > convertToDecimal(toTokenAddress)
-          ? [fromTokenAddress, toTokenAddress]
-          : [toTokenAddress, fromTokenAddress]
-      const fromAddress = await getAddress(fromWallet)
-      const toAddress = await getAddress(toWallet)
-
-      const routerTx = await spookySwapRouter[routerMethod](
-        convertToHex(amountToSwap),
-        convertToHex(expectedAmountOut),
+        isToNativeCurrency,
+        amountToSwap,
+        expectedAmountOut,
         path,
         toAddress,
-        `0x${(Math.floor(new Date().getTime() / 1000) + 60).toString(16)}`,
-        { gasLimit: 360000 }
+        `0x${(Math.floor(new Date().getTime() / 1000) + 60).toString(16)}`
       )
 
       // Convert to our spendInfo
@@ -267,6 +317,7 @@ export function makeSpookySwapPlugin(
           gasLimit: '360000'
         },
         networkFeeOption: 'custom',
+        // networkFeeOption: 'standard',
         swapData: {
           isEstimate: false,
           payoutAddress: toAddress,
@@ -296,7 +347,7 @@ export function makeSpookySwapPlugin(
         edgeUnsignedTx,
         toAddress,
         'spookySwap',
-        false, // TODO: is this right or even needed?
+        true,
         new Date(Date.now() + expirationMs)
       )
     }

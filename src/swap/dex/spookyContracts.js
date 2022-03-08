@@ -1267,9 +1267,6 @@ export const BOO_CONTRACT_ABI = [
   }
 ]
 
-export const SPOOKYSWAP_WITHDRAW_CONTRACT_ADDRESS =
-  '0x2b2929e785374c651a81a63878ab22742656dcdd'
-
 export const WFTM_ADDRESS = '0x21be370d5312f44cb42ce377bc9b8a0cef1a4c83'
 export const BOO_ADDRESS = '0x841fad6eae12c286d1fd18d1d525dffa75c7effe'
 export const TOMB_ADDRESS = '0x6c021Ae822BEa943b2E66552bDe1D2696a53fbB7'
