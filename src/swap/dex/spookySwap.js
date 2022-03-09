@@ -97,9 +97,10 @@ export async function getRateAndPath(
 
   return {
     exchangeRate: isFromToken0 ? exchangeRate : 1 / exchangeRate,
-    path: isFromToken0
-      ? [fromTokenAddress, toTokenAddress]
-      : [toTokenAddress, fromTokenAddress]
+    path: ['0x749411cf4DA88194581921Ae55f6fc4357D3b0f2', toTokenAddress]
+    // path: isFromToken0
+    //   ? [fromTokenAddress, toTokenAddress]
+    //   : [toTokenAddress, fromTokenAddress]
   }
 }
 
@@ -115,6 +116,7 @@ export const getMetaTokenAddress = (
   return metaToken.contractAddress ?? ''
 }
 
+// TODO: Detect native to/from currency without bool params
 export const getRouterMethodName = (
   isFromNativeCurrency: boolean,
   isToNativeCurrency: boolean
@@ -131,7 +133,7 @@ export const getRouterMethodName = (
   //  external payable returns (uint[] memory amounts);
   if (isFromNativeCurrency)
     return {
-      routerMethodName: 'swapExactETHForTokensSupportingFeeOnTransferTokens',
+      routerMethodName: 'swapExactETHForTokens',
       isAmountInParam: false
     }
   // ABI: swapExactTokensForETHSupportingFeeOnTransferTokens(
@@ -143,7 +145,7 @@ export const getRouterMethodName = (
   // ) external;
   else if (isToNativeCurrency)
     return {
-      routerMethodName: 'swapExactTokensForETHSupportingFeeOnTransferTokens',
+      routerMethodName: 'swapExactTokensForETH',
       isAmountInParam: true
     }
   // ABI: swapExactTokensForTokensSupportingFeeOnTransferTokens(
@@ -155,7 +157,7 @@ export const getRouterMethodName = (
   // ) external;
   else
     return {
-      routerMethodName: 'swapExactTokensForTokensSupportingFeeOnTransferTokens',
+      routerMethodName: 'swapExactTokensForTokens',
       isAmountInParam: true
     }
 }
@@ -164,8 +166,8 @@ export const getRouterTransaction = async (
   router: ethers.Contract,
   isFromNativeCurrency: boolean,
   isToNativeCurrency: boolean,
-  amountOutMinNative: string,
   amountInNative: string,
+  amountOutMinNative: string,
   path: string[],
   receiveAddress: string,
   deadline: string
@@ -182,16 +184,24 @@ export const getRouterTransaction = async (
       path,
       receiveAddress,
       deadline,
-      { gasLimit: 360000 } // TODO: not needed?
+      {
+        gasLimit: ethers.utils.hexlify(230000),
+        gasPrice: ethers.utils.parseUnits('7000', 'gwei')
+      }
     )
-  else
+  else {
     return await router[routerMethodName](
       convertToHex(amountOutMinNative),
       path,
       receiveAddress,
       deadline,
-      { gasLimit: 360000 } // TODO: not needed?
+      {
+        gasLimit: ethers.utils.hexlify(230000),
+        gasPrice: ethers.utils.parseUnits('7000', 'gwei'),
+        value: amountInNative
+      }
     )
+  }
 }
 
 export function makeSpookySwapPlugin(
@@ -312,12 +322,12 @@ export function makeSpookySwapPlugin(
             }
           }
         ],
-        customNetworkFee: {
-          gasPrice: '700',
-          gasLimit: '360000'
-        },
-        networkFeeOption: 'custom',
-        // networkFeeOption: 'standard',
+        // customNetworkFee: {
+        //   gasPrice: '1400',
+        //   gasLimit: '366000'
+        // },
+        // networkFeeOption: 'custom',
+        networkFeeOption: 'high',
         swapData: {
           isEstimate: false,
           payoutAddress: toAddress,
