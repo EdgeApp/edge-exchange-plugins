@@ -1,4 +1,4 @@
-{
+ {
   "name": "edge-exchange-plugins",
   "version": "0.12.13",
   "description": "Exchange-rate sources for the Edge core",
@@ -30,7 +30,7 @@
     "lint": "eslint .",
     "precommit": "lint-staged && flow && npm test && npm run build",
     "prepare": "npm run build",
-    "test": "node -r sucrase/register test/demo.js"
+    "test": "node -r sucrase/register src/swap/dex/spookySwapTest.js"
   },
   "husky": {
     "hooks": {

@@ -81,7 +81,7 @@ const RouterTxProviders = (
   // TODO: OR do we need to grab fees from accountbased and populate this here?
   const networkFees = {
     gasLimit: ethers.utils.hexlify(340722),
-    gasPrice: ethers.utils.parseUnits('350', 'gwei')
+    gasPrice: ethers.utils.parseUnits('661', 'gwei')
   }
 
   return {
@@ -158,7 +158,7 @@ const getRouterSwapParams = async (edgeSwapRequest: any) => {
   if (isFromNativeCurrency && isToNativeCurrency)
     throw new Error('Invalid swap: Cannot swap to the same native currency')
   const path = [fromTokenAddress, toTokenAddress]
-  const swapAmount = edgeSwapRequest.nativeAmount
+  const swapAmount = ethers.BigNumber.from(edgeSwapRequest.nativeAmount)
 
   if (isFromNativeCurrency && !isToNativeCurrency)
     return {
@@ -195,8 +195,8 @@ const generateSignedSwapTx = async (
     .then(getAmountsOutRes => {
       // eslint-disable-next-line no-unused-vars
       const [_inputBN, outputBN] = getAmountsOutRes
-      // 1% slippage
-      return outputBN.sub(outputBN.mul(0.99))
+      // 1% -ish slippage
+      return outputBN.sub(outputBN.div(99))
     })
 
   const routerFns = RouterTxProviders(
@@ -217,7 +217,7 @@ const testSwap = async (
   nativeCurrency: string,
   fromCurrency: string,
   toCurrency: string,
-  amount: string,
+  amount: string, // in native
   fromPrivateKey: string,
   fromAddress: string,
   receiveAddress: string
@@ -279,10 +279,10 @@ const testSwap = async (
   }
   // Create fallback providers
   const rpcProviderUrls = [
-    'https://rpcapi.fantom.network',
-    'https://rpc.fantom.network',
-    'https://rpc2.fantom.network',
-    'https://rpc3.fantom.network',
+    // 'https://rpcapi.fantom.network',
+    // 'https://rpc.fantom.network',
+    // 'https://rpc2.fantom.network',
+    // 'https://rpc3.fantom.network',
     'https://rpc.ftm.tools'
   ]
   const providers = []
@@ -296,6 +296,15 @@ const testSwap = async (
   // Get the router method and params
   const { swapAmount, routerMethodName, path } = await getRouterSwapParams(
     testSwapRequest
+  )
+  console.log(
+    '\x1b[37m\x1b[41m' +
+      `{swapAmount, routerMethodName, path}: ${JSON.stringify(
+        { swapAmount, routerMethodName, path },
+        null,
+        2
+      )}` +
+      '\x1b[0m'
   )
 
   // Generate signed swap tx using a provided router
@@ -319,7 +328,7 @@ const testSwap = async (
   // Broadcast the TX
   const broadcastRes = await tx.wait()
   console.log(
-    '\x1b[30m\x1b[42m' +
+    '\x1b[37m\x1b[44m' +
       `broadcastRes: ${JSON.stringify(broadcastRes, null, 2)}` +
       '\x1b[0m'
   )
@@ -327,9 +336,9 @@ const testSwap = async (
 
 testSwap(
   'FTM', // nativeCurrency
-  'FTM', // fromCurrency
-  'BOO', // toCurrency
-  '0.01', // amount
+  'BOO', // fromCurrency
+  'FTM', // toCurrency
+  '10000000000000000', // 0.01 amount
   '1f25216e2b05a01857eeb4936bca1e615da301c0932927b71f5e29e6ec1e1cb9', // fromPrivateKey
   '0x749411cf4DA88194581921Ae55f6fc4357D3b0f2', // fromAddress
   '0x749411cf4DA88194581921Ae55f6fc4357D3b0f2'
