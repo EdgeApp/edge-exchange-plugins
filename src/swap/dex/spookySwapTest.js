@@ -1,303 +1,336 @@
+/* eslint-disable no-console */
 // @flow
 
-import { ethers } from 'ethers'
-import readlineSync from 'readline-sync'
-import Web3 from 'web3'
+import { FallbackProvider } from '@ethersproject/providers'
+import { type EdgeMetaToken } from 'edge-core-js/types'
+import { ethers, Transaction } from 'ethers'
 
-import { FANTOM_MAINNET_RPC } from './constants.js'
+import { type RouterTxProviderMap } from './dexTypes.js'
 import {
-  BOO_ADDRESS,
-  BOO_CONTRACT_ABI,
-  SPOOKYSWAP_DEPOSIT_CONTRACT_ABI,
-  SPOOKYSWAP_DEPOSIT_CONTRACT_ADDRESS,
-  SPOOKYSWAP_FACTORY_ABI,
-  SPOOKYSWAP_FACTORY_ADDRESS,
   SPOOKYSWAP_ROUTER_ABI,
   SPOOKYSWAP_ROUTER_ADDRESS,
-  SPOOKYSWAP_WITHDRAW_CONTRACT_ABI,
-  SPOOKYSWAP_WITHDRAW_CONTRACT_ADDRESS,
-  TOMB_ADDRESS,
-  uniswapV2PairABI,
-  WFTM_ADDRESS,
-  wFTM_BOO_MASTER_CONTRACT_ABI,
-  wFTM_BOO_MASTERCHEF_CONTRACT,
-  wFTMABI,
-  wFTMBOOspLPAddress
-} from './contracts.js'
-import { convertToHex } from './functionCalls.js'
-
-const rpcProviderUrls = [
-  'https://rpcapi.fantom.network',
-  'https://rpc.fantom.network',
-  'https://rpc2.fantom.network',
-  'https://rpc3.fantom.network',
-  'https://rpc.ftm.tools'
-]
-
-const providers = []
-for (const address of rpcProviderUrls) {
-  const provider = new ethers.providers.JsonRpcProvider(address)
-  providers.push(provider)
-}
-const customHttpProvider = new ethers.providers.JsonRpcProvider(
-  'https://rpc.ftm.tools'
-) // new ethers.providers.FallbackProvider(providers, 1);
-// const dummyProvider = new Web3(new Web3.providers.HttpProvider("https://www.google.com"));
-
-const key = '1f25216e2b05a01857eeb4936bca1e615da301c0932927b71f5e29e6ec1e1cb9'
-const toAddress = '0x749411cf4DA88194581921Ae55f6fc4357D3b0f2'
-
-const account = new ethers.Wallet(key, customHttpProvider)
-const booContract = new ethers.Contract(
-  BOO_ADDRESS,
-  BOO_CONTRACT_ABI,
-  customHttpProvider
-)
-const tombContract = new ethers.Contract(
-  TOMB_ADDRESS,
-  BOO_CONTRACT_ABI,
-  account
-)
-const wFTMContract = new ethers.Contract(
-  WFTM_ADDRESS,
-  wFTMABI,
-  customHttpProvider
-)
-const wFTMBOOspLPContract = new ethers.Contract(
-  wFTMBOOspLPAddress,
-  uniswapV2PairABI,
-  customHttpProvider
-)
-const wFTMBooContract = new ethers.Contract(
-  wFTM_BOO_MASTERCHEF_CONTRACT,
-  wFTM_BOO_MASTER_CONTRACT_ABI,
-  account
-)
-const spookyRouter = new ethers.Contract(
-  SPOOKYSWAP_ROUTER_ADDRESS,
-  SPOOKYSWAP_ROUTER_ABI,
-  account
-)
-const cachedPairDatas = [
-  {
-    tokenAddresses: [WFTM_ADDRESS, BOO_ADDRESS],
-    lpAddress: '0xec7178f4c41f346b2721907f5cf7628e388a7a58'
-  },
-  {
-    tokenAddresses: [BOO_ADDRESS, TOMB_ADDRESS],
-    lpAddress: '0xe193De3E2ADE715A87A339AB7a1825fBc468aEF8'
-  },
-  {
-    tokenAddresses: [WFTM_ADDRESS, TOMB_ADDRESS],
-    lpAddress: '0x2A651563C9d3Af67aE0388a5c8F89b867038089e'
-  }
-]
-
-// TODO: remove
-export const getRouterMethodName = (
-  isFromNativeCurrency,
-  isToNativeCurrency
-) => {
-  if (isFromNativeCurrency && isToNativeCurrency)
-    throw new Error('Invalid swap: Cannot swap to the same native currency')
-
-  let retVal
-  if (isFromNativeCurrency)
-    retVal = {
-      routerMethodName: 'swapExactETHForTokens',
-      isAmountInParam: false
-    }
-  else if (isToNativeCurrency)
-    retVal = {
-      routerMethodName: 'swapExactTokensForETH',
-      isAmountInParam: true
-    }
-  else
-    retVal = {
-      routerMethodName: 'swapExactTokensForTokens',
-      isAmountInParam: true
-    }
-
-  console.log(
-    '\x1b[30m\x1b[42m' +
-      `methodName: ${JSON.stringify(retVal, null, 2)}` +
-      '\x1b[0m'
-  )
-  return retVal
-}
+  uniswapV2PairABI
+} from './spookyContracts.js'
 
 /**
- * TODO: Break each case into a named fn swapExactETHForTokens(),
- * swapExactTokensForETH(), swapExactTokensForTokens(), etc.
+ * Check first if the LP address exists in our cached data.
+ * If not found, try to query the factory smart contract.
  *
+ * TODO: May not be needed...
+ * Can probably calculate rates from the router's getAmountsOut()
  */
-
-export const getRouterTransaction = async (
-  router,
-  isFromNativeCurrency,
-  isToNativeCurrency,
-  swapInputAmount,
-  swapOutputAmount,
-  path,
-  receiveAddress,
-  deadline
-) => {
-  const { routerMethodName, isAmountInParam } = getRouterMethodName(
-    isFromNativeCurrency,
-    isToNativeCurrency
-  )
-
-  if (isAmountInParam)
-    return await router[routerMethodName](
-      swapInputAmount.toHexString(),
-      swapOutputAmount.toHexString(),
-      path,
-      receiveAddress,
-      deadline,
-      {
-        gasLimit: ethers.utils.hexlify(340722),
-        gasPrice: ethers.utils.parseUnits('350', 'gwei')
-      }
-    )
-  else {
-    return await router[routerMethodName](
-      swapOutputAmount.toHexString(),
-      // '0x00',
-      path,
-      receiveAddress,
-      deadline,
-      {
-        gasLimit: ethers.utils.hexlify(340722),
-        gasPrice: ethers.utils.parseUnits('350', 'gwei'),
-        value: swapInputAmount.toHexString()
-      }
-    )
-  }
-}
-
-export async function getRateAndPath(
-  fromTokenAddress: string,
-  toTokenAddress: string,
-  lpContract: ethers.Contract
-): Promise<{ exchangeRate: number, path: string[] }> {
-  const exchangeRate = await lpContract
-    .getReserves()
-    .then(reserves => Number(reserves._reserve0) / Number(reserves._reserve1))
-
-  // Check if the token being swapped is the 0 or 1 token index and invert the
-  // rate if needed.
-  // token1's address as a value literal is always less than token1's address
-  // value
-  const isFromToken0 =
-    convertToDecimal(fromTokenAddress) > convertToDecimal(toTokenAddress)
-
-  return {
-    exchangeRate: isFromToken0 ? exchangeRate : 1 / exchangeRate,
-    path: ['0x749411cf4DA88194581921Ae55f6fc4357D3b0f2', toTokenAddress]
-    // path: isFromToken0
-    //   ? [fromTokenAddress, toTokenAddress]
-    //   : [toTokenAddress, fromTokenAddress]
-  }
-}
-
-async function getLpContract(
+const getLpContract = async (
   tokenAddress0,
   tokenAddress1,
-  pairDatas,
-  provider
-) {
-  const foundPairData = pairDatas.find(pairData =>
-    pairData.tokenAddresses.every(pairTokenAddress => {
+  cachedPairDatas,
+  rpcProvider: FallbackProvider,
+  factory: ethers.Contract
+): ethers.Contract => {
+  let foundPairData = cachedPairDatas.find(cachedPairData =>
+    cachedPairData.tokenAddresses.every(pairTokenAddress => {
       return (
         tokenAddress0.toUpperCase() === pairTokenAddress.toUpperCase() ||
         tokenAddress1.toUpperCase() === pairTokenAddress.toUpperCase()
       )
     })
   )
-  const lpAddress = foundPairData?.lpAddress
 
-  if (lpAddress == null)
-    throw new Error(
-      `Could not find LP contract for tokens: ${tokenAddress0} ${tokenAddress1}`
-    )
+  // Try to query the factory contract for the LP address
+  if (foundPairData == null) {
+    try {
+      foundPairData = await factory.getPair(tokenAddress0, tokenAddress1)
+      if (foundPairData === null) throw new Error('No pair result from factory')
+    } catch (e) {
+      throw new Error(
+        `Could not find LP address for tokens: ${tokenAddress0} ${tokenAddress1} (${JSON.stringify(
+          e
+        )})`
+      )
+    }
+  }
 
-  return new ethers.Contract(lpAddress, uniswapV2PairABI, provider)
+  const lpAddress = foundPairData.lpAddress
+  return new ethers.Contract(lpAddress, uniswapV2PairABI, rpcProvider)
 }
 
-/** TODO: Split into:
- * 1. getSwapDetails() -
+const getMetaTokenAddress = (
+  metaTokens: EdgeMetaToken[],
+  tokenCurrencyCode: string
+): string => {
+  const metaToken = metaTokens.find(mt => mt.currencyCode === tokenCurrencyCode)
+
+  if (metaToken == null || metaToken?.contractAddress === undefined)
+    throw new Error('Could not find contract address for ' + tokenCurrencyCode)
+
+  return metaToken.contractAddress ?? ''
+}
+
+/**
+ * Calls upon the router (with sign privileges) to generate a signed swap transaction.
  */
-async function testSwap() {
-  // TODO: getSwapDetails() START
-  const swapInputAmount = ethers.utils.parseEther('0.01', 'ether')
-  console.log(
-    '\x1b[34m\x1b[43m' +
-      `Swap Input Amount: ${ethers.utils
-        .formatEther(swapInputAmount)
-        .toString()} (${swapInputAmount})` +
-      '\x1b[0m'
-  )
+const RouterTxProviders = (
+  router: ethers.Contract,
+  path: string[],
+  swapAmount: ethers.BigNumber,
+  receiveAddress: string,
+  deadline: string
+): RouterTxProviderMap => {
+  const hexZero = '0x00'
 
-  const path = [WFTM_ADDRESS, BOO_ADDRESS] // ETH for Tokens
-  // const path = [BOO_ADDRESS, WFTM_ADDRESS] // Tokens for Eth
+  // TODO: Do gasLimit, gasPrice, and value get set properly from accountbased on the resulting tx?
+  // TODO: OR do we need to grab fees from accountbased and populate this here?
+  const networkFees = {
+    gasLimit: ethers.utils.hexlify(340722),
+    gasPrice: ethers.utils.parseUnits('350', 'gwei')
+  }
 
-  const swapOutputAmount = await spookyRouter
-    .getAmountsOut(swapInputAmount, path)
-    .then(getAmountsOutRes => {
-      // console.log('\x1b[30m\x1b[42m' + `Router getAmountsOut: ${JSON.stringify(getAmountsOutRes, null, 2)}` + '\x1b[0m')
-      // console.log('\x1b[30m\x1b[42m' + `[0]:
-      // ${ethers.utils.formatEther(getAmountsOutRes[0]).toString()}, [1]:
-      // ${ethers.utils.formatEther(getAmountsOutRes[1]).toString()}` +
-      // '\x1b[0m')
-      // return getAmountsOutRes[1].sub(getAmountsOutRes[1].div(99))
-
-      const [inputBN, outputBN] = getAmountsOutRes
-      console.log(
-        '\x1b[34m\x1b[43m' +
-          `{inputBN, outputBN}: ${JSON.stringify(
-            { inputBN, outputBN },
-            null,
-            2
-          )}` +
-          '\x1b[0m'
+  return {
+    swapExactETHForTokens: (minReceivedTokens?) =>
+      router.swapExactETHForTokens(
+        minReceivedTokens?.toHexString() ?? hexZero,
+        path,
+        receiveAddress,
+        deadline,
+        {
+          ...networkFees,
+          value: swapAmount.toHexString()
+        }
+      ),
+    swapExactTokensForETH: (minReceivedEth?) =>
+      router.swapExactTokensForETH(
+        swapAmount.toHexString(),
+        minReceivedEth?.toHexString() ?? hexZero,
+        path,
+        receiveAddress,
+        deadline,
+        networkFees
+      ),
+    swapExactTokensForTokens: (minReceivedTokens?) =>
+      router.swapExactTokensForTokens(
+        swapAmount.toHexString(),
+        minReceivedTokens?.toHexString() ?? hexZero,
+        path,
+        receiveAddress,
+        deadline,
+        networkFees
       )
-      return outputBN.sub(outputBN.div(99))
-    })
-  // getSwapDetails() END
+  }
+}
 
-  console.log(
-    '\x1b[30m\x1b[42m' +
-      `Swap output amount: ${JSON.stringify(
-        ethers.utils.formatEther(swapOutputAmount).toString(),
-        null,
-        2
-      )}` +
-      '\x1b[0m'
+/**
+ * Translate our swap params into what the router smart contract needs to
+ * perform the swap.
+ */
+const getRouterSwapParams = async (edgeSwapRequest: any) => {
+  const {
+    fromWallet,
+    toWallet,
+    fromCurrencyCode,
+    toCurrencyCode
+  } = edgeSwapRequest
+  const currencyInfo = fromWallet.currencyInfo
+
+  // Sanity check: Both wallets should be of the same chain.
+  if (
+    fromWallet.currencyInfo.currencyCode !== toWallet.currencyInfo.currencyCode
+  )
+    throw new Error('SpookySwap: Mismatched wallet chain')
+
+  // TODO: Use our new denom implementation to get native amounts
+  const nativeCurrencyCode = currencyInfo.currencyCode
+  const isFromNativeCurrency = fromCurrencyCode === nativeCurrencyCode
+  const isToNativeCurrency = toCurrencyCode === nativeCurrencyCode
+  const wrappedCurrencyCode = `W${nativeCurrencyCode}`
+
+  // TODO: Do different wallets share the same custom metaTokens?
+  const metaTokens: EdgeMetaToken[] = currencyInfo.metaTokens
+
+  const fromTokenAddress = getMetaTokenAddress(
+    metaTokens,
+    isFromNativeCurrency ? wrappedCurrencyCode : fromCurrencyCode
+  )
+  const toTokenAddress = getMetaTokenAddress(
+    metaTokens,
+    isToNativeCurrency ? wrappedCurrencyCode : toCurrencyCode
   )
 
-  // TODO: generateSignedTx() START
-  const tx = await getRouterTransaction(
-    spookyRouter,
-    true,
-    false,
-    swapInputAmount,
-    swapOutputAmount,
+  // Determine router method name and params
+  if (isFromNativeCurrency && isToNativeCurrency)
+    throw new Error('Invalid swap: Cannot swap to the same native currency')
+  const path = [fromTokenAddress, toTokenAddress]
+  const swapAmount = edgeSwapRequest.nativeAmount
+
+  if (isFromNativeCurrency && !isToNativeCurrency)
+    return {
+      routerMethodName: 'swapExactETHForTokens',
+      path: path,
+      swapAmount
+    }
+  if (!isFromNativeCurrency && isToNativeCurrency)
+    return {
+      routerMethodName: 'swapExactTokensForETH',
+      path: path,
+      swapAmount
+    }
+  if (!isFromNativeCurrency && !isToNativeCurrency)
+    return {
+      routerMethodName: 'swapExactTokensForTokens',
+      path: path,
+      swapAmount
+    }
+  // TODO: Add wrap/unwrap methods
+  else throw new Error('Unhandled swap type')
+}
+
+const generateSignedSwapTx = async (
+  swapRouter: ethers.Contract,
+  swapAmount: ethers.BigNumber,
+  routerMethodName: string,
+  receiveAddress: string,
+  path: string[]
+): Promise<Transaction> => {
+  // Get an estimated amount to receive
+  const receiveAmount = await swapRouter
+    .getAmountsOut(swapAmount, path)
+    .then(getAmountsOutRes => {
+      // eslint-disable-next-line no-unused-vars
+      const [_inputBN, outputBN] = getAmountsOutRes
+      // 1% slippage
+      return outputBN.sub(outputBN.mul(0.99))
+    })
+
+  const routerFns = RouterTxProviders(
+    swapRouter,
     path,
-    toAddress,
+    swapAmount,
+    receiveAddress,
     (Math.floor(Date.now() / 1000) + 60 * 5).toString()
   )
 
+  return await routerFns[routerMethodName](receiveAmount)
+}
+
+/**
+ * Test fn
+ */
+const testSwap = async (
+  nativeCurrency: string,
+  fromCurrency: string,
+  toCurrency: string,
+  amount: string,
+  fromPrivateKey: string,
+  fromAddress: string,
+  receiveAddress: string
+) => {
+  const testSwapRequest = {
+    fromWallet: {
+      currencyInfo: {
+        currencyCode: nativeCurrency,
+        metaTokens: [
+          {
+            currencyCode: 'WFTM',
+            currencyName: 'Wrapped Fantom',
+            denominations: [
+              {
+                name: 'WFTM',
+                multiplier: '1000000000000000000'
+              }
+            ],
+            contractAddress: '0x21be370d5312f44cb42ce377bc9b8a0cef1a4c83'
+          },
+          {
+            currencyCode: 'BOO',
+            currencyName: 'SpookyToken',
+            denominations: [
+              {
+                name: 'BOO',
+                multiplier: '1000000000000000000'
+              }
+            ],
+            contractAddress: '0x841fad6eae12c286d1fd18d1d525dffa75c7effe'
+          },
+          {
+            currencyCode: 'TOMB',
+            currencyName: 'Tomb',
+            denominations: [
+              {
+                name: 'TOMB',
+                multiplier: '1000000000000000000'
+              }
+            ],
+            contractAddress: '0x6c021Ae822BEa943b2E66552bDe1D2696a53fbB7'
+          }
+        ]
+      }
+    },
+    toWallet: {
+      currencyInfo: {
+        currencyCode: nativeCurrency
+      }
+    },
+
+    // What?
+    fromCurrencyCode: fromCurrency,
+    toCurrencyCode: toCurrency,
+
+    // How much?
+    nativeAmount: amount,
+    quoteFor: 'from'
+  }
+  // Create fallback providers
+  const rpcProviderUrls = [
+    'https://rpcapi.fantom.network',
+    'https://rpc.fantom.network',
+    'https://rpc2.fantom.network',
+    'https://rpc3.fantom.network',
+    'https://rpc.ftm.tools'
+  ]
+  const providers = []
+  for (const rpcServer of rpcProviderUrls) {
+    providers.push(new ethers.providers.JsonRpcProvider(rpcServer))
+  }
+
+  // Only one provider is required for quorum
+  const fallbackProvider = new ethers.providers.FallbackProvider(providers, 1)
+
+  // Get the router method and params
+  const { swapAmount, routerMethodName, path } = await getRouterSwapParams(
+    testSwapRequest
+  )
+
+  // Generate signed swap tx using a provided router
+  const swapRouter = new ethers.Contract(
+    SPOOKYSWAP_ROUTER_ADDRESS,
+    SPOOKYSWAP_ROUTER_ABI,
+    new ethers.Wallet(fromPrivateKey, fallbackProvider)
+  )
+
+  const tx = await generateSignedSwapTx(
+    swapRouter,
+    swapAmount,
+    routerMethodName,
+    receiveAddress,
+    path
+  )
   console.log(
     '\x1b[30m\x1b[42m' + `tx: ${JSON.stringify(tx, null, 2)}` + '\x1b[0m'
   )
 
-  // TODO: broaadcast...() START
-  const receipt = await tx.wait()
+  // Broadcast the TX
+  const broadcastRes = await tx.wait()
   console.log(
     '\x1b[30m\x1b[42m' +
-      `receipt: ${JSON.stringify(receipt, null, 2)}` +
+      `broadcastRes: ${JSON.stringify(broadcastRes, null, 2)}` +
       '\x1b[0m'
   )
 }
 
-testSwap()
+testSwap(
+  'FTM', // nativeCurrency
+  'FTM', // fromCurrency
+  'BOO', // toCurrency
+  '0.01', // amount
+  '1f25216e2b05a01857eeb4936bca1e615da301c0932927b71f5e29e6ec1e1cb9', // fromPrivateKey
+  '0x749411cf4DA88194581921Ae55f6fc4357D3b0f2', // fromAddress
+  '0x749411cf4DA88194581921Ae55f6fc4357D3b0f2'
+) // receiveAddress
