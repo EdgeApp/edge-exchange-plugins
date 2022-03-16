@@ -17,7 +17,8 @@ import {
 import {
   type InvalidCurrencyCodes,
   checkInvalidCodes,
-  makeSwapPluginQuote, getCodes
+  makeSwapPluginQuote, getCodes,
+  getCodesWithMainnetTranscription
 } from '../swap-helpers.js'
 
 const pluginId = 'letsexchange'
@@ -75,32 +76,19 @@ const INVALID_CURRENCY_CODES: InvalidCurrencyCodes = {
   }
 }
 
+// Network names that don't match parent network currency code
+const networks = {
+  ETH: 'ERC20',
+  BNB: 'BEP2',
+  TRX: 'TRC20',
+  BSC: 'BEP20'
+}
+
 async function getAddress(wallet: EdgeCurrencyWallet, currencyCode: string) {
   const addressInfo = await wallet.getReceiveAddress({ currencyCode })
   return addressInfo.legacyAddress && !dontUseLegacy[currencyCode]
     ? addressInfo.legacyAddress
     : addressInfo.publicAddress
-}
-
-function networkCodeConverter(networkCode: string): string {
-  switch (networkCode) {
-    case 'ETH':
-      networkCode = 'ERC20';
-      break;
-    case 'BNB':
-      networkCode = 'BEP2';
-      break;
-    case 'TRX':
-      networkCode = 'TRC20';
-      break;
-    case 'BSC':
-      networkCode = 'BEP20';
-      break;
-    default:
-      break;
-  }
-
-  return networkCode;
 }
 
 export function makeLetsExchangePlugin(
@@ -146,24 +134,6 @@ export function makeLetsExchangePlugin(
         getAddress(request.toWallet, request.toCurrencyCode)
       ])
 
-      const {
-        fromCurrencyCode,
-        toCurrencyCode,
-        fromMainnetCode,
-        toMainnetCode
-      } = getCodes(request)
-
-      let networkFrom = fromMainnetCode;
-      let networkTo = toMainnetCode;
-
-      if (networkFrom !== fromCurrencyCode) {
-        networkFrom = networkCodeConverter(networkFrom);
-      }
-
-      if (networkTo !== toCurrencyCode) {
-        networkTo = networkCodeConverter(networkTo);
-      }
-
       // Convert the native amount to a denomination:
       const quoteAmount =
         request.quoteFor === 'from'
@@ -178,10 +148,14 @@ export function makeLetsExchangePlugin(
 
       // Swap the currencies if we need a reverse quote:
       const quoteParams = {
-        from: fromCurrencyCode,
-        to: toCurrencyCode,
-        network_from: networkFrom,
-        network_to: networkTo,
+        from: request.fromCurrencyCode,
+        to: request.toCurrencyCode,
+        network_from:
+          networks[request.fromWallet.currencyInfo.currencyCode] ??
+          request.fromWallet.currencyInfo.currencyCode,
+        network_to:
+          networks[request.toWallet.currencyInfo.currencyCode] ??
+          request.toWallet.currencyInfo.currencyCode,
         amount: quoteAmount
       }
       log('quoteParams:', quoteParams)
@@ -225,10 +199,14 @@ export function makeLetsExchangePlugin(
       const sendReply = await call(uri + 'transaction', request, {
         params: {
           deposit_amount: fromAmount,
-          coin_from: fromCurrencyCode,
-          coin_to: toCurrencyCode,
-          network_from: networkFrom,
-          network_to: networkTo,
+          coin_from: request.fromCurrencyCode,
+          coin_to: request.toCurrencyCode,
+          network_from:
+            networks[request.fromWallet.currencyInfo.currencyCode] ??
+            request.fromWallet.currencyInfo.currencyCode,
+          network_to:
+            networks[request.toWallet.currencyInfo.currencyCode] ??
+            request.toWallet.currencyInfo.currencyCode,
           withdrawal: toAddress,
           return: fromAddress,
           // return_extra_id: 'empty',
