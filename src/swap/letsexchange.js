@@ -77,11 +77,11 @@ const INVALID_CURRENCY_CODES: InvalidCurrencyCodes = {
 }
 
 // Network names that don't match parent network currency code
-const networks = {
-  ETH: 'ERC20',
-  BNB: 'BEP2',
-  TRX: 'TRC20',
-  BSC: 'BEP20'
+const MAINNET_CODE_TRANSCRIPTION = {
+  ethereum: 'ERC20',
+  binancesmartchain: 'BEP20',
+  tron: 'TRC20',
+  bnb: 'BEP2',
 }
 
 async function getAddress(wallet: EdgeCurrencyWallet, currencyCode: string) {
@@ -146,16 +146,18 @@ export function makeLetsExchangePlugin(
               request.toCurrencyCode
             )
 
+
+      const {
+        fromMainnetCode,
+        toMainnetCode
+      } = getCodesWithMainnetTranscription(request, MAINNET_CODE_TRANSCRIPTION)
+
       // Swap the currencies if we need a reverse quote:
       const quoteParams = {
         from: request.fromCurrencyCode,
         to: request.toCurrencyCode,
-        network_from:
-          networks[request.fromWallet.currencyInfo.currencyCode] ??
-          request.fromWallet.currencyInfo.currencyCode,
-        network_to:
-          networks[request.toWallet.currencyInfo.currencyCode] ??
-          request.toWallet.currencyInfo.currencyCode,
+        network_from: fromMainnetCode,
+        network_to: toMainnetCode,
         amount: quoteAmount
       }
       log('quoteParams:', quoteParams)
@@ -201,12 +203,8 @@ export function makeLetsExchangePlugin(
           deposit_amount: fromAmount,
           coin_from: request.fromCurrencyCode,
           coin_to: request.toCurrencyCode,
-          network_from:
-            networks[request.fromWallet.currencyInfo.currencyCode] ??
-            request.fromWallet.currencyInfo.currencyCode,
-          network_to:
-            networks[request.toWallet.currencyInfo.currencyCode] ??
-            request.toWallet.currencyInfo.currencyCode,
+          network_from: fromMainnetCode,
+          network_to: toMainnetCode,
           withdrawal: toAddress,
           return: fromAddress,
           // return_extra_id: 'empty',
