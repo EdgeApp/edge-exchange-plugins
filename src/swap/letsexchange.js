@@ -1,5 +1,13 @@
 // @flow
 
+import {
+  asBoolean,
+  asEither,
+  asNumber,
+  asObject,
+  asOptional,
+  asString
+} from 'cleaners'
 import { lt } from 'biggystring'
 import {
   type EdgeCorePluginOptions,
@@ -33,28 +41,27 @@ const uri = 'https://api.letsexchange.io/api/v1/'
 
 const expirationMs = 1000 * 60 * 20
 
-type QuoteInfo = {
-  transaction_id: string,
-  status: string,
-  coin_from: string,
-  coin_to: string,
-  network_from: string,
-  network_to: string,
-  deposit_amount: string,
-  withdrawal_amount: string,
-  deposit: string,
-  deposit_extra_id: string,
-  withdrawal: string,
-  withdrawal_extra_id: string,
-  rate: string,
-  fee: string,
-  return: string,
-  return_extra_id: string,
-  final_amount: string,
-  hash_in: string,
-  hash_out: string,
-  isEstimate: boolean
-}
+const asQuoteInfo = asObject({
+  transaction_id: asString,
+  status: asString,
+  coin_from: asString,
+  coin_to: asString,
+  network_from: asString,
+  network_to: asString,
+  deposit_amount: asString,
+  withdrawal_amount: asString,
+  deposit: asString,
+  deposit_extra_id: asString,
+  withdrawal: asString,
+  withdrawal_extra_id: asString,
+  rate: asString,
+  fee: asString,
+  return: asString,
+  final_amount: asString,
+  hash_in: asString,
+  hash_out: asString,
+  isEstimate: asBoolean,
+})
 
 const dontUseLegacy = {
   DGB: true
@@ -207,8 +214,6 @@ export function makeLetsExchangePlugin(
           network_to: toMainnetCode,
           withdrawal: toAddress,
           return: fromAddress,
-          // return_extra_id: 'empty',
-          // withdrawal_extra_id: 'empty',
           return_extra_id: null,
           withdrawal_extra_id: null,
           affiliate_id: initOptions.apiKey,
@@ -218,8 +223,29 @@ export function makeLetsExchangePlugin(
           isEstimate: false
         }
       })
+
       log('sendReply' + sendReply)
-      const quoteInfo: QuoteInfo = sendReply
+      const quoteInfo = asQuoteInfo({
+        transaction_id: sendReply.transaction_id,
+        status: sendReply.status,
+        coin_from: sendReply.coin_from,
+        coin_to: sendReply.coin_to,
+        network_from: sendReply.network_from,
+        network_to: sendReply.network_to,
+        deposit_amount: sendReply.deposit_amount,
+        withdrawal_amount: sendReply.withdrawal_amount,
+        deposit: sendReply.deposit,
+        deposit_extra_id: sendReply.deposit_extra_id,
+        withdrawal: sendReply.withdrawal,
+        withdrawal_extra_id: sendReply.withdrawal_extra_id,
+        rate: sendReply.rate,
+        fee: sendReply.fee,
+        return: sendReply.return,
+        final_amount: sendReply.final_amount,
+        hash_in: sendReply.hash_in,
+        hash_out: sendReply.hash_out,
+        isEstimate: sendReply.isEstimate,
+      })
 
       // Make the transaction:
       const spendInfo: EdgeSpendInfo = {
