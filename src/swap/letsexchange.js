@@ -225,27 +225,7 @@ export function makeLetsExchangePlugin(
       })
 
       log('sendReply' + sendReply)
-      const quoteInfo = asQuoteInfo({
-        transaction_id: sendReply.transaction_id,
-        status: sendReply.status,
-        coin_from: sendReply.coin_from,
-        coin_to: sendReply.coin_to,
-        network_from: sendReply.network_from,
-        network_to: sendReply.network_to,
-        deposit_amount: sendReply.deposit_amount,
-        withdrawal_amount: sendReply.withdrawal_amount,
-        deposit: sendReply.deposit,
-        deposit_extra_id: sendReply.deposit_extra_id,
-        withdrawal: sendReply.withdrawal,
-        withdrawal_extra_id: sendReply.withdrawal_extra_id,
-        rate: sendReply.rate,
-        fee: sendReply.fee,
-        return: sendReply.return,
-        final_amount: sendReply.final_amount,
-        hash_in: sendReply.hash_in,
-        hash_out: sendReply.hash_out,
-        isEstimate: sendReply.isEstimate,
-      })
+      const quoteInfo = asQuoteInfo(sendReply)
 
       // Make the transaction:
       const spendInfo: EdgeSpendInfo = {
