@@ -1,14 +1,7 @@
 // @flow
 
-import {
-  asBoolean,
-  asEither,
-  asNumber,
-  asObject,
-  asOptional,
-  asString
-} from 'cleaners'
 import { lt } from 'biggystring'
+import { asBoolean, asObject, asString } from 'cleaners'
 import {
   type EdgeCorePluginOptions,
   type EdgeCurrencyWallet,
@@ -25,8 +18,8 @@ import {
 import {
   type InvalidCurrencyCodes,
   checkInvalidCodes,
-  makeSwapPluginQuote, getCodes,
-  getCodesWithMainnetTranscription
+  getCodesWithMainnetTranscription,
+  makeSwapPluginQuote
 } from '../swap-helpers.js'
 
 const pluginId = 'letsexchange'
@@ -60,7 +53,7 @@ const asQuoteInfo = asObject({
   final_amount: asString,
   hash_in: asString,
   hash_out: asString,
-  isEstimate: asBoolean,
+  isEstimate: asBoolean
 })
 
 const dontUseLegacy = {
@@ -88,7 +81,7 @@ const MAINNET_CODE_TRANSCRIPTION = {
   ethereum: 'ERC20',
   binancesmartchain: 'BEP20',
   tron: 'TRC20',
-  bnb: 'BEP2',
+  bnb: 'BEP2'
 }
 
 async function getAddress(wallet: EdgeCurrencyWallet, currencyCode: string) {
@@ -152,7 +145,6 @@ export function makeLetsExchangePlugin(
               request.nativeAmount,
               request.toCurrencyCode
             )
-
 
       const {
         fromMainnetCode,
