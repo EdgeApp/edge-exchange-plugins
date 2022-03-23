@@ -29,7 +29,7 @@ const swapInfo: EdgeSwapInfo = {
   supportEmail: 'support@letsexchange.io'
 }
 
-const orderUri = 'https://api.letsexchange.io/?exchangeId='
+const orderUri = 'https://letsexchange.io/?exchangeId='
 const uri = 'https://api.letsexchange.io/api/v1/'
 
 const expirationMs = 1000 * 60 * 20
