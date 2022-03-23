@@ -1,5 +1,37 @@
 # edge-exchange-plugins
 
+# 0.12.14 (2022-03-02)
+
+- Fix calling denomination methods from wrong wallet
+
+# 0.12.13 (2022-03-02)
+
+- Re-enable BNB Beacon Chain
+
+# 0.12.12 (2022-03-02)
+
+- Changelly: Add BNB Smart Chain support
+- Disable BNB Beacon Chain in all swap plugins
+- Use pluginIds instead of currency codes in transfer plugin
+
+# 0.12.11 (2022-02-23)
+
+- Add Binance Smart Chain to swap partners
+- Changenow: Fix corner case where standard flow was skipped
+- Use pluginIds instead of currency code keys in transcription and invalid-code maps
+- Add helper function and transcription maps for changing mainnet codes
+
+# 0.12.10 (2022-02-16)
+
+- Exolix: Update plugin to use mainchain:tokencode values in requests
+- Coingecko: Add Celo and Aave unique IDs
+- Godex: Disable DGB selling
+
+# 0.12.9 (2022-02-10)
+
+- Coingecko: Add BOO unique ID
+- Nomics: Add BOO unique ID
+
 # 0.12.8 (2022-01-28)
 
 - Coingecko: Add new tokens

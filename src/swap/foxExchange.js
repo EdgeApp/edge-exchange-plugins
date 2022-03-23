@@ -66,17 +66,21 @@ type OrderInfo = {
 
 const INVALID_CURRENCY_CODES: InvalidCurrencyCodes = {
   from: {
-    ETH: ['MATIC'],
-    AVAX: 'allTokens',
-    FTM: 'allCodes',
-    MATIC: 'allCodes'
+    ethereum: ['MATIC'],
+    avalanche: 'allTokens',
+    binancesmartchain: 'allCodes',
+    celo: 'allTokens',
+    fantom: 'allCodes',
+    polygon: 'allCodes'
   },
   to: {
-    ETH: ['MATIC'],
-    AVAX: 'allTokens',
-    FTM: 'allCodes',
-    MATIC: 'allCodes',
-    ZEC: ['ZEC']
+    ethereum: ['MATIC'],
+    avalanche: 'allTokens',
+    binancesmartchain: 'allCodes',
+    celo: 'allTokens',
+    fantom: 'allCodes',
+    polygon: 'allCodes',
+    zcash: ['ZEC']
   }
 }
 

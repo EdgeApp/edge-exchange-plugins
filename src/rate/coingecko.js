@@ -126,7 +126,27 @@ const coinGeckoMap = {
   MIM: 'magic-internet-money',
   BUSD: 'binance-usd',
   UNI: 'uniswap',
-  FTM: 'fantom'
+  BOO: 'spookyswap',
+  FTM: 'fantom',
+  CELO: 'celo',
+  CUSD: 'celo-dollar',
+  CEUR: 'celo-euro',
+  AYFI: 'aave-yfi',
+  ALINK: 'aave-link',
+  ADAI: 'aave-dai',
+  ABAT: 'aave-bat',
+  AWETH: 'aave-weth',
+  AWBTC: 'aave-wbtc',
+  ASNX: 'aave-snx',
+  AREN: 'aave-ren',
+  AUSDT: 'aave-usdt',
+  AMKR: 'aave-mkr',
+  AMANA: 'aave-mana',
+  AZRX: 'aave-zrx',
+  AKNC: 'aave-knc',
+  AUSDC: 'aave-usdc',
+  ASUSD: 'aave-susd',
+  AUNI: 'aave-uni'
 }
 
 export function makeCoinGeckoPlugin(

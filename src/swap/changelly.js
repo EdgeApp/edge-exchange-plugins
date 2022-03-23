@@ -27,25 +27,32 @@ import {
 
 const INVALID_CURRENCY_CODES: InvalidCurrencyCodes = {
   from: {
-    ETH: ['FTM', 'MATIC'],
-    AVAX: 'allTokens',
-    MATIC: 'allCodes',
-    FTM: 'allCodes'
+    ethereum: ['BNB', 'FTM', 'MATIC'],
+    avalanche: 'allTokens',
+    binancesmartchain: 'allTokens',
+    polygon: 'allCodes',
+    celo: 'allTokens',
+    fantom: 'allCodes'
   },
   to: {
-    ETH: ['FTM', 'MATIC'],
-    AVAX: 'allTokens',
-    MATIC: 'allCodes',
-    FTM: 'allCodes',
-    ZEC: ['ZEC']
+    ethereum: ['BNB', 'FTM', 'MATIC'],
+    avalanche: 'allTokens',
+    binancesmartchain: 'allTokens',
+    polygon: 'allCodes',
+    celo: 'allTokens',
+    fantom: 'allCodes',
+    zcash: ['ZEC']
   }
 }
 
 // Invalid currency codes should *not* have transcribed codes
 // because currency codes with transcribed versions are NOT invalid
 const CURRENCY_CODE_TRANSCRIPTION = {
-  ETH: {
+  ethereum: {
     USDT: 'USDT20'
+  },
+  binancesmartchain: {
+    BNB: 'BNBBSC'
   }
 }
 
@@ -279,7 +286,7 @@ export function makeChangellyPlugin(
         sendReply.result.amountExpectedFrom,
         request.fromCurrencyCode
       )
-      const amountExpectedToTo = await request.fromWallet.denominationToNative(
+      const amountExpectedToTo = await request.toWallet.denominationToNative(
         sendReply.result.amountExpectedTo,
         request.toCurrencyCode
       )

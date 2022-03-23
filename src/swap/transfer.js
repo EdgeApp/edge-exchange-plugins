@@ -33,7 +33,10 @@ export function makeTransferPlugin(
       request: EdgeSwapRequest,
       userSettings: Object | void
     ): Promise<EdgeSwapQuote> {
-      if (request.fromCurrencyCode !== request.toCurrencyCode) {
+      if (
+        request.fromWallet.currencyInfo.pluginId !==
+        request.toWallet.currencyInfo.pluginId
+      ) {
         throw new SwapCurrencyError(
           swapInfo,
           request.fromCurrencyCode,

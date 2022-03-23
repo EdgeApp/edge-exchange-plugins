@@ -35,6 +35,25 @@ To enable in edge-react-gui please make sure that the appropriate truthy value (
 
 # Adding Your Exchange
 
+To test your exchange plugin, build the full application at [`edge-react-gui`](https://github.com/EdgeApp/edge-react-gui). Follow the README there for instructions on building and running the app.
+
+Clone this repo as a peer in the same directory as `edge-react-gui`. Then run
+
+```
+yarn
+yarn prepare
+```
+
+From within the `edge-react-gui`
+
+```
+yarn updot edge-exchange-plugins
+yarn prepare
+```
+
+Make appropriate changes to `edge-react-gui` to include your plugin. Search `edge-react-gui` for the string `changelly` and make similar changes for your plugin.
+You can then rebuild the `edge-react-gui` app and run and test the plugin. To do a swap with your plugin, go to Settings > Exchange Settings, then disable all other exchanges but yours. Then tap the bottom right `Exchange` button and try to do a swap. You'll of course need funds in your Edge account.
+
 Please be aware that when considering merging pull requests for additional exchanges we require the following:
 
 - Accompanying PR submitted to `edge-reports` that fetches transaction data to your exchange that is credited to Edge users
