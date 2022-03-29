@@ -145,6 +145,12 @@ export function makeConstantRatePlugin(
           toCurrency: 'ETH',
           rate: 1
         },
+        // MAI Finance
+        {
+          fromCurrency: 'MAI',
+          toCurrency: 'iso:USD',
+          rate: 1
+        },
         // AVAX wrapped tokens:
         {
           fromCurrency: 'BUSD.e',
