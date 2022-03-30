@@ -1,5 +1,9 @@
 # edge-exchange-plugins
 
+# 0.12.15 (2022-03-29)
+
+- Coingecko: Add TSHARE, TOMB, and MAI exchange rates
+
 # 0.12.14 (2022-03-02)
 
 - Fix calling denomination methods from wrong wallet
