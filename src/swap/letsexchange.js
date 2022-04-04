@@ -1,7 +1,7 @@
 // @flow
 
 import { lt } from 'biggystring'
-import { asBoolean, asObject, asString } from 'cleaners'
+import { asObject, asString } from 'cleaners'
 import {
   type EdgeCorePluginOptions,
   type EdgeCurrencyWallet,
@@ -21,6 +21,7 @@ import {
   getCodesWithMainnetTranscription,
   makeSwapPluginQuote
 } from '../swap-helpers.js'
+import { asOptionalBlank } from './changenow'
 
 const pluginId = 'letsexchange'
 const swapInfo: EdgeSwapInfo = {
@@ -39,21 +40,19 @@ const asQuoteInfo = asObject({
   status: asString,
   coin_from: asString,
   coin_to: asString,
-  network_from: asString,
-  network_to: asString,
+  coin_from_network: asString,
+  coin_to_network: asString,
   deposit_amount: asString,
   withdrawal_amount: asString,
   deposit: asString,
-  deposit_extra_id: asString,
+  deposit_extra_id: asOptionalBlank(asString),
   withdrawal: asString,
-  withdrawal_extra_id: asString,
+  withdrawal_extra_id: asOptionalBlank(asString),
   rate: asString,
   fee: asString,
   return: asString,
-  final_amount: asString,
-  hash_in: asString,
-  hash_out: asString,
-  isEstimate: asBoolean
+  hash_in: asOptionalBlank(asString),
+  hash_out: asOptionalBlank(asString)
 })
 
 const dontUseLegacy = {
@@ -159,6 +158,7 @@ export function makeLetsExchangePlugin(
         network_to: toMainnetCode,
         amount: quoteAmount
       }
+
       log('quoteParams:', quoteParams)
 
       // Calculate the amounts:
@@ -184,14 +184,13 @@ export function makeLetsExchangePlugin(
         )
         toNativeAmount = request.nativeAmount
       }
-      log('fromNativeAmount' + fromNativeAmount)
-      log('toNativeAmount' + toNativeAmount)
 
       // Check the minimum:
       const nativeMin = await request.fromWallet.denominationToNative(
         reply.min_amount,
         request.fromCurrencyCode
       )
+
       if (lt(fromNativeAmount, nativeMin)) {
         throw new SwapBelowLimitError(swapInfo, nativeMin)
       }
@@ -216,7 +215,7 @@ export function makeLetsExchangePlugin(
         }
       })
 
-      log('sendReply' + sendReply)
+      log('sendReply', sendReply)
       const quoteInfo = asQuoteInfo(sendReply)
 
       // Make the transaction:
@@ -245,6 +244,7 @@ export function makeLetsExchangePlugin(
           refundAddress: fromAddress
         }
       }
+
       log('spendInfo', spendInfo)
 
       const tx: EdgeTransaction = await request.fromWallet.makeSpend(spendInfo)
