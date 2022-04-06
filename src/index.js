@@ -19,6 +19,7 @@ import { makeGodexPlugin } from './swap/godex.js'
 import { makeSideshiftPlugin } from './swap/sideshift.js'
 import { makeSwitchainPlugin } from './swap/switchain.js'
 import { makeTransferPlugin } from './swap/transfer.js'
+import { makeLetsExchangePlugin } from './swap/letsexchange.js'
 
 const edgeCorePlugins = {
   // Rate plugins:
@@ -40,6 +41,7 @@ const edgeCorePlugins = {
   exolix: makeExolixPlugin,
   foxExchange: makeFoxExchangePlugin,
   godex: makeGodexPlugin,
+  letsexchange: makeLetsExchangePlugin,
   sideshift: makeSideshiftPlugin,
   switchain: makeSwitchainPlugin,
   transfer: makeTransferPlugin
