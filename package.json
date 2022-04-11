@@ -30,6 +30,7 @@
     "lint": "eslint .",
     "precommit": "lint-staged && flow && npm test && npm run build",
     "prepare": "npm run build",
+    "start.dev": "nodemon",
     "test": "node -r sucrase/register test/demo.js"
   },
   "husky": {
@@ -70,6 +71,7 @@
     "flow-bin": "^0.89.0",
     "husky": "^4.3.0",
     "lint-staged": "^10.5.3",
+    "nodemon": "^2.0.15",
     "prettier": "^2.2.0",
     "process": "^0.11.10",
     "rimraf": "^2.6.2",
