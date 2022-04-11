@@ -17,6 +17,7 @@ import { makeExolixPlugin } from './swap/exolix.js'
 import { makeFoxExchangePlugin } from './swap/foxExchange.js'
 import { makeGodexPlugin } from './swap/godex.js'
 import { makeSideshiftPlugin } from './swap/sideshift.js'
+import { makeSpookySwapPlugin } from './swap/spookySwap/spookySwap.js'
 import { makeSwitchainPlugin } from './swap/switchain.js'
 import { makeTransferPlugin } from './swap/transfer.js'
 
@@ -41,6 +42,7 @@ const edgeCorePlugins = {
   foxExchange: makeFoxExchangePlugin,
   godex: makeGodexPlugin,
   sideshift: makeSideshiftPlugin,
+  spookySwap: makeSpookySwapPlugin,
   switchain: makeSwitchainPlugin,
   transfer: makeTransferPlugin
 }
