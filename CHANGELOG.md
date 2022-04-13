@@ -1,5 +1,9 @@
 # edge-exchange-plugins
 
+# 0.12.16 (2022-04-13)
+
+- Add SpookySwap exchange plugin
+
 # 0.12.15 (2022-03-29)
 
 - Coingecko: Add TSHARE, TOMB, and MAI exchange rates
