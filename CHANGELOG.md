@@ -1,5 +1,9 @@
 # edge-exchange-plugins
 
+# 0.12.17 (2022-04-13)
+
+- Transfer: Don't allow transfers if the currency code doesn't match
+
 # 0.12.16 (2022-04-13)
 
 - Add SpookySwap exchange plugin
