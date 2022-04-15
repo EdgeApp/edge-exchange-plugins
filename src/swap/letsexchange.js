@@ -229,7 +229,7 @@ export function makeLetsExchangePlugin(
         swapData: {
           orderId: quoteInfo.transaction_id,
           orderUri: orderUri + quoteInfo.transaction_id,
-          isEstimate: false,
+          isEstimate: true,
           payoutAddress: toAddress,
           payoutCurrencyCode: request.toCurrencyCode,
           payoutNativeAmount: toNativeAmount,
