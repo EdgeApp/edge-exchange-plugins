@@ -34,10 +34,15 @@ const SLIPPAGE_MULTIPLIER = sub('1', SLIPPAGE)
 export function makeSpookySwapPlugin(
   opts: EdgeCorePluginOptions
 ): EdgeSwapPlugin {
-  const { log } = opts
+  const { log, initOptions } = opts
+  const { quiknodeApiKey } = initOptions
 
   // TOOD: Use FallbackProvider when it's patched https://github.com/ethers-io/ethers.js/issues/2837
-  const provider = new ethers.providers.JsonRpcProvider('https://rpc.ftm.tools')
+  const provider = new ethers.providers.JsonRpcProvider(
+    quiknodeApiKey
+      ? `https://polished-empty-cloud.fantom.quiknode.pro/${quiknodeApiKey}`
+      : 'https://rpc.ftm.tools'
+  )
 
   const spookySwapRouter = makeSpookySwapRouter(provider)
   const wrappedFtmToken = makeWrappedFtmToken(provider)
