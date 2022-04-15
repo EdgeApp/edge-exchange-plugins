@@ -32,159 +32,169 @@ const expirationMs = 1000 * 20 * 60
 const SLIPPAGE = '0.05' // 5%
 const SLIPPAGE_MULTIPLIER = sub('1', SLIPPAGE)
 
-export const getMetaTokenAddress = (
-  metaTokens: EdgeMetaToken[],
-  tokenCurrencyCode: string
-): string => {
-  const metaToken = metaTokens.find(mt => mt.currencyCode === tokenCurrencyCode)
-
-  if (metaToken == null || metaToken?.contractAddress === undefined)
-    throw new Error('Could not find contract address for ' + tokenCurrencyCode)
-
-  return metaToken.contractAddress ?? ''
-}
-
-export const getSwapTransactions = async (
-  swapRequest: EdgeSwapRequest,
-  amountToSwap: string,
-  expectedAmountOut: string,
-  toAddress: string,
-  deadline: number
-): Promise<PopulatedTransaction[]> => {
-  const { fromWallet, toWallet, fromCurrencyCode, toCurrencyCode } = swapRequest
-  const currencyInfo = fromWallet.currencyInfo
-  const fromAddress = (await fromWallet.getReceiveAddress()).publicAddress
-
-  // Sanity check: Both wallets should be of the same chain.
-  if (
-    fromWallet.currencyInfo.currencyCode !== toWallet.currencyInfo.currencyCode
-  )
-    throw new Error('SpookySwap: Mismatched wallet chain')
-
-  // TODO: Use our new denom implementation to get native amounts
-  const nativeCurrencyCode = currencyInfo.currencyCode
-  const wrappedCurrencyCode = `W${nativeCurrencyCode}`
-  const isFromNativeCurrency = fromCurrencyCode === nativeCurrencyCode
-  const isToNativeCurrency = toCurrencyCode === nativeCurrencyCode
-  const isFromWrappedCurrency = fromCurrencyCode === wrappedCurrencyCode
-  const isToWrappedCurrency = toCurrencyCode === wrappedCurrencyCode
-
-  // TODO: Do different wallets share the same custom metaTokens?
-  const metaTokens: EdgeMetaToken[] = currencyInfo.metaTokens
-
-  const fromTokenAddress = getMetaTokenAddress(
-    metaTokens,
-    isFromNativeCurrency ? wrappedCurrencyCode : fromCurrencyCode
-  )
-  const toTokenAddress = getMetaTokenAddress(
-    metaTokens,
-    isToNativeCurrency ? wrappedCurrencyCode : toCurrencyCode
-  )
-
-  // Determine router method name and params
-  if (isFromNativeCurrency && isToNativeCurrency)
-    throw new Error('Invalid swap: Cannot swap to the same native currency')
-  const path = [fromTokenAddress, toTokenAddress]
-
-  const gasPrice = await provider.getGasPrice()
-
-  const addressToApproveTxs = async (
-    tokenAddress: string,
-    contractAddress: string
-  ): PopulatedTransaction | void => {
-    const tokenContract = makeErc20Contract(tokenAddress)
-    const allowence = await tokenContract.allowance(
-      fromAddress,
-      contractAddress
-    )
-    if (allowence.sub(amountToSwap).lt(0)) {
-      return tokenContract.populateTransaction.approve(
-        contractAddress,
-        ethers.constants.MaxUint256,
-        { gasLimit: '60000', gasPrice }
-      )
-    }
-  }
-
-  const txs = await (async (): Promise<
-    Array<Promise<PopulatedTransaction> | void>
-  > => {
-    // Deposit native currency for wrapped token
-    if (isFromNativeCurrency && isToWrappedCurrency) {
-      return [
-        wrappedFtmToken.populateTransaction.deposit({
-          gasLimit: '51000',
-          gasPrice,
-          value: amountToSwap
-        })
-      ]
-    }
-    // Withdraw wrapped token for native currency
-    if (isFromWrappedCurrency && isToNativeCurrency) {
-      return [
-        // Deposit Tx
-        wrappedFtmToken.populateTransaction.withdraw(amountToSwap, {
-          gasLimit: '51000',
-          gasPrice
-        })
-      ]
-    }
-    // Swap native currency for token
-    if (isFromNativeCurrency && !isToNativeCurrency) {
-      return [
-        // Swap Tx
-        spookySwapRouter.populateTransaction.swapExactETHForTokens(
-          round(mul(expectedAmountOut, SLIPPAGE_MULTIPLIER)),
-          path,
-          toAddress,
-          deadline,
-          { gasLimit: '250000', gasPrice, value: amountToSwap }
-        )
-      ]
-    }
-    // Swap token for native currency
-    if (!isFromNativeCurrency && isToNativeCurrency) {
-      return [
-        // Approve TX
-        await addressToApproveTxs(path[0], spookySwapRouter.address),
-        // Swap Tx
-        spookySwapRouter.populateTransaction.swapExactTokensForETH(
-          amountToSwap,
-          round(mul(expectedAmountOut, SLIPPAGE_MULTIPLIER)),
-          path,
-          toAddress,
-          deadline,
-          { gasLimit: '250000', gasPrice }
-        )
-      ]
-    }
-    // Swap token for token
-    if (!isFromNativeCurrency && !isToNativeCurrency) {
-      return [
-        // Approve TX
-        await addressToApproveTxs(path[0], spookySwapRouter.address),
-        // Swap Tx
-        spookySwapRouter.populateTransaction.swapExactTokensForTokens(
-          amountToSwap,
-          round(mul(expectedAmountOut, SLIPPAGE_MULTIPLIER)),
-          path,
-          toAddress,
-          deadline,
-          { gasLimit: '600000', gasPrice }
-        )
-      ]
-    }
-
-    throw new Error('Unhandled swap type')
-  })()
-
-  return await Promise.all(txs.filter(tx => tx != null))
-}
-
 export function makeSpookySwapPlugin(
   opts: EdgeCorePluginOptions
 ): EdgeSwapPlugin {
   const { log } = opts
+
+  const getMetaTokenAddress = (
+    metaTokens: EdgeMetaToken[],
+    tokenCurrencyCode: string
+  ): string => {
+    const metaToken = metaTokens.find(
+      mt => mt.currencyCode === tokenCurrencyCode
+    )
+
+    if (metaToken == null || metaToken?.contractAddress === undefined)
+      throw new Error(
+        'Could not find contract address for ' + tokenCurrencyCode
+      )
+
+    return metaToken.contractAddress ?? ''
+  }
+
+  const getSwapTransactions = async (
+    swapRequest: EdgeSwapRequest,
+    amountToSwap: string,
+    expectedAmountOut: string,
+    toAddress: string,
+    deadline: number
+  ): Promise<PopulatedTransaction[]> => {
+    const {
+      fromWallet,
+      toWallet,
+      fromCurrencyCode,
+      toCurrencyCode
+    } = swapRequest
+    const currencyInfo = fromWallet.currencyInfo
+    const fromAddress = (await fromWallet.getReceiveAddress()).publicAddress
+
+    // Sanity check: Both wallets should be of the same chain.
+    if (
+      fromWallet.currencyInfo.currencyCode !==
+      toWallet.currencyInfo.currencyCode
+    )
+      throw new Error('SpookySwap: Mismatched wallet chain')
+
+    // TODO: Use our new denom implementation to get native amounts
+    const nativeCurrencyCode = currencyInfo.currencyCode
+    const wrappedCurrencyCode = `W${nativeCurrencyCode}`
+    const isFromNativeCurrency = fromCurrencyCode === nativeCurrencyCode
+    const isToNativeCurrency = toCurrencyCode === nativeCurrencyCode
+    const isFromWrappedCurrency = fromCurrencyCode === wrappedCurrencyCode
+    const isToWrappedCurrency = toCurrencyCode === wrappedCurrencyCode
+
+    // TODO: Do different wallets share the same custom metaTokens?
+    const metaTokens: EdgeMetaToken[] = currencyInfo.metaTokens
+
+    const fromTokenAddress = getMetaTokenAddress(
+      metaTokens,
+      isFromNativeCurrency ? wrappedCurrencyCode : fromCurrencyCode
+    )
+    const toTokenAddress = getMetaTokenAddress(
+      metaTokens,
+      isToNativeCurrency ? wrappedCurrencyCode : toCurrencyCode
+    )
+
+    // Determine router method name and params
+    if (isFromNativeCurrency && isToNativeCurrency)
+      throw new Error('Invalid swap: Cannot swap to the same native currency')
+    const path = [fromTokenAddress, toTokenAddress]
+
+    const gasPrice = await provider.getGasPrice()
+
+    const addressToApproveTxs = async (
+      tokenAddress: string,
+      contractAddress: string
+    ): PopulatedTransaction | void => {
+      const tokenContract = makeErc20Contract(tokenAddress)
+      const allowence = await tokenContract.allowance(
+        fromAddress,
+        contractAddress
+      )
+      if (allowence.sub(amountToSwap).lt(0)) {
+        return tokenContract.populateTransaction.approve(
+          contractAddress,
+          ethers.constants.MaxUint256,
+          { gasLimit: '60000', gasPrice }
+        )
+      }
+    }
+
+    const txs = await (async (): Promise<
+      Array<Promise<PopulatedTransaction> | void>
+    > => {
+      // Deposit native currency for wrapped token
+      if (isFromNativeCurrency && isToWrappedCurrency) {
+        return [
+          wrappedFtmToken.populateTransaction.deposit({
+            gasLimit: '51000',
+            gasPrice,
+            value: amountToSwap
+          })
+        ]
+      }
+      // Withdraw wrapped token for native currency
+      if (isFromWrappedCurrency && isToNativeCurrency) {
+        return [
+          // Deposit Tx
+          wrappedFtmToken.populateTransaction.withdraw(amountToSwap, {
+            gasLimit: '51000',
+            gasPrice
+          })
+        ]
+      }
+      // Swap native currency for token
+      if (isFromNativeCurrency && !isToNativeCurrency) {
+        return [
+          // Swap Tx
+          spookySwapRouter.populateTransaction.swapExactETHForTokens(
+            round(mul(expectedAmountOut, SLIPPAGE_MULTIPLIER)),
+            path,
+            toAddress,
+            deadline,
+            { gasLimit: '250000', gasPrice, value: amountToSwap }
+          )
+        ]
+      }
+      // Swap token for native currency
+      if (!isFromNativeCurrency && isToNativeCurrency) {
+        return [
+          // Approve TX
+          await addressToApproveTxs(path[0], spookySwapRouter.address),
+          // Swap Tx
+          spookySwapRouter.populateTransaction.swapExactTokensForETH(
+            amountToSwap,
+            round(mul(expectedAmountOut, SLIPPAGE_MULTIPLIER)),
+            path,
+            toAddress,
+            deadline,
+            { gasLimit: '250000', gasPrice }
+          )
+        ]
+      }
+      // Swap token for token
+      if (!isFromNativeCurrency && !isToNativeCurrency) {
+        return [
+          // Approve TX
+          await addressToApproveTxs(path[0], spookySwapRouter.address),
+          // Swap Tx
+          spookySwapRouter.populateTransaction.swapExactTokensForTokens(
+            amountToSwap,
+            round(mul(expectedAmountOut, SLIPPAGE_MULTIPLIER)),
+            path,
+            toAddress,
+            deadline,
+            { gasLimit: '600000', gasPrice }
+          )
+        ]
+      }
+
+      throw new Error('Unhandled swap type')
+    })()
+
+    return await Promise.all(txs.filter(tx => tx != null))
+  }
 
   const out: EdgeSwapPlugin = {
     swapInfo,
