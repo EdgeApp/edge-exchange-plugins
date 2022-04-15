@@ -60,18 +60,9 @@ const dontUseLegacy = {
 }
 
 const INVALID_CURRENCY_CODES: InvalidCurrencyCodes = {
-  from: {
-    ETH: ['MATIC'],
-    AVAX: 'allTokens',
-    FTM: 'allTokens',
-    MATIC: 'allCodes'
-  },
+  from: {},
   to: {
-    ETH: ['MATIC'],
-    AVAX: 'allTokens',
-    FTM: 'allTokens',
-    MATIC: 'allCodes',
-    ZEC: ['ZEC']
+    zcash: ['ZEC']
   }
 }
 
@@ -83,7 +74,10 @@ const MAINNET_CODE_TRANSCRIPTION = {
   bnb: 'BEP2'
 }
 
-async function getAddress(wallet: EdgeCurrencyWallet, currencyCode: string) {
+async function getAddress(
+  wallet: EdgeCurrencyWallet,
+  currencyCode: string
+): Promise<string> {
   const addressInfo = await wallet.getReceiveAddress({ currencyCode })
   return addressInfo.legacyAddress && !dontUseLegacy[currencyCode]
     ? addressInfo.legacyAddress
@@ -211,7 +205,7 @@ export function makeLetsExchangePlugin(
           promocode: promoCode != null ? promoCode : '',
           type: 'edge',
           float: true,
-          isEstimate: false
+          isEstimate: true
         }
       })
 
@@ -235,7 +229,7 @@ export function makeLetsExchangePlugin(
         swapData: {
           orderId: quoteInfo.transaction_id,
           orderUri: orderUri + quoteInfo.transaction_id,
-          isEstimate: false,
+          isEstimate: true,
           payoutAddress: toAddress,
           payoutCurrencyCode: request.toCurrencyCode,
           payoutNativeAmount: toNativeAmount,
