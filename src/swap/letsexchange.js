@@ -249,7 +249,7 @@ export function makeLetsExchangePlugin(
         tx,
         toAddress,
         'letsexchange',
-        false, // isEstimate, correct?
+        true, // isEstimate, correct?
         new Date(Date.now() + expirationMs),
         quoteInfo.transaction_id
       )
