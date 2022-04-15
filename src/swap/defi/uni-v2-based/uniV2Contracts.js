@@ -1,9 +1,9 @@
 // @flow
 import { type Contract, type Provider, ethers } from 'ethers'
 
-import UNISWAP_V2_ERC20_ABI from '../../../abi/UNISWAP_V2_ERC20_ABI'
-import UNISWAP_V2_ROUTER_ABI from '../../../abi/UNISWAP_V2_ROUTER_ABI'
-import WRAPPED_FTM_ABI from '../../../abi/WRAPPED_FTM_ABI'
+import UNISWAP_V2_ERC20_ABI from '../abi/UNISWAP_V2_ERC20_ABI'
+import UNISWAP_V2_ROUTER_ABI from '../abi/UNISWAP_V2_ROUTER_ABI'
+import WRAPPED_FTM_ABI from '../abi/WRAPPED_FTM_ABI'
 
 // Providers
 //

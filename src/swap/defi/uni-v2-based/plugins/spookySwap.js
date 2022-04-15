@@ -11,13 +11,13 @@ import {
 } from 'edge-core-js/types'
 import { ethers } from 'ethers'
 
-import { getInOutTokenAddresses } from '../defi/defiUtils.js'
-import { spookySwapRouter } from '../defi/uni-v2-based/uniV2Contracts.js'
+import { getInOutTokenAddresses } from '../../defiUtils.js'
+import { spookySwapRouter } from '../uniV2Contracts.js'
 import {
   getSwapAmounts,
   getSwapTransactions,
   makeUniV2EdgeSwapQuote
-} from '../defi/uni-v2-based/uniV2Utils.js'
+} from '../uniV2Utils.js'
 
 const EXPIRATION_MS = 1000 * 20 * 60
 const SLIPPAGE = '0.05'

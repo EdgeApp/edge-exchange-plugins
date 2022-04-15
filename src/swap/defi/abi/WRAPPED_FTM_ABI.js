@@ -1,3 +1,4 @@
+// ABI for wrapped tokens
 export default [
   {
     inputs: [],
