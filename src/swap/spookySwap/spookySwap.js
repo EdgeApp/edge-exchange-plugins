@@ -17,9 +17,8 @@ import { type PopulatedTransaction, ethers } from 'ethers'
 import { round } from '../../util/biggystringplus.js'
 import {
   makeErc20Contract,
-  provider,
-  spookySwapRouter,
-  wrappedFtmToken
+  makeSpookySwapRouter,
+  makeWrappedFtmToken
 } from './spookyContracts.js'
 
 const swapInfo: EdgeSwapInfo = {
@@ -36,6 +35,12 @@ export function makeSpookySwapPlugin(
   opts: EdgeCorePluginOptions
 ): EdgeSwapPlugin {
   const { log } = opts
+
+  // TOOD: Use FallbackProvider when it's patched https://github.com/ethers-io/ethers.js/issues/2837
+  const provider = new ethers.providers.JsonRpcProvider('https://rpc.ftm.tools')
+
+  const spookySwapRouter = makeSpookySwapRouter(provider)
+  const wrappedFtmToken = makeWrappedFtmToken(provider)
 
   const getMetaTokenAddress = (
     metaTokens: EdgeMetaToken[],
@@ -107,7 +112,7 @@ export function makeSpookySwapPlugin(
       tokenAddress: string,
       contractAddress: string
     ): PopulatedTransaction | void => {
-      const tokenContract = makeErc20Contract(tokenAddress)
+      const tokenContract = makeErc20Contract(tokenAddress, provider)
       const allowence = await tokenContract.allowance(
         fromAddress,
         contractAddress
