@@ -66,12 +66,10 @@ const INVALID_CURRENCY_CODES: InvalidCurrencyCodes = {
   }
 }
 
-// Network names that don't match parent network currency code
 const MAINNET_CODE_TRANSCRIPTION = {
-  ethereum: 'ERC20',
-  binancesmartchain: 'BEP20',
-  tron: 'TRC20',
-  bnb: 'BEP2'
+  rsk: 'RSK',
+  binancesmartchain: 'BSC',
+  avalanche: 'AVAXC'
 }
 
 async function getAddress(
