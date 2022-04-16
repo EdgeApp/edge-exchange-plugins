@@ -204,8 +204,8 @@ export function makeLetsExchangePlugin(
           affiliate_id: initOptions.apiKey,
           promocode: promoCode != null ? promoCode : '',
           type: 'edge',
-          float: true,
-          isEstimate: true
+          float: false,
+          isEstimate: false
         }
       })
 
@@ -229,7 +229,7 @@ export function makeLetsExchangePlugin(
         swapData: {
           orderId: quoteInfo.transaction_id,
           orderUri: orderUri + quoteInfo.transaction_id,
-          isEstimate: true,
+          isEstimate: false,
           payoutAddress: toAddress,
           payoutCurrencyCode: request.toCurrencyCode,
           payoutNativeAmount: toNativeAmount,
@@ -251,7 +251,7 @@ export function makeLetsExchangePlugin(
         tx,
         toAddress,
         'letsexchange',
-        true, // isEstimate, correct?
+        false, // isEstimate, correct?
         new Date(Date.now() + expirationMs),
         quoteInfo.transaction_id
       )
