@@ -128,6 +128,8 @@ const coinGeckoMap = {
   UNI: 'uniswap',
   BOO: 'spookyswap',
   FTM: 'fantom',
+  TSHARE: 'tomb-shares',
+  TOMB: 'tomb',
   CELO: 'celo',
   CUSD: 'celo-dollar',
   CEUR: 'celo-euro',
