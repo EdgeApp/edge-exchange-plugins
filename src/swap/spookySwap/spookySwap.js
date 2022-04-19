@@ -25,6 +25,7 @@ import {
   spookySwapRouter,
   wrappedFtmToken
 } from '../defi/uni-v2-based/uniV2Contracts.js'
+import { getSwapAmounts } from '../defi/uni-v2-based/uniV2Utils.js'
 
 const swapInfo: EdgeSwapInfo = {
   pluginId: 'spookySwap',
@@ -32,7 +33,7 @@ const swapInfo: EdgeSwapInfo = {
   supportEmail: '',
   supportUrl: 'https://discord.com/invite/weXbvPAH4Q'
 }
-const expirationMs = 1000 * 20 * 60
+const EXPIRATION_MS = 1000 * 20 * 60
 const SLIPPAGE = '0.05' // 5%
 const SLIPPAGE_MULTIPLIER = sub('1', SLIPPAGE)
 
@@ -213,26 +214,20 @@ export function makeSpookySwapPlugin(
         toCurrencyCode
       )
 
-      // Calculate amounts
-      const path = [fromTokenAddress, toTokenAddress]
-      const [amountToSwap, expectedAmountOut] = (isWrappingSwap
-        ? [request.nativeAmount, request.nativeAmount]
-        : quoteFor === 'to'
-        ? await spookySwapRouter.getAmountsIn(request.nativeAmount, path)
-        : quoteFor === 'from'
-        ? await spookySwapRouter.getAmountsOut(request.nativeAmount, path)
-        : []
-      ).map(String)
-
-      if (!amountToSwap || !expectedAmountOut)
-        throw new Error(`Unknown quote direction ${quoteFor}`)
+      // Calculate swap amounts
+      const { amountToSwap, expectedAmountOut } = await getSwapAmounts(
+        spookySwapRouter,
+        quoteFor,
+        request.nativeAmount,
+        fromTokenAddress,
+        toTokenAddress,
+        isWrappingSwap
+      )
 
       const fromAddress = (await fromWallet.getReceiveAddress()).publicAddress
       const toAddress = (await toWallet.getReceiveAddress()).publicAddress
-
-      const expirationDate = new Date(Date.now() + expirationMs)
+      const expirationDate = new Date(Date.now() + EXPIRATION_MS)
       const deadline = Math.round(expirationDate.getTime() / 1000) // unix timestamp
-
       const swapTxs = await getSwapTransactions(
         request,
         amountToSwap,
