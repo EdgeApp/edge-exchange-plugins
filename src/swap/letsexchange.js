@@ -66,12 +66,13 @@ const INVALID_CURRENCY_CODES: InvalidCurrencyCodes = {
   }
 }
 
-// Network names that don't match parent network currency code
 const MAINNET_CODE_TRANSCRIPTION = {
   ethereum: 'ERC20',
   binancesmartchain: 'BEP20',
   tron: 'TRC20',
-  bnb: 'BEP2'
+  binance: 'BEP2',
+  rsk: 'RSK',
+  avalanche: 'AVAXC'
 }
 
 async function getAddress(
@@ -131,25 +132,35 @@ export function makeLetsExchangePlugin(
       const quoteAmount =
         request.quoteFor === 'from'
           ? await request.fromWallet.nativeToDenomination(
-              request.nativeAmount,
-              request.fromCurrencyCode
-            )
+            request.nativeAmount,
+            request.fromCurrencyCode
+          )
           : await request.toWallet.nativeToDenomination(
-              request.nativeAmount,
-              request.toCurrencyCode
-            )
+            request.nativeAmount,
+            request.toCurrencyCode
+          )
 
       const {
         fromMainnetCode,
         toMainnetCode
       } = getCodesWithMainnetTranscription(request, MAINNET_CODE_TRANSCRIPTION)
 
+      const networkFrom =
+        request.fromCurrencyCode === request.fromWallet.currencyInfo.currencyCode
+          ? request.fromCurrencyCode
+          : fromMainnetCode
+
+      const networkTo =
+        request.toCurrencyCode === request.toWallet.currencyInfo.currencyCode
+          ? request.toCurrencyCode
+          : toMainnetCode
+
       // Swap the currencies if we need a reverse quote:
       const quoteParams = {
         from: request.fromCurrencyCode,
         to: request.toCurrencyCode,
-        network_from: fromMainnetCode,
-        network_to: toMainnetCode,
+        network_from: networkFrom,
+        network_to: networkTo,
         amount: quoteAmount
       }
 
@@ -195,8 +206,8 @@ export function makeLetsExchangePlugin(
           deposit_amount: fromAmount,
           coin_from: request.fromCurrencyCode,
           coin_to: request.toCurrencyCode,
-          network_from: fromMainnetCode,
-          network_to: toMainnetCode,
+          network_from: networkFrom,
+          network_to: networkTo,
           withdrawal: toAddress,
           return: fromAddress,
           return_extra_id: null,
@@ -204,8 +215,8 @@ export function makeLetsExchangePlugin(
           affiliate_id: initOptions.apiKey,
           promocode: promoCode != null ? promoCode : '',
           type: 'edge',
-          float: true,
-          isEstimate: true
+          float: false,
+          isEstimate: false
         }
       })
 
@@ -229,7 +240,7 @@ export function makeLetsExchangePlugin(
         swapData: {
           orderId: quoteInfo.transaction_id,
           orderUri: orderUri + quoteInfo.transaction_id,
-          isEstimate: true,
+          isEstimate: false,
           payoutAddress: toAddress,
           payoutCurrencyCode: request.toCurrencyCode,
           payoutNativeAmount: toNativeAmount,
