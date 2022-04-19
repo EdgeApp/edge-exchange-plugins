@@ -16,6 +16,10 @@ import { type PopulatedTransaction, ethers } from 'ethers'
 
 import { round } from '../../util/biggystringplus.js'
 import {
+  getInOutTokenAddresses,
+  getMetaTokenAddress
+} from '../defi/defiUtils.js'
+import {
   makeErc20Contract,
   provider,
   spookySwapRouter,
@@ -31,18 +35,6 @@ const swapInfo: EdgeSwapInfo = {
 const expirationMs = 1000 * 20 * 60
 const SLIPPAGE = '0.05' // 5%
 const SLIPPAGE_MULTIPLIER = sub('1', SLIPPAGE)
-
-export const getMetaTokenAddress = (
-  metaTokens: EdgeMetaToken[],
-  tokenCurrencyCode: string
-): string => {
-  const metaToken = metaTokens.find(mt => mt.currencyCode === tokenCurrencyCode)
-
-  if (metaToken == null || metaToken?.contractAddress === undefined)
-    throw new Error('Could not find contract address for ' + tokenCurrencyCode)
-
-  return metaToken.contractAddress ?? ''
-}
 
 export const getSwapTransactions = async (
   swapRequest: EdgeSwapRequest,
@@ -211,24 +203,14 @@ export function makeSpookySwapPlugin(
 
       // Parse input/output token addresses. If either from or to swap sources
       // are for the native currency, convert the address to the wrapped equivalent.
-      const nativeCurrencyCode = fromWallet.currencyInfo.currencyCode
-      const wrappedCurrencyCode = `W${nativeCurrencyCode}`
-      const isFromNativeCurrency = fromCurrencyCode === nativeCurrencyCode
-      const isToNativeCurrency = toCurrencyCode === nativeCurrencyCode
-      const isFromWrappedCurrency = fromCurrencyCode === wrappedCurrencyCode
-      const isToWrappedCurrency = toCurrencyCode === wrappedCurrencyCode
-      const isWrappingSwap =
-        (isFromNativeCurrency && isToWrappedCurrency) ||
-        (isFromWrappedCurrency && isToNativeCurrency)
-      const metaTokens: EdgeMetaToken[] = fromWallet.currencyInfo.metaTokens
-
-      const fromTokenAddress = getMetaTokenAddress(
-        metaTokens,
-        isFromNativeCurrency ? wrappedCurrencyCode : fromCurrencyCode
-      )
-      const toTokenAddress = getMetaTokenAddress(
-        metaTokens,
-        isToNativeCurrency ? wrappedCurrencyCode : toCurrencyCode
+      const {
+        fromTokenAddress,
+        toTokenAddress,
+        isWrappingSwap
+      } = getInOutTokenAddresses(
+        fromWallet.currencyInfo,
+        fromCurrencyCode,
+        toCurrencyCode
       )
 
       // Calculate amounts
