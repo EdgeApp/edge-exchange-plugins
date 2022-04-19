@@ -67,8 +67,11 @@ const INVALID_CURRENCY_CODES: InvalidCurrencyCodes = {
 }
 
 const MAINNET_CODE_TRANSCRIPTION = {
+  ethereum: 'ERC20',
+  binancesmartchain: 'BEP20',
+  tron: 'TRC20',
+  binance: 'BEP2',
   rsk: 'RSK',
-  binancesmartchain: 'BSC',
   avalanche: 'AVAXC'
 }
 
@@ -142,12 +145,22 @@ export function makeLetsExchangePlugin(
         toMainnetCode
       } = getCodesWithMainnetTranscription(request, MAINNET_CODE_TRANSCRIPTION)
 
+      const networkFrom =
+        request.fromCurrencyCode === request.fromWallet.currencyInfo.currencyCode
+          ? request.fromCurrencyCode
+          : fromMainnetCode
+
+      const networkTo =
+        request.toCurrencyCode === request.toWallet.currencyInfo.currencyCode
+          ? request.toCurrencyCode
+          : toMainnetCode
+
       // Swap the currencies if we need a reverse quote:
       const quoteParams = {
         from: request.fromCurrencyCode,
         to: request.toCurrencyCode,
-        network_from: fromMainnetCode,
-        network_to: toMainnetCode,
+        network_from: networkFrom,
+        network_to: networkTo,
         amount: quoteAmount
       }
 
@@ -193,8 +206,8 @@ export function makeLetsExchangePlugin(
           deposit_amount: fromAmount,
           coin_from: request.fromCurrencyCode,
           coin_to: request.toCurrencyCode,
-          network_from: fromMainnetCode,
-          network_to: toMainnetCode,
+          network_from: networkFrom,
+          network_to: networkTo,
           withdrawal: toAddress,
           return: fromAddress,
           return_extra_id: null,
