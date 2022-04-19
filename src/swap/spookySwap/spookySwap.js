@@ -3,7 +3,6 @@
 import { mul, sub } from 'biggystring'
 import {
   type EdgeCorePluginOptions,
-  type EdgeMetaToken,
   type EdgeSpendInfo,
   type EdgeSwapInfo,
   type EdgeSwapPlugin,
@@ -12,7 +11,7 @@ import {
   type EdgeSwapResult,
   type EdgeTransaction
 } from 'edge-core-js/types'
-import { type PopulatedTransaction, ethers } from 'ethers'
+import { type PopulatedTransaction, Contract, ethers } from 'ethers'
 
 import { round } from '../../util/biggystringplus.js'
 import {
@@ -35,35 +34,32 @@ const swapInfo: EdgeSwapInfo = {
 }
 const EXPIRATION_MS = 1000 * 20 * 60
 const SLIPPAGE = '0.05' // 5%
-const SLIPPAGE_MULTIPLIER = sub('1', SLIPPAGE)
 
+/**
+ * Get smart contract transaction(s) necessary to swap based on swap params
+ */
 export const getSwapTransactions = async (
   swapRequest: EdgeSwapRequest,
+  router: Contract,
   amountToSwap: string,
   expectedAmountOut: string,
   toAddress: string,
+  slippage: string,
   deadline: number
 ): Promise<PopulatedTransaction[]> => {
-  const { fromWallet, toWallet, fromCurrencyCode, toCurrencyCode } = swapRequest
-  const currencyInfo = fromWallet.currencyInfo
+  const { fromWallet, fromCurrencyCode, toCurrencyCode } = swapRequest
+  const {
+    currencyCode: nativeCurrencyCode,
+    metaTokens
+  } = fromWallet.currencyInfo
   const fromAddress = (await fromWallet.getReceiveAddress()).publicAddress
 
-  // Sanity check: Both wallets should be of the same chain.
-  if (
-    fromWallet.currencyInfo.currencyCode !== toWallet.currencyInfo.currencyCode
-  )
-    throw new Error('SpookySwap: Mismatched wallet chain')
-
   // TODO: Use our new denom implementation to get native amounts
-  const nativeCurrencyCode = currencyInfo.currencyCode
   const wrappedCurrencyCode = `W${nativeCurrencyCode}`
   const isFromNativeCurrency = fromCurrencyCode === nativeCurrencyCode
   const isToNativeCurrency = toCurrencyCode === nativeCurrencyCode
   const isFromWrappedCurrency = fromCurrencyCode === wrappedCurrencyCode
   const isToWrappedCurrency = toCurrencyCode === wrappedCurrencyCode
-
-  // TODO: Do different wallets share the same custom metaTokens?
-  const metaTokens: EdgeMetaToken[] = currencyInfo.metaTokens
 
   const fromTokenAddress = getMetaTokenAddress(
     metaTokens,
@@ -123,11 +119,13 @@ export const getSwapTransactions = async (
       ]
     }
     // Swap native currency for token
+
+    const slippageMultiplier = sub('1', slippage)
     if (isFromNativeCurrency && !isToNativeCurrency) {
       return [
         // Swap Tx
-        spookySwapRouter.populateTransaction.swapExactETHForTokens(
-          round(mul(expectedAmountOut, SLIPPAGE_MULTIPLIER)),
+        router.populateTransaction.swapExactETHForTokens(
+          round(mul(expectedAmountOut, slippageMultiplier)),
           path,
           toAddress,
           deadline,
@@ -139,11 +137,11 @@ export const getSwapTransactions = async (
     if (!isFromNativeCurrency && isToNativeCurrency) {
       return [
         // Approve TX
-        await addressToApproveTxs(path[0], spookySwapRouter.address),
+        await addressToApproveTxs(path[0], router.address),
         // Swap Tx
-        spookySwapRouter.populateTransaction.swapExactTokensForETH(
+        router.populateTransaction.swapExactTokensForETH(
           amountToSwap,
-          round(mul(expectedAmountOut, SLIPPAGE_MULTIPLIER)),
+          round(mul(expectedAmountOut, slippageMultiplier)),
           path,
           toAddress,
           deadline,
@@ -155,11 +153,11 @@ export const getSwapTransactions = async (
     if (!isFromNativeCurrency && !isToNativeCurrency) {
       return [
         // Approve TX
-        await addressToApproveTxs(path[0], spookySwapRouter.address),
+        await addressToApproveTxs(path[0], router.address),
         // Swap Tx
-        spookySwapRouter.populateTransaction.swapExactTokensForTokens(
+        router.populateTransaction.swapExactTokensForTokens(
           amountToSwap,
-          round(mul(expectedAmountOut, SLIPPAGE_MULTIPLIER)),
+          round(mul(expectedAmountOut, slippageMultiplier)),
           path,
           toAddress,
           deadline,
@@ -224,15 +222,18 @@ export function makeSpookySwapPlugin(
         isWrappingSwap
       )
 
+      // Generate swap transactions
       const fromAddress = (await fromWallet.getReceiveAddress()).publicAddress
       const toAddress = (await toWallet.getReceiveAddress()).publicAddress
       const expirationDate = new Date(Date.now() + EXPIRATION_MS)
       const deadline = Math.round(expirationDate.getTime() / 1000) // unix timestamp
       const swapTxs = await getSwapTransactions(
         request,
+        spookySwapRouter,
         amountToSwap,
         expectedAmountOut,
         toAddress,
+        SLIPPAGE,
         deadline
       )
 
