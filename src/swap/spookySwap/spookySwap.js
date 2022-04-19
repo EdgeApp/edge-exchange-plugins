@@ -136,7 +136,7 @@ export function makeSpookySwapPlugin(
       )
 
       // Convert that to the output format:
-      return makeSpookySwapPluginQuote(
+      return makeUniV2EdgeSwapQuote(
         request,
         amountToSwap.toString(),
         expectedAmountOut.toString(),
@@ -152,7 +152,10 @@ export function makeSpookySwapPlugin(
   return out
 }
 
-export function makeSpookySwapPluginQuote(
+/**
+ * Generate the quote with approve() method
+ * */
+export function makeUniV2EdgeSwapQuote(
   request: EdgeSwapRequest,
   fromNativeAmount: string,
   toNativeAmount: string,
@@ -197,7 +200,7 @@ export function makeSpookySwapPluginQuote(
         await fromWallet.saveTx(signedTransaction)
         index++
       }
-      if (!swapTx) throw new Error('No Totle swapTx')
+      if (!swapTx) throw new Error(`No ${pluginId} swapTx generated.`)
       return {
         transaction: swapTx,
         orderId: swapTx.txid,
