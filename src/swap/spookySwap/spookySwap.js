@@ -24,7 +24,7 @@ import {
   provider,
   spookySwapRouter,
   wrappedFtmToken
-} from './spookyContracts.js'
+} from '../defi/uni-v2-based/uniV2Contracts.js'
 
 const swapInfo: EdgeSwapInfo = {
   pluginId: 'spookySwap',
