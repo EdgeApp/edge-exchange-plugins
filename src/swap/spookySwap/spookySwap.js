@@ -19,20 +19,19 @@ import {
   makeUniV2EdgeSwapQuote
 } from '../defi/uni-v2-based/uniV2Utils.js'
 
+const EXPIRATION_MS = 1000 * 20 * 60
+const SLIPPAGE = '0.05'
+
 const swapInfo: EdgeSwapInfo = {
   pluginId: 'spookySwap',
   displayName: 'SpookySwap',
   supportEmail: '',
   supportUrl: 'https://discord.com/invite/weXbvPAH4Q'
 }
-const EXPIRATION_MS = 1000 * 20 * 60
-const SLIPPAGE = '0.05' // 5%
 
 export function makeSpookySwapPlugin(
   opts: EdgeCorePluginOptions
 ): EdgeSwapPlugin {
-  const { log } = opts
-
   const out: EdgeSwapPlugin = {
     swapInfo,
     async fetchSwapQuote(
@@ -40,7 +39,6 @@ export function makeSpookySwapPlugin(
       userSettings: Object | void,
       opts: { promoCode?: string }
     ): Promise<EdgeSwapQuote> {
-      log.warn(JSON.stringify(request, null, 2))
       const {
         fromWallet,
         toWallet,
@@ -54,7 +52,7 @@ export function makeSpookySwapPlugin(
         fromWallet.currencyInfo.currencyCode !==
         toWallet.currencyInfo.currencyCode
       )
-        throw new Error('SpookySwap: Mismatched wallet chain')
+        throw new Error(`${swapInfo.displayName}: Mismatched wallet chain`)
 
       // Parse input/output token addresses. If either from or to swap sources
       // are for the native currency, convert the address to the wrapped equivalent.
@@ -93,11 +91,12 @@ export function makeSpookySwapPlugin(
         deadline
       )
 
+      const pluginId = swapInfo.pluginId
       const edgeUnsignedTxs = await Promise.all(
         swapTxs.map(async swapTx => {
           // Convert to our spendInfo
           const edgeSpendInfo: EdgeSpendInfo = {
-            pluginId: 'spookySwap',
+            pluginId,
             currencyCode: request.fromCurrencyCode, // what is being sent out, only if token. Blank if not token
             spendTargets: [
               {
@@ -135,19 +134,18 @@ export function makeSpookySwapPlugin(
         })
       )
 
-      // Convert that to the output format:
+      // Convert that to the EdgeSwapQuote format:
       return makeUniV2EdgeSwapQuote(
         request,
         amountToSwap.toString(),
         expectedAmountOut.toString(),
         edgeUnsignedTxs,
         toAddress,
-        'spookySwap',
+        pluginId,
         true,
         expirationDate
       )
     }
   }
-
   return out
 }
