@@ -1,7 +1,12 @@
 // @flow
 
 import { mul, sub } from 'biggystring'
-import { type EdgeSwapRequest } from 'edge-core-js/types'
+import {
+  type EdgeSwapQuote,
+  type EdgeSwapRequest,
+  type EdgeSwapResult,
+  type EdgeTransaction
+} from 'edge-core-js/types'
 import { type Contract, type PopulatedTransaction, ethers } from 'ethers'
 
 import { round } from '../../../util/biggystringplus.js'
@@ -172,4 +177,65 @@ export const getSwapTransactions = async (
   })()
 
   return await Promise.all(txs.filter(tx => tx != null))
+}
+
+/**
+ * Generate the quote with approve() method
+ * */
+export function makeUniV2EdgeSwapQuote(
+  request: EdgeSwapRequest,
+  fromNativeAmount: string,
+  toNativeAmount: string,
+  txs: EdgeTransaction[],
+  toAddress: string,
+  pluginId: string,
+  isEstimate: boolean = false,
+  expirationDate?: Date,
+  quoteId?: string
+): EdgeSwapQuote {
+  const { fromWallet } = request
+  const swapTx = txs[txs.length - 1]
+
+  const out: EdgeSwapQuote = {
+    fromNativeAmount,
+    toNativeAmount,
+    networkFee: {
+      currencyCode: fromWallet.currencyInfo.currencyCode,
+      nativeAmount:
+        swapTx.parentNetworkFee != null
+          ? swapTx.parentNetworkFee
+          : swapTx.networkFee
+    },
+    toAddress,
+    pluginId,
+    expirationDate,
+    quoteId,
+    isEstimate,
+    async approve(): Promise<EdgeSwapResult> {
+      let swapTx
+      let index = 0
+      for (const tx of txs) {
+        const signedTransaction = await fromWallet.signTx(tx)
+        // NOTE: The swap transaction will always be the last one
+        swapTx = await fromWallet.broadcastTx(signedTransaction)
+        const lastTransactionIndex = txs.length - 1
+        // if it's the last transaction of the array then assign `nativeAmount` data
+        // (after signing and broadcasting) for metadata purposes
+        if (index === lastTransactionIndex) {
+          tx.nativeAmount = `-${fromNativeAmount}`
+        }
+        await fromWallet.saveTx(signedTransaction)
+        index++
+      }
+      if (!swapTx) throw new Error(`No ${pluginId} swapTx generated.`)
+      return {
+        transaction: swapTx,
+        orderId: swapTx.txid,
+        toAddress
+      }
+    },
+
+    async close() {}
+  }
+  return out
 }
