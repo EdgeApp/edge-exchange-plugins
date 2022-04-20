@@ -14,6 +14,7 @@ import { makeWazirxPlugin } from './rate/wazirx'
 import { makeChangellyPlugin } from './swap/changelly.js'
 import { makeChangeNowPlugin } from './swap/changenow.js'
 import { makeSpookySwapPlugin } from './swap/defi/uni-v2-based/plugins/spookySwap.js'
+import { makeTombSwapPlugin } from './swap/defi/uni-v2-based/plugins/tombSwap.js'
 import { makeExolixPlugin } from './swap/exolix.js'
 import { makeFoxExchangePlugin } from './swap/foxExchange.js'
 import { makeGodexPlugin } from './swap/godex.js'
@@ -43,6 +44,7 @@ const edgeCorePlugins = {
   godex: makeGodexPlugin,
   sideshift: makeSideshiftPlugin,
   spookySwap: makeSpookySwapPlugin,
+  tombSwap: makeTombSwapPlugin,
   switchain: makeSwitchainPlugin,
   transfer: makeTransferPlugin
 }
