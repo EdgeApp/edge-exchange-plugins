@@ -45,7 +45,7 @@ export const makeTombSwapRouterContract: Contract = (
 
 // Wrapped Tokens
 const WFTM_TOKEN_ADDRESS = '0x21be370D5312f44cB42ce377BC9b8a0cEF1A4C83'
-export const wFtmTokenContract: Contract = (provider: JsonRpcProvider) =>
+export const makeWrappedFtmContract: Contract = (provider: JsonRpcProvider) =>
   new ethers.Contract(WFTM_TOKEN_ADDRESS, WRAPPED_FTM_ABI, provider)
 
 export const makeErc20Contract = (
