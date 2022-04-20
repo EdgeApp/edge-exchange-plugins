@@ -12,7 +12,10 @@ import {
 import { ethers } from 'ethers'
 
 import { getInOutTokenAddresses } from '../../defiUtils.js'
-import { spookySwapRouter } from '../uniV2Contracts.js'
+import {
+  getFtmProvider,
+  makeSpookySwapRouterContract
+} from '../uniV2Contracts.js'
 import {
   getSwapAmounts,
   getSwapTransactions,
@@ -32,6 +35,8 @@ const swapInfo: EdgeSwapInfo = {
 export function makeSpookySwapPlugin(
   opts: EdgeCorePluginOptions
 ): EdgeSwapPlugin {
+  const provider = getFtmProvider(opts.initOptions.quiknodeApiKey)
+
   const out: EdgeSwapPlugin = {
     swapInfo,
     async fetchSwapQuote(
@@ -67,6 +72,7 @@ export function makeSpookySwapPlugin(
       )
 
       // Calculate swap amounts
+      const spookySwapRouter = makeSpookySwapRouterContract(provider)
       const { amountToSwap, expectedAmountOut } = await getSwapAmounts(
         spookySwapRouter,
         quoteFor,
@@ -77,11 +83,13 @@ export function makeSpookySwapPlugin(
       )
 
       // Generate swap transactions
+
       const fromAddress = (await fromWallet.getReceiveAddress()).publicAddress
       const toAddress = (await toWallet.getReceiveAddress()).publicAddress
       const expirationDate = new Date(Date.now() + EXPIRATION_MS)
       const deadline = Math.round(expirationDate.getTime() / 1000) // unix timestamp
       const swapTxs = await getSwapTransactions(
+        provider,
         request,
         spookySwapRouter,
         amountToSwap,

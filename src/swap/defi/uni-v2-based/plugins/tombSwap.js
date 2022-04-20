@@ -12,7 +12,10 @@ import {
 import { ethers } from 'ethers'
 
 import { getInOutTokenAddresses } from '../../defiUtils.js'
-import { tombSwapRouter } from '../uniV2Contracts.js'
+import {
+  getFtmProvider,
+  makeTombSwapRouterContract
+} from '../uniV2Contracts.js'
 import {
   getSwapAmounts,
   getSwapTransactions,
@@ -32,6 +35,8 @@ const swapInfo: EdgeSwapInfo = {
 export function makeTombSwapPlugin(
   opts: EdgeCorePluginOptions
 ): EdgeSwapPlugin {
+  const provider = getFtmProvider(opts.initOptions.quiknodeApiKey)
+
   const out: EdgeSwapPlugin = {
     swapInfo,
     async fetchSwapQuote(
@@ -67,6 +72,7 @@ export function makeTombSwapPlugin(
       )
 
       // Calculate swap amounts
+      const tombSwapRouter = makeTombSwapRouterContract(provider)
       const { amountToSwap, expectedAmountOut } = await getSwapAmounts(
         tombSwapRouter,
         quoteFor,
@@ -81,6 +87,7 @@ export function makeTombSwapPlugin(
       const expirationDate = new Date(Date.now() + EXPIRATION_MS)
       const deadline = Math.round(expirationDate.getTime() / 1000) // unix timestamp
       const swapTxs = await getSwapTransactions(
+        provider,
         request,
         tombSwapRouter,
         amountToSwap,

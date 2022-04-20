@@ -1,5 +1,6 @@
 // @flow
 
+import { JsonRpcProvider } from '@ethersproject/providers'
 import { mul, sub } from 'biggystring'
 import {
   type EdgeSwapQuote,
@@ -11,8 +12,7 @@ import { type Contract, type PopulatedTransaction, ethers } from 'ethers'
 
 import { round } from '../../../util/biggystringplus.js'
 import { getMetaTokenAddress } from '../defiUtils.js'
-import { makeErc20Contract, provider, wrappedFtmToken } from './uniV2Contracts'
-
+import { makeErc20Contract, wFtmTokenContract } from './uniV2Contracts.js'
 /**
  * Get the output swap amounts based on the requested input amount.
  * Call the router contract to calculate amounts and check if the swap path is
@@ -46,6 +46,7 @@ export const getSwapAmounts = async (
  * Get smart contract transaction(s) necessary to swap based on swap params
  */
 export const getSwapTransactions = async (
+  provider: JsonRpcProvider,
   swapRequest: EdgeSwapRequest,
   router: Contract,
   amountToSwap: string,
@@ -88,7 +89,7 @@ export const getSwapTransactions = async (
     tokenAddress: string,
     contractAddress: string
   ): PopulatedTransaction | void => {
-    const tokenContract = makeErc20Contract(tokenAddress)
+    const tokenContract = makeErc20Contract(provider, tokenAddress)
     const allowence = await tokenContract.allowance(
       fromAddress,
       contractAddress
@@ -108,7 +109,7 @@ export const getSwapTransactions = async (
     // Deposit native currency for wrapped token
     if (isFromNativeCurrency && isToWrappedCurrency) {
       return [
-        wrappedFtmToken.populateTransaction.deposit({
+        wFtmTokenContract.populateTransaction.deposit({
           gasLimit: '51000',
           gasPrice,
           value: amountToSwap
@@ -119,7 +120,7 @@ export const getSwapTransactions = async (
     if (isFromWrappedCurrency && isToNativeCurrency) {
       return [
         // Deposit Tx
-        wrappedFtmToken.populateTransaction.withdraw(amountToSwap, {
+        wFtmTokenContract.populateTransaction.withdraw(amountToSwap, {
           gasLimit: '51000',
           gasPrice
         })
