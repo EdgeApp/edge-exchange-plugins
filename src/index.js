@@ -20,6 +20,7 @@ import { makeSideshiftPlugin } from './swap/sideshift.js'
 import { makeSpookySwapPlugin } from './swap/spookySwap/spookySwap.js'
 import { makeSwitchainPlugin } from './swap/switchain.js'
 import { makeTransferPlugin } from './swap/transfer.js'
+import { makeLetsExchangePlugin } from "../lib/swap/letsexchange";
 
 const edgeCorePlugins = {
   // Rate plugins:
@@ -44,7 +45,8 @@ const edgeCorePlugins = {
   sideshift: makeSideshiftPlugin,
   spookySwap: makeSpookySwapPlugin,
   switchain: makeSwitchainPlugin,
-  transfer: makeTransferPlugin
+  transfer: makeTransferPlugin,
+  letsexchange: makeLetsExchangePlugin
 }
 
 if (
