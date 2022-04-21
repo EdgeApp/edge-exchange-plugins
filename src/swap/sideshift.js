@@ -50,6 +50,9 @@ const CURRENCY_CODE_TRANSCRIPTION = {
   },
   polygon: {
     MATIC: 'polygon'
+  },
+  AVAX: {
+    AVAX: 'avaxc'
   }
 }
 const INVALID_CURRENCY_CODES: InvalidCurrencyCodes = {
