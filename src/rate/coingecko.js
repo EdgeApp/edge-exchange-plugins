@@ -130,6 +130,7 @@ const coinGeckoMap = {
   FTM: 'fantom',
   TSHARE: 'tomb-shares',
   TOMB: 'tomb',
+  MAI: 'mimatic',
   CELO: 'celo',
   CUSD: 'celo-dollar',
   CEUR: 'celo-euro',
