@@ -1,5 +1,11 @@
 # edge-exchange-plugins
 
+# 0.13.0 (2022-04-21)
+
+- Add new swap partner TombSwap
+- Add new swap partner LetsExchange
+- Coingecko: Add miMATIC (MAI)
+
 # 0.12.17 (2022-04-13)
 
 - Transfer: Don't allow transfers if the currency code doesn't match
