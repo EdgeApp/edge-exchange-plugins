@@ -1,5 +1,6 @@
 // @flow
 
+import { makeLetsExchangePlugin } from '../lib/swap/letsexchange'
 import { makeBitMaxPlugin } from './rate/bitmax.js'
 import { makeCoinbasePlugin } from './rate/coinbase.js'
 import { makeCoincapPlugin } from './rate/coincap.js'
@@ -21,7 +22,6 @@ import { makeGodexPlugin } from './swap/godex.js'
 import { makeSideshiftPlugin } from './swap/sideshift.js'
 import { makeSwitchainPlugin } from './swap/switchain.js'
 import { makeTransferPlugin } from './swap/transfer.js'
-import { makeLetsExchangePlugin } from "../lib/swap/letsexchange";
 
 const edgeCorePlugins = {
   // Rate plugins:
