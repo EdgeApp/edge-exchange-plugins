@@ -1,6 +1,5 @@
 // @flow
 
-import { makeLetsExchangePlugin } from '../lib/swap/letsexchange'
 import { makeBitMaxPlugin } from './rate/bitmax.js'
 import { makeCoinbasePlugin } from './rate/coinbase.js'
 import { makeCoincapPlugin } from './rate/coincap.js'
@@ -19,6 +18,7 @@ import { makeTombSwapPlugin } from './swap/defi/uni-v2-based/plugins/tombSwap.js
 import { makeExolixPlugin } from './swap/exolix.js'
 import { makeFoxExchangePlugin } from './swap/foxExchange.js'
 import { makeGodexPlugin } from './swap/godex.js'
+import { makeLetsExchangePlugin } from './swap/letsexchange.js'
 import { makeSideshiftPlugin } from './swap/sideshift.js'
 import { makeSwitchainPlugin } from './swap/switchain.js'
 import { makeTransferPlugin } from './swap/transfer.js'
