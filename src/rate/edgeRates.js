@@ -48,7 +48,7 @@ export function makeEdgeRatesPlugin(
         }
         try {
           const reply = await fetch(
-            `https://rates1.edge.app/v2/exchangeRates`,
+            `https://rates2.edge.app/v2/exchangeRates`,
             options
           )
           const json = asEdgeRatesResponse(await reply.json())
