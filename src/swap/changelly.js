@@ -27,7 +27,7 @@ import {
 
 const INVALID_CURRENCY_CODES: InvalidCurrencyCodes = {
   from: {
-    ethereum: ['BNB', 'FTM', 'MATIC'],
+    ethereum: ['BNB', 'FTM', 'MATIC', 'KNC'],
     avalanche: 'allTokens',
     binancesmartchain: 'allTokens',
     polygon: 'allCodes',
@@ -35,7 +35,7 @@ const INVALID_CURRENCY_CODES: InvalidCurrencyCodes = {
     fantom: 'allCodes'
   },
   to: {
-    ethereum: ['BNB', 'FTM', 'MATIC'],
+    ethereum: ['BNB', 'FTM', 'MATIC', 'KNC'],
     avalanche: 'allTokens',
     binancesmartchain: 'allTokens',
     polygon: 'allCodes',
