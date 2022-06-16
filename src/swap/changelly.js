@@ -199,9 +199,14 @@ export function makeChangellyPlugin(
       checkInvalidCodes(INVALID_CURRENCY_CODES, request, swapInfo)
 
       const fixedPromise = this.getFixedQuote(request, userSettings, opts)
-      // FIXME: Estimated swaps are temporarily disabled
-      const fixedResult = await fixedPromise
-      return fixedResult
+      const estimatePromise = this.getEstimate(request, userSettings, opts)
+      try {
+        const fixedResult = await fixedPromise
+        return fixedResult
+      } catch (e) {
+        const estimateResult = await estimatePromise
+        return estimateResult
+      }
     },
 
     async getFixedQuote(
