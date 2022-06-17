@@ -1,5 +1,10 @@
 # edge-exchange-plugins
 
+# 0.13.1 (2022-06-19)
+
+- Changelly: Re-enable floating-rate swap support
+- Changelly: Block KNC swaps
+
 # 0.13.0 (2022-04-21)
 
 - Add new swap partner TombSwap
