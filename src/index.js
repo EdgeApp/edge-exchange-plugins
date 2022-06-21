@@ -11,7 +11,6 @@ import { makeCurrencyconverterapiPlugin } from './rate/currencyconverterapi.js'
 import { makeEdgeRatesPlugin } from './rate/edgeRates.js'
 import { makeNomicsPlugin } from './rate/nomics.js'
 import { makeWazirxPlugin } from './rate/wazirx'
-import { makeChangellyPlugin } from './swap/changelly.js'
 import { makeChangeNowPlugin } from './swap/changenow.js'
 import { makeSpookySwapPlugin } from './swap/defi/uni-v2-based/plugins/spookySwap.js'
 import { makeTombSwapPlugin } from './swap/defi/uni-v2-based/plugins/tombSwap.js'
@@ -38,7 +37,6 @@ const edgeCorePlugins = {
   wazirx: makeWazirxPlugin,
 
   // Swap plugins:
-  changelly: makeChangellyPlugin,
   changenow: makeChangeNowPlugin,
   exolix: makeExolixPlugin,
   foxExchange: makeFoxExchangePlugin,
