@@ -1,5 +1,9 @@
 # edge-exchange-plugins
 
+# 0.13.2 (2022-06-21)
+
+- Deprecate Changelly plugin
+
 # 0.13.1 (2022-06-19)
 
 - Changelly: Re-enable floating-rate swap support
