@@ -23,7 +23,8 @@ import {
 } from '../swap-helpers.js'
 
 const MAINNET_CODE_TRANSCRIPTION = {
-  zcash: 'shielded'
+  zcash: 'shielded',
+  binancesmartchain: 'bsc'
 }
 
 const SIDESHIFT_BASE_URL = 'https://sideshift.ai/api/v2'
