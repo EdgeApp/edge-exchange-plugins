@@ -96,6 +96,7 @@ export function makeLetsExchangePlugin(
 
     const headers = {
       'Content-Type': 'application/json',
+      Authorization: 'Bearer ' + initOptions.apiKey,
       Accept: 'application/json'
     }
     const response = await fetchCors(url, { method: 'POST', body, headers })
@@ -213,7 +214,7 @@ export function makeLetsExchangePlugin(
           return: fromAddress,
           return_extra_id: null,
           withdrawal_extra_id: null,
-          affiliate_id: initOptions.apiKey,
+          affiliate_id: initOptions.affiliateId,
           promocode: promoCode != null ? promoCode : '',
           type: 'edge',
           float: false,
