@@ -205,3 +205,31 @@ export const getCodesWithMainnetTranscription = (
     toCurrencyCode: toCurrencyCode
   }
 }
+
+export const checkEthTokensOnly = (
+  swapInfo: EdgeSwapInfo,
+  request: EdgeSwapRequest
+): void => {
+  const currencyFromWallet = request.fromWallet.currencyInfo.currencyCode
+  const currencyToWallet = request.toWallet.currencyInfo.currencyCode
+
+  if (
+    currencyFromWallet !== request.fromCurrencyCode &&
+    currencyFromWallet !== 'ETH'
+  ) {
+    throw new SwapCurrencyError(
+      swapInfo,
+      request.fromCurrencyCode,
+      request.toCurrencyCode
+    )
+  } else if (
+    currencyToWallet !== request.toCurrencyCode &&
+    currencyToWallet !== 'ETH'
+  ) {
+    throw new SwapCurrencyError(
+      swapInfo,
+      request.fromCurrencyCode,
+      request.toCurrencyCode
+    )
+  }
+}
