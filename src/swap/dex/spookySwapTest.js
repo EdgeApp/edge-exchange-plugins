@@ -80,8 +80,8 @@ const RouterTxProviders = (
   // TODO: Do gasLimit, gasPrice, and value get set properly from accountbased on the resulting tx?
   // TODO: OR do we need to grab fees from accountbased and populate this here?
   const networkFees = {
-    gasLimit: ethers.utils.hexlify(340722),
-    gasPrice: ethers.utils.parseUnits('661', 'gwei')
+    gasLimit: ethers.utils.hexlify(170000),
+    gasPrice: ethers.utils.parseUnits('3.5', 'gwei')
   }
 
   return {
@@ -126,7 +126,9 @@ const getRouterSwapParams = async (edgeSwapRequest: any) => {
     fromWallet,
     toWallet,
     fromCurrencyCode,
-    toCurrencyCode
+    fromTokenAddress,
+    toCurrencyCode,
+    toTokenAddress
   } = edgeSwapRequest
   const currencyInfo = fromWallet.currencyInfo
 
@@ -140,19 +142,19 @@ const getRouterSwapParams = async (edgeSwapRequest: any) => {
   const nativeCurrencyCode = currencyInfo.currencyCode
   const isFromNativeCurrency = fromCurrencyCode === nativeCurrencyCode
   const isToNativeCurrency = toCurrencyCode === nativeCurrencyCode
-  const wrappedCurrencyCode = `W${nativeCurrencyCode}`
+  // const wrappedCurrencyCode = `W${nativeCurrencyCode}`
 
   // TODO: Do different wallets share the same custom metaTokens?
-  const metaTokens: EdgeMetaToken[] = currencyInfo.metaTokens
+  // const metaTokens: EdgeMetaToken[] = currencyInfo.metaTokens
 
-  const fromTokenAddress = getMetaTokenAddress(
-    metaTokens,
-    isFromNativeCurrency ? wrappedCurrencyCode : fromCurrencyCode
-  )
-  const toTokenAddress = getMetaTokenAddress(
-    metaTokens,
-    isToNativeCurrency ? wrappedCurrencyCode : toCurrencyCode
-  )
+  // const fromTokenAddress = getMetaTokenAddress(
+  //   metaTokens,
+  //   isFromNativeCurrency ? wrappedCurrencyCode : fromCurrencyCode
+  // )
+  // const toTokenAddress = getMetaTokenAddress(
+  //   metaTokens,
+  //   isToNativeCurrency ? wrappedCurrencyCode : toCurrencyCode
+  // )
 
   // Determine router method name and params
   if (isFromNativeCurrency && isToNativeCurrency)
@@ -211,17 +213,30 @@ const generateSignedSwapTx = async (
 }
 
 /**
- * Test fn
+ * Test swap fn
  */
-const testSwap = async (
+type TestSwapParams = {
   nativeCurrency: string,
-  fromCurrency: string,
-  toCurrency: string,
+  fromCurrencyCode: string,
+  fromTokenAddress: string,
+  toTokenAddress: string,
+  toCurrencyCode: string,
   amount: string, // in native
   fromPrivateKey: string,
-  fromAddress: string,
   receiveAddress: string
-) => {
+}
+const testSwap = async (testSwapParams: TestSwapParams) => {
+  const {
+    nativeCurrency,
+    fromCurrencyCode,
+    fromTokenAddress,
+    toTokenAddress,
+    toCurrencyCode,
+    amount, // in native
+    fromPrivateKey,
+    receiveAddress
+  } = testSwapParams
+
   const testSwapRequest = {
     fromWallet: {
       currencyInfo: {
@@ -270,13 +285,16 @@ const testSwap = async (
     },
 
     // What?
-    fromCurrencyCode: fromCurrency,
-    toCurrencyCode: toCurrency,
+    fromCurrencyCode,
+    fromTokenAddress,
+    toCurrencyCode,
+    toTokenAddress,
 
     // How much?
     nativeAmount: amount,
     quoteFor: 'from'
   }
+
   // Create fallback providers
   const rpcProviderUrls = [
     // 'https://rpcapi.fantom.network',
@@ -334,12 +352,109 @@ const testSwap = async (
   )
 }
 
-testSwap(
-  'FTM', // nativeCurrency
-  'BOO', // fromCurrency
-  'FTM', // toCurrency
-  '10000000000000000', // 0.01 amount
-  '1f25216e2b05a01857eeb4936bca1e615da301c0932927b71f5e29e6ec1e1cb9', // fromPrivateKey
-  '0x749411cf4DA88194581921Ae55f6fc4357D3b0f2', // fromAddress
-  '0x749411cf4DA88194581921Ae55f6fc4357D3b0f2'
-) // receiveAddress
+/**
+ * Swap into multiple tokens
+ */
+const testSwaps = async (swapTargets: any) => {
+  for (const swapTarget of swapTargets) {
+    await testSwap({
+      nativeCurrency: 'FTM',
+      fromCurrencyCode: 'FTM',
+      fromTokenAddress: '0x21be370d5312f44cb42ce377bc9b8a0cef1a4c83',
+      toTokenAddress: swapTarget.toTokenAddress,
+      toCurrencyCode: swapTarget.toCurrencyCode,
+      amount: '10000000000000000000', // Swap 10 FTM for each token
+      fromPrivateKey:
+        'a609cd0029cef4959727977412b253f2cd90c253847688d1cfb695f389cda838',
+      receiveAddress: '0x93723056de77c9065209b0fc6ca00dd3c95ada18'
+    })
+    console.log(
+      '\x1b[30m\x1b[42m\n' +
+        'Finished ' +
+        swapTarget.toCurrencyCode +
+        '\n\n\x1b[0m'
+    )
+  }
+}
+
+const swapTargets = [
+  // {
+  //   toTokenAddress: '0x6c021ae822bea943b2e66552bde1d2696a53fbb7',
+  //   toCurrencyCode: 'TOMB'
+  // },
+  // {
+  //   toTokenAddress: '0x04068da6c83afcfa0e13ba15a6696662335d5b75',
+  //   toCurrencyCode: 'USDC'
+  // },
+  // {
+  //   toTokenAddress: '0x09e145a1d53c0045f41aeef25d8ff982ae74dd56',
+  //   toCurrencyCode: 'ZOO'
+  // },
+  // {
+  //   toTokenAddress: '0x321162cd933e2be498cd2267a90534a804051b11',
+  //   toCurrencyCode: 'BTC'
+  // },
+  // {
+  //   toTokenAddress: '0x4cdf39285d7ca8eb3f090fda0c069ba5f4145b37',
+  //   toCurrencyCode: 'TSHARE'
+  // },
+  // {
+  //   toTokenAddress: '0x74b23882a30290451a17c44f4f05243b6b58c76d',
+  //   toCurrencyCode: 'ETH'
+  // },
+  // {
+  //   toTokenAddress: '0x049d68029688eabf473097a2fc38ef61633a3c7a',
+  //   toCurrencyCode: 'FUSDT'
+  // },
+  // {
+  //   toTokenAddress: '0x82f0b8b456c1a451378467398982d4834b6829c1',
+  //   toCurrencyCode: 'MIM'
+  // },
+  // {
+  //   toTokenAddress: '0x8d11ec38a3eb5e956b052f67da8bdc9bef8abf3e',
+  //   toCurrencyCode: 'DAI'
+  // },
+  // {
+  //   toTokenAddress: '0xbf60e7414ef09026733c1e7de72e7393888c64da',
+  //   toCurrencyCode: 'LIF3'
+  // },
+  // {
+  //   toTokenAddress: '0xcbe0ca46399af916784cadf5bcc3aed2052d6c45',
+  //   toCurrencyCode: 'LSHARE'
+  // },
+  // {
+  //   toTokenAddress: '0xd67de0e0a0fd7b15dc8348bb9be742f3c5850454',
+  //   toCurrencyCode: 'BNB'
+  // },
+  // {
+  //   toTokenAddress: '0x511d35c52a3c244e7b8bd92c0c297755fbd89212',
+  //   toCurrencyCode: 'AVAX'
+  // },
+  // {
+  //   toTokenAddress: '0xb3654dc3d10ea7645f8319668e8f54d2574fbdc8',
+  //   toCurrencyCode: 'LINK'
+  // },
+  // {
+  //   toTokenAddress: '0x1e4f97b9f9f913c46f1632781732927b9019c68b',
+  //   toCurrencyCode: 'CRV'
+  // },
+  // {
+  //   toTokenAddress: '0x24248cd1747348bdc971a5395f4b3cd7fee94ea0',
+  //   toCurrencyCode: 'TBOND'
+  // }
+
+  // No direct swap route for the tokens below!
+  {
+    // WFTM -> TOMB -> TREEB
+    toTokenAddress: '0xc60d7067dfbc6f2caf30523a064f416a5af52963',
+    toCurrencyCode: 'TREEB'
+  },
+  {
+    // WFTM -> LIV3 -> USDC -> FUSD
+    toTokenAddress: '0xad84341756bf337f5a0164515b1f6f993d194e1f',
+    toCurrencyCode: 'FUSD'
+  }
+]
+
+// Swap into the token array
+testSwaps(swapTargets)

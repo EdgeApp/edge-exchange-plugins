@@ -910,7 +910,7 @@ export const SPOOKYSWAP_ROUTER_ABI = [
   { stateMutability: 'payable', type: 'receive' }
 ]
 export const SPOOKYSWAP_ROUTER_ADDRESS =
-  '0xF491e7B69E4244ad4002BC14e878a34207E38c29'
+  '0x6d0176c5ea1e44b08d3dd001b0784ce42f47a3a7' // tomb
 
 export const BOO_CONTRACT_ABI = [
   { inputs: [], stateMutability: 'nonpayable', type: 'constructor' },
