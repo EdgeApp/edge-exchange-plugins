@@ -1,5 +1,11 @@
 # edge-exchange-plugins
 
+# 0.13.3 (2022-07-13)
+
+- LetsExchange: Update apiKey config
+- LetsExchange: Fix min amount currency display
+- Upgrade edge-core-js to v0.19.23
+
 # 0.13.2 (2022-06-21)
 
 - Deprecate Changelly plugin
