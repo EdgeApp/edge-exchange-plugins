@@ -206,11 +206,7 @@ export function makeLetsExchangePlugin(
         )
 
         if (lt(toNativeAmount, nativeMin)) {
-          const toSwapInfo = {
-            ...swapInfo,
-            pluginId: request.toWallet.currencyInfo.pluginId
-          }
-          throw new SwapBelowLimitError(toSwapInfo, nativeMin, 'to')
+          throw new SwapBelowLimitError(swapInfo, nativeMin, 'to')
         }
 
         fromAmount = reply.amount
