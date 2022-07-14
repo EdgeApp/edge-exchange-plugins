@@ -1,5 +1,10 @@
 # edge-exchange-plugins
 
+# 0.13.4 (2022-07-13)
+
+- Godex: Fix min amount currency display
+- Exolix: Fix min amount currency display
+
 # 0.13.3 (2022-07-13)
 
 - LetsExchange: Update apiKey config
