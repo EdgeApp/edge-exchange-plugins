@@ -158,8 +158,19 @@ export function makeGodexPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
         reply = await call(uri + 'info', request, {
           params: quoteParams
         })
-        fromAmount = quoteAmount
+
         fromNativeAmount = request.nativeAmount
+
+        // Check the minimum:
+        const nativeMin = await request.fromWallet.denominationToNative(
+          reply.min_amount,
+          request.fromCurrencyCode
+        )
+        if (lt(fromNativeAmount, nativeMin)) {
+          throw new SwapBelowLimitError(swapInfo, nativeMin)
+        }
+
+        fromAmount = quoteAmount
         toNativeAmount = await request.toWallet.denominationToNative(
           reply.amount.toString(),
           request.toCurrencyCode
@@ -168,24 +179,27 @@ export function makeGodexPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
         reply = await call(uri + 'info-revert', request, {
           params: quoteParams
         })
+
+        toNativeAmount = request.nativeAmount
+
+        // Check the minimum:
+        const nativeMin = await request.toWallet.denominationToNative(
+          reply.min_amount,
+          request.toCurrencyCode
+        )
+        if (lt(toNativeAmount, nativeMin)) {
+          throw new SwapBelowLimitError(swapInfo, nativeMin, 'to')
+        }
+
         fromAmount = reply.amount
         fromNativeAmount = await request.fromWallet.denominationToNative(
           fromAmount.toString(),
           request.fromCurrencyCode
         )
-        toNativeAmount = request.nativeAmount
       }
       log('fromNativeAmount' + fromNativeAmount)
       log('toNativeAmount' + toNativeAmount)
 
-      // Check the minimum:
-      const nativeMin = await request.fromWallet.denominationToNative(
-        reply.min_amount,
-        request.fromCurrencyCode
-      )
-      if (lt(fromNativeAmount, nativeMin)) {
-        throw new SwapBelowLimitError(swapInfo, nativeMin)
-      }
       const { promoCode } = opts
       const {
         fromMainnetCode,

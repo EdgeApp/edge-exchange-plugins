@@ -161,13 +161,24 @@ export function makeExolixPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
       const rateResponse = await call('rate', quoteParams)
 
       // Check rate minimum:
-      const nativeMin = await request.fromWallet.denominationToNative(
-        rateResponse.min_amount,
-        request.fromCurrencyCode
-      )
+      if (request.quoteFor === 'from') {
+        const nativeMin = await request.fromWallet.denominationToNative(
+          rateResponse.min_amount,
+          request.fromCurrencyCode
+        )
 
-      if (lt(request.nativeAmount, nativeMin)) {
-        throw new SwapBelowLimitError(swapInfo, nativeMin)
+        if (lt(request.nativeAmount, nativeMin)) {
+          throw new SwapBelowLimitError(swapInfo, nativeMin)
+        }
+      } else {
+        const nativeMin = await request.toWallet.denominationToNative(
+          rateResponse.min_amount,
+          request.toCurrencyCode
+        )
+
+        if (lt(request.nativeAmount, nativeMin)) {
+          throw new SwapBelowLimitError(swapInfo, nativeMin, 'to')
+        }
       }
 
       // Make the transaction:
