@@ -1,5 +1,9 @@
 # edge-exchange-plugins
 
+# 0.13.5 (2022-07-20)
+
+- Add ChangeHero
+
 # 0.13.4 (2022-07-13)
 
 - Godex: Fix min amount currency display
