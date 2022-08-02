@@ -1,5 +1,9 @@
 # edge-exchange-plugins
 
+# 0.13.6 (2022-08-02)
+
+- ChangeHero: Prevent swapping currency codes could represent both a token and a mainnet currency
+
 # 0.13.5 (2022-07-20)
 
 - Add ChangeHero
