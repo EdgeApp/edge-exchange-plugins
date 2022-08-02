@@ -23,7 +23,12 @@ import {
   SwapCurrencyError
 } from 'edge-core-js/types'
 
-import { makeSwapPluginQuote, safeCurrencyCodes } from '../swap-helpers.js'
+import {
+  type InvalidCurrencyCodes,
+  checkInvalidCodes,
+  makeSwapPluginQuote,
+  safeCurrencyCodes
+} from '../swap-helpers.js'
 
 const CURRENCY_CODE_TRANSCRIPTION = {
   ethereum: {
@@ -37,6 +42,25 @@ const CURRENCY_CODE_TRANSCRIPTION = {
   },
   polygon: {
     MATIC: 'POLYGON'
+  }
+}
+
+const INVALID_CURRENCY_CODES: InvalidCurrencyCodes = {
+  from: {
+    ethereum: ['MATIC', 'AVAX', 'BNB', 'FTM', 'CELO'],
+    avalanche: 'allCodes',
+    binancesmartchain: 'allCodes',
+    celo: 'allCodes',
+    fantom: 'allCodes',
+    polygon: 'allCodes'
+  },
+  to: {
+    ethereum: ['MATIC', 'AVAX', 'BNB', 'FTM', 'CELO'],
+    avalanche: 'allCodes',
+    binancesmartchain: 'allCodes',
+    celo: 'allCodes',
+    fantom: 'allCodes',
+    polygon: 'allCodes'
   }
 }
 
@@ -168,6 +192,8 @@ export function makeChangeHeroPlugin(
       userSettings: Object | void
     ): Promise<EdgeSwapQuote> {
       checkEthOnly(request)
+      checkInvalidCodes(INVALID_CURRENCY_CODES, request, swapInfo)
+
       return this.getFixedQuote(request, userSettings)
     },
     async getFixedQuote(
