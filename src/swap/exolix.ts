@@ -39,7 +39,7 @@ const swapInfo: EdgeSwapInfo = {
 }
 
 const orderUri = 'https://exolix.com/transaction/'
-const uri = 'https://exolix.com/api/'
+const uri = 'https://exolix.com/api/v2'
 
 const expirationMs = 1000 * 60
 
@@ -48,15 +48,15 @@ const dontUseLegacy: { [cc: string]: boolean } = {
 }
 
 const asRateResponse = asObject({
-  min_amount: asString
+  minAmount: asString
 })
 
 const asQuoteInfo = asObject({
   id: asString,
-  amount_from: asNumber,
-  amount_to: asNumber,
-  deposit_address: asString,
-  deposit_extra: asOptional(asString)
+  amount: asNumber,
+  amountTo: asNumber,
+  depositAddress: asString,
+  depositExtraId: asOptional(asString)
 })
 
 async function getAddress(
@@ -82,8 +82,8 @@ export function makeExolixPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
 
   const { apiKey } = initOptions
 
-  async function call(route: string, params: any): Promise<Object> {
-    const body = JSON.stringify(params)
+  async function call(
+    method: 'GET' | 'POST', route: string, params: any): Promise<Object> {
 
     const headers: { [header: string]: string } = {
       Accept: 'application/json',
@@ -91,15 +91,26 @@ export function makeExolixPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
       Authorization: `${apiKey}`
     }
 
-    const response = await fetchCors(uri + route, {
-      method: 'POST',
-      body,
-      headers
-    })
+    let response: Awaited<ReturnType<typeof fetchCors>>
+
+    if (method === 'POST') {
+      const body = JSON.stringify(params)
+      response = await fetchCors(uri + route, {
+        method,
+        headers,
+        body
+      })
+    } else {
+      const url = `${uri}${route}?${new URLSearchParams(params)}`
+      response = await fetchCors(url, {
+        method,
+        headers
+      })
+    }
 
     if (!response.ok) {
       if (response.status === 422) {
-        throw new SwapCurrencyError(swapInfo, params.coin_from, params.coin_to)
+        throw new SwapCurrencyError(swapInfo, params.coinFrom, params.coinTo)
       }
       throw new Error(`Exolix returned error code ${response.status}`)
     }
@@ -158,34 +169,33 @@ export function makeExolixPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
       toMainnetCode
     } = getCodes(request)
 
-    // The Exolix documentation doesn't detail this mainnetCode:currencyCode functionality
-    // but it's been verified by testing
-    const safeFromCurrencyCode = `${fromMainnetCode}:${fromCurrencyCode}`
-    const safeToCurrencyCode = `${toMainnetCode}:${toCurrencyCode}`
-
     // Swap the currencies if we need a reverse quote:
     const quoteParams =
-      request.quoteFor === 'from'
-        ? {
-            coin_from: safeFromCurrencyCode,
-            coin_to: safeToCurrencyCode,
-            deposit_amount: quoteAmount,
-            rate_type: 'fixed'
-          }
-        : {
-            coin_from: safeToCurrencyCode,
-            coin_to: safeFromCurrencyCode,
-            deposit_amount: quoteAmount,
-            rate_type: 'fixed'
-          }
+        request.quoteFor === 'from'
+          ? {
+              coinFrom: fromCurrencyCode,
+              coinFromNetwork: fromMainnetCode,
+              coinTo: toCurrencyCode,
+              coinToNetwork: toMainnetCode,
+              amount: quoteAmount,
+              rateType: 'fixed'
+            }
+          : {
+              coinFrom: toCurrencyCode,
+              coinFromNetwork: toMainnetCode,
+              coinTo: fromCurrencyCode,
+              coinToNetwork: fromMainnetCode,
+              amount: quoteAmount,
+              rateType: 'fixed'
+            }
 
     // Get Rate
-    const rateResponse = asRateResponse(await call('rate', quoteParams))
+    const rateResponse = asRateResponse(await call('GET', 'rate', quoteParams))
 
     // Check rate minimum:
     if (request.quoteFor === 'from') {
       const nativeMin = await request.fromWallet.denominationToNative(
-        rateResponse.min_amount,
+        rateResponse.minAmount,
         request.fromCurrencyCode
       )
 
@@ -194,7 +204,7 @@ export function makeExolixPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
       }
     } else {
       const nativeMin = await request.toWallet.denominationToNative(
-        rateResponse.min_amount,
+        rateResponse.minAmount,
         request.toCurrencyCode
       )
 
@@ -205,26 +215,28 @@ export function makeExolixPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
 
     // Make the transaction:
     const exchangeParams = {
-      coin_from: quoteParams.coin_from,
-      coin_to: quoteParams.coin_to,
-      deposit_amount: quoteAmount,
-      destination_address: toAddress,
-      destination_extra: '',
-      refund_address: fromAddress,
-      refund_extra: '',
-      rate_type: 'fixed'
+      coinFrom: quoteParams.coinFrom,
+      networkFrom: quoteParams.coinFromNetwork,
+      coinTo: quoteParams.coinTo,
+      networkTo: quoteParams.coinToNetwork,
+      amount: quoteAmount,
+      withdrawalAddress: toAddress,
+      withdrawalExtraId: '',
+      refundAddress: fromAddress,
+      refundExtraId: '',
+      rateType: 'fixed'
     }
 
-    const callJson = await call('exchange', exchangeParams)
+    const callJson = await call('POST', 'transactions', exchangeParams)
     const quoteInfo = asQuoteInfo(callJson)
 
     const fromNativeAmount = await request.fromWallet.denominationToNative(
-      quoteInfo.amount_from.toString(),
+      quoteInfo.amount.toString(),
       request.fromCurrencyCode
     )
 
     const toNativeAmount = await request.toWallet.denominationToNative(
-      quoteInfo.amount_to.toString(),
+      quoteInfo.amountTo.toString(),
       request.toCurrencyCode
     )
 
@@ -233,8 +245,8 @@ export function makeExolixPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
       spendTargets: [
         {
           nativeAmount: fromNativeAmount,
-          publicAddress: quoteInfo.deposit_address,
-          uniqueIdentifier: quoteInfo.deposit_extra
+          publicAddress: quoteInfo.depositAddress,
+          uniqueIdentifier: quoteInfo.depositExtraId
         }
       ],
       networkFeeOption:
