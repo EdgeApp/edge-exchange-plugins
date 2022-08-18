@@ -149,12 +149,10 @@ export function makeChangeHeroPlugin(
         getAddress(request.fromWallet, request.fromCurrencyCode),
         getAddress(request.toWallet, request.toCurrencyCode)
       ])
-      const {
-        fromCurrencyCode,
-        toCurrencyCode,
-        fromMainnetCode,
-        toMainnetCode
-      } = getCodes(request)
+      const { fromCurrencyCode, toCurrencyCode } = getCodes(request)
+
+      const fromMainnetCode = request.fromWallet.currencyInfo.pluginId
+      const toMainnetCode = request.toWallet.currencyInfo.pluginId
 
       const quoteAmount =
         request.quoteFor === 'from'
@@ -242,7 +240,6 @@ export function makeChangeHeroPlugin(
               refundExtraId: null,
               rateId: responseId
             }
-
       const reply = {
         jsonrpc: '2.0',
         id: 2,
