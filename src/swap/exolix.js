@@ -118,6 +118,15 @@ export function makeExolixPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
         getAddress(request.toWallet, request.toCurrencyCode)
       ])
 
+      if (request.quoteFor === 'to') {
+        // Does not yet support reverse quotes
+        throw new SwapCurrencyError(
+          swapInfo,
+          request.fromCurrencyCode,
+          request.toCurrencyCode
+        )
+      }
+
       const quoteAmount =
         request.quoteFor === 'from'
           ? await request.fromWallet.nativeToDenomination(
