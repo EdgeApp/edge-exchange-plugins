@@ -1,5 +1,9 @@
 # edge-exchange-plugins
 
+# 0.13.7 (2022-08-22)
+
+- Exolix: Disable reverse quotes
+
 # 0.13.6 (2022-08-02)
 
 - ChangeHero: Prevent swapping currency codes could represent both a token and a mainnet currency
