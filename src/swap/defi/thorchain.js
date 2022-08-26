@@ -55,7 +55,7 @@ const LIKE_KIND_VOLATILITY_SPREAD_DEFAULT = 0.0025
 const EXCHANGE_INFO_UPDATE_FREQ_MS = 60000
 const EVM_SEND_GAS = '80000'
 const EVM_TOKEN_SEND_GAS = '80000'
-const THOR_LIMIT_UNITS = '100000000'
+export const THOR_LIMIT_UNITS = '100000000'
 
 const INVALID_CURRENCY_CODES: InvalidCurrencyCodes = {
   from: {},
@@ -103,7 +103,7 @@ const asInboundAddresses = asArray(
   })
 )
 
-const asPool = asObject({
+export const asPool = asObject({
   asset: asString,
   status: asString,
   assetPrice: asString,
