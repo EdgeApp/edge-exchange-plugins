@@ -22,7 +22,7 @@ import {
   makeUniV2EdgeSwapQuote
 } from '../uniV2Utils.js'
 
-const EXPIRATION_MS = 1000 * 20 * 60
+const EXPIRATION_MS = 1000 * 60
 const SLIPPAGE = '0.05'
 
 const swapInfo: EdgeSwapInfo = {

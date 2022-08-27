@@ -31,7 +31,7 @@ const swapInfo: EdgeSwapInfo = {
 const orderUri = 'https://godex.io/exchange/waiting/'
 const uri = 'https://api.godex.io/api/v1/'
 
-const expirationMs = 1000 * 60 * 20
+const expirationMs = 1000 * 60
 
 type QuoteInfo = {
   transaction_id: string,

@@ -33,7 +33,7 @@ const swapInfo: EdgeSwapInfo = {
 const orderUri = 'https://letsexchange.io/?exchangeId='
 const uri = 'https://api.letsexchange.io/api/v1/'
 
-const expirationMs = 1000 * 60 * 20
+const expirationMs = 1000 * 60
 
 const asQuoteInfo = asObject({
   transaction_id: asString,
