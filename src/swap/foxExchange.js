@@ -26,7 +26,7 @@ const swapInfo: EdgeSwapInfo = {
 
 const orderUri = 'https://fox.exchange/tx/'
 const uri = 'https://fox.exchange/api/cs'
-const expirationMs = 1000 * 60 * 20
+const expirationMs = 1000 * 60
 
 type RateRequest = {
   depositCoin: string,

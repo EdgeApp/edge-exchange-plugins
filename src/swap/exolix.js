@@ -41,7 +41,7 @@ const swapInfo: EdgeSwapInfo = {
 const orderUri = 'https://exolix.com/transaction/'
 const uri = 'https://exolix.com/api/'
 
-const expirationMs = 1000 * 60 * 60
+const expirationMs = 1000 * 60
 
 const dontUseLegacy = {
   DGB: true

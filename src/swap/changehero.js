@@ -73,7 +73,7 @@ const swapInfo: EdgeSwapInfo = {
 
 const orderUri = 'https://changehero.io/transaction/'
 const uri = 'https://api.changehero.io/v2'
-const expirationFixedMs = 1000 * 60 * 5
+const expirationFixedMs = 1000 * 60
 
 const asGetFixRateReply = asObject({
   result: asArray(

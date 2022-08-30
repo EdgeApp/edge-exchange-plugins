@@ -259,7 +259,7 @@ export function makeChangeNowPlugin(
           flow === 'standard',
           validUntil != null
             ? ensureInFuture(validUntil)
-            : new Date(Date.now() + 1000 * 60 * 20),
+            : new Date(Date.now() + 1000 * 60),
           id
         )
       }
@@ -320,7 +320,7 @@ export function makeChangeNowPlugin(
           false,
           validUntil != null
             ? ensureInFuture(validUntil)
-            : new Date(Date.now() + 1000 * 60 * 20),
+            : new Date(Date.now() + 1000 * 60),
           id
         )
       }
