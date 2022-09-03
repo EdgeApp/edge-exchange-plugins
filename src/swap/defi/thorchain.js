@@ -1,6 +1,6 @@
 // @flow
 
-import { div, lt, mul, sub, toFixed } from 'biggystring'
+import { add, div, lt, mul, sub, toFixed } from 'biggystring'
 import {
   asArray,
   asBoolean,
@@ -357,7 +357,22 @@ export function makeThorchainPlugin(
           clog
         )
       } else {
-        throw new Error('TODO: TO quoting')
+        calcResponse = await calcSwapTo(
+          {
+            fromWallet,
+            fromCurrencyCode,
+            toWallet,
+            toCurrencyCode,
+            nativeAmount,
+            minAmount,
+            sourcePool,
+            destPool,
+            volatilitySpreadFinal,
+            affiliateFee,
+            feeInDestCurrency
+          },
+          clog
+        )
       }
       const { fromNativeAmount, toNativeAmount, limit } = calcResponse
 
@@ -636,6 +651,118 @@ const calcSwapFrom = async (
   clog(`toNativeAmount: ${toNativeAmount}`)
   const limit = toFixed(mul(toExchangeAmount, THOR_LIMIT_UNITS), 0, 0)
   clog(`limit: ${limit}`)
+
+  return {
+    fromNativeAmount,
+    fromExchangeAmount,
+    toNativeAmount,
+    toExchangeAmount,
+    limit
+  }
+}
+
+const calcSwapTo = async (
+  params: {
+    fromWallet: EdgeCurrencyWallet,
+    fromCurrencyCode: string,
+    toWallet: EdgeCurrencyWallet,
+    toCurrencyCode: string,
+    nativeAmount: string,
+    minAmount: MinAmount | void,
+    sourcePool: Pool,
+    destPool: Pool,
+    volatilitySpreadFinal: string,
+    affiliateFee: string,
+    feeInDestCurrency: string
+  },
+  clog: Function
+): Promise<{
+  fromNativeAmount: string,
+  fromExchangeAmount: string,
+  toNativeAmount: string,
+  toExchangeAmount: string,
+  limit: string
+}> => {
+  // Get exchange rate from destination to source asset
+  const {
+    fromWallet,
+    fromCurrencyCode,
+    toWallet,
+    toCurrencyCode,
+    nativeAmount,
+    minAmount,
+    sourcePool,
+    destPool,
+    volatilitySpreadFinal,
+    affiliateFee,
+    feeInDestCurrency
+  } = params
+  const toNativeAmount = nativeAmount
+
+  let toExchangeAmount = await toWallet.nativeToDenomination(
+    nativeAmount,
+    toCurrencyCode
+  )
+  clog(`toExchangeAmount: ${toExchangeAmount}`)
+
+  const limit = toFixed(mul(toExchangeAmount, THOR_LIMIT_UNITS), 0, 0)
+
+  // Adjust the toExchangeAmount by the fee so that calcDoubleSwapInput returns a higher
+  // fromAmount to compensate for the fee necessary
+  const addVolatility = mul(toExchangeAmount, volatilitySpreadFinal)
+
+  toExchangeAmount = add(toExchangeAmount, feeInDestCurrency)
+  clog(
+    `toExchangeAmount w/network fee of ${feeInDestCurrency}: ${toExchangeAmount}`
+  )
+  toExchangeAmount = add(toExchangeAmount, addVolatility)
+  clog(
+    `toExchangeAmount w/volatilitySpread ${mul(
+      volatilitySpreadFinal,
+      '100'
+    )}%: ${toExchangeAmount}`
+  )
+
+  const result = calcDoubleSwapInput(
+    Number(mul(toExchangeAmount, THOR_LIMIT_UNITS)),
+    sourcePool,
+    destPool
+  )
+
+  let fromExchangeAmount = div(
+    result.toString(),
+    THOR_LIMIT_UNITS,
+    DIVIDE_PRECISION
+  )
+  clog(`fromExchangeAmount: ${fromExchangeAmount}`)
+
+  const addAffiliateFee = mul(fromExchangeAmount, affiliateFee)
+  fromExchangeAmount = add(fromExchangeAmount, addAffiliateFee)
+  clog(
+    `fromExchangeAmount w/affiliate fee of ${mul(
+      affiliateFee,
+      '100'
+    )}%: ${fromExchangeAmount}`
+  )
+
+  const fromNativeAmount = await fromWallet.denominationToNative(
+    fromExchangeAmount,
+    fromCurrencyCode
+  )
+
+  // Check minimums if we can
+  if (minAmount != null) {
+    const { minInputAmount } = minAmount
+    if (lt(fromExchangeAmount, minInputAmount)) {
+      // Convert the minimum amount into an output amount
+      const result = await calcSwapFrom(
+        { ...params, nativeAmount: minInputAmount, dontCheckLimits: true },
+        clog
+      )
+      const { toNativeAmount } = result
+      throw new SwapBelowLimitError(swapInfo, toNativeAmount, 'to')
+    }
+  }
 
   return {
     fromNativeAmount,
