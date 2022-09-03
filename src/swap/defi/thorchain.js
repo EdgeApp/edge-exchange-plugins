@@ -1,7 +1,14 @@
 // @flow
 
 import { div, lt, mul, sub, toFixed } from 'biggystring'
-import { asArray, asBoolean, asObject, asOptional, asString } from 'cleaners'
+import {
+  asArray,
+  asBoolean,
+  asNumber,
+  asObject,
+  asOptional,
+  asString
+} from 'cleaners'
 import {
   type EdgeCorePluginOptions,
   type EdgeCurrencyWallet,
@@ -20,7 +27,11 @@ import {
   isLikeKind,
   makeSwapPluginQuote
 } from '../../swap-helpers.js'
-import { fetchWaterfall } from '../../util/utils.js'
+import {
+  fetchInfo,
+  fetchWaterfall,
+  promiseWithTimeout
+} from '../../util/utils.js'
 
 const pluginId = 'thorchain'
 const swapInfo: EdgeSwapInfo = {
@@ -37,6 +48,7 @@ const THORNAME_DEFAULT = 'ej'
 const VOLATILITY_SPREAD_DEFAULT = 0.01
 const LIKE_KIND_VOLATILITY_SPREAD_DEFAULT = 0.0025
 const DO_CONSOLE_LOG = true
+const EXCHANGE_INFO_UPDATE_FREQ_MS = 60000
 const EVM_SEND_GAS = '80000'
 const EVM_TOKEN_SEND_GAS = '80000'
 const THOR_LIMIT_UNITS = '100000000'
@@ -92,8 +104,25 @@ const asPool = asObject({
   runeDepth: asString
 })
 
+const asExchangeInfo = asObject({
+  swap: asObject({
+    plugins: asObject({
+      thorchain: asObject({
+        volatilitySpread: asNumber,
+        likeKindVolatilitySpread: asNumber,
+        midgardServers: asArray(asString),
+        nineRealmsServers: asOptional(asArray(asString))
+      })
+    })
+  })
+})
+
 const asPools = asArray(asPool)
 type Pool = $Call<typeof asPool>
+type ExchangeInfo = $Call<typeof asExchangeInfo>
+
+let exchangeInfo: ExchangeInfo | void
+let exchangeInfoLastUpdate: number = 0
 
 export function makeThorchainPlugin(
   opts: EdgeCorePluginOptions
@@ -131,9 +160,9 @@ export function makeThorchainPlugin(
       } = request
       const likeKind = isLikeKind(fromCurrencyCode, toCurrencyCode)
 
-      const midgardServers: string[] = MIDGARD_SERVERS_DEFAULT
-      const likeKindVolatilitySpread: number = LIKE_KIND_VOLATILITY_SPREAD_DEFAULT
-      const volatilitySpread: number = VOLATILITY_SPREAD_DEFAULT
+      let midgardServers: string[] = MIDGARD_SERVERS_DEFAULT
+      let likeKindVolatilitySpread: number = LIKE_KIND_VOLATILITY_SPREAD_DEFAULT
+      let volatilitySpread: number = VOLATILITY_SPREAD_DEFAULT
 
       checkInvalidCodes(INVALID_CURRENCY_CODES, request, swapInfo)
 
@@ -147,6 +176,38 @@ export function makeThorchainPlugin(
 
       if (fromMainnetCode == null || toMainnetCode == null) {
         throw new SwapCurrencyError(swapInfo, fromCurrencyCode, toCurrencyCode)
+      }
+
+      const now = Date.now()
+      if (
+        now - exchangeInfoLastUpdate > EXCHANGE_INFO_UPDATE_FREQ_MS ||
+        exchangeInfo == null
+      ) {
+        try {
+          const exchangeInfoResponse = await promiseWithTimeout(
+            fetchInfo(fetch, 'v1/exchangeInfo/edge')
+          )
+
+          if (exchangeInfoResponse.ok) {
+            exchangeInfo = asExchangeInfo(await exchangeInfoResponse.json())
+            exchangeInfoLastUpdate = now
+          } else {
+            // Error is ok. We just use defaults
+            log('Error getting info server exchangeInfo. Using defaults...')
+          }
+        } catch (e) {
+          log(
+            'Error getting info server exchangeInfo. Using defaults...',
+            e.message
+          )
+        }
+      }
+
+      if (exchangeInfo != null) {
+        likeKindVolatilitySpread =
+          exchangeInfo.swap.plugins.thorchain.likeKindVolatilitySpread
+        volatilitySpread = exchangeInfo.swap.plugins.thorchain.volatilitySpread
+        midgardServers = exchangeInfo.swap.plugins.thorchain.midgardServers
       }
 
       const volatilitySpreadFinal = likeKind
