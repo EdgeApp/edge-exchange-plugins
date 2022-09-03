@@ -1,5 +1,6 @@
 // @flow
 
+import { add } from 'biggystring'
 import {
   type EdgeSwapInfo,
   type EdgeSwapQuote,
@@ -36,17 +37,26 @@ export function makeSwapPluginQuote(
   pluginId: string,
   isEstimate: boolean = false,
   expirationDate?: Date,
-  quoteId?: string
+  quoteId?: string,
+  preTx?: EdgeTransaction
 ): EdgeSwapQuote {
   const { fromWallet } = request
+
+  let nativeAmount =
+    tx.parentNetworkFee != null ? tx.parentNetworkFee : tx.networkFee
+
+  if (preTx != null)
+    nativeAmount = add(
+      nativeAmount,
+      preTx.parentNetworkFee != null ? preTx.parentNetworkFee : preTx.networkFee
+    )
 
   const out: EdgeSwapQuote = {
     fromNativeAmount,
     toNativeAmount,
     networkFee: {
       currencyCode: fromWallet.currencyInfo.currencyCode,
-      nativeAmount:
-        tx.parentNetworkFee != null ? tx.parentNetworkFee : tx.networkFee
+      nativeAmount
     },
     destinationAddress,
     pluginId,
@@ -54,6 +64,10 @@ export function makeSwapPluginQuote(
     quoteId,
     isEstimate,
     async approve(): Promise<EdgeSwapResult> {
+      if (preTx != null) {
+        const signedTransaction = await fromWallet.signTx(preTx)
+        await fromWallet.broadcastTx(signedTransaction)
+      }
       const signedTransaction = await fromWallet.signTx(tx)
       const broadcastedTransaction = await fromWallet.broadcastTx(
         signedTransaction

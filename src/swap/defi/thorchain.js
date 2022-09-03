@@ -21,6 +21,7 @@ import {
   SwapBelowLimitError,
   SwapCurrencyError
 } from 'edge-core-js/types'
+import { ethers } from 'ethers'
 
 import {
   type InvalidCurrencyCodes,
@@ -33,6 +34,8 @@ import {
   fetchWaterfall,
   promiseWithTimeout
 } from '../../util/utils.js'
+import abi from './abi/THORCHAIN_SWAP_ABI'
+import erc20Abi from './abi/UNISWAP_V2_ERC20_ABI'
 
 const pluginId = 'thorchain'
 const swapInfo: EdgeSwapInfo = {
@@ -141,7 +144,7 @@ export function makeThorchainPlugin(
     affiliateFeeBasis = AFFILIATE_FEE_BASIS_DEFAULT
   } = initOptions
   // eslint-disable-next-line no-console
-  const clog = (...args) => (DO_CONSOLE_LOG ? log(...args) : undefined)
+  const clog = (...args) => (DO_CONSOLE_LOG ? console.log(...args) : undefined)
 
   const affiliateFee = div(affiliateFeeBasis, '10000', DIVIDE_PRECISION)
 
@@ -175,6 +178,7 @@ export function makeThorchainPlugin(
       checkInvalidCodes(INVALID_CURRENCY_CODES, request, swapInfo)
 
       // Grab addresses:
+      const fromAddress = await getAddress(fromWallet, fromCurrencyCode)
       const toAddress = await getAddress(toWallet, toCurrencyCode)
 
       const fromMainnetCode =
@@ -299,7 +303,13 @@ export function makeThorchainPlugin(
       if (sourcePool == null) {
         throw new SwapCurrencyError(swapInfo, fromCurrencyCode, toCurrencyCode)
       }
-      const [sourceAsset] = sourcePool.asset.split('-')
+      const [
+        sourceAsset,
+        sourceTokenContractAddressAllCaps
+      ] = sourcePool.asset.split('-')
+      const sourceTokenContractAddress = sourceTokenContractAddressAllCaps
+        ? sourceTokenContractAddressAllCaps.toLowerCase()
+        : undefined
       clog(`sourceAsset: ${sourceAsset}`)
 
       const destPool = pools.find(pool => {
@@ -375,7 +385,7 @@ export function makeThorchainPlugin(
         throw new SwapCurrencyError(swapInfo, fromCurrencyCode, toCurrencyCode)
       }
 
-      const memo = buildSwapMemo({
+      let memo = buildSwapMemo({
         chain: toMainnetCode,
         asset: toCurrencyCode,
         address: toAddress,
@@ -384,14 +394,77 @@ export function makeThorchainPlugin(
         points: affiliateFeeBasis
       })
 
-      const publicAddress = thorAddress
+      let ethNativeAmount = fromNativeAmount
+      let publicAddress = thorAddress
+      let approvalData
+      if (EVM_CURRENCY_CODES[fromMainnetCode]) {
+        if (fromMainnetCode !== fromCurrencyCode) {
+          const { router, address } = inAddressObject
+          if (router == null)
+            throw new Error(`Missing router address for ${fromMainnetCode}`)
+          if (sourceTokenContractAddress == null)
+            throw new Error(
+              `Missing sourceTokenContractAddress for ${fromMainnetCode}`
+            )
+          // Need to use ethers.js to craft a proper tx that calls Thorchain contract, then extract the data payload
+          memo = await getEvmTokenData({
+            assetAddress: sourceTokenContractAddress,
+            amountToSwapWei: Number(fromNativeAmount),
+            contractAddress: router,
+            vaultAddress: address,
+            memo
+          })
+
+          // Token transactions send no ETH (or other EVM mainnet coin)
+          ethNativeAmount = '0'
+          publicAddress = router
+
+          // Check if token approval is required and return necessary data field
+          approvalData = await getApprovalData({
+            contractAddress: router,
+            assetAddress: sourceTokenContractAddress,
+            publicAddress: fromAddress,
+            nativeAmount: fromNativeAmount
+          })
+        } else {
+          memo = '0x' + Buffer.from(memo).toString('hex')
+        }
+      } else {
+        // Cannot yet do tokens on non-EVM chains
+        if (fromMainnetCode !== fromCurrencyCode) {
+          throw new SwapCurrencyError(
+            swapInfo,
+            fromCurrencyCode,
+            toCurrencyCode
+          )
+        }
+      }
+
+      let preTx: EdgeTransaction | void
+      if (approvalData != null) {
+        const spendInfo: EdgeSpendInfo = {
+          currencyCode: request.fromCurrencyCode,
+          spendTargets: [
+            {
+              memo: approvalData,
+              nativeAmount: '0',
+              publicAddress: sourceTokenContractAddress
+            }
+          ],
+          networkFeeOption: 'custom',
+          customNetworkFee: {
+            [customNetworkFeeKey]: customNetworkFee
+          }
+        }
+        preTx = await request.fromWallet.makeSpend(spendInfo)
+      }
 
       const spendInfo: EdgeSpendInfo = {
         currencyCode: request.fromCurrencyCode,
         spendTargets: [
           {
             memo,
-            nativeAmount: fromNativeAmount,
+            nativeAmount: ethNativeAmount,
             publicAddress
           }
         ],
@@ -413,6 +486,19 @@ export function makeThorchainPlugin(
         }
       }
 
+      if (EVM_CURRENCY_CODES[fromMainnetCode]) {
+        if (fromMainnetCode === fromCurrencyCode) {
+          // For mainnet coins of EVM chains, use gasLimit override since makeSpend doesn't
+          // know how to estimate an ETH spend with extra data
+          const gasLimit = getGasLimit(fromMainnetCode, fromCurrencyCode)
+          if (gasLimit != null) {
+            spendInfo.customNetworkFee = {
+              ...spendInfo.customNetworkFee,
+              gasLimit
+            }
+          }
+        }
+      }
       const tx: EdgeTransaction = await request.fromWallet.makeSpend(spendInfo)
 
       return makeSwapPluginQuote(
@@ -424,7 +510,8 @@ export function makeThorchainPlugin(
         pluginId,
         false,
         new Date(Date.now() + EXPIRATION_MS),
-        tx.txid
+        tx.txid,
+        preTx
       )
     }
   }
@@ -482,7 +569,8 @@ const calcSwapFrom = async (
     destPool,
     volatilitySpreadFinal,
     affiliateFee,
-    feeInDestCurrency
+    feeInDestCurrency,
+    dontCheckLimits = false
   } = params
   const fromNativeAmount = nativeAmount
 
@@ -495,7 +583,7 @@ const calcSwapFrom = async (
   clog(`fromExchangeAmount: ${fromExchangeAmount}`)
 
   // Check minimums if we can
-  if (minAmount != null) {
+  if (!dontCheckLimits && minAmount != null) {
     if (lt(fromExchangeAmount, minAmount.minInputAmount)) {
       const fromMinNativeAmount = await fromWallet.denominationToNative(
         minAmount.minInputAmount,
@@ -562,6 +650,92 @@ const buildSwapMemo = (params: BuildSwapMemoParams): string => {
   const { chain, asset, address, limit, affiliateAddress, points } = params
   // affiliate address could be a thorname, and the minimum received is not set in this example.
   return `=:${chain}.${asset}:${address}:${limit}:${affiliateAddress}:${points}`
+}
+
+const getCheckSumAddress = (assetAddress: string): string => {
+  // if (assetAddress === ETHAddress) return ETHAddress
+  return ethers.utils.getAddress(assetAddress.toLowerCase())
+}
+
+const getApprovalData = async (params: {
+  contractAddress: string,
+  assetAddress: string,
+  publicAddress: string,
+  nativeAmount: string
+}): Promise<string | void> => {
+  const { contractAddress, assetAddress, publicAddress, nativeAmount } = params
+  const contract = new ethers.Contract(
+    assetAddress,
+    erc20Abi,
+    ethers.providers.getDefaultProvider()
+  )
+
+  let allowance
+  try {
+    allowance = await // promiseWithTimeout(
+    contract.allowance(publicAddress, contractAddress)
+    // )
+  } catch (e) {
+    // If we fail to get an allowance, just send an approval
+  }
+
+  const bnNativeAmount = ethers.BigNumber.from(nativeAmount)
+
+  if (allowance == null || !allowance.sub(bnNativeAmount).gte(0)) {
+    try {
+      const approveTx = await contract.populateTransaction.approve(
+        contractAddress,
+        ethers.constants.MaxUint256,
+        {
+          gasLimit: '500000',
+          gasPrice: '20'
+        }
+      )
+      return approveTx.data
+    } catch (e) {}
+  }
+}
+
+const getEvmTokenData = async (params: {
+  memo: string,
+  // usersSendingAddress: string,
+  assetAddress: string,
+  contractAddress: string,
+  vaultAddress: string,
+  amountToSwapWei: number
+}): Promise<string> => {
+  // const isETH = assetAddress === ETHAddress
+  const {
+    // usersSendingAddress,
+    assetAddress,
+    contractAddress,
+    memo,
+    vaultAddress,
+    amountToSwapWei
+  } = params
+
+  // initialize contract
+  const contract = new ethers.Contract(
+    contractAddress,
+    abi,
+    ethers.providers.getDefaultProvider()
+  )
+
+  // Dummy gasPrice that we won't actually use
+  const gasPrice = ethers.BigNumber.from('50')
+
+  // setup contract params
+  const contractParams: any[] = [
+    vaultAddress,
+    getCheckSumAddress(assetAddress),
+    amountToSwapWei.toFixed(),
+    memo,
+    { gasPrice }
+  ]
+
+  // call the deposit method on the thorchain router.
+  const tx = await contract.populateTransaction.deposit(...contractParams)
+  return tx.data
 }
 
 //
