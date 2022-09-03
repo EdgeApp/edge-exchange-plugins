@@ -9,6 +9,12 @@ import {
   SwapCurrencyError
 } from 'edge-core-js/types'
 
+const likeKindAssets = [
+  ['BTC', 'WBTC', 'SBTC', 'RBTC'],
+  ['ETH', 'WETH'],
+  ['USDC', 'USDT', 'DAI']
+]
+
 /**
  * Ensures that a date is in the future by at least the given amount.
  */
@@ -204,4 +210,21 @@ export const getCodesWithMainnetTranscription = (
     fromCurrencyCode: fromCurrencyCode,
     toCurrencyCode: toCurrencyCode
   }
+}
+
+export const isLikeKind = (
+  fromCurrencyCode: string,
+  toCurrencyCode: string
+): boolean => {
+  // Check if the swap is Like Kind
+  for (const assetList of likeKindAssets) {
+    const matchFrom = assetList.find(cc => cc === fromCurrencyCode)
+    if (matchFrom != null) {
+      const matchTo = assetList.find(cc => cc === toCurrencyCode)
+      if (matchTo != null) {
+        return true
+      }
+    }
+  }
+  return false
 }

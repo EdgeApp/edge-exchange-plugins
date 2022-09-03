@@ -13,6 +13,7 @@ import { makeNomicsPlugin } from './rate/nomics.js'
 import { makeWazirxPlugin } from './rate/wazirx'
 import { makeChangeHeroPlugin } from './swap/changehero.js'
 import { makeChangeNowPlugin } from './swap/changenow.js'
+import { makeThorchainPlugin } from './swap/defi/thorchain'
 import { makeSpookySwapPlugin } from './swap/defi/uni-v2-based/plugins/spookySwap.js'
 import { makeTombSwapPlugin } from './swap/defi/uni-v2-based/plugins/tombSwap.js'
 import { makeExolixPlugin } from './swap/exolix.js'
@@ -47,6 +48,7 @@ const edgeCorePlugins = {
   spookySwap: makeSpookySwapPlugin,
   tombSwap: makeTombSwapPlugin,
   switchain: makeSwitchainPlugin,
+  thorchain: makeThorchainPlugin,
   transfer: makeTransferPlugin,
   letsexchange: makeLetsExchangePlugin
 }
