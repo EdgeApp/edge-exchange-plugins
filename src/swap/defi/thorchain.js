@@ -52,7 +52,6 @@ const AFFILIATE_FEE_BASIS_DEFAULT = '50'
 const THORNAME_DEFAULT = 'ej'
 const VOLATILITY_SPREAD_DEFAULT = 0.01
 const LIKE_KIND_VOLATILITY_SPREAD_DEFAULT = 0.0025
-const DO_CONSOLE_LOG = true
 const EXCHANGE_INFO_UPDATE_FREQ_MS = 60000
 const EVM_SEND_GAS = '80000'
 const EVM_TOKEN_SEND_GAS = '80000'
@@ -144,8 +143,6 @@ export function makeThorchainPlugin(
     affiliateFeeBasis = AFFILIATE_FEE_BASIS_DEFAULT
   } = initOptions
   // eslint-disable-next-line no-console
-  const clog = (...args) => (DO_CONSOLE_LOG ? console.log(...args) : undefined)
-
   const affiliateFee = div(affiliateFeeBasis, '10000', DIVIDE_PRECISION)
 
   const headers = {
@@ -245,7 +242,7 @@ export function makeThorchainPlugin(
           nineRealmsServers,
           `thorchain/swap/minAmount?inAsset=${fromMainnetCode}.${fromCurrencyCode}&outAsset=${toMainnetCode}.${toCurrencyCode}`
         ).catch(e => {
-          clog(e.message)
+          log(e.message)
         })
       ])
 
@@ -266,7 +263,7 @@ export function makeThorchainPlugin(
         const responseJson = await minAmountResponse.json()
         minAmount = asMinAmount(responseJson)
       } catch (e) {
-        clog('Failed to get minAmount')
+        log('Failed to get minAmount')
       }
 
       const iaJson = await iaResponse.json()
@@ -283,7 +280,7 @@ export function makeThorchainPlugin(
         throw new SwapCurrencyError(swapInfo, fromCurrencyCode, toCurrencyCode)
       }
       const { address: thorAddress, gas_rate: gasRate } = inAddressObject
-      clog(`${fromMainnetCode}.${fromCurrencyCode} gasRate ${gasRate}`)
+      log(`${fromMainnetCode}.${fromCurrencyCode} gasRate ${gasRate}`)
 
       const outAddressObject = inboundAddresses.find(
         addrObj => addrObj.halted === false && addrObj.chain === toMainnetCode
@@ -292,7 +289,7 @@ export function makeThorchainPlugin(
         throw new SwapCurrencyError(swapInfo, fromCurrencyCode, toCurrencyCode)
       }
       const { gas_rate: outboundGasRate } = outAddressObject
-      clog(
+      log(
         `${toMainnetCode}.${toCurrencyCode} outboundGasRate ${outboundGasRate}`
       )
 
@@ -310,7 +307,7 @@ export function makeThorchainPlugin(
       const sourceTokenContractAddress = sourceTokenContractAddressAllCaps
         ? sourceTokenContractAddressAllCaps.toLowerCase()
         : undefined
-      clog(`sourceAsset: ${sourceAsset}`)
+      log(`sourceAsset: ${sourceAsset}`)
 
       const destPool = pools.find(pool => {
         const [asset] = pool.asset.split('-')
@@ -330,12 +327,12 @@ export function makeThorchainPlugin(
 
       // Per Thorchain specs, user pays 2x the outbound transaction networkfee
       let feeInDestCurrency = mul(networkFee, '2')
-      clog(`feeInDestCurrency: ${feeInDestCurrency}`)
+      log(`feeInDestCurrency: ${feeInDestCurrency}`)
 
       const assetInUsd = mul(feeInDestCurrency, destPool.assetPriceUSD)
       if (lt(assetInUsd, '1')) {
         feeInDestCurrency = div('1', destPool.assetPriceUSD, DIVIDE_PRECISION)
-        clog(`feeInDestCurrency adjusted to $1 min: ${feeInDestCurrency}`)
+        log(`feeInDestCurrency adjusted to $1 min: ${feeInDestCurrency}`)
       }
 
       let calcResponse
@@ -354,7 +351,7 @@ export function makeThorchainPlugin(
             affiliateFee,
             feeInDestCurrency
           },
-          clog
+          log
         )
       } else {
         calcResponse = await calcSwapTo(
@@ -371,7 +368,7 @@ export function makeThorchainPlugin(
             affiliateFee,
             feeInDestCurrency
           },
-          clog
+          log
         )
       }
       const { fromNativeAmount, toNativeAmount, limit } = calcResponse
@@ -565,7 +562,7 @@ const calcSwapFrom = async (
     feeInDestCurrency: string,
     dontCheckLimits?: boolean
   },
-  clog: Function
+  log: Function
 ): Promise<{
   fromNativeAmount: string,
   fromExchangeAmount: string,
@@ -595,7 +592,7 @@ const calcSwapFrom = async (
     fromCurrencyCode
   )
 
-  clog(`fromExchangeAmount: ${fromExchangeAmount}`)
+  log(`fromExchangeAmount: ${fromExchangeAmount}`)
 
   // Check minimums if we can
   if (!dontCheckLimits && minAmount != null) {
@@ -620,27 +617,27 @@ const calcSwapFrom = async (
     THOR_LIMIT_UNITS,
     DIVIDE_PRECISION
   )
-  clog(`toExchangeAmount: ${toExchangeAmount}`)
+  log(`toExchangeAmount: ${toExchangeAmount}`)
 
   const subVolatility = mul(toExchangeAmount, volatilitySpreadFinal)
   const subAffiliateFee = mul(toExchangeAmount, affiliateFee)
 
   toExchangeAmount = sub(toExchangeAmount, subVolatility)
-  clog(
+  log(
     `toExchangeAmount w/volatilitySpread of ${mul(
       volatilitySpreadFinal,
       '100'
     )}%: ${toExchangeAmount}`
   )
   toExchangeAmount = sub(toExchangeAmount, subAffiliateFee)
-  clog(
+  log(
     `toExchangeAmount w/affiliate fee of ${mul(
       affiliateFee,
       '100'
     )}%: ${toExchangeAmount}`
   )
   toExchangeAmount = sub(toExchangeAmount, feeInDestCurrency)
-  clog(
+  log(
     `toExchangeAmount w/network fee of ${feeInDestCurrency}: ${toExchangeAmount}`
   )
 
@@ -648,9 +645,9 @@ const calcSwapFrom = async (
     toExchangeAmount,
     toCurrencyCode
   )
-  clog(`toNativeAmount: ${toNativeAmount}`)
+  log(`toNativeAmount: ${toNativeAmount}`)
   const limit = toFixed(mul(toExchangeAmount, THOR_LIMIT_UNITS), 0, 0)
-  clog(`limit: ${limit}`)
+  log(`limit: ${limit}`)
 
   return {
     fromNativeAmount,
@@ -675,7 +672,7 @@ const calcSwapTo = async (
     affiliateFee: string,
     feeInDestCurrency: string
   },
-  clog: Function
+  log: Function
 ): Promise<{
   fromNativeAmount: string,
   fromExchangeAmount: string,
@@ -703,7 +700,7 @@ const calcSwapTo = async (
     nativeAmount,
     toCurrencyCode
   )
-  clog(`toExchangeAmount: ${toExchangeAmount}`)
+  log(`toExchangeAmount: ${toExchangeAmount}`)
 
   const limit = toFixed(mul(toExchangeAmount, THOR_LIMIT_UNITS), 0, 0)
 
@@ -712,11 +709,11 @@ const calcSwapTo = async (
   const addVolatility = mul(toExchangeAmount, volatilitySpreadFinal)
 
   toExchangeAmount = add(toExchangeAmount, feeInDestCurrency)
-  clog(
+  log(
     `toExchangeAmount w/network fee of ${feeInDestCurrency}: ${toExchangeAmount}`
   )
   toExchangeAmount = add(toExchangeAmount, addVolatility)
-  clog(
+  log(
     `toExchangeAmount w/volatilitySpread ${mul(
       volatilitySpreadFinal,
       '100'
@@ -734,11 +731,11 @@ const calcSwapTo = async (
     THOR_LIMIT_UNITS,
     DIVIDE_PRECISION
   )
-  clog(`fromExchangeAmount: ${fromExchangeAmount}`)
+  log(`fromExchangeAmount: ${fromExchangeAmount}`)
 
   const addAffiliateFee = mul(fromExchangeAmount, affiliateFee)
   fromExchangeAmount = add(fromExchangeAmount, addAffiliateFee)
-  clog(
+  log(
     `fromExchangeAmount w/affiliate fee of ${mul(
       affiliateFee,
       '100'
@@ -757,7 +754,7 @@ const calcSwapTo = async (
       // Convert the minimum amount into an output amount
       const result = await calcSwapFrom(
         { ...params, nativeAmount: minInputAmount, dontCheckLimits: true },
-        clog
+        log
       )
       const { toNativeAmount } = result
       throw new SwapBelowLimitError(swapInfo, toNativeAmount, 'to')
