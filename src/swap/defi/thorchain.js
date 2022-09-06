@@ -18,6 +18,7 @@ import {
   type EdgeSwapQuote,
   type EdgeSwapRequest,
   type EdgeTransaction,
+  SwapBelowLimitError,
   SwapCurrencyError
 } from 'edge-core-js/types'
 
@@ -42,6 +43,7 @@ const swapInfo: EdgeSwapInfo = {
 
 const EXPIRATION_MS = 1000 * 60
 const MIDGARD_SERVERS_DEFAULT = ['https://midgard.thorchain.info']
+const NINEREALMS_SERVERS_DEFAULT = ['https://api.ninerealms.com']
 const DIVIDE_PRECISION = 16
 const AFFILIATE_FEE_BASIS_DEFAULT = '50'
 const THORNAME_DEFAULT = 'ej'
@@ -84,6 +86,10 @@ const MAINNET_CODE_TRANSCRIPTION = {
   thorchain: 'RUNE'
 }
 
+const asMinAmount = asObject({
+  minInputAmount: asString
+})
+
 const asInboundAddresses = asArray(
   asObject({
     address: asString,
@@ -120,6 +126,7 @@ const asExchangeInfo = asObject({
 const asPools = asArray(asPool)
 type Pool = $Call<typeof asPool>
 type ExchangeInfo = $Call<typeof asExchangeInfo>
+type MinAmount = $Call<typeof asMinAmount>
 
 let exchangeInfo: ExchangeInfo | void
 let exchangeInfoLastUpdate: number = 0
@@ -161,6 +168,7 @@ export function makeThorchainPlugin(
       const likeKind = isLikeKind(fromCurrencyCode, toCurrencyCode)
 
       let midgardServers: string[] = MIDGARD_SERVERS_DEFAULT
+      let nineRealmsServers: string[] = NINEREALMS_SERVERS_DEFAULT
       let likeKindVolatilitySpread: number = LIKE_KIND_VOLATILITY_SPREAD_DEFAULT
       let volatilitySpread: number = VOLATILITY_SPREAD_DEFAULT
 
@@ -208,6 +216,9 @@ export function makeThorchainPlugin(
           exchangeInfo.swap.plugins.thorchain.likeKindVolatilitySpread
         volatilitySpread = exchangeInfo.swap.plugins.thorchain.volatilitySpread
         midgardServers = exchangeInfo.swap.plugins.thorchain.midgardServers
+        nineRealmsServers =
+          exchangeInfo.swap.plugins.thorchain.nineRealmsServers ??
+          nineRealmsServers
       }
 
       const volatilitySpreadFinal = likeKind
@@ -215,7 +226,7 @@ export function makeThorchainPlugin(
         : volatilitySpread.toString()
 
       // Get current pool
-      const [iaResponse, poolResponse] = await Promise.all([
+      const [iaResponse, poolResponse, minAmountResponse] = await Promise.all([
         fetchWaterfall(
           fetch,
           midgardServers,
@@ -224,7 +235,14 @@ export function makeThorchainPlugin(
             headers
           }
         ),
-        fetchWaterfall(fetch, midgardServers, 'v2/pools', { headers })
+        fetchWaterfall(fetch, midgardServers, 'v2/pools', { headers }),
+        fetchWaterfall(
+          fetch,
+          nineRealmsServers,
+          `thorchain/swap/minAmount?inAsset=${fromMainnetCode}.${fromCurrencyCode}&outAsset=${toMainnetCode}.${toCurrencyCode}`
+        ).catch(e => {
+          clog(e.message)
+        })
       ])
 
       if (!iaResponse.ok) {
@@ -236,6 +254,15 @@ export function makeThorchainPlugin(
       if (!poolResponse.ok) {
         const responseText = await poolResponse.text()
         throw new Error(`Thorchain could not fetch pools: ${responseText}`)
+      }
+      let minAmount
+      try {
+        if (minAmountResponse == null)
+          throw new Error('Failed to get minAmount')
+        const responseJson = await minAmountResponse.json()
+        minAmount = asMinAmount(responseJson)
+      } catch (e) {
+        clog('Failed to get minAmount')
       }
 
       const iaJson = await iaResponse.json()
@@ -310,6 +337,7 @@ export function makeThorchainPlugin(
             toWallet,
             toCurrencyCode,
             nativeAmount,
+            minAmount,
             sourcePool,
             destPool,
             volatilitySpreadFinal,
@@ -427,6 +455,7 @@ const calcSwapFrom = async (
     toWallet: EdgeCurrencyWallet,
     toCurrencyCode: string,
     nativeAmount: string,
+    minAmount: MinAmount | void,
     sourcePool: Pool,
     destPool: Pool,
     volatilitySpreadFinal: string,
@@ -448,6 +477,7 @@ const calcSwapFrom = async (
     toWallet,
     toCurrencyCode,
     nativeAmount,
+    minAmount,
     sourcePool,
     destPool,
     volatilitySpreadFinal,
@@ -463,6 +493,18 @@ const calcSwapFrom = async (
   )
 
   clog(`fromExchangeAmount: ${fromExchangeAmount}`)
+
+  // Check minimums if we can
+  if (minAmount != null) {
+    if (lt(fromExchangeAmount, minAmount.minInputAmount)) {
+      const fromMinNativeAmount = await fromWallet.denominationToNative(
+        minAmount.minInputAmount,
+        fromCurrencyCode
+      )
+
+      throw new SwapBelowLimitError(swapInfo, fromMinNativeAmount, 'from')
+    }
+  }
 
   const result = calcDoubleSwapOutput(
     Number(mul(fromExchangeAmount, THOR_LIMIT_UNITS)),
