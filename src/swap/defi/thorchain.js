@@ -641,10 +641,11 @@ const calcSwapFrom = async (
     `toExchangeAmount w/network fee of ${feeInDestCurrency}: ${toExchangeAmount}`
   )
 
-  const toNativeAmount = await toWallet.denominationToNative(
+  const toNativeAmountFloat = await toWallet.denominationToNative(
     toExchangeAmount,
     toCurrencyCode
   )
+  const toNativeAmount = toFixed(toNativeAmountFloat, 0, 0)
   log(`toNativeAmount: ${toNativeAmount}`)
   const limit = toFixed(mul(toExchangeAmount, THOR_LIMIT_UNITS), 0, 0)
   log(`limit: ${limit}`)
@@ -742,10 +743,12 @@ const calcSwapTo = async (
     )}%: ${fromExchangeAmount}`
   )
 
-  const fromNativeAmount = await fromWallet.denominationToNative(
+  const fromNativeAmountFloat = await fromWallet.denominationToNative(
     fromExchangeAmount,
     fromCurrencyCode
   )
+
+  const fromNativeAmount = toFixed(fromNativeAmountFloat, 0, 0)
 
   // Check minimums if we can
   if (minAmount != null) {
@@ -756,7 +759,7 @@ const calcSwapTo = async (
         { ...params, nativeAmount: minInputAmount, dontCheckLimits: true },
         log
       )
-      const { toNativeAmount } = result
+      const toNativeAmount = toFixed(result.toNativeAmount, 0, 0)
       throw new SwapBelowLimitError(swapInfo, toNativeAmount, 'to')
     }
   }
