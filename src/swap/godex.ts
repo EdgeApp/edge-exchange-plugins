@@ -1,5 +1,3 @@
-
-
 import { lt } from 'biggystring'
 import {
   EdgeCorePluginOptions,
@@ -15,9 +13,9 @@ import {
 } from 'edge-core-js/types'
 
 import {
-  InvalidCurrencyCodes,
   checkInvalidCodes,
   getCodesWithMainnetTranscription,
+  InvalidCurrencyCodes,
   makeSwapPluginQuote
 } from '../swap-helpers'
 
@@ -33,24 +31,24 @@ const uri = 'https://api.godex.io/api/v1/'
 
 const expirationMs = 1000 * 60
 
-type QuoteInfo = {
-  transaction_id: string,
-  status: string,
-  coin_from: string,
-  coin_to: string,
-  deposit_amount: string,
-  withdrawal_amount: string,
-  deposit: string,
-  deposit_extra_id: string,
-  withdrawal: string,
-  withdrawal_extra_id: string,
-  rate: string,
-  fee: string,
-  return: string,
-  return_extra_id: string,
-  final_amount: string,
-  hash_in: string,
-  hash_out: string,
+interface QuoteInfo {
+  transaction_id: string
+  status: string
+  coin_from: string
+  coin_to: string
+  deposit_amount: string
+  withdrawal_amount: string
+  deposit: string
+  deposit_extra_id: string
+  withdrawal: string
+  withdrawal_extra_id: string
+  rate: string
+  fee: string
+  return: string
+  return_extra_id: string
+  final_amount: string
+  hash_in: string
+  hash_out: string
   isEstimate: boolean
 }
 
@@ -113,7 +111,7 @@ export function makeGodexPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
       }
       throw new Error(`godex returned error code ${response.status}`)
     }
-    return response.json()
+    return await response.json()
   }
 
   const out: EdgeSwapPlugin = {

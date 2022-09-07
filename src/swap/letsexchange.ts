@@ -1,5 +1,3 @@
-
-
 import { lt } from 'biggystring'
 import { asObject, asString } from 'cleaners'
 import {
@@ -16,9 +14,9 @@ import {
 } from 'edge-core-js/types'
 
 import {
-  InvalidCurrencyCodes,
   checkInvalidCodes,
   getCodesWithMainnetTranscription,
+  InvalidCurrencyCodes,
   makeSwapPluginQuote
 } from '../swap-helpers'
 import { asOptionalBlank } from './changenow'
@@ -110,7 +108,7 @@ export function makeLetsExchangePlugin(
       }
       throw new Error(`letsexchange returned error code ${response.status}`)
     }
-    return response.json()
+    return await response.json()
   }
 
   const out: EdgeSwapPlugin = {

@@ -1,5 +1,3 @@
-
-
 import { lt } from 'biggystring'
 import {
   EdgeCorePluginOptions,
@@ -92,7 +90,7 @@ export function makeExolixPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
       throw new Error(`Exolix returned error code ${response.status}`)
     }
 
-    return response.json()
+    return await response.json()
   }
 
   const out: EdgeSwapPlugin = {

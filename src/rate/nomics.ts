@@ -1,10 +1,5 @@
-
-
 import { asArray, asObject, asOptional, asString } from 'cleaners'
-import {
-  EdgeCorePluginOptions,
-  EdgeRatePlugin
-} from 'edge-core-js/types'
+import { EdgeCorePluginOptions, EdgeRatePlugin } from 'edge-core-js/types'
 
 const asNomicsResponse = asArray(
   asObject({
@@ -38,7 +33,7 @@ export function makeNomicsPlugin(opts: EdgeCorePluginOptions): EdgeRatePlugin {
       const queryStrings = []
       let filteredPairs = []
       for (let i = 0; i < pairsHint.length; i++) {
-        if (pairsHint[i].fromCurrency.indexOf('iso:') >= 0) continue
+        if (pairsHint[i].fromCurrency.includes('iso:')) continue
         if (filteredPairs.some(cc => cc === pairsHint[i].fromCurrency)) continue
         filteredPairs.push(
           UNIQUE_ID_MAP[pairsHint[i].fromCurrency] ?? pairsHint[i].fromCurrency
@@ -54,11 +49,7 @@ export function makeNomicsPlugin(opts: EdgeCorePluginOptions): EdgeRatePlugin {
           const reply = await fetchCors(
             `https://api.nomics.com/v1/currencies/ticker?key=${apiKey}&ids=${query}&convert=USD`
           )
-          if (
-            reply.status === 429 ||
-            reply.status === 401 ||
-            reply.ok === false
-          )
+          if (reply.status === 429 || reply.status === 401 || !reply.ok)
             throw new Error(`Nomics returned with status: ${reply.status}`)
           asNomicsResponse(await reply.json()).forEach(rate => {
             // When Nomics considers a coin "dead" they don't return a price

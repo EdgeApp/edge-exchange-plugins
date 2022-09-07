@@ -1,5 +1,3 @@
-
-
 import { gt, lt } from 'biggystring'
 import {
   asArray,
@@ -24,8 +22,8 @@ import {
 } from 'edge-core-js/types'
 
 import {
-  InvalidCurrencyCodes,
   checkInvalidCodes,
+  InvalidCurrencyCodes,
   makeSwapPluginQuote,
   safeCurrencyCodes
 } from '../swap-helpers'
@@ -182,7 +180,7 @@ export function makeChangeHeroPlugin(
     if (!response.ok) {
       throw new Error(`ChangeHero returned error code ${response.status}`)
     }
-    return response.json()
+    return await response.json()
   }
 
   const out: EdgeSwapPlugin = {

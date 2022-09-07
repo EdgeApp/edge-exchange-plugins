@@ -1,5 +1,3 @@
-
-
 import { assert } from 'chai'
 import { before, describe, it } from 'mocha'
 

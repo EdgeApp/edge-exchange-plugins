@@ -1,5 +1,3 @@
-
-
 import { add, div, lt, mul, sub, toFixed } from 'biggystring'
 import {
   asArray,
@@ -24,16 +22,12 @@ import {
 import { ethers } from 'ethers'
 
 import {
-  InvalidCurrencyCodes,
   checkInvalidCodes,
+  InvalidCurrencyCodes,
   isLikeKind,
   makeSwapPluginQuote
 } from '../../swap-helpers'
-import {
-  fetchInfo,
-  fetchWaterfall,
-  promiseWithTimeout
-} from '../../util/utils'
+import { fetchInfo, fetchWaterfall, promiseWithTimeout } from '../../util/utils'
 import abi from './abi/THORCHAIN_SWAP_ABI'
 import erc20Abi from './abi/UNISWAP_V2_ERC20_ABI'
 
@@ -283,7 +277,7 @@ export function makeThorchainPlugin(
       log(`${fromMainnetCode}.${fromCurrencyCode} gasRate ${gasRate}`)
 
       const outAddressObject = inboundAddresses.find(
-        addrObj => addrObj.halted === false && addrObj.chain === toMainnetCode
+        addrObj => !addrObj.halted && addrObj.chain === toMainnetCode
       )
       if (outAddressObject == null) {
         throw new SwapCurrencyError(swapInfo, fromCurrencyCode, toCurrencyCode)
@@ -538,36 +532,36 @@ async function getAddress(
   return addressInfo.publicAddress
 }
 
-type BuildSwapMemoParams = {
-  chain: string,
-  asset: string,
-  address: string,
-  limit: string,
-  affiliateAddress: string,
+interface BuildSwapMemoParams {
+  chain: string
+  asset: string
+  address: string
+  limit: string
+  affiliateAddress: string
   points: string
 }
 
 const calcSwapFrom = async (
   params: {
-    fromWallet: EdgeCurrencyWallet,
-    fromCurrencyCode: string,
-    toWallet: EdgeCurrencyWallet,
-    toCurrencyCode: string,
-    nativeAmount: string,
-    minAmount: MinAmount | undefined,
-    sourcePool: Pool,
-    destPool: Pool,
-    volatilitySpreadFinal: string,
-    affiliateFee: string,
-    feeInDestCurrency: string,
+    fromWallet: EdgeCurrencyWallet
+    fromCurrencyCode: string
+    toWallet: EdgeCurrencyWallet
+    toCurrencyCode: string
+    nativeAmount: string
+    minAmount: MinAmount | undefined
+    sourcePool: Pool
+    destPool: Pool
+    volatilitySpreadFinal: string
+    affiliateFee: string
+    feeInDestCurrency: string
     dontCheckLimits?: boolean
   },
   log: Function
 ): Promise<{
-  fromNativeAmount: string,
-  fromExchangeAmount: string,
-  toNativeAmount: string,
-  toExchangeAmount: string,
+  fromNativeAmount: string
+  fromExchangeAmount: string
+  toNativeAmount: string
+  toExchangeAmount: string
   limit: string
 }> => {
   const {
@@ -661,24 +655,24 @@ const calcSwapFrom = async (
 
 const calcSwapTo = async (
   params: {
-    fromWallet: EdgeCurrencyWallet,
-    fromCurrencyCode: string,
-    toWallet: EdgeCurrencyWallet,
-    toCurrencyCode: string,
-    nativeAmount: string,
-    minAmount: MinAmount | undefined,
-    sourcePool: Pool,
-    destPool: Pool,
-    volatilitySpreadFinal: string,
-    affiliateFee: string,
+    fromWallet: EdgeCurrencyWallet
+    fromCurrencyCode: string
+    toWallet: EdgeCurrencyWallet
+    toCurrencyCode: string
+    nativeAmount: string
+    minAmount: MinAmount | undefined
+    sourcePool: Pool
+    destPool: Pool
+    volatilitySpreadFinal: string
+    affiliateFee: string
     feeInDestCurrency: string
   },
   log: Function
 ): Promise<{
-  fromNativeAmount: string,
-  fromExchangeAmount: string,
-  toNativeAmount: string,
-  toExchangeAmount: string,
+  fromNativeAmount: string
+  fromExchangeAmount: string
+  toNativeAmount: string
+  toExchangeAmount: string
   limit: string
 }> => {
   // Get exchange rate from destination to source asset
@@ -785,9 +779,9 @@ const getCheckSumAddress = (assetAddress: string): string => {
 }
 
 const getApprovalData = async (params: {
-  contractAddress: string,
-  assetAddress: string,
-  publicAddress: string,
+  contractAddress: string
+  assetAddress: string
+  publicAddress: string
   nativeAmount: string
 }): Promise<string | undefined> => {
   const { contractAddress, assetAddress, publicAddress, nativeAmount } = params
@@ -824,11 +818,11 @@ const getApprovalData = async (params: {
 }
 
 const getEvmTokenData = async (params: {
-  memo: string,
+  memo: string
   // usersSendingAddress: string,
-  assetAddress: string,
-  contractAddress: string,
-  vaultAddress: string,
+  assetAddress: string
+  contractAddress: string
+  vaultAddress: string
   amountToSwapWei: number
 }): Promise<string> => {
   // const isETH = assetAddress === ETHAddress

@@ -1,5 +1,3 @@
-
-
 import { EdgeCurrencyInfo, EdgeMetaToken } from 'edge-core-js/types'
 
 /**
@@ -26,8 +24,8 @@ export const getInOutTokenAddresses = (
   fromCurrencyCode: string,
   toCurrencyCode: string
 ): {
-  fromTokenAddress: string,
-  toTokenAddress: string,
+  fromTokenAddress: string
+  toTokenAddress: string
   isWrappingSwap: boolean
 } => {
   const { currencyCode: nativeCurrencyCode, metaTokens } = currencyInfo

@@ -1,6 +1,5 @@
 /* eslint-disable no-console */
 
-
 import { EdgeRatePlugin, makeNodeIo } from 'edge-core-js'
 
 import edgeCorePlugins from '../src/index'

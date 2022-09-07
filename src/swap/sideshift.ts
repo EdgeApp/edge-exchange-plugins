@@ -1,5 +1,3 @@
-
-
 import {
   asBoolean,
   asEither,
@@ -24,9 +22,9 @@ import {
 } from 'edge-core-js/types'
 
 import {
-  InvalidCurrencyCodes,
   checkInvalidCodes,
   ensureInFuture,
+  InvalidCurrencyCodes,
   makeSwapPluginQuote,
   safeCurrencyCodes
 } from '../swap-helpers'
@@ -134,7 +132,7 @@ const createSideshiftApi = (baseUrl: string, fetch: EdgeFetchFunction) => {
   async function request<R>(
     method: 'GET' | 'POST',
     path: string,
-    body: ?{}
+    body: Object
   ): Promise<R> {
     const url = `${baseUrl}${path}`
 
@@ -156,9 +154,9 @@ const createSideshiftApi = (baseUrl: string, fetch: EdgeFetchFunction) => {
   }
 
   return {
-    get: <R>(path: string): Promise<R> => request<R>('GET', path),
-    post: <R>(path: string, body: {}): Promise<R> =>
-      request<R>('POST', path, body)
+    get: async <R>(path: string): Promise<R> => await request<R>('GET', path),
+    post: async <R>(path: string, body: {}): Promise<R> =>
+      await request<R>('POST', path, body)
   }
 }
 
@@ -314,7 +312,10 @@ export function makeSideshiftPlugin(
 ): EdgeSwapPlugin {
   const { io, initOptions } = opts
 
-  const api = createSideshiftApi(SIDESHIFT_BASE_URL, io.fetchCors || io.fetch)
+  const api = createSideshiftApi(
+    SIDESHIFT_BASE_URL,
+    io.fetchCors != null || io.fetch
+  )
 
   const fetchSwapQuote = createFetchSwapQuote(api, initOptions.affiliateId)
 
@@ -325,19 +326,19 @@ export function makeSideshiftPlugin(
 }
 
 interface SideshiftApi {
-  get: <R>(path: string) => Promise<R>;
-  post: <R>(path: string, body: {}) => Promise<R>;
+  get: <R>(path: string) => Promise<R>
+  post: <R>(path: string, body: {}) => Promise<R>
 }
 
 interface Permission {
-  createOrder: boolean;
-  createQuote: boolean;
+  createOrder: boolean
+  createQuote: boolean
 }
 
 interface Rate {
-  rate: string;
-  min: string;
-  max: string;
+  rate: string
+  min: string
+  max: string
 }
 
 const asError = asObject({ error: asObject({ message: asString }) })

@@ -1,5 +1,3 @@
-
-
 import { makeBitMaxPlugin } from './rate/bitmax'
 import { makeCoinbasePlugin } from './rate/coinbase'
 import { makeCoincapPlugin } from './rate/coincap'

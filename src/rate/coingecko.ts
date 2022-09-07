@@ -1,10 +1,5 @@
-
-
 import { asMap, asNumber, asObject } from 'cleaners'
-import {
-  EdgeCorePluginOptions,
-  EdgeRatePlugin
-} from 'edge-core-js/types'
+import { EdgeCorePluginOptions, EdgeRatePlugin } from 'edge-core-js/types'
 
 const asGeckoBulkUsdReply = asMap(asObject({ usd: asNumber }))
 

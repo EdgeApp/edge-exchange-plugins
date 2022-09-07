@@ -1,5 +1,3 @@
-
-
 import {
   EdgeCorePluginOptions,
   EdgeSpendInfo,
@@ -12,10 +10,7 @@ import {
 import { ethers } from 'ethers'
 
 import { getInOutTokenAddresses } from '../../defiUtils'
-import {
-  getFtmProvider,
-  makeSpookySwapRouterContract
-} from '../uniV2Contracts'
+import { getFtmProvider, makeSpookySwapRouterContract } from '../uniV2Contracts'
 import {
   getSwapAmounts,
   getSwapTransactions,
@@ -108,7 +103,8 @@ export function makeSpookySwapPlugin(
             currencyCode: request.fromCurrencyCode, // what is being sent out, only if token. Blank if not token
             spendTargets: [
               {
-                nativeAmount: swapTx.value ? swapTx.value.toString() : '0', // biggy/number string integer
+                nativeAmount:
+                  swapTx.value != null ? swapTx.value.toString() : '0', // biggy/number string integer
                 publicAddress: swapTx.to,
 
                 otherParams: {

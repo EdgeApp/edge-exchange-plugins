@@ -15,6 +15,7 @@
   ],
   "main": "index.js",
   "module": "lib/index.js",
+  "react-native": "lib/index.js",
   "files": [
     "CHANGELOG.md",
     "index.js",
@@ -75,7 +76,8 @@
     "@types/url-parse": "^1.4.3",
     "@types/ws": "^7.2.6",
     "@typescript-eslint/eslint-plugin": "^4.8.2",
-    "@typescript-eslint/parser": "^4.8.2",    "assert": "^2.0.0",
+    "@typescript-eslint/parser": "^4.8.2",
+    "assert": "^2.0.0",
     "babel-eslint": "^10.1.0",
     "babel-loader": "^8.2.2",
     "buffer": "^6.0.3",
@@ -109,6 +111,5 @@
     "typescript": "^4.1.2",
     "webpack": "^5.28.0",
     "webpack-cli": "^4.6.0"
-  },
-  "react-native": "lib/index.js"
+  }
 }

@@ -1,14 +1,12 @@
-
-
 import { gt, lt } from 'biggystring'
 import {
-  Cleaner,
   asDate,
   asMaybe,
   asNumber,
   asObject,
   asOptional,
-  asString
+  asString,
+  Cleaner
 } from 'cleaners'
 import {
   EdgeCorePluginOptions,
@@ -25,10 +23,10 @@ import {
 } from 'edge-core-js/types'
 
 import {
-  InvalidCurrencyCodes,
   checkInvalidCodes,
   ensureInFuture,
   getCodesWithMainnetTranscription,
+  InvalidCurrencyCodes,
   makeSwapPluginQuote
 } from '../swap-helpers'
 
@@ -338,7 +336,7 @@ export function makeChangeNowPlugin(
           }
         }
       } else {
-        return swapBuy('fixed-rate')
+        return await swapBuy('fixed-rate')
       }
     }
   }

@@ -1,5 +1,3 @@
-
-
 import {
   EdgeCorePluginOptions,
   EdgeCurrencyWallet,
@@ -15,7 +13,7 @@ import {
   SwapPermissionError
 } from 'edge-core-js/types'
 
-import { InvalidCurrencyCodes, checkInvalidCodes } from '../swap-helpers'
+import { checkInvalidCodes, InvalidCurrencyCodes } from '../swap-helpers'
 
 const pluginId = 'foxExchange'
 const swapInfo: EdgeSwapInfo = {
@@ -28,39 +26,39 @@ const orderUri = 'https://fox.exchange/tx/'
 const uri = 'https://fox.exchange/api/cs'
 const expirationMs = 1000 * 60
 
-type RateRequest = {
-  depositCoin: string,
-  destinationCoin: string,
-  depositCoinAmount?: number,
-  destinationCoinAmount?: number,
-  requestFixed: boolean,
+interface RateRequest {
+  depositCoin: string
+  destinationCoin: string
+  depositCoinAmount?: number
+  destinationCoinAmount?: number
+  requestFixed: boolean
   requestDummyAddress?: boolean
 }
 
-type RateInfo = {
-  rate: number | null,
-  destinationCoinAmount?: number | null,
-  depositCoinAmount?: number | null,
-  limitMinDepositCoin?: number,
-  limitMaxDepositCoin?: number,
-  limitMinDestinationCoin?: number,
-  limitMaxDestinationCoin?: number,
-  futureOrderId: string,
-  quoteToken?: string,
-  dummyAddress?: string,
+interface RateInfo {
+  rate: number | null
+  destinationCoinAmount?: number | null
+  depositCoinAmount?: number | null
+  limitMinDepositCoin?: number
+  limitMaxDepositCoin?: number
+  limitMinDestinationCoin?: number
+  limitMaxDestinationCoin?: number
+  futureOrderId: string
+  quoteToken?: string
+  dummyAddress?: string
   validTill?: number
 }
 
-type OrderInfo = {
-  orderId: string,
+interface OrderInfo {
+  orderId: string
   exchangeAddress: {
-    address: string,
+    address: string
     tag: string | null
-  },
-  qrCodeUrl: string,
-  expectedDepositCoinAmount: number,
-  expectedDestinationCoinAmount: number,
-  validTill: number,
+  }
+  qrCodeUrl: string
+  expectedDepositCoinAmount: number
+  expectedDestinationCoinAmount: number
+  validTill: number
   frontendTimeout: number
 }
 

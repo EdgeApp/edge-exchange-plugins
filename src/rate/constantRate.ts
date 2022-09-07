@@ -1,9 +1,4 @@
-
-
-import {
-  EdgeCorePluginOptions,
-  EdgeRatePlugin
-} from 'edge-core-js/types'
+import { EdgeCorePluginOptions, EdgeRatePlugin } from 'edge-core-js/types'
 
 export function makeConstantRatePlugin(
   opts: EdgeCorePluginOptions

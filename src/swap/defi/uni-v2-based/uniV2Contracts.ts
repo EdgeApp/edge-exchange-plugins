@@ -1,4 +1,3 @@
-
 import { JsonRpcProvider } from '@ethersproject/providers'
 import { Contract, ethers } from 'ethers'
 

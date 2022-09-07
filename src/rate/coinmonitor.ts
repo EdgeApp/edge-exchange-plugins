@@ -1,10 +1,5 @@
-
-
 import { asObject, asString } from 'cleaners'
-import {
-  EdgeCorePluginOptions,
-  EdgeRatePlugin
-} from 'edge-core-js/types'
+import { EdgeCorePluginOptions, EdgeRatePlugin } from 'edge-core-js/types'
 
 const asCoinmonitorTickerResponse = asObject({ mediana_prom: asString })
 

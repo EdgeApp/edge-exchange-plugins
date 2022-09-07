@@ -1,5 +1,3 @@
-
-
 import { add } from 'biggystring'
 import {
   EdgeSwapInfo,
@@ -89,10 +87,10 @@ export function makeSwapPluginQuote(
   return out
 }
 
-type AllCodes = {
-  fromMainnetCode: string,
-  toMainnetCode: string,
-  fromCurrencyCode: string,
+interface AllCodes {
+  fromMainnetCode: string
+  toMainnetCode: string
+  fromCurrencyCode: string
   toCurrencyCode: string
 }
 
@@ -105,13 +103,13 @@ export const getCodes = (request: EdgeSwapRequest): AllCodes => ({
 
 const getPluginIds = (
   request: EdgeSwapRequest
-): { fromPluginId: string, toPluginId: string } => ({
+): { fromPluginId: string; toPluginId: string } => ({
   fromPluginId: request.fromWallet.currencyInfo.pluginId,
   toPluginId: request.toWallet.currencyInfo.pluginId
 })
 
-export type InvalidCurrencyCodes = {
-  from: { [code: string]: 'allCodes' | 'allTokens' | string[] },
+export interface InvalidCurrencyCodes {
+  from: { [code: string]: 'allCodes' | 'allTokens' | string[] }
   to: { [code: string]: 'allCodes' | 'allTokens' | string[] }
 }
 
@@ -160,7 +158,7 @@ export function checkInvalidCodes(
     )
 }
 
-export type CurrencyCodeTranscriptions = {
+export interface CurrencyCodeTranscriptions {
   [code: string]: {
     [code: string]: string
   }
@@ -174,7 +172,7 @@ export function safeCurrencyCodes(
   request: EdgeSwapRequest,
   toLowerCase: boolean = false
 ): {
-  safeFromCurrencyCode: string,
+  safeFromCurrencyCode: string
   safeToCurrencyCode: string
 } {
   const { fromPluginId, toPluginId } = getPluginIds(request)
@@ -201,7 +199,7 @@ export function safeCurrencyCodes(
   return out
 }
 
-export type MainnetPluginIdTranscriptionMap = {
+export interface MainnetPluginIdTranscriptionMap {
   [pluginId: string]: string
 }
 

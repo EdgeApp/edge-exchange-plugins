@@ -1,10 +1,5 @@
-
-
 import { asArray, asNumber, asObject, asOptional, asString } from 'cleaners'
-import {
-  EdgeCorePluginOptions,
-  EdgeRatePlugin
-} from 'edge-core-js/types'
+import { EdgeCorePluginOptions, EdgeRatePlugin } from 'edge-core-js/types'
 
 const asCoincapResponse = asObject({
   data: asArray(
@@ -31,7 +26,7 @@ const currencyMap = {}
 
 export function makeCoincapPlugin(opts: EdgeCorePluginOptions): EdgeRatePlugin {
   const { io, log } = opts
-  const fetch = io.fetchCors || io.fetch
+  const fetch = io.fetchCors != null || io.fetch
 
   return {
     rateInfo: {
@@ -54,7 +49,7 @@ export function makeCoincapPlugin(opts: EdgeCorePluginOptions): EdgeRatePlugin {
       let filteredPairs = []
       for (let i = 0; i < pairsHint.length; i++) {
         if (!currencyMap[pairsHint[i].fromCurrency]) continue
-        if (pairsHint[i].fromCurrency.indexOf('iso:') >= 0) continue
+        if (pairsHint[i].fromCurrency.includes('iso:')) continue
         if (
           filteredPairs.some(
             cc => cc === currencyMap[pairsHint[i].fromCurrency]
@@ -76,7 +71,7 @@ export function makeCoincapPlugin(opts: EdgeCorePluginOptions): EdgeRatePlugin {
           )
           const json = await reply.json()
           const { error } = asCoincapError(json)
-          if ((error != null && error !== '') || reply.ok === false) {
+          if ((error != null && error !== '') || !reply.ok) {
             throw new Error(
               `CoincapHistorical returned code ${JSON.stringify(
                 error ?? reply.status

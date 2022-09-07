@@ -1,5 +1,3 @@
-
-
 import { add, div, gt, lt, mul, sub } from 'biggystring'
 import {
   EdgeCorePluginOptions,
@@ -18,7 +16,7 @@ import {
   SwapCurrencyError
 } from 'edge-core-js/types'
 
-import { InvalidCurrencyCodes, checkInvalidCodes } from '../swap-helpers'
+import { checkInvalidCodes, InvalidCurrencyCodes } from '../swap-helpers'
 
 const pluginId = 'switchain'
 const swapInfo: EdgeSwapInfo = {
@@ -30,43 +28,43 @@ const swapInfo: EdgeSwapInfo = {
 let apiUrl = 'https://api.switchain.com/rest/v1'
 const orderUri = 'https://www.switchain.com/order-status/'
 
-type SwitchainResponseError = {
-  error: string,
+interface SwitchainResponseError {
+  error: string
   reason?: string
 }
 
-type SwitchainOfferResponse = {
-  pair: string,
-  signature: string,
-  quote: string,
-  maxLimit: string,
-  minLimit: string,
-  expiryTs: number,
-  minerFee: string,
+interface SwitchainOfferResponse {
+  pair: string
+  signature: string
+  quote: string
+  maxLimit: string
+  minLimit: string
+  expiryTs: number
+  minerFee: string
   orderId?: string
 }
 
-type SwitchainOrderCreationResponse = {
-  orderId: string,
-  fromAmount: string,
-  rate: string,
-  exchangeAddress: string,
-  exchangeAddressTag?: string,
-  refundAddress: string,
-  refundAddressTag?: string,
-  toAddress: string,
+interface SwitchainOrderCreationResponse {
+  orderId: string
+  fromAmount: string
+  rate: string
+  exchangeAddress: string
+  exchangeAddressTag?: string
+  refundAddress: string
+  refundAddressTag?: string
+  toAddress: string
   toAddressTag?: string
 }
 
-type SwitchainOrderCreationBody = {
-  pair: string,
-  toAddress: string,
-  toAddressTag?: string,
-  refundAddress: string,
-  refundAddressTag?: string,
-  signature: string,
-  fromAmount?: string,
-  toAmount?: string,
+interface SwitchainOrderCreationBody {
+  pair: string
+  toAddress: string
+  toAddressTag?: string
+  refundAddress: string
+  refundAddressTag?: string
+  signature: string
+  fromAmount?: string
+  toAmount?: string
   promotionCode?: string
 }
 
@@ -138,11 +136,11 @@ export function makeSwitchainPlugin(
       method
     }
 
-    if (body) {
+    if (body != null) {
       requestOpts = { ...requestOpts, body: JSON.stringify(body) }
     }
     let queryParams = ''
-    if (query) {
+    if (query != null) {
       const queryStringList: Array<[string, string]> = []
       for (const k of Object.keys(query)) {
         queryStringList.push([k, query[k]])

@@ -1,17 +1,12 @@
-
-
 import { asObject, asString } from 'cleaners'
-import {
-  EdgeCorePluginOptions,
-  EdgeRatePlugin
-} from 'edge-core-js/types'
+import { EdgeCorePluginOptions, EdgeRatePlugin } from 'edge-core-js/types'
 
 const asEdgeRatesResponse = asObject({
   exchangeRate: asString
 })
 
 function checkIfFiat(code: string): boolean {
-  if (code.indexOf('iso:') >= 0) return true
+  if (code.includes('iso:')) return true
   return false
 }
 

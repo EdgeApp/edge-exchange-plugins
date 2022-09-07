@@ -1,5 +1,3 @@
-
-
 import { JsonRpcProvider } from '@ethersproject/providers'
 import { mul, sub } from 'biggystring'
 import {
@@ -8,7 +6,7 @@ import {
   EdgeSwapResult,
   EdgeTransaction
 } from 'edge-core-js/types'
-import { Contract, PopulatedTransaction, ethers } from 'ethers'
+import { Contract, ethers, PopulatedTransaction } from 'ethers'
 
 import { round } from '../../../util/biggystringplus'
 import { getMetaTokenAddress } from '../defiUtils'
@@ -95,7 +93,7 @@ export const getSwapTransactions = async (
       contractAddress
     )
     if (allowence.sub(amountToSwap).lt(0)) {
-      return tokenContract.populateTransaction.approve(
+      return await tokenContract.populateTransaction.approve(
         contractAddress,
         ethers.constants.MaxUint256,
         { gasLimit: '60000', gasPrice }
@@ -228,7 +226,7 @@ export function makeUniV2EdgeSwapQuote(
         await fromWallet.saveTx(signedTransaction)
         index++
       }
-      if (!swapTx) throw new Error(`No ${pluginId} swapTx generated.`)
+      if (swapTx == null) throw new Error(`No ${pluginId} swapTx generated.`)
       return {
         transaction: swapTx,
         orderId: swapTx.txid,

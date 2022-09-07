@@ -1,10 +1,5 @@
-
-
 import { asNumber, asObject, asOptional, asString } from 'cleaners'
-import {
-  EdgeCorePluginOptions,
-  EdgeRatePlugin
-} from 'edge-core-js/types'
+import { EdgeCorePluginOptions, EdgeRatePlugin } from 'edge-core-js/types'
 
 const asRates = asObject(asNumber)
 
@@ -62,7 +57,7 @@ export function makeCurrencyconverterapiPlugin(
         if (
           (status != null && status !== 200) ||
           (error != null && error !== '') ||
-          response.ok === false
+          !response.ok
         ) {
           throw new Error(
             `CurrencyConvertor returned with status: ${JSON.stringify(
