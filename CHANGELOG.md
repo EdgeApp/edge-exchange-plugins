@@ -1,5 +1,9 @@
 # edge-exchange-plugins
 
+# 0.13.9 (2022-09-07)
+
+- Fix Thorchain reverse quotes
+
 # 0.13.8 (2022-09-06)
 
 - Add Thorchain
