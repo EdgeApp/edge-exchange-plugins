@@ -6,3 +6,4 @@ package-lock.json
 # Editors:
 .idea/
 .vscode/
+.nyc_output/
