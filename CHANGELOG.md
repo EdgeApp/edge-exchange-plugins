@@ -1,5 +1,9 @@
 # edge-exchange-plugins
 
+# 0.13.8 (2022-09-06)
+
+- Add Thorchain
+
 # 0.13.7 (2022-08-22)
 
 - Exolix: Disable reverse quotes
