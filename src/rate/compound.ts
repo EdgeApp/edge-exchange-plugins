@@ -1,6 +1,19 @@
+import { asArray, asObject, asString } from 'cleaners'
 import { EdgeCorePluginOptions, EdgeRatePlugin } from 'edge-core-js/types'
 
-function fixCurrency(currencyCode) {
+const asCToken = asObject({
+  cToken: asArray(
+    asObject({
+      exchange_rate: asObject({
+        value: asString
+      }),
+      underlying_symbol: asString,
+      symbol: asString
+    })
+  )
+})
+
+function fixCurrency(currencyCode: string): string {
   return currencyCode.toUpperCase()
 }
 
@@ -15,10 +28,9 @@ export function makeCompoundPlugin(
       displayName: 'Compound'
     },
 
-    async fetchRates(pairsHint) {
+    async fetchRates() {
       const reply = await io.fetch('https://api.compound.finance/api/v2/ctoken')
-      const json = await reply.json()
-      if (!json || !json.cToken) return []
+      const json = asCToken(await reply.json())
 
       const pairs = []
       for (const rateInfo of json.cToken) {

@@ -1,7 +1,9 @@
 import { add, div, gt, lt, mul, sub } from 'biggystring'
+import { asNumber, asObject, asOptional, asString } from 'cleaners'
 import {
   EdgeCorePluginOptions,
   EdgeCurrencyWallet,
+  EdgeFetchOptions,
   EdgeFetchResponse,
   EdgeSpendInfo,
   EdgeSpendTarget,
@@ -28,33 +30,33 @@ const swapInfo: EdgeSwapInfo = {
 let apiUrl = 'https://api.switchain.com/rest/v1'
 const orderUri = 'https://www.switchain.com/order-status/'
 
-interface SwitchainResponseError {
-  error: string
-  reason?: string
-}
+const asSwitchainResponseError = asObject({
+  error: asString,
+  reason: asOptional(asString)
+})
 
-interface SwitchainOfferResponse {
-  pair: string
-  signature: string
-  quote: string
-  maxLimit: string
-  minLimit: string
-  expiryTs: number
-  minerFee: string
-  orderId?: string
-}
+const asSwitchainOfferResponse = asObject({
+  pair: asString,
+  signature: asString,
+  quote: asString,
+  maxLimit: asString,
+  minLimit: asString,
+  expiryTs: asNumber,
+  minerFee: asString,
+  orderId: asOptional(asString)
+})
 
-interface SwitchainOrderCreationResponse {
-  orderId: string
-  fromAmount: string
-  rate: string
-  exchangeAddress: string
-  exchangeAddressTag?: string
-  refundAddress: string
-  refundAddressTag?: string
-  toAddress: string
-  toAddressTag?: string
-}
+const asSwitchainOrderCreationResponse = asObject({
+  orderId: asString,
+  fromAmount: asString,
+  rate: asString,
+  exchangeAddress: asString,
+  exchangeAddressTag: asOptional(asString),
+  refundAddress: asString,
+  refundAddressTag: asOptional(asString),
+  toAddress: asString,
+  toAddressTag: asOptional(asString)
+})
 
 interface SwitchainOrderCreationBody {
   pair: string
@@ -65,8 +67,15 @@ interface SwitchainOrderCreationBody {
   signature: string
   fromAmount?: string
   toAmount?: string
+  orderId?: string
   promotionCode?: string
 }
+
+type SwitchainResponseError = ReturnType<typeof asSwitchainResponseError>
+type SwitchainOfferResponse = ReturnType<typeof asSwitchainOfferResponse>
+type SwitchainOrderCreationResponse = ReturnType<
+  typeof asSwitchainOrderCreationResponse
+>
 
 const INVALID_CURRENCY_CODES: InvalidCurrencyCodes = {
   from: {
@@ -88,12 +97,12 @@ const INVALID_CURRENCY_CODES: InvalidCurrencyCodes = {
   }
 }
 
-const dontUseLegacy = {
+const dontUseLegacy: { [cc: string]: boolean } = {
   DGB: true,
   LTC: true
 }
 
-const dummyAddresses = {
+const dummyAddresses: { [cc: string]: string } = {
   ETH: '0x0000000000000000000000000000000000000000',
   XRP: 'rEb8TK3gBgk5auZkwc6sHnwrGVJH8DuaLh',
   XLM: 'GAHK7EEG2WWHVKDNT4CEQFZGKF2LGDSW2IVM4S5DP42RBW3K6BTODB4A',
@@ -107,7 +116,7 @@ export function makeSwitchainPlugin(
 ): EdgeSwapPlugin {
   const { initOptions, io } = opts
 
-  if (!initOptions.apiKey) {
+  if (initOptions.apiKey == null) {
     throw new Error('No Switchain API key provided.')
   }
 
@@ -115,9 +124,11 @@ export function makeSwitchainPlugin(
     wallet: EdgeCurrencyWallet,
     currencyCode: string
   ): Promise<string> {
-    const addressInfo = await wallet.getReceiveAddress({ currencyCode })
+    const addressInfo = await wallet.getReceiveAddress({
+      currencyCode
+    })
 
-    return addressInfo.legacyAddress && !dontUseLegacy[currencyCode]
+    return addressInfo.legacyAddress != null && !dontUseLegacy[currencyCode]
       ? addressInfo.legacyAddress
       : addressInfo.publicAddress
   }
@@ -126,9 +137,9 @@ export function makeSwitchainPlugin(
     path: string,
     method: string,
     body?: Object,
-    query?: { [string]: string }
-  ) {
-    let requestOpts = {
+    query?: { [q: string]: string }
+  ): Promise<Object> {
+    let requestOpts: EdgeFetchOptions = {
       headers: {
         'Content-Type': 'application/json',
         Authorization: `Bearer ${initOptions.apiKey}`
@@ -163,13 +174,13 @@ export function makeSwitchainPlugin(
     }
 
     if (reply.status !== 200) {
-      if (replyJson.reason) {
+      if ('reason' in replyJson) {
         throw new Error(replyJson.reason)
       }
 
       throw new Error(
         `Switchain ${uri} returned error code ${
-          replyJson.status
+          reply.status
         } with JSON ${JSON.stringify(replyJson)}`
       )
     }
@@ -218,16 +229,13 @@ export function makeSwitchainPlugin(
       ])
 
       // retrieve quote for pair
-      const queryParameters: { [string]: string } = {
+      const queryParameters: { [promoCode: string]: string } = {
         pair,
         orderIdSeed: toAddress
       }
       if (promoCode != null) queryParameters.promotionCode = promoCode
-      const json: SwitchainOfferResponse = await swHttpCall(
-        '/offer',
-        'GET',
-        null,
-        queryParameters
+      const json = asSwitchainOfferResponse(
+        await swHttpCall('/offer', 'GET', undefined, queryParameters)
       )
       const {
         maxLimit,
@@ -254,20 +262,20 @@ export function makeSwitchainPlugin(
       const quoteForFrom = quoteFor === 'from'
       // check for min / max limits
       if (quoteForFrom) {
-        if (lt(nativeAmount, nativeMin)) {
+        if (lt(nativeAmount, nativeMin) === true) {
           throw new SwapBelowLimitError(swapInfo, nativeMin)
         }
-        if (gt(nativeAmount, nativeMax)) {
+        if (gt(nativeAmount, nativeMax) === true) {
           throw new SwapAboveLimitError(swapInfo, nativeMax)
         }
       } else {
         const toAmountInFrom = div(toAmount, quote, 8)
 
-        if (lt(toAmountInFrom, minLimit)) {
+        if (lt(toAmountInFrom, minLimit) === true) {
           throw new SwapBelowLimitError(swapInfo, nativeMin)
         }
 
-        if (gt(toAmountInFrom, maxLimit)) {
+        if (gt(toAmountInFrom, maxLimit) === true) {
           throw new SwapAboveLimitError(swapInfo, nativeMax)
         }
       }
@@ -310,7 +318,7 @@ export function makeSwitchainPlugin(
           {
             nativeAmount: fromNativeAmount,
             publicAddress:
-              dummyAddresses[fromWallet.currencyInfo.currencyCode] ||
+              dummyAddresses[fromWallet.currencyInfo.currencyCode] ??
               fromAddress
           }
         ]
@@ -335,10 +343,8 @@ export function makeSwitchainPlugin(
         expirationDate,
         pluginId,
         async approve(): Promise<EdgeSwapResult> {
-          const json: SwitchainOrderCreationResponse = await swHttpCall(
-            '/order',
-            'POST',
-            orderCreationBody
+          const json = asSwitchainOrderCreationResponse(
+            await swHttpCall('/order', 'POST', orderCreationBody)
           )
           const { orderId, exchangeAddress, exchangeAddressTag } = json
 

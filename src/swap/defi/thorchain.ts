@@ -58,7 +58,7 @@ const INVALID_CURRENCY_CODES: InvalidCurrencyCodes = {
   }
 }
 
-const EVM_CURRENCY_CODES = {
+const EVM_CURRENCY_CODES: { [cc: string]: boolean } = {
   ETH: true,
   AVAX: true,
   FTM: true,
@@ -72,14 +72,14 @@ const EVM_CURRENCY_CODES = {
 }
 
 // Network names that don't match parent network currency code
-const MAINNET_CODE_TRANSCRIPTION = {
+const MAINNET_CODE_TRANSCRIPTION: { [cc: string]: ChainTypes } = {
   bitcoin: 'BTC',
   bitcoincash: 'BCH',
   binancechain: 'BNB',
   litecoin: 'LTC',
   ethereum: 'ETH',
   dogecoin: 'DOGE',
-  thorchain: 'RUNE'
+  thorchain: 'THOR'
 }
 
 const asMinAmount = asObject({
@@ -119,7 +119,10 @@ const asExchangeInfo = asObject({
   })
 })
 
+const asCustomFeeSettings = asArray(asString)
+
 const asPools = asArray(asPool)
+
 type Pool = ReturnType<typeof asPool>
 type ExchangeInfo = ReturnType<typeof asExchangeInfo>
 type MinAmount = ReturnType<typeof asMinAmount>
@@ -146,11 +149,7 @@ export function makeThorchainPlugin(
   const out: EdgeSwapPlugin = {
     swapInfo,
 
-    async fetchSwapQuote(
-      request: EdgeSwapRequest,
-      userSettings: Object | undefined,
-      opts: { promoCode?: string }
-    ): Promise<EdgeSwapQuote> {
+    async fetchSwapQuote(request: EdgeSwapRequest): Promise<EdgeSwapQuote> {
       const {
         fromCurrencyCode,
         toCurrencyCode,
@@ -191,14 +190,14 @@ export function makeThorchainPlugin(
             fetchInfo(fetch, 'v1/exchangeInfo/edge')
           )
 
-          if (exchangeInfoResponse.ok) {
+          if (exchangeInfoResponse.ok === true) {
             exchangeInfo = asExchangeInfo(await exchangeInfoResponse.json())
             exchangeInfoLastUpdate = now
           } else {
             // Error is ok. We just use defaults
             log('Error getting info server exchangeInfo. Using defaults...')
           }
-        } catch (e) {
+        } catch (e: any) {
           log(
             'Error getting info server exchangeInfo. Using defaults...',
             e.message
@@ -240,13 +239,13 @@ export function makeThorchainPlugin(
         })
       ])
 
-      if (!iaResponse.ok) {
+      if (iaResponse.ok === false) {
         const responseText = await iaResponse.text()
         throw new Error(
           `Thorchain could not fetch inbound_addresses: ${responseText}`
         )
       }
-      if (!poolResponse.ok) {
+      if (poolResponse.ok === false) {
         const responseText = await poolResponse.text()
         throw new Error(`Thorchain could not fetch pools: ${responseText}`)
       }
@@ -298,9 +297,10 @@ export function makeThorchainPlugin(
         sourceAsset,
         sourceTokenContractAddressAllCaps
       ] = sourcePool.asset.split('-')
-      const sourceTokenContractAddress = sourceTokenContractAddressAllCaps
-        ? sourceTokenContractAddressAllCaps.toLowerCase()
-        : undefined
+      const sourceTokenContractAddress =
+        sourceTokenContractAddressAllCaps != null
+          ? sourceTokenContractAddressAllCaps.toLowerCase()
+          : undefined
       log(`sourceAsset: ${sourceAsset}`)
 
       const destPool = pools.find(pool => {
@@ -324,7 +324,7 @@ export function makeThorchainPlugin(
       log(`feeInDestCurrency: ${feeInDestCurrency}`)
 
       const assetInUsd = mul(feeInDestCurrency, destPool.assetPriceUSD)
-      if (lt(assetInUsd, '1')) {
+      if (lt(assetInUsd, '1') === true) {
         feeInDestCurrency = div('1', destPool.assetPriceUSD, DIVIDE_PRECISION)
         log(`feeInDestCurrency adjusted to $1 min: ${feeInDestCurrency}`)
       }
@@ -377,10 +377,11 @@ export function makeThorchainPlugin(
         customNetworkFee = gasRate
         customNetworkFeeKey = customFeeTemplate.key
       } else if (fromCurrencyInfo.defaultSettings?.customFeeSettings != null) {
-        // Only know about the key 'gasPrice'
-        const usesGasPrice = fromCurrencyInfo.defaultSettings.customFeeSettings.find(
-          f => f === 'gasPrice'
+        const customFeeSettings = asCustomFeeSettings(
+          fromCurrencyInfo.defaultSettings.customFeeSettings
         )
+        // Only know about the key 'gasPrice'
+        const usesGasPrice = customFeeSettings.find(f => f === 'gasPrice')
         if (usesGasPrice != null) {
           customNetworkFee = gasRate
           customNetworkFeeKey = 'gasPrice'
@@ -590,7 +591,7 @@ const calcSwapFrom = async (
 
   // Check minimums if we can
   if (!dontCheckLimits && minAmount != null) {
-    if (lt(fromExchangeAmount, minAmount.minInputAmount)) {
+    if (lt(fromExchangeAmount, minAmount.minInputAmount) === true) {
       const fromMinNativeAmount = await fromWallet.denominationToNative(
         minAmount.minInputAmount,
         fromCurrencyCode
@@ -747,7 +748,7 @@ const calcSwapTo = async (
   // Check minimums if we can
   if (minAmount != null) {
     const { minInputAmount } = minAmount
-    if (lt(fromExchangeAmount, minInputAmount)) {
+    if (lt(fromExchangeAmount, minInputAmount) === true) {
       // Convert the minimum amount into an output amount
       const result = await calcSwapFrom(
         { ...params, nativeAmount: minInputAmount, dontCheckLimits: true },
@@ -802,7 +803,7 @@ const getApprovalData = async (params: {
 
   const bnNativeAmount = ethers.BigNumber.from(nativeAmount)
 
-  if (allowance == null || !allowance.sub(bnNativeAmount).gte(0)) {
+  if (allowance == null || allowance.sub(bnNativeAmount).gte(0) === false) {
     try {
       const approveTx = await contract.populateTransaction.approve(
         contractAddress,
@@ -856,6 +857,7 @@ const getEvmTokenData = async (params: {
 
   // call the deposit method on the thorchain router.
   const tx = await contract.populateTransaction.deposit(...contractParams)
+  if (tx.data == null) throw new Error('No data in tx object')
   return tx.data
 }
 

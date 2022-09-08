@@ -26,7 +26,7 @@ describe(`calcDoubleSwapOutput`, function () {
     )
     const endAmount = result / THOR_UNITS_NUM
 
-    assert.equal(endAmount, '13.1382759382696')
+    assert.equal(endAmount.toString(), '13.1382759382696')
   })
 })
 
@@ -46,7 +46,7 @@ describe(`calcDoubleSwapInput`, function () {
     )
     const startAmount = result / THOR_UNITS_NUM
 
-    assert.equal(startAmount, '1')
+    assert.equal(startAmount.toString(), '1')
   })
 })
 

@@ -22,11 +22,17 @@ const asCoincapAssets = asArray(
   })
 )
 
-const currencyMap = {}
+interface RatePair {
+  fromCurrency: string
+  toCurrency: string
+  rate: number
+}
+
+const currencyMap: { [symbol: string]: string } = {}
 
 export function makeCoincapPlugin(opts: EdgeCorePluginOptions): EdgeRatePlugin {
   const { io, log } = opts
-  const fetch = io.fetchCors != null || io.fetch
+  const fetch = io.fetchCors ?? io.fetch
 
   return {
     rateInfo: {
@@ -34,8 +40,8 @@ export function makeCoincapPlugin(opts: EdgeCorePluginOptions): EdgeRatePlugin {
       displayName: 'Coincap'
     },
 
-    async fetchRates(pairsHint) {
-      const pairs = []
+    async fetchRates(pairsHint): Promise<RatePair[]> {
+      const pairs: RatePair[] = []
       // Create unique ID map
       if (Object.keys(currencyMap).length === 0) {
         const assets = await fetch(`https://api.coincap.io/v2/assets/`)
@@ -46,9 +52,13 @@ export function makeCoincapPlugin(opts: EdgeCorePluginOptions): EdgeRatePlugin {
 
       // Create query strings
       const queryStrings = []
-      let filteredPairs = []
+      let filteredPairs: string[] = []
       for (let i = 0; i < pairsHint.length; i++) {
-        if (!currencyMap[pairsHint[i].fromCurrency]) continue
+        if (
+          currencyMap[pairsHint[i].fromCurrency] === '' ||
+          currencyMap[pairsHint[i].fromCurrency] == null
+        )
+          continue
         if (pairsHint[i].fromCurrency.includes('iso:')) continue
         if (
           filteredPairs.some(

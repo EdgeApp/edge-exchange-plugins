@@ -40,7 +40,7 @@ const swapInfo: EdgeSwapInfo = {
 const orderUri = 'https://changenow.io/exchange/txs/'
 const uri = 'https://api.changenow.io/v2/'
 
-const dontUseLegacy = {
+const dontUseLegacy: { [cc: string]: boolean } = {
   DGB: true
 }
 
@@ -61,7 +61,7 @@ async function getAddress(
   currencyCode: string
 ): Promise<string> {
   const addressInfo = await wallet.getReceiveAddress({ currencyCode })
-  return addressInfo.legacyAddress && !dontUseLegacy[currencyCode]
+  return addressInfo.legacyAddress != null && !dontUseLegacy[currencyCode]
     ? addressInfo.legacyAddress
     : addressInfo.publicAddress
 }
@@ -193,7 +193,7 @@ export function makeChangeNowPlugin(
 
         const { minAmount, maxAmount } = asMarketRange(marketRangeResponseJson)
 
-        if (lt(largeDenomAmount, minAmount.toString())) {
+        if (lt(largeDenomAmount, minAmount.toString()) === true) {
           const minNativeAmount = await request.fromWallet.denominationToNative(
             minAmount.toString(),
             fromCurrencyCode
@@ -201,7 +201,10 @@ export function makeChangeNowPlugin(
           throw new SwapBelowLimitError(swapInfo, minNativeAmount)
         }
 
-        if (maxAmount != null && gt(largeDenomAmount, maxAmount.toString())) {
+        if (
+          maxAmount != null &&
+          gt(largeDenomAmount, maxAmount.toString()) === true
+        ) {
           const maxNativeAmount = await request.fromWallet.denominationToNative(
             maxAmount.toString(),
             fromCurrencyCode

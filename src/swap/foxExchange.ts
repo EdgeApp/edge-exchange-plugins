@@ -1,4 +1,14 @@
 import {
+  asBoolean,
+  asEither,
+  asNull,
+  asNumber,
+  asObject,
+  asOptional,
+  asString,
+  asUnknown
+} from 'cleaners'
+import {
   EdgeCorePluginOptions,
   EdgeCurrencyWallet,
   EdgeSwapInfo,
@@ -16,6 +26,16 @@ import {
 import { checkInvalidCodes, InvalidCurrencyCodes } from '../swap-helpers'
 
 const pluginId = 'foxExchange'
+
+const asPostResponse = asOptional(
+  asObject({
+    success: asOptional(asBoolean),
+    code: asOptional(asString),
+    error: asOptional(asString),
+    data: asObject(asUnknown)
+  })
+)
+
 const swapInfo: EdgeSwapInfo = {
   pluginId,
   displayName: 'Fox Exchange',
@@ -35,32 +55,32 @@ interface RateRequest {
   requestDummyAddress?: boolean
 }
 
-interface RateInfo {
-  rate: number | null
-  destinationCoinAmount?: number | null
-  depositCoinAmount?: number | null
-  limitMinDepositCoin?: number
-  limitMaxDepositCoin?: number
-  limitMinDestinationCoin?: number
-  limitMaxDestinationCoin?: number
-  futureOrderId: string
-  quoteToken?: string
-  dummyAddress?: string
-  validTill?: number
-}
+const asRateInfo = asObject({
+  rate: asEither(asNumber, asNull),
+  destinationCoinAmount: asOptional(asEither(asNumber, asNull)),
+  depositCoinAmount: asOptional(asEither(asNumber, asNull)),
+  limitMinDepositCoin: asOptional(asNumber),
+  limitMaxDepositCoin: asOptional(asNumber),
+  limitMinDestinationCoin: asOptional(asNumber),
+  limitMaxDestinationCoin: asOptional(asNumber),
+  futureOrderId: asString,
+  quoteToken: asOptional(asString),
+  dummyAddress: asOptional(asString),
+  validTill: asOptional(asNumber)
+})
 
-interface OrderInfo {
-  orderId: string
-  exchangeAddress: {
-    address: string
-    tag: string | null
-  }
-  qrCodeUrl: string
-  expectedDepositCoinAmount: number
-  expectedDestinationCoinAmount: number
-  validTill: number
-  frontendTimeout: number
-}
+const asOrderInfo = asObject({
+  orderId: asString,
+  exchangeAddress: asObject({
+    address: asString,
+    tag: asEither(asString, asNull)
+  }),
+  qrCodeUrl: asString,
+  expectedDepositCoinAmount: asNumber,
+  expectedDestinationCoinAmount: asNumber,
+  validTill: asNumber,
+  frontendTimeout: asNumber
+})
 
 const INVALID_CURRENCY_CODES: InvalidCurrencyCodes = {
   from: {
@@ -82,7 +102,7 @@ const INVALID_CURRENCY_CODES: InvalidCurrencyCodes = {
   }
 }
 
-const dontUseLegacy = {
+const dontUseLegacy: { [cc: string]: boolean } = {
   DGB: true,
   LTC: true,
   BCH: true
@@ -93,7 +113,7 @@ async function getAddress(
   currencyCode: string
 ): Promise<string> {
   const addressInfo = await wallet.getReceiveAddress({ currencyCode })
-  return addressInfo.legacyAddress && !dontUseLegacy[currencyCode]
+  return addressInfo.legacyAddress != null && !dontUseLegacy[currencyCode]
     ? addressInfo.legacyAddress
     : addressInfo.publicAddress
 }
@@ -112,11 +132,8 @@ export function makeFoxExchangePlugin(
   const out: EdgeSwapPlugin = {
     swapInfo,
 
-    async fetchSwapQuote(
-      request: EdgeSwapRequest,
-      userSettings: Object | undefined
-    ): Promise<EdgeSwapQuote> {
-      async function post(path: string, data: Object) {
+    async fetchSwapQuote(request: EdgeSwapRequest): Promise<EdgeSwapQuote> {
+      async function post(path: string, data: Object): Promise<Object> {
         log(`request to ${path}`, data)
         const body = JSON.stringify(data)
         const response = await fetchCors(`${uri}${path}`, {
@@ -130,11 +147,11 @@ export function makeFoxExchangePlugin(
           }
         })
 
-        const json = await response.json()
+        const json = asPostResponse(await response.json())
         log(`reply to ${path} (${response.status})`, json)
-        if (!json) {
+        if (json == null) {
           throw new Error(`fox returned error code ${response.status}`)
-        } else if (!json.success) {
+        } else if (json.success === false) {
           if (
             json.code === 'invalid_symbol' ||
             json.code === 'trade_pair_disabled'
@@ -157,7 +174,9 @@ export function makeFoxExchangePlugin(
           }
 
           log.error('error:', json)
-          throw new Error('fox.exchange replied: ' + json.error || json.code)
+          throw new Error(
+            'fox.exchange replied: ' + (json.error ?? json.code ?? '')
+          )
         }
 
         return json.data
@@ -189,16 +208,16 @@ export function makeFoxExchangePlugin(
           )
         }
 
-        const rateResp: RateInfo = await post('/rate', rateReq)
-        let sourceAmount: number
-        let targetAmount: number
+        const rateResp = asRateInfo(await post('/rate', rateReq))
+        let sourceAmount: number = 0
+        let targetAmount: number = 0
 
         if (request.quoteFor === 'from') {
-          if (rateResp.destinationCoinAmount) {
+          if (rateResp.destinationCoinAmount != null) {
             targetAmount = rateResp.destinationCoinAmount
           } else if (
-            rateReq.depositCoinAmount &&
-            rateResp.limitMinDepositCoin &&
+            rateReq.depositCoinAmount != null &&
+            rateResp.limitMinDepositCoin != null &&
             rateReq.depositCoinAmount < rateResp.limitMinDepositCoin
           ) {
             throw new SwapBelowLimitError(
@@ -209,8 +228,8 @@ export function makeFoxExchangePlugin(
               )
             )
           } else if (
-            rateReq.depositCoinAmount &&
-            rateResp.limitMaxDepositCoin &&
+            rateReq.depositCoinAmount != null &&
+            rateResp.limitMaxDepositCoin != null &&
             rateReq.depositCoinAmount > rateResp.limitMaxDepositCoin
           ) {
             throw new SwapAboveLimitError(
@@ -228,11 +247,11 @@ export function makeFoxExchangePlugin(
             )
           }
         } else {
-          if (rateResp.depositCoinAmount) {
+          if (rateResp.depositCoinAmount != null) {
             sourceAmount = rateResp.depositCoinAmount
           } else if (
-            rateReq.destinationCoinAmount &&
-            rateResp.limitMinDestinationCoin &&
+            rateReq.destinationCoinAmount != null &&
+            rateResp.limitMinDestinationCoin != null &&
             rateReq.destinationCoinAmount < rateResp.limitMinDestinationCoin
           ) {
             throw new SwapBelowLimitError(
@@ -243,8 +262,8 @@ export function makeFoxExchangePlugin(
               )
             )
           } else if (
-            rateReq.destinationCoinAmount &&
-            rateResp.limitMaxDestinationCoin &&
+            rateReq.destinationCoinAmount != null &&
+            rateResp.limitMaxDestinationCoin != null &&
             rateReq.destinationCoinAmount > rateResp.limitMaxDestinationCoin
           ) {
             throw new SwapAboveLimitError(
@@ -267,7 +286,7 @@ export function makeFoxExchangePlugin(
         // Note: For ETH this results in a SpendToSelfError, so instead
         // we build a TX to the null address
         const dummyAddress =
-          rateResp.dummyAddress ||
+          rateResp.dummyAddress ??
           (request.fromCurrencyCode === 'ETH'
             ? '0x0000000000000000000000000000000000000000'
             : await getAddress(request.fromWallet, request.fromCurrencyCode))
@@ -319,27 +338,27 @@ export function makeFoxExchangePlugin(
                 ? dummyTx.parentNetworkFee
                 : dummyTx.networkFee
           },
-          destinationAddress,
           pluginId,
           expirationDate: new Date(
-            rateResp.validTill || Date.now() + expirationMs
+            rateResp.validTill ?? Date.now() + expirationMs
           ),
-          quoteId: rateResp.futureOrderId,
-          isEstimate: !rateResp.quoteToken,
+          isEstimate: rateResp.quoteToken == null,
 
           async approve(): Promise<EdgeSwapResult> {
-            const orderResp: OrderInfo = await post('/order', {
-              depositCoin: request.fromCurrencyCode,
-              destinationCoin: request.toCurrencyCode,
-              depositCoinAmount:
-                rateReq.depositCoinAmount || rateResp.depositCoinAmount,
-              destinationAddress: {
-                address: destinationAddress,
-                tag: null
-              },
-              futureOrderId: rateResp.futureOrderId,
-              quoteToken: rateResp.quoteToken
-            })
+            const orderResp = asOrderInfo(
+              await post('/order', {
+                depositCoin: request.fromCurrencyCode,
+                destinationCoin: request.toCurrencyCode,
+                depositCoinAmount:
+                  rateReq.depositCoinAmount ?? rateResp.depositCoinAmount,
+                destinationAddress: {
+                  address: destinationAddress,
+                  tag: null
+                },
+                futureOrderId: rateResp.futureOrderId,
+                quoteToken: rateResp.quoteToken
+              })
+            )
 
             log(`transaction ID: ${orderResp.orderId}`)
 
@@ -352,7 +371,7 @@ export function makeFoxExchangePlugin(
                     request.fromCurrencyCode
                   ),
                   publicAddress: orderResp.exchangeAddress.address,
-                  uniqueIdentifier: orderResp.exchangeAddress.tag || undefined
+                  uniqueIdentifier: orderResp.exchangeAddress.tag ?? undefined
                 }
               ],
               networkFeeOption:
@@ -362,7 +381,7 @@ export function makeFoxExchangePlugin(
               swapData: {
                 orderId: rateResp.futureOrderId,
                 orderUri: orderUri + rateResp.futureOrderId,
-                isEstimate: !rateResp.quoteToken,
+                isEstimate: rateResp.quoteToken == null,
                 payoutAddress: destinationAddress,
                 payoutCurrencyCode: request.toCurrencyCode,
                 payoutNativeAmount: quote.toNativeAmount,

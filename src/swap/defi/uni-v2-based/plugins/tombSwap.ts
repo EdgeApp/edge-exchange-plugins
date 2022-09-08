@@ -23,8 +23,7 @@ const SLIPPAGE = '0.05'
 const swapInfo: EdgeSwapInfo = {
   pluginId: 'tombSwap',
   displayName: 'TombSwap',
-  supportEmail: '',
-  supportUrl: 'https://discord.gg/vANnESmVdz'
+  supportEmail: 'support@edge.app'
 }
 
 export function makeTombSwapPlugin(
@@ -34,11 +33,7 @@ export function makeTombSwapPlugin(
 
   const out: EdgeSwapPlugin = {
     swapInfo,
-    async fetchSwapQuote(
-      request: EdgeSwapRequest,
-      userSettings: Object | undefined,
-      opts: { promoCode?: string }
-    ): Promise<EdgeSwapQuote> {
+    async fetchSwapQuote(request: EdgeSwapRequest): Promise<EdgeSwapQuote> {
       const {
         fromWallet,
         toWallet,
@@ -99,7 +94,6 @@ export function makeTombSwapPlugin(
         swapTxs.map(async swapTx => {
           // Convert to our spendInfo
           const edgeSpendInfo: EdgeSpendInfo = {
-            pluginId,
             currencyCode: request.fromCurrencyCode, // what is being sent out, only if token. Blank if not token
             spendTargets: [
               {
@@ -113,10 +107,11 @@ export function makeTombSwapPlugin(
               }
             ],
             customNetworkFee: {
-              gasPrice: ethers.utils
-                .formatUnits(swapTx.gasPrice, 'gwei')
-                .toString(),
-              gasLimit: swapTx.gasLimit.toString()
+              gasPrice:
+                swapTx.gasPrice != null
+                  ? ethers.utils.formatUnits(swapTx.gasPrice, 'gwei').toString()
+                  : '0',
+              gasLimit: swapTx.gasLimit?.toString() ?? '0'
             },
             networkFeeOption: 'custom',
             swapData: {
@@ -144,7 +139,6 @@ export function makeTombSwapPlugin(
         amountToSwap.toString(),
         expectedAmountOut.toString(),
         edgeUnsignedTxs,
-        toAddress,
         pluginId,
         true,
         expirationDate

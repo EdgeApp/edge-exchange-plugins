@@ -1,9 +1,14 @@
 import { asMap, asNumber, asObject } from 'cleaners'
-import { EdgeCorePluginOptions, EdgeRatePlugin } from 'edge-core-js/types'
+import {
+  EdgeCorePluginOptions,
+  EdgeRateHint,
+  EdgeRatePair,
+  EdgeRatePlugin
+} from 'edge-core-js/types'
 
 const asGeckoBulkUsdReply = asMap(asObject({ usd: asNumber }))
 
-const coinGeckoMap = {
+const coinGeckoMap: { [ccode: string]: string } = {
   TLOS: 'telos',
   FIRO: 'zcoin',
   ANT: 'aragon',
@@ -158,12 +163,12 @@ export function makeCoinGeckoPlugin(
       pluginId: 'coingecko'
     },
 
-    async fetchRates(pairsHint) {
-      const pairs = []
+    async fetchRates(pairsHint: EdgeRateHint[]): Promise<EdgeRatePair[]> {
+      const pairs: EdgeRatePair[] = []
       const query = []
       for (const pair of pairsHint) {
         // Coingecko is only used to query specific currencies
-        if (coinGeckoMap[pair.fromCurrency])
+        if (coinGeckoMap[pair.fromCurrency] != null)
           query.push(coinGeckoMap[pair.fromCurrency])
       }
       try {
@@ -178,7 +183,7 @@ export function makeCoinGeckoPlugin(
           const fromCurrency = Object.keys(coinGeckoMap).find(
             key => typeof key === 'string' && coinGeckoMap[key] === rate
           )
-          if (fromCurrency)
+          if (fromCurrency != null)
             pairs.push({
               fromCurrency,
               toCurrency: 'iso:USD',

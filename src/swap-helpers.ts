@@ -56,10 +56,8 @@ export function makeSwapPluginQuote(
       currencyCode: fromWallet.currencyInfo.currencyCode,
       nativeAmount
     },
-    destinationAddress,
     pluginId,
     expirationDate,
-    quoteId,
     isEstimate,
     async approve(): Promise<EdgeSwapResult> {
       if (preTx != null) {
@@ -130,21 +128,16 @@ export function checkInvalidCodes(
   } = getCodes(request)
 
   function check(
-    direction: string,
+    direction: 'from' | 'to',
     pluginId: string,
     main: string,
     token: string
   ): boolean {
-    switch (invalidCodes[direction][pluginId]) {
-      case undefined:
-        return false
-      case 'allCodes':
-        return true
-      case 'allTokens':
-        return main !== token
-      default:
-        return invalidCodes[direction][pluginId].some(code => code === token)
-    }
+    const codes = invalidCodes[direction][pluginId]
+    if (codes == null) return false
+    if (codes === 'allCodes') return true
+    if (codes === 'allTokens') return main !== token
+    return codes.some(code => code === token)
   }
 
   if (
@@ -182,20 +175,19 @@ export function safeCurrencyCodes(
     safeFromCurrencyCode: fromCurrencyCode,
     safeToCurrencyCode: toCurrencyCode
   }
-  if (transcriptionMap[fromPluginId]?.[request.fromCurrencyCode]) {
+  if (transcriptionMap[fromPluginId]?.[request.fromCurrencyCode] != null) {
     out.safeFromCurrencyCode =
       transcriptionMap[fromPluginId][request.fromCurrencyCode]
   }
-  if (transcriptionMap[toPluginId]?.[request.toCurrencyCode]) {
+  if (transcriptionMap[toPluginId]?.[request.toCurrencyCode] != null) {
     out.safeToCurrencyCode =
       transcriptionMap[toPluginId][request.toCurrencyCode]
   }
 
-  if (toLowerCase)
-    Object.keys(out).forEach(key => {
-      out[key] = out[key].toLowerCase()
-    })
-
+  if (toLowerCase) {
+    out.safeFromCurrencyCode = out.safeFromCurrencyCode.toLowerCase()
+    out.safeToCurrencyCode = out.safeToCurrencyCode.toLowerCase()
+  }
   return out
 }
 

@@ -1,15 +1,13 @@
-
-
 import { EdgeFetchFunction } from 'edge-core-js'
 const INFO_SERVERS = ['https://info1.edge.app', 'https://info2.edge.app']
 const RATES_SERVERS = ['https://rates1.edge.app', 'https://rates2.edge.app']
 
-export const promiseWithTimeout = <T>(
+export const promiseWithTimeout = async <T>(
   promise: Promise<T>,
   timeoutMs: number = 5000
 ): Promise<T> => {
-  return new Promise((resolve, reject) => {
-    promise.then(v => resolve(v))
+  return await new Promise((resolve, reject) => {
+    promise.then(v => resolve(v)).catch(e => reject(e))
     setTimeout(() => reject(new Error('PROMISE_TIMEOUT')), timeoutMs)
   })
 }
@@ -18,10 +16,10 @@ export const promiseWithTimeout = <T>(
 // All routines below borrowed verbatim from edge-react-gui
 //
 
-type AsyncFunction = void => Promise<any>
+type AsyncFunction = () => Promise<any>
 
-export function snooze(ms: number): Promise<void> {
-  return new Promise((resolve: any) => setTimeout(resolve, ms))
+export async function snooze(ms: number): Promise<void> {
+  return await new Promise((resolve: any) => setTimeout(() => resolve(), ms))
 }
 
 export const shuffleArray = <T>(array: T[]): T[] => {
@@ -48,7 +46,7 @@ export async function asyncWaterfall(
   timeoutMs: number = 5000
 ): Promise<any> {
   let pending = asyncFuncs.length
-  const promises: Promise<any>[] = []
+  const promises: Array<Promise<any>> = []
   for (const func of asyncFuncs) {
     const index = promises.length
     promises.push(
@@ -59,27 +57,31 @@ export async function asyncWaterfall(
     )
     if (pending > 1) {
       promises.push(
-        new Promise(resolve => {
-          snooze(timeoutMs).then(() => {
-            resolve('async_waterfall_timed_out')
-          })
+        new Promise((resolve, reject) => {
+          snooze(timeoutMs)
+            .then(() => {
+              resolve('async_waterfall_timed_out')
+            })
+            .catch(e => reject(e))
         })
       )
     }
     try {
       const result = await Promise.race(promises)
       if (result === 'async_waterfall_timed_out') {
-        promises.pop()
+        const p = promises.pop()
+        p?.then().catch()
         --pending
       } else {
         return result
       }
-    } catch (e) {
+    } catch (e: any) {
       const i = e.index
       promises.splice(i, 1)
-      promises.pop()
+      const p = promises.pop()
+      p?.then().catch()
       --pending
-      if (!pending) {
+      if (pending === 0) {
         throw e
       }
     }
@@ -88,10 +90,10 @@ export async function asyncWaterfall(
 
 export async function fetchWaterfall(
   fetch: EdgeFetchFunction,
-  servers?: string[],
+  servers: string[],
   path: string,
   options?: any,
-  timeout?: number = 5000
+  timeout: number = 5000
 ): Promise<any> {
   if (servers == null) return
   const funcs = servers.map(server => async () => {
@@ -102,33 +104,39 @@ export async function fetchWaterfall(
     }
     return result
   })
-  return asyncWaterfall(funcs, timeout)
+  return await asyncWaterfall(funcs, timeout)
 }
 
 async function multiFetch(
   fetch: EdgeFetchFunction,
-  servers?: string[],
+  servers: string[],
   path: string,
   options?: any,
-  timeout?: number = 5000
+  timeout: number = 5000
 ): Promise<any> {
   if (servers == null) return
-  return fetchWaterfall(fetch, shuffleArray(servers), path, options, timeout)
+  return await fetchWaterfall(
+    fetch,
+    shuffleArray(servers),
+    path,
+    options,
+    timeout
+  )
 }
 
-export const fetchInfo = (
+export const fetchInfo = async (
   fetch: EdgeFetchFunction,
   path: string,
   options?: Object,
   timeout?: number
 ): Promise<any> => {
-  return multiFetch(fetch, INFO_SERVERS, path, options, timeout)
+  return await multiFetch(fetch, INFO_SERVERS, path, options, timeout)
 }
-export const fetchRates = (
+export const fetchRates = async (
   fetch: EdgeFetchFunction,
   path: string,
   options?: Object,
   timeout?: number
 ): Promise<any> => {
-  return multiFetch(fetch, RATES_SERVERS, path, options, timeout)
+  return await multiFetch(fetch, RATES_SERVERS, path, options, timeout)
 }

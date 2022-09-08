@@ -1,5 +1,9 @@
 import { asArray, asObject, asOptional, asString } from 'cleaners'
-import { EdgeCorePluginOptions, EdgeRatePlugin } from 'edge-core-js/types'
+import {
+  EdgeCorePluginOptions,
+  EdgeRatePair,
+  EdgeRatePlugin
+} from 'edge-core-js/types'
 
 const asNomicsResponse = asArray(
   asObject({
@@ -8,7 +12,7 @@ const asNomicsResponse = asArray(
   })
 )
 
-const UNIQUE_ID_MAP = {
+const UNIQUE_ID_MAP: { [cc: string]: string } = {
   BOO: 'BOO4'
 }
 
@@ -27,11 +31,11 @@ export function makeNomicsPlugin(opts: EdgeCorePluginOptions): EdgeRatePlugin {
     },
 
     async fetchRates(pairsHint) {
-      const pairs = []
+      const pairs: EdgeRatePair[] = []
 
       // Create query strings
       const queryStrings = []
-      let filteredPairs = []
+      let filteredPairs: string[] = []
       for (let i = 0; i < pairsHint.length; i++) {
         if (pairsHint[i].fromCurrency.includes('iso:')) continue
         if (filteredPairs.some(cc => cc === pairsHint[i].fromCurrency)) continue
@@ -53,14 +57,14 @@ export function makeNomicsPlugin(opts: EdgeCorePluginOptions): EdgeRatePlugin {
             throw new Error(`Nomics returned with status: ${reply.status}`)
           asNomicsResponse(await reply.json()).forEach(rate => {
             // When Nomics considers a coin "dead" they don't return a price
-            if (rate.price)
+            if (rate.price != null)
               pairs.push({
                 fromCurrency: rate.symbol,
                 toCurrency: 'iso:USD',
                 rate: Number(rate.price)
               })
           })
-        } catch (e) {
+        } catch (e: any) {
           log.warn(
             `Issue with Nomics rate data structure. Error: ${e.message ?? ''}`
           )

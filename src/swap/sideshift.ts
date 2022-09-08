@@ -96,7 +96,7 @@ async function checkQuoteError(
   rate: Rate,
   request: EdgeSwapRequest,
   quoteErrorMessage: string
-) {
+): Promise<void> {
   const { fromCurrencyCode, fromWallet, toCurrencyCode } = request
 
   if (quoteErrorMessage === 'Amount too low') {
@@ -128,11 +128,19 @@ async function checkQuoteError(
   throw new Error(`SideShift.ai error ${quoteErrorMessage}`)
 }
 
-const createSideshiftApi = (baseUrl: string, fetch: EdgeFetchFunction) => {
+interface SideshiftApi {
+  get: <R>(path: string) => Promise<R>
+  post: <R>(path: string, body: {}) => Promise<R>
+}
+
+const createSideshiftApi = (
+  baseUrl: string,
+  fetch: EdgeFetchFunction
+): SideshiftApi => {
   async function request<R>(
     method: 'GET' | 'POST',
     path: string,
-    body: Object
+    body: Object = {}
   ): Promise<R> {
     const url = `${baseUrl}${path}`
 
@@ -183,7 +191,7 @@ const createFetchSwapQuote = (api: SideshiftApi, affiliateId: string) =>
       )
     )
 
-    if (rate.error) {
+    if ('error' in rate) {
       throw new SwapCurrencyError(
         swapInfo,
         request.fromCurrencyCode,
@@ -224,7 +232,7 @@ const createFetchSwapQuote = (api: SideshiftApi, affiliateId: string) =>
       await api.post<typeof asFixedQuote>('/quotes', fixedQuoteRequest)
     )
 
-    if (fixedQuote.error) {
+    if ('error' in fixedQuote) {
       await checkQuoteError(rate, request, fixedQuote.error.message)
       throw new Error(`SideShift.ai error ${fixedQuote.error.message}`)
     }
@@ -241,7 +249,7 @@ const createFetchSwapQuote = (api: SideshiftApi, affiliateId: string) =>
       await api.post<typeof asOrder>('/orders', orderRequest)
     )
 
-    if (order.error) {
+    if ('error' in order) {
       await checkQuoteError(rate, request, order.error.message)
       throw new Error(`SideShift.ai error ${order.error.message}`)
     }
@@ -311,11 +319,9 @@ export function makeSideshiftPlugin(
   opts: EdgeCorePluginOptions
 ): EdgeSwapPlugin {
   const { io, initOptions } = opts
+  const fetch = io.fetchCors ?? io.fetch
 
-  const api = createSideshiftApi(
-    SIDESHIFT_BASE_URL,
-    io.fetchCors != null || io.fetch
-  )
+  const api = createSideshiftApi(SIDESHIFT_BASE_URL, fetch)
 
   const fetchSwapQuote = createFetchSwapQuote(api, initOptions.affiliateId)
 

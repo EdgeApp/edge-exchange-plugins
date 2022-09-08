@@ -1,15 +1,13 @@
-import { EdgeCorePluginOptions, EdgeRatePlugin } from 'edge-core-js/types'
+import { EdgeRatePlugin } from 'edge-core-js/types'
 
-export function makeConstantRatePlugin(
-  opts: EdgeCorePluginOptions
-): EdgeRatePlugin {
+export function makeConstantRatePlugin(): EdgeRatePlugin {
   return {
     rateInfo: {
       pluginId: 'constantRate',
       displayName: 'ConstantRate'
     },
 
-    async fetchRates(pairsHint) {
+    async fetchRates() {
       // Grab all the pairs which are in USD:
       const pairs = [
         {

@@ -53,7 +53,11 @@ const asQuoteInfo = asObject({
   hash_out: asOptionalBlank(asString)
 })
 
-const dontUseLegacy = {
+const asInfoReply = asObject({
+  min_amount: asString,
+  amount: asString
+})
+const dontUseLegacy: { [cc: string]: boolean } = {
   DGB: true
 }
 
@@ -78,7 +82,7 @@ async function getAddress(
   currencyCode: string
 ): Promise<string> {
   const addressInfo = await wallet.getReceiveAddress({ currencyCode })
-  return addressInfo.legacyAddress && !dontUseLegacy[currencyCode]
+  return addressInfo.legacyAddress != null && !dontUseLegacy[currencyCode]
     ? addressInfo.legacyAddress
     : addressInfo.publicAddress
 }
@@ -89,12 +93,16 @@ export function makeLetsExchangePlugin(
   const { initOptions, io, log } = opts
   const { fetchCors = io.fetch } = io
 
-  async function call(url, request, data) {
+  async function call(
+    url: string,
+    request: EdgeSwapRequest,
+    data: { params: Object }
+  ): Promise<Object> {
     const body = JSON.stringify(data.params)
 
     const headers = {
       'Content-Type': 'application/json',
-      Authorization: 'Bearer ' + initOptions.apiKey,
+      Authorization: `Bearer ${initOptions.apiKey.toString()}`,
       Accept: 'application/json'
     }
     const response = await fetchCors(url, { method: 'POST', body, headers })
@@ -169,9 +177,11 @@ export function makeLetsExchangePlugin(
       // Calculate the amounts:
       let fromAmount, fromNativeAmount, toNativeAmount, reply
       if (request.quoteFor === 'from') {
-        reply = await call(uri + 'info', request, {
-          params: quoteParams
-        })
+        reply = asInfoReply(
+          await call(uri + 'info', request, {
+            params: quoteParams
+          })
+        )
 
         fromNativeAmount = request.nativeAmount
 
@@ -181,7 +191,7 @@ export function makeLetsExchangePlugin(
           request.fromCurrencyCode
         )
 
-        if (lt(fromNativeAmount, nativeMin)) {
+        if (lt(fromNativeAmount, nativeMin) === true) {
           throw new SwapBelowLimitError(swapInfo, nativeMin)
         }
 
@@ -191,9 +201,11 @@ export function makeLetsExchangePlugin(
           request.toCurrencyCode
         )
       } else {
-        reply = await call(uri + 'info-revert', request, {
-          params: quoteParams
-        })
+        reply = await asInfoReply(
+          call(uri + 'info-revert', request, {
+            params: quoteParams
+          })
+        )
 
         toNativeAmount = request.nativeAmount
 
@@ -203,7 +215,7 @@ export function makeLetsExchangePlugin(
           request.toCurrencyCode
         )
 
-        if (lt(toNativeAmount, nativeMin)) {
+        if (lt(toNativeAmount, nativeMin) === true) {
           throw new SwapBelowLimitError(swapInfo, nativeMin, 'to')
         }
 

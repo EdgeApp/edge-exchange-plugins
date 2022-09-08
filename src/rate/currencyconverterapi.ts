@@ -1,5 +1,9 @@
 import { asNumber, asObject, asOptional, asString } from 'cleaners'
-import { EdgeCorePluginOptions, EdgeRatePlugin } from 'edge-core-js/types'
+import {
+  EdgeCorePluginOptions,
+  EdgeRatePair,
+  EdgeRatePlugin
+} from 'edge-core-js/types'
 
 const asRates = asObject(asNumber)
 
@@ -8,7 +12,7 @@ const asCurrencyConverterResponse = asObject({
   error: asOptional(asString)
 }).withRest
 
-const checkAndPush = (isoCc, ccArray) => {
+const checkAndPush = (isoCc: string, ccArray: string[]): void => {
   if (isoCc !== 'iso:USD' && isoCc.slice(0, 4) === 'iso:') {
     const cc = isoCc.slice(4).toUpperCase()
     if (!ccArray.includes(`USD_${cc}`)) {
@@ -34,12 +38,12 @@ export function makeCurrencyconverterapiPlugin(
       displayName: 'CurrencyConverterAPI'
     },
 
-    async fetchRates(pairsHint) {
+    async fetchRates(pairsHint): Promise<EdgeRatePair[]> {
       pairsHint = pairsHint.concat([
         { fromCurrency: 'iso:USD', toCurrency: 'iso:IMP' },
         { fromCurrency: 'iso:USD', toCurrency: 'iso:IRR' }
       ])
-      const isoCodesWanted = []
+      const isoCodesWanted: string[] = []
       for (const pair of pairsHint) {
         checkAndPush(pair.fromCurrency, isoCodesWanted)
         checkAndPush(pair.toCurrency, isoCodesWanted)
@@ -51,9 +55,10 @@ export function makeCurrencyconverterapiPlugin(
         const response = await fetchCors(
           `https://api.currconv.com/api/v7/convert?q=${query}&compact=ultra&apiKey=${apiKey}`
         )
-        const { status, error, ...rates } = asCurrencyConverterResponse(
+        const { status, error, ...rest } = asCurrencyConverterResponse(
           await response.json()
         )
+        const rates: { [cc: string]: number } = rest
         if (
           (status != null && status !== 200) ||
           (error != null && error !== '') ||
@@ -72,7 +77,7 @@ export function makeCurrencyconverterapiPlugin(
             rate: rates[rate]
           })
         }
-      } catch (e) {
+      } catch (e: any) {
         log.warn(
           `Failed to get ${query} from currencyconverterapi.com`,
           e.message

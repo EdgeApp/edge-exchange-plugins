@@ -1,4 +1,3 @@
-import { JsonRpcProvider } from '@ethersproject/providers'
 import { mul, sub } from 'biggystring'
 import {
   EdgeSwapQuote,
@@ -23,7 +22,7 @@ export const getSwapAmounts = async (
   fromTokenAddress: string,
   toTokenAddress: string,
   isWrappingSwap: boolean
-) => {
+): Promise<{ amountToSwap: string; expectedAmountOut: string }> => {
   const path = [fromTokenAddress, toTokenAddress]
   const [amountToSwap, expectedAmountOut] = (isWrappingSwap
     ? [nativeAmount, nativeAmount]
@@ -34,7 +33,7 @@ export const getSwapAmounts = async (
     : []
   ).map(String)
 
-  if (!amountToSwap || !expectedAmountOut)
+  if (amountToSwap == null || expectedAmountOut == null)
     throw new Error(`Failed to calculate amounts`)
 
   return { amountToSwap, expectedAmountOut }
@@ -44,7 +43,7 @@ export const getSwapAmounts = async (
  * Get smart contract transaction(s) necessary to swap based on swap params
  */
 export const getSwapTransactions = async (
-  provider: JsonRpcProvider,
+  provider: ethers.providers.Provider,
   swapRequest: EdgeSwapRequest,
   router: Contract,
   amountToSwap: string,
@@ -86,49 +85,55 @@ export const getSwapTransactions = async (
   const addressToApproveTxs = async (
     tokenAddress: string,
     contractAddress: string
-  ): PopulatedTransaction | undefined => {
+  ): Promise<Array<Promise<ethers.PopulatedTransaction>>> => {
     const tokenContract = makeErc20Contract(provider, tokenAddress)
-    const allowence = await tokenContract.allowance(
+    const allowance: ethers.BigNumber = await tokenContract.allowance(
       fromAddress,
       contractAddress
     )
-    if (allowence.sub(amountToSwap).lt(0)) {
-      return await tokenContract.populateTransaction.approve(
+    if (allowance.sub(amountToSwap).lt(0)) {
+      const promise = tokenContract.populateTransaction.approve(
         contractAddress,
         ethers.constants.MaxUint256,
         { gasLimit: '60000', gasPrice }
       )
+      return [promise]
     }
+    return []
   }
 
-  const txs = await (async (): Promise<
-    Array<Promise<PopulatedTransaction> | undefined>
-  > => {
-    // Deposit native currency for wrapped token
-    if (isFromNativeCurrency && isToWrappedCurrency) {
-      return [
-        makeWrappedFtmContract.populateTransaction.deposit({
+  const txPromises: Array<Promise<PopulatedTransaction>> = []
+
+  // Deposit native currency for wrapped token
+  if (isFromNativeCurrency && isToWrappedCurrency) {
+    txPromises.push(
+      ...[
+        makeWrappedFtmContract(provider).populateTransaction.deposit({
           gasLimit: '51000',
           gasPrice,
           value: amountToSwap
         })
       ]
-    }
-    // Withdraw wrapped token for native currency
-    if (isFromWrappedCurrency && isToNativeCurrency) {
-      return [
-        // Deposit Tx
-        makeWrappedFtmContract.populateTransaction.withdraw(amountToSwap, {
+    )
+  }
+  // Withdraw wrapped token for native currency
+  else if (isFromWrappedCurrency && isToNativeCurrency) {
+    txPromises.push(
+      // Deposit Tx
+      makeWrappedFtmContract(provider).populateTransaction.withdraw(
+        amountToSwap,
+        {
           gasLimit: '51000',
           gasPrice
-        })
-      ]
-    }
-    // Swap native currency for token
-
+        }
+      )
+    )
+  }
+  // Swap native currency for token
+  else {
     const slippageMultiplier = sub('1', slippage)
     if (isFromNativeCurrency && !isToNativeCurrency) {
-      return [
+      txPromises.push(
         // Swap Tx
         router.populateTransaction.swapExactETHForTokens(
           round(mul(expectedAmountOut, slippageMultiplier)),
@@ -137,13 +142,13 @@ export const getSwapTransactions = async (
           deadline,
           { gasLimit: '250000', gasPrice, value: amountToSwap }
         )
-      ]
+      )
     }
     // Swap token for native currency
-    if (!isFromNativeCurrency && isToNativeCurrency) {
-      return [
+    else if (!isFromNativeCurrency && isToNativeCurrency) {
+      txPromises.push(
         // Approve TX
-        await addressToApproveTxs(path[0], router.address),
+        ...(await addressToApproveTxs(path[0], router.address)),
         // Swap Tx
         router.populateTransaction.swapExactTokensForETH(
           amountToSwap,
@@ -153,13 +158,13 @@ export const getSwapTransactions = async (
           deadline,
           { gasLimit: '250000', gasPrice }
         )
-      ]
+      )
     }
     // Swap token for token
-    if (!isFromNativeCurrency && !isToNativeCurrency) {
-      return [
+    else if (!isFromNativeCurrency && !isToNativeCurrency) {
+      txPromises.push(
         // Approve TX
-        await addressToApproveTxs(path[0], router.address),
+        ...(await addressToApproveTxs(path[0], router.address)),
         // Swap Tx
         router.populateTransaction.swapExactTokensForTokens(
           amountToSwap,
@@ -169,13 +174,13 @@ export const getSwapTransactions = async (
           deadline,
           { gasLimit: '600000', gasPrice }
         )
-      ]
+      )
+    } else {
+      throw new Error('Unhandled swap type')
     }
+  }
 
-    throw new Error('Unhandled swap type')
-  })()
-
-  return await Promise.all(txs.filter(tx => tx != null))
+  return await Promise.all(txPromises)
 }
 
 /**
@@ -186,11 +191,9 @@ export function makeUniV2EdgeSwapQuote(
   fromNativeAmount: string,
   toNativeAmount: string,
   txs: EdgeTransaction[],
-  toAddress: string,
   pluginId: string,
   isEstimate: boolean = false,
-  expirationDate?: Date,
-  quoteId?: string
+  expirationDate?: Date
 ): EdgeSwapQuote {
   const { fromWallet } = request
   const swapTx = txs[txs.length - 1]
@@ -205,10 +208,8 @@ export function makeUniV2EdgeSwapQuote(
           ? swapTx.parentNetworkFee
           : swapTx.networkFee
     },
-    toAddress,
     pluginId,
     expirationDate,
-    quoteId,
     isEstimate,
     async approve(): Promise<EdgeSwapResult> {
       let swapTx
@@ -229,8 +230,7 @@ export function makeUniV2EdgeSwapQuote(
       if (swapTx == null) throw new Error(`No ${pluginId} swapTx generated.`)
       return {
         transaction: swapTx,
-        orderId: swapTx.txid,
-        toAddress
+        orderId: swapTx.txid
       }
     },
 

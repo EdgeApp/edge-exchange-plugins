@@ -28,7 +28,11 @@ export function makeCoinbasePlugin(
         const cleanJson = asCoinbaseResponse(json)
         for (const pair of pairsHint) {
           const cc = pair.fromCurrency
-          if (!cleanJson.data.rates[cc]) continue
+          if (
+            cleanJson.data.rates[cc] == null ||
+            cleanJson.data.rates[cc] === ''
+          )
+            continue
           const rate = Number(cleanJson.data.rates[cc])
           pairs.push({
             fromCurrency: 'iso:USD',

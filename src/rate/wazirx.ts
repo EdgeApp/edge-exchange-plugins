@@ -7,7 +7,9 @@ const asWazirxResponse = asMap(
   })
 )
 
-function fixCurrency(currencyCode) {
+type WazirxResponse = ReturnType<typeof asWazirxResponse>
+
+function fixCurrency(currencyCode: string): string {
   currencyCode = currencyCode.toUpperCase()
 
   if (currencyCode === 'BCHABC') currencyCode = 'BCH'
@@ -27,7 +29,7 @@ export function makeWazirxPlugin(opts: EdgeCorePluginOptions): EdgeRatePlugin {
 
     async fetchRates(pairsHint) {
       const pairs = []
-      let rates
+      let rates: WazirxResponse | undefined
       for (const pair of pairsHint) {
         // Wazirx is only used to query INR exchange rates
         if (pair.toCurrency !== 'iso:INR') continue
@@ -43,7 +45,7 @@ export function makeWazirxPlugin(opts: EdgeCorePluginOptions): EdgeRatePlugin {
 
           const cc = fixCurrency(pair.fromCurrency).toLowerCase()
           const currencyPair = `${cc}inr`
-          if (rates && rates[currencyPair]) {
+          if (rates[currencyPair] != null) {
             pairs.push({
               fromCurrency: pair.fromCurrency,
               toCurrency: 'iso:INR',

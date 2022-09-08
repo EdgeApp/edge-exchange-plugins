@@ -1,8 +1,10 @@
 /* eslint-disable no-console */
 
-import { EdgeRatePlugin, makeNodeIo } from 'edge-core-js'
+import { EdgeCorePluginOptions, EdgeRatePlugin, makeNodeIo } from 'edge-core-js'
 
 import edgeCorePlugins from '../src/index'
+
+type EdgeRatePluginFactory = (env: EdgeCorePluginOptions) => EdgeRatePlugin
 
 const io = makeNodeIo(__dirname)
 const log = Object.assign(() => {}, {
@@ -13,11 +15,11 @@ const log = Object.assign(() => {}, {
 })
 
 async function showRate(
-  plugin,
+  plugin: EdgeRatePluginFactory,
   fromCurrency: string,
   toCurrency: string,
   initOptions: Object = {}
-) {
+): Promise<void> {
   const instance: EdgeRatePlugin = plugin({
     initOptions,
     io,
@@ -37,7 +39,7 @@ async function showRate(
   }
 }
 
-showRate(edgeCorePlugins.coinbase, 'iso:USD', 'BTC')
+showRate(edgeCorePlugins.coinbase, 'iso:USD', 'BTC').catch(e => console.log(e))
 
 // Uncomment and insert key to test:
 // showRate(edgeCorePlugins['currencyconverterapi'], 'iso:USD', 'iso:IRR', {

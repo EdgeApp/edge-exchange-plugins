@@ -1,4 +1,5 @@
 import { lt } from 'biggystring'
+import { asBoolean, asObject, asString } from 'cleaners'
 import {
   EdgeCorePluginOptions,
   EdgeCurrencyWallet,
@@ -8,6 +9,7 @@ import {
   EdgeSwapQuote,
   EdgeSwapRequest,
   EdgeTransaction,
+  JsonObject,
   SwapBelowLimitError,
   SwapCurrencyError
 } from 'edge-core-js/types'
@@ -31,28 +33,49 @@ const uri = 'https://api.godex.io/api/v1/'
 
 const expirationMs = 1000 * 60
 
-interface QuoteInfo {
-  transaction_id: string
-  status: string
-  coin_from: string
-  coin_to: string
-  deposit_amount: string
-  withdrawal_amount: string
-  deposit: string
-  deposit_extra_id: string
-  withdrawal: string
-  withdrawal_extra_id: string
-  rate: string
-  fee: string
-  return: string
-  return_extra_id: string
-  final_amount: string
-  hash_in: string
-  hash_out: string
-  isEstimate: boolean
-}
+const asQuoteInfo = asObject({
+  transaction_id: asString,
+  status: asString,
+  coin_from: asString,
+  coin_to: asString,
+  deposit_amount: asString,
+  withdrawal_amount: asString,
+  deposit: asString,
+  deposit_extra_id: asString,
+  withdrawal: asString,
+  withdrawal_extra_id: asString,
+  rate: asString,
+  fee: asString,
+  return: asString,
+  return_extra_id: asString,
+  final_amount: asString,
+  hash_in: asString,
+  hash_out: asString,
+  isEstimate: asBoolean
+})
 
-const dontUseLegacy = {
+// interface QuoteInfo {
+//   transaction_id: string
+//   status: string
+//   coin_from: string
+//   coin_to: string
+//   deposit_amount: string
+//   withdrawal_amount: string
+//   deposit: string
+//   deposit_extra_id: string
+//   withdrawal: string
+//   withdrawal_extra_id: string
+//   rate: string
+//   fee: string
+//   return: string
+//   return_extra_id: string
+//   final_amount: string
+//   hash_in: string
+//   hash_out: string
+//   isEstimate: boolean
+// }
+
+const dontUseLegacy: { [cc: string]: boolean } = {
   DGB: true
 }
 
@@ -82,9 +105,12 @@ const MAINNET_CODE_TRANSCRIPTION = {
   avalanche: 'AVAXC'
 }
 
-async function getAddress(wallet: EdgeCurrencyWallet, currencyCode: string) {
+async function getAddress(
+  wallet: EdgeCurrencyWallet,
+  currencyCode: string
+): Promise<string> {
   const addressInfo = await wallet.getReceiveAddress({ currencyCode })
-  return addressInfo.legacyAddress && !dontUseLegacy[currencyCode]
+  return addressInfo.legacyAddress != null && !dontUseLegacy[currencyCode]
     ? addressInfo.legacyAddress
     : addressInfo.publicAddress
 }
@@ -93,7 +119,11 @@ export function makeGodexPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
   const { initOptions, io, log } = opts
   const { fetchCors = io.fetch } = io
 
-  async function call(url, request, data) {
+  async function call(
+    url: string,
+    request: EdgeSwapRequest,
+    data: { params: JsonObject }
+  ): Promise<JsonObject> {
     const body = JSON.stringify(data.params)
 
     const headers = {
@@ -164,7 +194,7 @@ export function makeGodexPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
           reply.min_amount,
           request.fromCurrencyCode
         )
-        if (lt(fromNativeAmount, nativeMin)) {
+        if (lt(fromNativeAmount, nativeMin) === true) {
           throw new SwapBelowLimitError(swapInfo, nativeMin)
         }
 
@@ -185,7 +215,7 @@ export function makeGodexPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
           reply.min_amount,
           request.toCurrencyCode
         )
-        if (lt(toNativeAmount, nativeMin)) {
+        if (lt(toNativeAmount, nativeMin) === true) {
           throw new SwapBelowLimitError(swapInfo, nativeMin, 'to')
         }
 
@@ -225,8 +255,8 @@ export function makeGodexPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
           }
         }
       )
-      log('sendReply' + sendReply)
-      const quoteInfo: QuoteInfo = sendReply
+      log('sendReply' + JSON.stringify(sendReply, null, 2))
+      const quoteInfo = asQuoteInfo(sendReply)
 
       // Make the transaction:
       const spendInfo: EdgeSpendInfo = {

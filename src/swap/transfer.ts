@@ -27,10 +27,7 @@ export function makeTransferPlugin(
   const out: EdgeSwapPlugin = {
     swapInfo,
 
-    async fetchSwapQuote(
-      request: EdgeSwapRequest,
-      userSettings: Object | undefined
-    ): Promise<EdgeSwapQuote> {
+    async fetchSwapQuote(request: EdgeSwapRequest): Promise<EdgeSwapQuote> {
       if (
         request.fromWallet.currencyInfo.pluginId !==
           request.toWallet.currencyInfo.pluginId ||
