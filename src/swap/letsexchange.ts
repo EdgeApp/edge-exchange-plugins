@@ -191,7 +191,7 @@ export function makeLetsExchangePlugin(
           request.fromCurrencyCode
         )
 
-        if (lt(fromNativeAmount, nativeMin) === true) {
+        if (lt(fromNativeAmount, nativeMin)) {
           throw new SwapBelowLimitError(swapInfo, nativeMin)
         }
 
@@ -215,7 +215,7 @@ export function makeLetsExchangePlugin(
           request.toCurrencyCode
         )
 
-        if (lt(toNativeAmount, nativeMin) === true) {
+        if (lt(toNativeAmount, nativeMin)) {
           throw new SwapBelowLimitError(swapInfo, nativeMin, 'to')
         }
 

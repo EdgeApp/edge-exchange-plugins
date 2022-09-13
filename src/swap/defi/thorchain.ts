@@ -324,7 +324,7 @@ export function makeThorchainPlugin(
       log(`feeInDestCurrency: ${feeInDestCurrency}`)
 
       const assetInUsd = mul(feeInDestCurrency, destPool.assetPriceUSD)
-      if (lt(assetInUsd, '1') === true) {
+      if (lt(assetInUsd, '1')) {
         feeInDestCurrency = div('1', destPool.assetPriceUSD, DIVIDE_PRECISION)
         log(`feeInDestCurrency adjusted to $1 min: ${feeInDestCurrency}`)
       }
@@ -591,7 +591,7 @@ const calcSwapFrom = async (
 
   // Check minimums if we can
   if (!dontCheckLimits && minAmount != null) {
-    if (lt(fromExchangeAmount, minAmount.minInputAmount) === true) {
+    if (lt(fromExchangeAmount, minAmount.minInputAmount)) {
       const fromMinNativeAmount = await fromWallet.denominationToNative(
         minAmount.minInputAmount,
         fromCurrencyCode
@@ -748,7 +748,7 @@ const calcSwapTo = async (
   // Check minimums if we can
   if (minAmount != null) {
     const { minInputAmount } = minAmount
-    if (lt(fromExchangeAmount, minInputAmount) === true) {
+    if (lt(fromExchangeAmount, minInputAmount)) {
       // Convert the minimum amount into an output amount
       const result = await calcSwapFrom(
         { ...params, nativeAmount: minInputAmount, dontCheckLimits: true },

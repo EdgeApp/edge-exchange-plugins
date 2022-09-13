@@ -262,20 +262,20 @@ export function makeSwitchainPlugin(
       const quoteForFrom = quoteFor === 'from'
       // check for min / max limits
       if (quoteForFrom) {
-        if (lt(nativeAmount, nativeMin) === true) {
+        if (lt(nativeAmount, nativeMin)) {
           throw new SwapBelowLimitError(swapInfo, nativeMin)
         }
-        if (gt(nativeAmount, nativeMax) === true) {
+        if (gt(nativeAmount, nativeMax)) {
           throw new SwapAboveLimitError(swapInfo, nativeMax)
         }
       } else {
         const toAmountInFrom = div(toAmount, quote, 8)
 
-        if (lt(toAmountInFrom, minLimit) === true) {
+        if (lt(toAmountInFrom, minLimit)) {
           throw new SwapBelowLimitError(swapInfo, nativeMin)
         }
 
-        if (gt(toAmountInFrom, maxLimit) === true) {
+        if (gt(toAmountInFrom, maxLimit)) {
           throw new SwapAboveLimitError(swapInfo, nativeMax)
         }
       }

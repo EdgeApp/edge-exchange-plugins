@@ -189,7 +189,7 @@ export function makeExolixPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
         request.fromCurrencyCode
       )
 
-      if (lt(request.nativeAmount, nativeMin) === true) {
+      if (lt(request.nativeAmount, nativeMin)) {
         throw new SwapBelowLimitError(swapInfo, nativeMin)
       }
     } else {
@@ -198,7 +198,7 @@ export function makeExolixPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
         request.toCurrencyCode
       )
 
-      if (lt(request.nativeAmount, nativeMin) === true) {
+      if (lt(request.nativeAmount, nativeMin)) {
         throw new SwapBelowLimitError(swapInfo, nativeMin, 'to')
       }
     }

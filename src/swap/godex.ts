@@ -194,7 +194,7 @@ export function makeGodexPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
           reply.min_amount,
           request.fromCurrencyCode
         )
-        if (lt(fromNativeAmount, nativeMin) === true) {
+        if (lt(fromNativeAmount, nativeMin)) {
           throw new SwapBelowLimitError(swapInfo, nativeMin)
         }
 
@@ -215,7 +215,7 @@ export function makeGodexPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
           reply.min_amount,
           request.toCurrencyCode
         )
-        if (lt(toNativeAmount, nativeMin) === true) {
+        if (lt(toNativeAmount, nativeMin)) {
           throw new SwapBelowLimitError(swapInfo, nativeMin, 'to')
         }
 

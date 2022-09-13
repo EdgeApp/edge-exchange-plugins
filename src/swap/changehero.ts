@@ -250,17 +250,17 @@ export function makeChangeHeroPlugin(
     )
 
     if (request.quoteFor === 'from') {
-      if (gt(quoteAmount, maxFrom) === true) {
+      if (gt(quoteAmount, maxFrom)) {
         throw new SwapAboveLimitError(swapInfo, maxFromNative)
       }
-      if (lt(quoteAmount, minFrom) === true) {
+      if (lt(quoteAmount, minFrom)) {
         throw new SwapBelowLimitError(swapInfo, minFromNative)
       }
     } else {
-      if (gt(quoteAmount, maxTo) === true) {
+      if (gt(quoteAmount, maxTo)) {
         throw new SwapAboveLimitError(swapInfo, maxToNative)
       }
-      if (lt(quoteAmount, minTo) === true) {
+      if (lt(quoteAmount, minTo)) {
         throw new SwapBelowLimitError(swapInfo, minToNative)
       }
     }

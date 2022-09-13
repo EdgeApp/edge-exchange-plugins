@@ -193,7 +193,7 @@ export function makeChangeNowPlugin(
 
         const { minAmount, maxAmount } = asMarketRange(marketRangeResponseJson)
 
-        if (lt(largeDenomAmount, minAmount.toString()) === true) {
+        if (lt(largeDenomAmount, minAmount.toString())) {
           const minNativeAmount = await request.fromWallet.denominationToNative(
             minAmount.toString(),
             fromCurrencyCode
@@ -201,10 +201,7 @@ export function makeChangeNowPlugin(
           throw new SwapBelowLimitError(swapInfo, minNativeAmount)
         }
 
-        if (
-          maxAmount != null &&
-          gt(largeDenomAmount, maxAmount.toString()) === true
-        ) {
+        if (maxAmount != null && gt(largeDenomAmount, maxAmount.toString())) {
           const maxNativeAmount = await request.fromWallet.denominationToNative(
             maxAmount.toString(),
             fromCurrencyCode
