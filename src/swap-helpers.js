@@ -66,7 +66,10 @@ export function makeSwapPluginQuote(
     async approve(): Promise<EdgeSwapResult> {
       if (preTx != null) {
         const signedTransaction = await fromWallet.signTx(preTx)
-        await fromWallet.broadcastTx(signedTransaction)
+        const broadcastedTransaction = await fromWallet.broadcastTx(
+          signedTransaction
+        )
+        await fromWallet.saveTx(broadcastedTransaction)
       }
       const signedTransaction = await fromWallet.signTx(tx)
       const broadcastedTransaction = await fromWallet.broadcastTx(
