@@ -1,5 +1,9 @@
 # edge-exchange-plugins
 
+# 0.13.10 (2022-09-14)
+
+- Fix Thorchain token transactions using duplicate nonce
+
 # 0.13.9 (2022-09-07)
 
 - Fix Thorchain reverse quotes
