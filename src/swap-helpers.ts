@@ -59,7 +59,7 @@ export function makeSwapPluginQuote(
     pluginId,
     expirationDate,
     isEstimate,
-    async approve(): Promise<EdgeSwapResult> {
+    async approve(opts): Promise<EdgeSwapResult> {
       if (preTx != null) {
         const signedTransaction = await fromWallet.signTx(preTx)
         const broadcastedTransaction = await fromWallet.broadcastTx(
@@ -67,6 +67,7 @@ export function makeSwapPluginQuote(
         )
         await fromWallet.saveTx(broadcastedTransaction)
       }
+      tx.metadata = { ...(opts?.metadata ?? {}), ...tx.metadata }
       const signedTransaction = await fromWallet.signTx(tx)
       const broadcastedTransaction = await fromWallet.broadcastTx(
         signedTransaction

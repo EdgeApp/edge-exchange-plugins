@@ -461,6 +461,10 @@ export function makeThorchainPlugin(
           networkFeeOption: 'custom',
           customNetworkFee: {
             [customNetworkFeeKey]: customNetworkFee
+          },
+          metadata: {
+            name: 'Thorchain',
+            category: 'expense:Token Approval'
           }
         }
         preTx = await request.fromWallet.makeSpend(spendInfo)

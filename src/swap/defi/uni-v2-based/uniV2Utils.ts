@@ -192,6 +192,7 @@ export function makeUniV2EdgeSwapQuote(
   toNativeAmount: string,
   txs: EdgeTransaction[],
   pluginId: string,
+  displayName: string,
   isEstimate: boolean = false,
   expirationDate?: Date
 ): EdgeSwapQuote {
@@ -211,10 +212,22 @@ export function makeUniV2EdgeSwapQuote(
     pluginId,
     expirationDate,
     isEstimate,
-    async approve(): Promise<EdgeSwapResult> {
+    async approve(opts): Promise<EdgeSwapResult> {
       let swapTx
       let index = 0
-      for (const tx of txs) {
+      for (let i = 0; i < txs.length; i++) {
+        const tx = txs[i]
+        if (txs.length > 1 && i === 0) {
+          // This is an approval transaction. Tag with some unfortunately non-translatable data but better than nothing
+          tx.metadata = {
+            name: displayName,
+            category: 'expense:Token Approval'
+          }
+        } else {
+          // This is the swap transaction
+          tx.metadata = { ...opts?.metadata, ...tx.metadata }
+        }
+        // for (const tx of txs) {
         const signedTransaction = await fromWallet.signTx(tx)
         // NOTE: The swap transaction will always be the last one
         swapTx = await fromWallet.broadcastTx(signedTransaction)

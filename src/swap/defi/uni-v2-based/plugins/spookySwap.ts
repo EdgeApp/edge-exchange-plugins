@@ -140,6 +140,7 @@ export function makeSpookySwapPlugin(
         expectedAmountOut.toString(),
         edgeUnsignedTxs,
         pluginId,
+        swapInfo.displayName,
         true,
         expirationDate
       )

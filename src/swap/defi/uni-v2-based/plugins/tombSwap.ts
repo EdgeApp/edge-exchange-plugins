@@ -140,6 +140,7 @@ export function makeTombSwapPlugin(
         expectedAmountOut.toString(),
         edgeUnsignedTxs,
         pluginId,
+        swapInfo.displayName,
         true,
         expirationDate
       )
