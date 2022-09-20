@@ -1,5 +1,6 @@
 import { add } from 'biggystring'
 import {
+  EdgeSwapApproveOptions,
   EdgeSwapInfo,
   EdgeSwapQuote,
   EdgeSwapRequest,
@@ -59,7 +60,7 @@ export function makeSwapPluginQuote(
     pluginId,
     expirationDate,
     isEstimate,
-    async approve(opts): Promise<EdgeSwapResult> {
+    async approve(opts?: EdgeSwapApproveOptions): Promise<EdgeSwapResult> {
       if (preTx != null) {
         const signedTransaction = await fromWallet.signTx(preTx)
         const broadcastedTransaction = await fromWallet.broadcastTx(
