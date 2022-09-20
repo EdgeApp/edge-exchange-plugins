@@ -1,5 +1,11 @@
 # edge-exchange-plugins
 
+# 0.14.0 (2022-09-20)
+
+- Convert project to Typescript
+- Upgrade edge-core-js to v0.19.29
+- Plugins will receive metadata as part of their approve method in include in the tx object
+
 # 0.13.10 (2022-09-14)
 
 - Fix Thorchain token transactions using duplicate nonce
