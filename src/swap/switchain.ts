@@ -342,7 +342,7 @@ export function makeSwitchainPlugin(
         },
         expirationDate,
         pluginId,
-        async approve(): Promise<EdgeSwapResult> {
+        async approve(opts): Promise<EdgeSwapResult> {
           const json = asSwitchainOrderCreationResponse(
             await swHttpCall('/order', 'POST', orderCreationBody)
           )
@@ -357,6 +357,7 @@ export function makeSwitchainPlugin(
           const spendInfo: EdgeSpendInfo = {
             currencyCode: fromCurrencyCode,
             spendTargets: [spendTarget],
+            metadata: opts?.metadata,
             networkFeeOption:
               fromCurrencyCode.toUpperCase() === 'BTC' ? 'high' : 'standard',
             swapData: {

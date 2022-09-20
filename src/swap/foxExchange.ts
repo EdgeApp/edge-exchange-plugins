@@ -344,7 +344,7 @@ export function makeFoxExchangePlugin(
           ),
           isEstimate: rateResp.quoteToken == null,
 
-          async approve(): Promise<EdgeSwapResult> {
+          async approve(opts): Promise<EdgeSwapResult> {
             const orderResp = asOrderInfo(
               await post('/order', {
                 depositCoin: request.fromCurrencyCode,
@@ -374,6 +374,7 @@ export function makeFoxExchangePlugin(
                   uniqueIdentifier: orderResp.exchangeAddress.tag ?? undefined
                 }
               ],
+              metadata: opts?.metadata,
               networkFeeOption:
                 request.fromCurrencyCode.toUpperCase() === 'BTC'
                   ? 'high'
