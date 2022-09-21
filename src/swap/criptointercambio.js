@@ -1,7 +1,14 @@
 // @flow
 
-import { lt, mul } from 'biggystring'
-import { asObject, asString } from 'cleaners'
+import {
+  type ObjectCleaner,
+  asBoolean,
+  asNumber,
+  asObject,
+  asOptional,
+  asString
+} from 'cleaners'
+import { type EdgeFetchFunction } from 'edge-core-js'
 import {
   type EdgeCorePluginOptions,
   type EdgeCurrencyWallet,
@@ -11,6 +18,7 @@ import {
   type EdgeSwapQuote,
   type EdgeSwapRequest,
   type EdgeTransaction,
+  SwapAboveLimitError,
   SwapBelowLimitError,
   SwapCurrencyError
 } from 'edge-core-js/types'
@@ -20,6 +28,7 @@ import utf8Codec from 'utf8'
 
 import {
   type InvalidCurrencyCodes,
+  checkEthTokensOnly,
   checkInvalidCodes,
   makeSwapPluginQuote,
   safeCurrencyCodes
@@ -56,6 +65,45 @@ const CURRENCY_CODE_TRANSCRIPTION = {
   }
 }
 
+const pluginId = 'criptointercambio'
+const swapInfo: EdgeSwapInfo = {
+  pluginId,
+  displayName: 'Criptointercambio',
+  supportEmail: 'support@criptointercambio.com'
+}
+const orderUri = 'https://criptointercambio.com/transaction/'
+const uri = 'https://api2.criptointercambio.com'
+const expirationFixedMs = 1000 * 60 * 5
+const asRequestOptions = asObject({
+  apiKey: asString,
+  secret: asString
+})
+type RequestOptions = $Call<typeof asRequestOptions>
+const asCreateFixedTransaction = asObject({
+  id: asString,
+  amountExpectedFrom: asString,
+  amountExpectedTo: asString,
+  amountTo: asNumber,
+  apiExtraFee: asString,
+  createdAt: asString,
+  currencyFrom: asString,
+  currencyTo: asString,
+  kycRequired: asBoolean,
+  payinAddress: asString,
+  payinExtraId: asOptional(asString),
+  payoutAddress: asString,
+  payoutExtraId: asOptional(asString),
+  refundAddress: asString,
+  refundExtraId: asOptional(asString),
+  status: asString
+})
+const asGetFixRateForAmount = asObject({
+  id: asString
+})
+const dontUseLegacy = {
+  DGB: true
+}
+
 function hmacSha512(data: Uint8Array, key: Uint8Array): Uint8Array {
   const hmac = hashjs.hmac(hashjs.sha512, key)
   return hmac.update(data).digest()
@@ -72,63 +120,6 @@ function parseUtf8(text: string): Uint8Array {
   return out
 }
 
-const pluginId = 'criptointercambio'
-const swapInfo: EdgeSwapInfo = {
-  pluginId,
-  displayName: 'Criptointercambio',
-
-  supportEmail: 'support@criptointercambio.com'
-}
-
-const orderUri = 'https://criptointercambio.com/transaction/'
-const uri = 'https://api2.criptointercambio.com'
-const expirationMs = 1000 * 60 * 20
-const expirationFixedMs = 1000 * 60 * 5
-type QuoteInfo = {
-  id: string,
-  apiExtraFee: string,
-  payinExtraId: string | null,
-  payoutExtraId: string | null,
-  amountExpectedFrom: number,
-  status: string,
-  currencyFrom: string,
-  currencyTo: string,
-  amountTo: number,
-  payinAddress: string,
-  payoutAddress: string,
-  createdAt: string
-}
-type FixedQuoteInfo = {
-  id: string,
-  amountExpectedFrom: string,
-  amountExpectedTo: string,
-  amountTo: number,
-  apiExtraFee: string,
-  createdAt: string,
-  currencyFrom: string,
-  currencyTo: string,
-  kycRequired: boolean,
-  payinAddress: string,
-  payinExtraId: string | null,
-  payoutAddress: string,
-  payoutExtraId: string | null,
-  refundAddress: string,
-  refundExtraId: string | null,
-  status: string
-}
-
-const asFixedRateQuote = asObject({
-  result: asObject({
-    id: asString
-  })
-})
-
-type FixedRateQuote = $Call<typeof asFixedRateQuote>
-
-const dontUseLegacy = {
-  DGB: true
-}
-
 async function getAddress(
   wallet: EdgeCurrencyWallet,
   currencyCode: string
@@ -139,7 +130,58 @@ async function getAddress(
     : addressInfo.publicAddress
 }
 
-function checkReply(reply: Object, request: EdgeSwapRequest) {
+type FetcherType = (json: any, promoCode?: string) => Promise<any>
+
+function makeFetcher(
+  fetch: EdgeFetchFunction,
+  options: RequestOptions
+): FetcherType {
+  return async function (json: any, promoCode?: string) {
+    const body = JSON.stringify(json)
+    const sign = base16
+      .stringify(hmacSha512(parseUtf8(body), parseUtf8(options.secret)))
+      .toLowerCase()
+
+    const headers: { [header: string]: string } = {
+      'Content-Type': 'application/json',
+      'api-key': options.apiKey,
+      sign
+    }
+    if (promoCode != null) headers['X-Promo-Code'] = promoCode
+    const response = await fetch(uri, { method: 'POST', body, headers })
+
+    if (!response.ok) {
+      throw new Error(
+        `Criptointercambio returned error code ${response.status}`
+      )
+    }
+    return response.json()
+  }
+}
+
+async function wrapCleanerRequest(
+  cleaner: ObjectCleaner<any>,
+  fetcher: FetcherType,
+  request: EdgeSwapRequest,
+  method: string,
+  params: any
+) {
+  const { promoCode, ...restParams } = params
+  const response = await fetcher(
+    {
+      jsonrpc: '2.0',
+      id: 'one',
+      method,
+      restParams
+    },
+    promoCode
+  )
+  await checkReply(response, request)
+  return cleaner(response.result)
+}
+
+async function checkReply(reply: Object, request: EdgeSwapRequest) {
+  const { fromCurrencyCode, fromWallet } = request
   if (reply.error != null) {
     if (
       reply.error.code === -32602 ||
@@ -151,6 +193,22 @@ function checkReply(reply: Object, request: EdgeSwapRequest) {
         request.toCurrencyCode
       )
     }
+    if (
+      reply.error.code === -32600 ||
+      /Invalid amout:/.test(reply.error.message)
+    ) {
+      const matcher = reply.error.code.match(/([\d\\.]+)$/gim)
+      const minmaxAmount =
+        matcher.length > 0
+          ? await fromWallet.denominationToNative(matcher[0], fromCurrencyCode)
+          : ''
+      if (/minimal amount/.test(reply.error.message)) {
+        throw new SwapBelowLimitError(swapInfo, minmaxAmount)
+      } else {
+        throw new SwapAboveLimitError(swapInfo, minmaxAmount)
+      }
+    }
+
     throw new Error('Criptointercambio error: ' + JSON.stringify(reply.error))
   }
 }
@@ -158,36 +216,15 @@ function checkReply(reply: Object, request: EdgeSwapRequest) {
 export function makeCriptointercambioPlugin(
   opts: EdgeCorePluginOptions
 ): EdgeSwapPlugin {
-  const { initOptions, io, log } = opts
+  const { initOptions, io } = opts
   const { fetchCors = io.fetch } = io
 
   if (initOptions.apiKey == null || initOptions.secret == null) {
     throw new Error('No Criptointercambio apiKey or secret provided.')
   }
-  const { apiKey } = initOptions
-  const secret = parseUtf8(initOptions.secret)
+  const fetcher = makeFetcher(fetchCors, asRequestOptions(initOptions))
 
-  async function call(json: any, promoCode?: string) {
-    const body = JSON.stringify(json)
-    const sign = base16
-      .stringify(hmacSha512(parseUtf8(body), secret))
-      .toLowerCase()
-
-    const headers: { [header: string]: string } = {
-      'Content-Type': 'application/json',
-      'api-key': apiKey,
-      sign
-    }
-    if (promoCode != null) headers['X-Promo-Code'] = promoCode
-    const response = await fetchCors(uri, { method: 'POST', body, headers })
-
-    if (!response.ok) {
-      throw new Error(`Criptointercambio returned error code ${response.status}`)
-    }
-    return response.json()
-  }
-
-  const out: EdgeSwapPlugin = {
+  return {
     swapInfo,
     async fetchSwapQuote(
       request: EdgeSwapRequest,
@@ -195,6 +232,7 @@ export function makeCriptointercambioPlugin(
       opts: { promoCode?: string }
     ): Promise<EdgeSwapQuote> {
       checkInvalidCodes(INVALID_CURRENCY_CODES, request, swapInfo)
+      checkEthTokensOnly(swapInfo, request)
 
       const fixedPromise = this.getFixedQuote(request, userSettings, opts)
       // FIXME: Estimated swaps are temporarily disabled
@@ -215,77 +253,56 @@ export function makeCriptointercambioPlugin(
       const quoteAmount =
         request.quoteFor === 'from'
           ? await request.fromWallet.nativeToDenomination(
-            request.nativeAmount,
-            request.fromCurrencyCode
-          )
+              request.nativeAmount,
+              request.fromCurrencyCode
+            )
           : await request.toWallet.nativeToDenomination(
-            request.nativeAmount,
-            request.toCurrencyCode
-          )
+              request.nativeAmount,
+              request.toCurrencyCode
+            )
 
       const { safeFromCurrencyCode, safeToCurrencyCode } = safeCurrencyCodes(
         CURRENCY_CODE_TRANSCRIPTION,
         request
       )
 
-      const fixedRateQuoteResponse: FixedRateQuote = await call({
-        jsonrpc: '2.0',
-        id: 'one',
-        method: 'getFixRateForAmount',
-        params: {
+      const fixedRate = await wrapCleanerRequest(
+        asGetFixRateForAmount,
+        fetcher,
+        request,
+        'getFixRateForAmount',
+        {
           from: safeFromCurrencyCode,
           to: safeToCurrencyCode,
-          amountFrom: quoteAmount
+          [request.quoteFor === 'from' ? 'amountFrom' : 'amountTo']: quoteAmount
         }
-      })
-      const fixedRateQuote = asFixedRateQuote(fixedRateQuoteResponse)
-      const params =
-        request.quoteFor === 'from'
-          ? {
-            amount: quoteAmount,
-            from: safeFromCurrencyCode,
-            to: safeToCurrencyCode,
-            address: toAddress,
-            extraId: null,
-            refundAddress: fromAddress,
-            refundExtraId: null,
-            rateId: fixedRateQuote.result.id
-          }
-          : {
-            amountTo: quoteAmount,
-            from: safeFromCurrencyCode,
-            to: safeToCurrencyCode,
-            address: toAddress,
-            extraId: null,
-            refundAddress: fromAddress,
-            refundExtraId: null,
-            rateId: fixedRateQuote.result.id
-          }
-
-      const sendReply = await call(
-        {
-          jsonrpc: '2.0',
-          id: 2,
-          method: 'createFixTransaction',
-          params
-        },
-        promoCode
       )
-      checkReply(sendReply, request)
-      const quoteInfo: FixedQuoteInfo = sendReply.result
-      const spendInfoAmount = await request.fromWallet.denominationToNative(
-        quoteInfo.amountExpectedFrom,
-        // need to verify that this is okay
-        // why use currencyCode from quoteInfo in the first place?
-        request.fromCurrencyCode.toUpperCase()
+
+      const fixedTx = await wrapCleanerRequest(
+        asCreateFixedTransaction,
+        fetcher,
+        request,
+        'createFixTransaction',
+        {
+          [request.quoteFor === 'from' ? 'amount' : 'amountTo']: quoteAmount,
+          from: safeFromCurrencyCode,
+          to: safeToCurrencyCode,
+          address: toAddress,
+          extraId: null,
+          refundAddress: fromAddress,
+          refundExtraId: null,
+          rateId: fixedRate.result.id,
+          //
+          promoCode
+        }
       )
 
       const amountExpectedFromNative = await request.fromWallet.denominationToNative(
-        sendReply.result.amountExpectedFrom,
+        fixedTx.amountExpectedFrom,
         request.fromCurrencyCode
       )
-      const amountExpectedToTo = await request.toWallet.denominationToNative(
-        sendReply.result.amountExpectedTo,
+      const amountExpectedToNative = await request.toWallet.denominationToNative(
+        fixedTx.amountExpectedTo,
         request.toCurrencyCode
       )
 
@@ -293,22 +310,20 @@ export function makeCriptointercambioPlugin(
         currencyCode: request.fromCurrencyCode,
         spendTargets: [
           {
-            nativeAmount: spendInfoAmount,
-            publicAddress: quoteInfo.payinAddress,
-            uniqueIdentifier: quoteInfo.payinExtraId || undefined
+            nativeAmount: amountExpectedFromNative,
+            publicAddress: fixedTx.payinAddress,
+            uniqueIdentifier: fixedTx.payinExtraId || undefined
           }
         ],
         networkFeeOption:
-          request.fromCurrencyCode.toUpperCase() === 'BTC'
-            ? 'high'
-            : 'standard',
+          request.fromCurrencyCode === 'BTC' ? 'high' : 'standard',
         swapData: {
-          orderId: quoteInfo.id,
-          orderUri: orderUri + quoteInfo.id,
+          orderId: fixedTx.id,
+          orderUri: orderUri + fixedTx.id,
           isEstimate: false,
           payoutAddress: toAddress,
           payoutCurrencyCode: request.toCurrencyCode,
-          payoutNativeAmount: amountExpectedToTo,
+          payoutNativeAmount: amountExpectedToNative,
           payoutWalletId: request.toWallet.id,
           plugin: { ...swapInfo },
           refundAddress: fromAddress
@@ -319,170 +334,14 @@ export function makeCriptointercambioPlugin(
       return makeSwapPluginQuote(
         request,
         amountExpectedFromNative,
-        amountExpectedToTo,
+        amountExpectedToNative,
         tx,
         toAddress,
-        'criptointercambio',
+        pluginId,
         false,
         new Date(Date.now() + expirationFixedMs),
-        quoteInfo.id
-      )
-    },
-
-    async getEstimate(
-      request: EdgeSwapRequest,
-      userSettings: Object | void,
-      opts: { promoCode?: string }
-    ): Promise<EdgeSwapQuote> {
-      const { promoCode } = opts
-      // Grab addresses:
-      const [fromAddress, toAddress] = await Promise.all([
-        getAddress(request.fromWallet, request.fromCurrencyCode),
-        getAddress(request.toWallet, request.toCurrencyCode)
-      ])
-
-      // Convert the native amount to a denomination:
-      const quoteAmount =
-        request.quoteFor === 'from'
-          ? await request.fromWallet.nativeToDenomination(
-            request.nativeAmount,
-            request.fromCurrencyCode
-          )
-          : await request.toWallet.nativeToDenomination(
-            request.nativeAmount,
-            request.toCurrencyCode
-          )
-
-      let safeFromCurrencyCode = request.fromCurrencyCode
-      let safeToCurrencyCode = request.toCurrencyCode
-      if (CURRENCY_CODE_TRANSCRIPTION[request.fromCurrencyCode]) {
-        safeFromCurrencyCode =
-          CURRENCY_CODE_TRANSCRIPTION[request.fromCurrencyCode]
-      }
-      if (CURRENCY_CODE_TRANSCRIPTION[request.toCurrencyCode]) {
-        safeToCurrencyCode = CURRENCY_CODE_TRANSCRIPTION[request.toCurrencyCode]
-      }
-      // Swap the currencies if we need a reverse quote:
-      const quoteParams =
-        request.quoteFor === 'from'
-          ? {
-            from: safeFromCurrencyCode,
-            to: safeToCurrencyCode,
-            amount: quoteAmount
-          }
-          : {
-            from: safeToCurrencyCode,
-            to: safeFromCurrencyCode,
-            amount: quoteAmount
-          }
-
-      // Get the estimate from the server:
-      const quoteReplies = await Promise.all([
-        call({
-          jsonrpc: '2.0',
-          id: 'one',
-          method: 'getMinAmount',
-          params: {
-            from: safeFromCurrencyCode,
-            to: safeToCurrencyCode
-          }
-        }),
-        call({
-          jsonrpc: '2.0',
-          id: 'two',
-          method: 'getExchangeAmount',
-          params: quoteParams
-        })
-      ])
-      checkReply(quoteReplies[0], request)
-
-      // Check the minimum:
-      const nativeMin = await request.fromWallet.denominationToNative(
-        quoteReplies[0].result,
-        request.fromCurrencyCode
-      )
-      if (lt(request.nativeAmount, nativeMin)) {
-        throw new SwapBelowLimitError(swapInfo, nativeMin)
-      }
-
-      checkReply(quoteReplies[1], request)
-
-      // Calculate the amounts:
-      let fromAmount, fromNativeAmount, toNativeAmount
-      if (request.quoteFor === 'from') {
-        fromAmount = quoteAmount
-        fromNativeAmount = request.nativeAmount
-        toNativeAmount = await request.toWallet.denominationToNative(
-          quoteReplies[1].result,
-          request.toCurrencyCode
-        )
-      } else {
-        fromAmount = mul(quoteReplies[1].result, '1.02')
-        fromNativeAmount = await request.fromWallet.denominationToNative(
-          fromAmount,
-          request.fromCurrencyCode
-        )
-        toNativeAmount = request.nativeAmount
-      }
-
-      // Get the address:
-      const sendReply = await call(
-        {
-          jsonrpc: '2.0',
-          id: 3,
-          method: 'createTransaction',
-          params: {
-            amount: fromAmount,
-            from: safeFromCurrencyCode,
-            to: safeToCurrencyCode,
-            address: toAddress,
-            extraId: null, // TODO: Do we need this for Monero?
-            refundAddress: fromAddress,
-            refundExtraId: null
-          }
-        },
-        promoCode
-      )
-      checkReply(sendReply, request)
-      const quoteInfo: QuoteInfo = sendReply.result
-      // Make the transaction:
-      const spendInfo: EdgeSpendInfo = {
-        currencyCode: request.fromCurrencyCode,
-        spendTargets: [
-          {
-            nativeAmount: fromNativeAmount,
-            publicAddress: quoteInfo.payinAddress,
-            uniqueIdentifier: quoteInfo.payinExtraId || undefined
-          }
-        ],
-        swapData: {
-          orderId: quoteInfo.id,
-          orderUri: orderUri + quoteInfo.id,
-          isEstimate: true,
-          payoutAddress: toAddress,
-          payoutCurrencyCode: request.toCurrencyCode,
-          payoutNativeAmount: toNativeAmount,
-          payoutWalletId: request.toWallet.id,
-          plugin: { ...swapInfo },
-          refundAddress: fromAddress
-        }
-      }
-      log('spendInfo', spendInfo)
-      const tx: EdgeTransaction = await request.fromWallet.makeSpend(spendInfo)
-
-      return makeSwapPluginQuote(
-        request,
-        fromNativeAmount,
-        toNativeAmount,
-        tx,
-        toAddress,
-        'criptointercambio',
-        true,
-        new Date(Date.now() + expirationMs),
-        quoteInfo.id
+        fixedTx.id
       )
     }
   }
-
-  return out
 }
