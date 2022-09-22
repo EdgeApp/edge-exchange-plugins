@@ -1,5 +1,27 @@
 # edge-exchange-plugins
 
+# 0.14.0 (2022-09-20)
+
+- Convert project to Typescript
+- Upgrade edge-core-js to v0.19.29
+- Plugins will receive metadata as part of their approve method in include in the tx object
+
+# 0.13.10 (2022-09-14)
+
+- Fix Thorchain token transactions using duplicate nonce
+
+# 0.13.9 (2022-09-07)
+
+- Fix Thorchain reverse quotes
+
+# 0.13.8 (2022-09-06)
+
+- Add Thorchain
+
+# 0.13.7 (2022-08-22)
+
+- Exolix: Disable reverse quotes
+
 # 0.13.6 (2022-08-02)
 
 - ChangeHero: Prevent swapping currency codes could represent both a token and a mainnet currency
