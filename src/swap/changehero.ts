@@ -23,43 +23,13 @@ import {
 
 import {
   checkInvalidCodes,
+  getCodes,
   InvalidCurrencyCodes,
-  makeSwapPluginQuote,
-  safeCurrencyCodes
+  makeSwapPluginQuote
 } from '../swap-helpers'
-
-const CURRENCY_CODE_TRANSCRIPTION = {
-  ethereum: {
-    USDT: 'USDT20'
-  },
-  avalanche: {
-    AVAX: 'AVAXC'
-  },
-  binancesmartchain: {
-    BNB: 'BNBBSC'
-  },
-  polygon: {
-    MATIC: 'POLYGON'
-  }
-}
-
 const INVALID_CURRENCY_CODES: InvalidCurrencyCodes = {
-  from: {
-    ethereum: ['MATIC', 'AVAX', 'BNB', 'FTM', 'CELO'],
-    avalanche: 'allCodes',
-    binancesmartchain: 'allCodes',
-    celo: 'allCodes',
-    fantom: 'allCodes',
-    polygon: 'allCodes'
-  },
-  to: {
-    ethereum: ['MATIC', 'AVAX', 'BNB', 'FTM', 'CELO'],
-    avalanche: 'allCodes',
-    binancesmartchain: 'allCodes',
-    celo: 'allCodes',
-    fantom: 'allCodes',
-    polygon: 'allCodes'
-  }
+  from: {},
+  to: {}
 }
 
 const pluginId = 'changehero'
@@ -134,32 +104,6 @@ function checkReply(
     throw new Error('ChangeHero error: ' + JSON.stringify(reply.error))
   }
 }
-
-function checkEthOnly(request: EdgeSwapRequest): void {
-  const currencyFromWallet = request.fromWallet.currencyInfo.currencyCode
-  const currencyToWallet = request.toWallet.currencyInfo.currencyCode
-
-  if (
-    currencyFromWallet !== request.fromCurrencyCode &&
-    currencyFromWallet !== 'ETH'
-  ) {
-    throw new SwapCurrencyError(
-      swapInfo,
-      request.fromCurrencyCode,
-      request.toCurrencyCode
-    )
-  } else if (
-    currencyToWallet !== request.toCurrencyCode &&
-    currencyToWallet !== 'ETH'
-  ) {
-    throw new SwapCurrencyError(
-      swapInfo,
-      request.fromCurrencyCode,
-      request.toCurrencyCode
-    )
-  }
-}
-
 export function makeChangeHeroPlugin(
   opts: EdgeCorePluginOptions
 ): EdgeSwapPlugin {
@@ -171,7 +115,7 @@ export function makeChangeHeroPlugin(
   }
   const { apiKey } = initOptions
 
-  async function call(json: any): Promise<Object> {
+  async function call(json: any): Promise<any> {
     const body = JSON.stringify(json)
 
     const headers = {
@@ -186,67 +130,60 @@ export function makeChangeHeroPlugin(
     return await response.json()
   }
 
-  const out: EdgeSwapPlugin = {
-    swapInfo,
-    async fetchSwapQuote(request: EdgeSwapRequest): Promise<EdgeSwapQuote> {
-      checkEthOnly(request)
-      checkInvalidCodes(INVALID_CURRENCY_CODES, request, swapInfo)
-
-      return await getFixedQuote(request)
-    }
-  }
-
-  const getFixedQuote = async (
+  async function getFixedQuote(
     request: EdgeSwapRequest
-  ): Promise<EdgeSwapQuote> => {
+  ): Promise<EdgeSwapQuote> {
     const [fromAddress, toAddress] = await Promise.all([
       getAddress(request.fromWallet, request.fromCurrencyCode),
       getAddress(request.toWallet, request.toCurrencyCode)
     ])
+    const { fromCurrencyCode, toCurrencyCode } = getCodes(request)
+
+    const fromMainnetCode = request.fromWallet.currencyInfo.pluginId
+    const toMainnetCode = request.toWallet.currencyInfo.pluginId
+
     const quoteAmount =
       request.quoteFor === 'from'
         ? await request.fromWallet.nativeToDenomination(
             request.nativeAmount,
-            request.fromCurrencyCode
+            fromCurrencyCode
           )
         : await request.toWallet.nativeToDenomination(
             request.nativeAmount,
-            request.toCurrencyCode
+            toCurrencyCode
           )
 
-    const { safeFromCurrencyCode, safeToCurrencyCode } = safeCurrencyCodes(
-      CURRENCY_CODE_TRANSCRIPTION,
-      request
-    )
-
-    const fixedRateQuote = await call({
+    const fixRate = {
       jsonrpc: '2.0',
       id: 'one',
       method: 'getFixRate',
       params: {
-        from: safeFromCurrencyCode,
-        to: safeToCurrencyCode
+        from: fromCurrencyCode,
+        to: toCurrencyCode,
+        chainFrom: fromMainnetCode,
+        chainTo: toMainnetCode
       }
-    })
+    }
+    const fixedRateQuote = await call(fixRate)
 
     const [
       { id: responseId, maxFrom, maxTo, minFrom, minTo }
     ] = asGetFixRateReply(fixedRateQuote).result
     const maxFromNative = await request.fromWallet.denominationToNative(
       maxFrom,
-      request.fromCurrencyCode
+      fromCurrencyCode
     )
     const maxToNative = await request.toWallet.denominationToNative(
       maxTo,
-      request.toCurrencyCode
+      toCurrencyCode
     )
     const minFromNative = await request.fromWallet.denominationToNative(
       minFrom,
-      request.fromCurrencyCode
+      fromCurrencyCode
     )
     const minToNative = await request.toWallet.denominationToNative(
       minTo,
-      request.toCurrencyCode
+      toCurrencyCode
     )
 
     if (request.quoteFor === 'from') {
@@ -269,8 +206,10 @@ export function makeChangeHeroPlugin(
       request.quoteFor === 'from'
         ? {
             amount: quoteAmount,
-            from: safeFromCurrencyCode,
-            to: safeToCurrencyCode,
+            from: fromCurrencyCode,
+            to: toCurrencyCode,
+            chainFrom: fromMainnetCode,
+            chainTo: toMainnetCode,
             address: toAddress,
             extraId: null,
             refundAddress: fromAddress,
@@ -279,35 +218,39 @@ export function makeChangeHeroPlugin(
           }
         : {
             amountTo: quoteAmount,
-            from: safeFromCurrencyCode,
-            to: safeToCurrencyCode,
+            from: fromCurrencyCode,
+            to: toCurrencyCode,
+            chainFrom: fromMainnetCode,
+            chainTo: toMainnetCode,
             address: toAddress,
             extraId: null,
             refundAddress: fromAddress,
             refundExtraId: null,
             rateId: responseId
           }
-
-    const sendReply = await call({
+    const reply = {
       jsonrpc: '2.0',
       id: 2,
       method: 'createFixTransaction',
       params
-    })
+    }
+
+    const sendReply = await call(reply)
+
     checkReply(sendReply, request)
 
     const quoteInfo = asCreateFixTransactionReply(sendReply).result
     const amountExpectedFromNative = await request.fromWallet.denominationToNative(
       `${quoteInfo.amountExpectedFrom.toString()}`,
-      request.fromCurrencyCode
+      fromCurrencyCode
     )
     const amountExpectedToNative = await request.toWallet.denominationToNative(
       `${quoteInfo.amountExpectedTo.toString()}`,
-      request.toCurrencyCode
+      toCurrencyCode
     )
 
     const spendInfo: EdgeSpendInfo = {
-      currencyCode: request.fromCurrencyCode,
+      currencyCode: fromCurrencyCode,
       spendTargets: [
         {
           nativeAmount: amountExpectedFromNative,
@@ -322,7 +265,7 @@ export function makeChangeHeroPlugin(
         orderId: quoteInfo.id,
         isEstimate: false,
         payoutAddress: toAddress,
-        payoutCurrencyCode: request.toCurrencyCode,
+        payoutCurrencyCode: toCurrencyCode,
         payoutNativeAmount: amountExpectedToNative,
         payoutWalletId: request.toWallet.id,
         plugin: { ...swapInfo },
@@ -342,6 +285,14 @@ export function makeChangeHeroPlugin(
       new Date(Date.now() + expirationFixedMs),
       quoteInfo.id
     )
+  }
+
+  const out: EdgeSwapPlugin = {
+    swapInfo,
+    async fetchSwapQuote(request: EdgeSwapRequest): Promise<EdgeSwapQuote> {
+      checkInvalidCodes(INVALID_CURRENCY_CODES, request, swapInfo)
+      return await getFixedQuote(request)
+    }
   }
 
   return out
