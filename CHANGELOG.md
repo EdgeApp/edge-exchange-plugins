@@ -1,5 +1,9 @@
 # edge-exchange-plugins
 
+# 0.15.0 (2022-09-24)
+
+- Update Changehero plugin to support arbitrary chains and tokens with reverse quoting
+
 # 0.14.0 (2022-09-20)
 
 - Convert project to Typescript
