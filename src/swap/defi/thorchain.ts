@@ -79,6 +79,7 @@ const MAINNET_CODE_TRANSCRIPTION: { [cc: string]: ChainTypes } = {
   litecoin: 'LTC',
   ethereum: 'ETH',
   dogecoin: 'DOGE',
+  avalanche: 'AVAX',
   thorchain: 'THOR'
 }
 
