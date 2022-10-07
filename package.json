@@ -1,6 +1,6 @@
 {
   "name": "edge-exchange-plugins",
-  "version": "0.15.0",
+  "version": "0.15.1",
   "description": "Exchange-rate sources for the Edge core",
   "repository": {
     "type": "git",
@@ -9,9 +9,8 @@
   "license": "SEE LICENSE IN LICENSE",
   "author": "Edge",
   "contributors": [
-    "MrJLP <MrJLP@users.noreply.github.com>",
-    "William Swanson <william@edgesecure.co>",
-    "Paul Puey <paul@edgesecure.co>"
+    "William Swanson <william@edge.app>",
+    "Paul Puey <paul@edge.app>"
   ],
   "main": "index.js",
   "module": "lib/index.js",

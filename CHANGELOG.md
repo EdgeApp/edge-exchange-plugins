@@ -1,5 +1,9 @@
 # edge-exchange-plugins
 
+# 0.15.1 (2022-10-07)
+
+- Add AVAX support to Thorchain
+
 # 0.15.0 (2022-09-24)
 
 - Update Changehero plugin to support arbitrary chains and tokens with reverse quoting
