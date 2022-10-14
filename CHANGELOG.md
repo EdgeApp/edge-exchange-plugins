@@ -1,5 +1,9 @@
 # edge-exchange-plugins
 
+# 0.15.2 (2022-10-14)
+
+- Thorchain: Reject swap quotes between the same assets
+
 # 0.15.1 (2022-10-07)
 
 - Add AVAX support to Thorchain
