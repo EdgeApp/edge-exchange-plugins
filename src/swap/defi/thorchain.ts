@@ -159,6 +159,13 @@ export function makeThorchainPlugin(
         toWallet,
         quoteFor
       } = request
+      // Do not support transfer between same assets
+      if (
+        fromWallet.currencyInfo.pluginId === toWallet.currencyInfo.pluginId &&
+        request.fromCurrencyCode === request.toCurrencyCode
+      ) {
+        throw new SwapCurrencyError(swapInfo, fromCurrencyCode, toCurrencyCode)
+      }
       const likeKind = isLikeKind(fromCurrencyCode, toCurrencyCode)
 
       let midgardServers: string[] = MIDGARD_SERVERS_DEFAULT
