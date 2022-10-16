@@ -1,5 +1,5 @@
 import { lt } from 'biggystring'
-import { asBoolean, asObject, asString } from 'cleaners'
+import { asEither, asNull, asObject, asString } from 'cleaners'
 import {
   EdgeCorePluginOptions,
   EdgeCurrencyWallet,
@@ -33,47 +33,20 @@ const uri = 'https://api.godex.io/api/v1/'
 
 const expirationMs = 1000 * 60
 
-const asQuoteInfo = asObject({
-  transaction_id: asString,
-  status: asString,
-  coin_from: asString,
-  coin_to: asString,
-  deposit_amount: asString,
-  withdrawal_amount: asString,
-  deposit: asString,
-  deposit_extra_id: asString,
-  withdrawal: asString,
-  withdrawal_extra_id: asString,
-  rate: asString,
-  fee: asString,
-  return: asString,
-  return_extra_id: asString,
-  final_amount: asString,
-  hash_in: asString,
-  hash_out: asString,
-  isEstimate: asBoolean
+const asApiInfo = asObject({
+  amount: asString,
+  min_amount: asString
 })
 
-// interface QuoteInfo {
-//   transaction_id: string
-//   status: string
-//   coin_from: string
-//   coin_to: string
-//   deposit_amount: string
-//   withdrawal_amount: string
-//   deposit: string
-//   deposit_extra_id: string
-//   withdrawal: string
-//   withdrawal_extra_id: string
-//   rate: string
-//   fee: string
-//   return: string
-//   return_extra_id: string
-//   final_amount: string
-//   hash_in: string
-//   hash_out: string
-//   isEstimate: boolean
-// }
+const asQuoteInfo = asObject({
+  transaction_id: asString,
+  deposit: asString,
+  deposit_extra_id: asEither(asString, asNull),
+  withdrawal: asString,
+  withdrawal_extra_id: asEither(asString, asNull),
+  return: asString,
+  return_extra_id: asEither(asString, asNull)
+})
 
 const dontUseLegacy: { [cc: string]: boolean } = {
   DGB: true
@@ -183,9 +156,10 @@ export function makeGodexPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
       // Calculate the amounts:
       let fromAmount, fromNativeAmount, toNativeAmount, reply
       if (request.quoteFor === 'from') {
-        reply = await call(uri + 'info', request, {
+        const response = await call(uri + 'info', request, {
           params: quoteParams
         })
+        reply = asApiInfo(response)
 
         fromNativeAmount = request.nativeAmount
 
@@ -204,9 +178,10 @@ export function makeGodexPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
           request.toCurrencyCode
         )
       } else {
-        reply = await call(uri + 'info-revert', request, {
+        const response = await call(uri + 'info-revert', request, {
           params: quoteParams
         })
+        reply = asApiInfo(response)
 
         toNativeAmount = request.nativeAmount
 
@@ -243,8 +218,6 @@ export function makeGodexPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
             coin_to: request.toCurrencyCode,
             withdrawal: toAddress,
             return: fromAddress,
-            // return_extra_id: 'empty',
-            // withdrawal_extra_id: 'empty',
             return_extra_id: null,
             withdrawal_extra_id: null,
             affiliate_id: initOptions.apiKey,
@@ -265,7 +238,7 @@ export function makeGodexPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
           {
             nativeAmount: fromNativeAmount,
             publicAddress: quoteInfo.deposit,
-            uniqueIdentifier: quoteInfo.deposit_extra_id
+            uniqueIdentifier: quoteInfo.deposit_extra_id ?? undefined
           }
         ],
         networkFeeOption:
