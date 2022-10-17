@@ -109,8 +109,8 @@ const getPluginIds = (
 })
 
 export interface InvalidCurrencyCodes {
-  from: { [code: string]: 'allCodes' | 'allTokens' | string[] }
-  to: { [code: string]: 'allCodes' | 'allTokens' | string[] }
+  from: { [pluginId: string]: 'allCodes' | 'allTokens' | string[] }
+  to: { [pluginId: string]: 'allCodes' | 'allTokens' | string[] }
 }
 
 /**
