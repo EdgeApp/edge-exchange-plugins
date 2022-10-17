@@ -30,15 +30,10 @@
     "lib": "sucrase -q -t typescript,imports -d ./lib ./src",
     "lint": "eslint .",
     "precommit": "lint-staged && npm-run-all types test",
-    "prepare": "npm run build",
+    "prepare": "husky install && npm run build",
     "start.dev": "nodemon",
     "test": "nyc mocha -r sucrase/register './test/**/*.test.ts'",
     "types": "tsc"
-  },
-  "husky": {
-    "hooks": {
-      "pre-commit": "npm run precommit"
-    }
   },
   "lint-staged": {
     "*.{js,ts,json}": "eslint"
@@ -90,7 +85,7 @@
     "eslint-plugin-prettier": "^3.1.4",
     "eslint-plugin-promise": "^4.2.1",
     "eslint-plugin-simple-import-sort": "^6.0.1",
-    "husky": "^7.0.4",
+    "husky": "^7.0.0",
     "lint-staged": "^10.5.3",
     "mocha": "^8.1.3",
     "mocha-junit-reporter": "^2.0.2",
