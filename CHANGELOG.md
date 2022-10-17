@@ -1,5 +1,9 @@
 # edge-exchange-plugins
 
+# 0.15.3 (2022-10-17)
+
+- Fix Godex API by updating cleaners
+
 # 0.15.2 (2022-10-14)
 
 - Thorchain: Reject swap quotes between the same assets
