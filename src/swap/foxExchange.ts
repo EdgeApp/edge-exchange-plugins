@@ -84,20 +84,21 @@ const asOrderInfo = asObject({
 
 const INVALID_CURRENCY_CODES: InvalidCurrencyCodes = {
   from: {
-    ethereum: ['MATIC'],
     avalanche: 'allTokens',
     binancesmartchain: 'allCodes',
     celo: 'allTokens',
+    ethereum: ['MATIC'],
     fantom: 'allCodes',
     polygon: 'allCodes'
   },
   to: {
-    ethereum: ['MATIC'],
     avalanche: 'allTokens',
     binancesmartchain: 'allCodes',
     celo: 'allTokens',
+    ethereum: ['MATIC'],
     fantom: 'allCodes',
     polygon: 'allCodes',
+    tezos: 'allCodes', // Unreliable with dummy addresses
     zcash: ['ZEC']
   }
 }

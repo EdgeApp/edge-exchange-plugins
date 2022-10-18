@@ -79,20 +79,21 @@ type SwitchainOrderCreationResponse = ReturnType<
 
 const INVALID_CURRENCY_CODES: InvalidCurrencyCodes = {
   from: {
-    ethereum: ['MATIC'],
     avalanche: 'allTokens',
     binancesmartchain: 'allCodes',
     celo: 'allTokens',
+    ethereum: ['MATIC'],
     fantom: 'allCodes',
     polygon: 'allCodes'
   },
   to: {
-    ethereum: ['MATIC'],
     avalanche: 'allTokens',
     binancesmartchain: 'allCodes',
     celo: 'allTokens',
+    ethereum: ['MATIC'],
     fantom: 'allCodes',
     polygon: 'allCodes',
+    tezos: 'allCodes', // Unreliable with dummy addresses
     zcash: ['ZEC']
   }
 }
@@ -107,7 +108,6 @@ const dummyAddresses: { [cc: string]: string } = {
   XRP: 'rEb8TK3gBgk5auZkwc6sHnwrGVJH8DuaLh',
   XLM: 'GAHK7EEG2WWHVKDNT4CEQFZGKF2LGDSW2IVM4S5DP42RBW3K6BTODB4A',
   BNB: 'bnb136ns6lfw4zs5hg4n85vdthaad7hq5m4gtkgf23',
-  XTZ: 'tz1dD2rBsYYLnsZtijtGqT4tynCEVaEJ6DeL',
   EOS: 'binancecleos'
 }
 
