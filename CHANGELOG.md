@@ -1,5 +1,9 @@
 # edge-exchange-plugins
 
+# 0.15.4 (2022-10-19)
+
+- fixed: Do not allow swaps to Tezos using Fox Exchange or Switchain, which rely on dummy addresses.
+
 # 0.15.3 (2022-10-17)
 
 - Fix Godex API by updating cleaners
