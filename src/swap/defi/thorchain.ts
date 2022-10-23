@@ -40,7 +40,6 @@ const swapInfo: EdgeSwapInfo = {
 
 const EXPIRATION_MS = 1000 * 60
 const MIDGARD_SERVERS_DEFAULT = ['https://midgard.thorchain.info']
-const NINEREALMS_SERVERS_DEFAULT = ['https://api.ninerealms.com']
 const DIVIDE_PRECISION = 16
 const AFFILIATE_FEE_BASIS_DEFAULT = '50'
 const THORNAME_DEFAULT = 'ej'
@@ -169,7 +168,6 @@ export function makeThorchainPlugin(
       const likeKind = isLikeKind(fromCurrencyCode, toCurrencyCode)
 
       let midgardServers: string[] = MIDGARD_SERVERS_DEFAULT
-      let nineRealmsServers: string[] = NINEREALMS_SERVERS_DEFAULT
       let likeKindVolatilitySpread: number = LIKE_KIND_VOLATILITY_SPREAD_DEFAULT
       let volatilitySpread: number = VOLATILITY_SPREAD_DEFAULT
 
@@ -218,9 +216,6 @@ export function makeThorchainPlugin(
           exchangeInfo.swap.plugins.thorchain.likeKindVolatilitySpread
         volatilitySpread = exchangeInfo.swap.plugins.thorchain.volatilitySpread
         midgardServers = exchangeInfo.swap.plugins.thorchain.midgardServers
-        nineRealmsServers =
-          exchangeInfo.swap.plugins.thorchain.nineRealmsServers ??
-          nineRealmsServers
       }
 
       const volatilitySpreadFinal = likeKind
@@ -228,7 +223,7 @@ export function makeThorchainPlugin(
         : volatilitySpread.toString()
 
       // Get current pool
-      const [iaResponse, poolResponse, minAmountResponse] = await Promise.all([
+      const [iaResponse, poolResponse] = await Promise.all([
         fetchWaterfall(
           fetch,
           midgardServers,
@@ -237,14 +232,7 @@ export function makeThorchainPlugin(
             headers
           }
         ),
-        fetchWaterfall(fetch, midgardServers, 'v2/pools', { headers }),
-        fetchWaterfall(
-          fetch,
-          nineRealmsServers,
-          `thorchain/swap/minAmount?inAsset=${fromMainnetCode}.${fromCurrencyCode}&outAsset=${toMainnetCode}.${toCurrencyCode}`
-        ).catch(e => {
-          log(e.message)
-        })
+        fetchWaterfall(fetch, midgardServers, 'v2/pools', { headers })
       ])
 
       if (iaResponse.ok === false) {
@@ -257,15 +245,10 @@ export function makeThorchainPlugin(
         const responseText = await poolResponse.text()
         throw new Error(`Thorchain could not fetch pools: ${responseText}`)
       }
-      let minAmount
-      try {
-        if (minAmountResponse == null)
-          throw new Error('Failed to get minAmount')
-        const responseJson = await minAmountResponse.json()
-        minAmount = asMinAmount(responseJson)
-      } catch (e) {
-        log('Failed to get minAmount')
-      }
+
+      // Nine realms servers removed minAmount support so disable for now but keep all code
+      // logic so we can easily enable in the future with new API
+      const minAmount = undefined
 
       const iaJson = await iaResponse.json()
       const inboundAddresses = asInboundAddresses(iaJson)
