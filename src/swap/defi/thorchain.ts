@@ -1,4 +1,4 @@
-import { add, div, lt, mul, sub, toFixed } from 'biggystring'
+import { add, div, gt, lt, mul, sub, toFixed } from 'biggystring'
 import {
   asArray,
   asBoolean,
@@ -48,6 +48,7 @@ const LIKE_KIND_VOLATILITY_SPREAD_DEFAULT = 0.0025
 const EXCHANGE_INFO_UPDATE_FREQ_MS = 60000
 const EVM_SEND_GAS = '80000'
 const EVM_TOKEN_SEND_GAS = '80000'
+const MIN_USD_SWAP = '30'
 export const THOR_LIMIT_UNITS = '100000000'
 
 const INVALID_CURRENCY_CODES: InvalidCurrencyCodes = {
@@ -577,7 +578,7 @@ const calcSwapFrom = async (
   const fromNativeAmount = nativeAmount
 
   // Get exchange rate from source to destination asset
-  const fromExchangeAmount = await fromWallet.nativeToDenomination(
+  let fromExchangeAmount = await fromWallet.nativeToDenomination(
     nativeAmount,
     fromCurrencyCode
   )
@@ -585,16 +586,40 @@ const calcSwapFrom = async (
   log(`fromExchangeAmount: ${fromExchangeAmount}`)
 
   // Check minimums if we can
-  if (!dontCheckLimits && minAmount != null) {
-    if (lt(fromExchangeAmount, minAmount.minInputAmount)) {
-      const fromMinNativeAmount = await fromWallet.denominationToNative(
+  if (!dontCheckLimits) {
+    const srcInUsd = mul(sourcePool.assetPriceUSD, fromExchangeAmount)
+    let fromMinNativeAmount
+    if (lt(srcInUsd, MIN_USD_SWAP)) {
+      const minExchangeAmount = div(
+        MIN_USD_SWAP,
+        sourcePool.assetPriceUSD,
+        DIVIDE_PRECISION
+      )
+      fromMinNativeAmount = await fromWallet.denominationToNative(
+        minExchangeAmount,
+        fromCurrencyCode
+      )
+    }
+
+    if (minAmount != null && lt(fromExchangeAmount, minAmount.minInputAmount)) {
+      const tempNativeMin = await fromWallet.denominationToNative(
         minAmount.minInputAmount,
         fromCurrencyCode
       )
-
+      if (gt(tempNativeMin, fromMinNativeAmount ?? '0')) {
+        fromMinNativeAmount = tempNativeMin
+      }
+    }
+    if (fromMinNativeAmount != null) {
       throw new SwapBelowLimitError(swapInfo, fromMinNativeAmount, 'from')
     }
   }
+
+  // Calc the total % fees including affiliate and volatility
+  const totalFeePercent = add(volatilitySpreadFinal, affiliateFee)
+  log(`totalFeePercent: ${totalFeePercent}`)
+  fromExchangeAmount = mul(sub('1', totalFeePercent), fromExchangeAmount)
+  log(`fromExchangeAmount after % fees: ${fromExchangeAmount}`)
 
   const result = calcDoubleSwapOutput(
     Number(mul(fromExchangeAmount, THOR_LIMIT_UNITS)),
@@ -609,23 +634,6 @@ const calcSwapFrom = async (
   )
   log(`toExchangeAmount: ${toExchangeAmount}`)
 
-  const subVolatility = mul(toExchangeAmount, volatilitySpreadFinal)
-  const subAffiliateFee = mul(toExchangeAmount, affiliateFee)
-
-  toExchangeAmount = sub(toExchangeAmount, subVolatility)
-  log(
-    `toExchangeAmount w/volatilitySpread of ${mul(
-      volatilitySpreadFinal,
-      '100'
-    )}%: ${toExchangeAmount}`
-  )
-  toExchangeAmount = sub(toExchangeAmount, subAffiliateFee)
-  log(
-    `toExchangeAmount w/affiliate fee of ${mul(
-      affiliateFee,
-      '100'
-    )}%: ${toExchangeAmount}`
-  )
   toExchangeAmount = sub(toExchangeAmount, feeInDestCurrency)
   log(
     `toExchangeAmount w/network fee of ${feeInDestCurrency}: ${toExchangeAmount}`
@@ -695,20 +703,9 @@ const calcSwapTo = async (
 
   const limit = toFixed(mul(toExchangeAmount, THOR_LIMIT_UNITS), 0, 0)
 
-  // Adjust the toExchangeAmount by the fee so that calcDoubleSwapInput returns a higher
-  // fromAmount to compensate for the fee necessary
-  const addVolatility = mul(toExchangeAmount, volatilitySpreadFinal)
-
   toExchangeAmount = add(toExchangeAmount, feeInDestCurrency)
   log(
     `toExchangeAmount w/network fee of ${feeInDestCurrency}: ${toExchangeAmount}`
-  )
-  toExchangeAmount = add(toExchangeAmount, addVolatility)
-  log(
-    `toExchangeAmount w/volatilitySpread ${mul(
-      volatilitySpreadFinal,
-      '100'
-    )}%: ${toExchangeAmount}`
   )
 
   const result = calcDoubleSwapInput(
@@ -724,14 +721,13 @@ const calcSwapTo = async (
   )
   log(`fromExchangeAmount: ${fromExchangeAmount}`)
 
-  const addAffiliateFee = mul(fromExchangeAmount, affiliateFee)
-  fromExchangeAmount = add(fromExchangeAmount, addAffiliateFee)
-  log(
-    `fromExchangeAmount w/affiliate fee of ${mul(
-      affiliateFee,
-      '100'
-    )}%: ${fromExchangeAmount}`
-  )
+  // Calc the total % fees including affiliate and volatility
+  const totalFeePercent = add(volatilitySpreadFinal, affiliateFee)
+  log(`totalFeePercent: ${totalFeePercent}`)
+  const invPercent = sub('1', totalFeePercent)
+
+  fromExchangeAmount = div(fromExchangeAmount, invPercent, 32)
+  log(`fromExchangeAmount after % fees: ${fromExchangeAmount}`)
 
   const fromNativeAmountFloat = await fromWallet.denominationToNative(
     fromExchangeAmount,
@@ -740,18 +736,37 @@ const calcSwapTo = async (
 
   const fromNativeAmount = toFixed(fromNativeAmountFloat, 0, 0)
 
-  // Check minimums if we can
-  if (minAmount != null) {
-    const { minInputAmount } = minAmount
-    if (lt(fromExchangeAmount, minInputAmount)) {
-      // Convert the minimum amount into an output amount
-      const result = await calcSwapFrom(
-        { ...params, nativeAmount: minInputAmount, dontCheckLimits: true },
-        log
-      )
-      const toNativeAmount = toFixed(result.toNativeAmount, 0, 0)
-      throw new SwapBelowLimitError(swapInfo, toNativeAmount, 'to')
-    }
+  const srcInUsd = mul(sourcePool.assetPriceUSD, fromExchangeAmount)
+  let minExchangeAmount = '0'
+  if (lt(srcInUsd, MIN_USD_SWAP)) {
+    minExchangeAmount = div(
+      MIN_USD_SWAP,
+      sourcePool.assetPriceUSD,
+      DIVIDE_PRECISION
+    )
+  }
+
+  // Check minimums
+  const { minInputAmount } = minAmount ?? { minInputAmount: '0' }
+  if (gt(minInputAmount, minExchangeAmount)) {
+    minExchangeAmount = minInputAmount
+  }
+
+  if (lt(fromExchangeAmount, minExchangeAmount)) {
+    const fromMinNativeAmount = await fromWallet.denominationToNative(
+      minExchangeAmount,
+      fromCurrencyCode
+    )
+
+    // Convert the minimum amount into an output amount
+    const result = await calcSwapFrom(
+      { ...params, nativeAmount: fromMinNativeAmount, dontCheckLimits: true },
+      log
+    )
+    const toNativeAmount = toFixed(result.toNativeAmount, 0, 0)
+
+    // Add one native amount unit due to biggystring rounding down all divisions
+    throw new SwapBelowLimitError(swapInfo, add(toNativeAmount, '1'), 'to')
   }
 
   return {
