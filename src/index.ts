@@ -19,6 +19,7 @@ import { makeFoxExchangePlugin } from './swap/foxExchange'
 import { makeGodexPlugin } from './swap/godex'
 import { makeLetsExchangePlugin } from './swap/letsexchange'
 import { makeSideshiftPlugin } from './swap/sideshift'
+import { makeSwapuzPlugin } from './swap/swapuz'
 import { makeSwitchainPlugin } from './swap/switchain'
 import { makeTransferPlugin } from './swap/transfer'
 
@@ -45,6 +46,7 @@ const edgeCorePlugins = {
   sideshift: makeSideshiftPlugin,
   spookySwap: makeSpookySwapPlugin,
   tombSwap: makeTombSwapPlugin,
+  swapuz: makeSwapuzPlugin,
   switchain: makeSwitchainPlugin,
   thorchain: makeThorchainPlugin,
   transfer: makeTransferPlugin,
