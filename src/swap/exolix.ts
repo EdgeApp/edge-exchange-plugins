@@ -39,7 +39,7 @@ const swapInfo: EdgeSwapInfo = {
 }
 
 const orderUri = 'https://exolix.com/transaction/'
-const uri = 'https://exolix.com/api/v2'
+const uri = 'https://exolix.com/api/v2/'
 
 const expirationMs = 1000 * 60
 
@@ -48,7 +48,7 @@ const dontUseLegacy: { [cc: string]: boolean } = {
 }
 
 const asRateResponse = asObject({
-  minAmount: asString
+  minAmount: asNumber
 })
 
 const asQuoteInfo = asObject({
@@ -83,8 +83,10 @@ export function makeExolixPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
   const { apiKey } = initOptions
 
   async function call(
-    method: 'GET' | 'POST', route: string, params: any): Promise<Object> {
-
+    method: 'GET' | 'POST',
+    route: string,
+    params: any
+  ): Promise<Object> {
     const headers: { [header: string]: string } = {
       Accept: 'application/json',
       'Content-Type': 'application/json',
@@ -151,7 +153,7 @@ export function makeExolixPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
       )
     }
 
-    const quoteAmount =
+    const nativeQuoteAmount =
       request.quoteFor === 'from'
         ? await request.fromWallet.nativeToDenomination(
             request.nativeAmount,
@@ -162,6 +164,8 @@ export function makeExolixPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
             request.toCurrencyCode
           )
 
+    const quoteAmount = parseFloat(nativeQuoteAmount)
+
     const {
       fromCurrencyCode,
       toCurrencyCode,
@@ -171,23 +175,23 @@ export function makeExolixPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
 
     // Swap the currencies if we need a reverse quote:
     const quoteParams =
-        request.quoteFor === 'from'
-          ? {
-              coinFrom: fromCurrencyCode,
-              coinFromNetwork: fromMainnetCode,
-              coinTo: toCurrencyCode,
-              coinToNetwork: toMainnetCode,
-              amount: quoteAmount,
-              rateType: 'fixed'
-            }
-          : {
-              coinFrom: toCurrencyCode,
-              coinFromNetwork: toMainnetCode,
-              coinTo: fromCurrencyCode,
-              coinToNetwork: fromMainnetCode,
-              amount: quoteAmount,
-              rateType: 'fixed'
-            }
+      request.quoteFor === 'from'
+        ? {
+            coinFrom: fromCurrencyCode,
+            coinFromNetwork: fromMainnetCode,
+            coinTo: toCurrencyCode,
+            coinToNetwork: toMainnetCode,
+            amount: quoteAmount,
+            rateType: 'fixed'
+          }
+        : {
+            coinFrom: toCurrencyCode,
+            coinFromNetwork: toMainnetCode,
+            coinTo: fromCurrencyCode,
+            coinToNetwork: fromMainnetCode,
+            amount: quoteAmount,
+            rateType: 'fixed'
+          }
 
     // Get Rate
     const rateResponse = asRateResponse(await call('GET', 'rate', quoteParams))
@@ -195,7 +199,7 @@ export function makeExolixPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
     // Check rate minimum:
     if (request.quoteFor === 'from') {
       const nativeMin = await request.fromWallet.denominationToNative(
-        rateResponse.minAmount,
+        rateResponse.minAmount.toString(),
         request.fromCurrencyCode
       )
 
@@ -204,7 +208,7 @@ export function makeExolixPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
       }
     } else {
       const nativeMin = await request.toWallet.denominationToNative(
-        rateResponse.minAmount,
+        rateResponse.minAmount.toString(),
         request.toCurrencyCode
       )
 
