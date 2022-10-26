@@ -191,6 +191,11 @@ export function makeSwapuzPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
           memoFrom
         } = createOrderJson.result
 
+        const toNativeAmount = await toWallet.denominationToNative(
+          amountResult.toString(),
+          toCurrencyCode
+        )
+
         const spendInfo: EdgeSpendInfo = {
           currencyCode: fromCurrencyCode,
           spendTargets: [
@@ -207,7 +212,7 @@ export function makeSwapuzPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
             isEstimate: mode === 'float',
             payoutAddress: toAddress,
             payoutCurrencyCode: toCurrencyCode,
-            payoutNativeAmount: nativeAmount,
+            payoutNativeAmount: toNativeAmount,
             payoutWalletId: request.toWallet.id,
             plugin: { ...swapInfo },
             refundAddress: fromAddress
@@ -216,11 +221,6 @@ export function makeSwapuzPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
 
         const tx: EdgeTransaction = await request.fromWallet.makeSpend(
           spendInfo
-        )
-
-        const toNativeAmount = await toWallet.denominationToNative(
-          amountResult.toString(),
-          toCurrencyCode
         )
 
         return makeSwapPluginQuote(
