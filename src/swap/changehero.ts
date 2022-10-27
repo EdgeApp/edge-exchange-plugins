@@ -28,8 +28,23 @@ import {
   makeSwapPluginQuote
 } from '../swap-helpers'
 const INVALID_CURRENCY_CODES: InvalidCurrencyCodes = {
-  from: {},
-  to: {}
+  from: {
+    ethereum: ['MATIC', 'AVAX', 'BNB', 'FTM', 'CELO'],
+    avalanche: 'allCodes',
+    binancesmartchain: 'allCodes',
+    celo: 'allCodes',
+    fantom: 'allCodes',
+    polygon: 'allCodes'
+  },
+  to: {
+    ethereum: ['MATIC', 'AVAX', 'BNB', 'FTM', 'CELO'],
+    avalanche: 'allCodes',
+    binancesmartchain: 'allCodes',
+    celo: 'allCodes',
+    fantom: 'allCodes',
+    polygon: 'allCodes',
+    zcash: ['ZEC'] // Was not able to validate a sapling address in the ChangeHero UI
+  }
 }
 
 const pluginId = 'changehero'
@@ -139,6 +154,8 @@ export function makeChangeHeroPlugin(
     ])
     const { fromCurrencyCode, toCurrencyCode } = getCodes(request)
 
+    // FIXME: It's not likely ChangeHero uses our pluginIds for their chain identifiers but I'm leaving this until the API docs are updated
+    // https://api-docs.changehero.io/
     const fromMainnetCode = request.fromWallet.currencyInfo.pluginId
     const toMainnetCode = request.toWallet.currencyInfo.pluginId
 
@@ -236,6 +253,9 @@ export function makeChangeHeroPlugin(
     }
 
     const sendReply = await call(reply)
+
+    // NOTE: Testing showed the undocumented `chainFrom` and `chainTo` fields in sendReply are present in the response but are null.
+    // Tested with mainnet currency codes in addition to the pluginIds as detailed above.
 
     checkReply(sendReply, request)
 
