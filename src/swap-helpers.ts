@@ -129,6 +129,11 @@ export function checkInvalidCodes(
     toCurrencyCode
   } = getCodes(request)
 
+  const isSameAsset = (request: EdgeSwapRequest): boolean =>
+    request.fromWallet.currencyInfo.pluginId ===
+      request.toWallet.currencyInfo.pluginId &&
+    request.fromCurrencyCode === request.toCurrencyCode
+
   function check(
     direction: 'from' | 'to',
     pluginId: string,
@@ -144,7 +149,8 @@ export function checkInvalidCodes(
 
   if (
     check('from', fromPluginId, fromMainnetCode, fromCurrencyCode) ||
-    check('to', toPluginId, toMainnetCode, toCurrencyCode)
+    check('to', toPluginId, toMainnetCode, toCurrencyCode) ||
+    isSameAsset(request)
   )
     throw new SwapCurrencyError(
       swapInfo,
