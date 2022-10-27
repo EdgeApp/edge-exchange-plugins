@@ -25,7 +25,7 @@ import {
 import {
   checkInvalidCodes,
   ensureInFuture,
-  getCodesWithMainnetTranscription,
+  getCodesWithTranscription,
   InvalidCurrencyCodes,
   makeSwapPluginQuote
 } from '../swap-helpers'
@@ -105,7 +105,7 @@ export function makeChangeNowPlugin(
         toCurrencyCode,
         fromMainnetCode,
         toMainnetCode
-      } = getCodesWithMainnetTranscription(request, MAINNET_CODE_TRANSCRIPTION)
+      } = getCodesWithTranscription(request, MAINNET_CODE_TRANSCRIPTION)
       const currencyString = `fromCurrency=${fromCurrencyCode}&toCurrency=${toCurrencyCode}&fromNetwork=${fromMainnetCode}&toNetwork=${toMainnetCode}`
 
       const { nativeAmount, quoteFor } = request

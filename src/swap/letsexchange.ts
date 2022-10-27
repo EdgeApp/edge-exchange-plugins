@@ -15,7 +15,7 @@ import {
 
 import {
   checkInvalidCodes,
-  getCodesWithMainnetTranscription,
+  getCodesWithTranscription,
   InvalidCurrencyCodes,
   makeSwapPluginQuote
 } from '../swap-helpers'
@@ -147,10 +147,10 @@ export function makeLetsExchangePlugin(
               request.toCurrencyCode
             )
 
-      const {
-        fromMainnetCode,
-        toMainnetCode
-      } = getCodesWithMainnetTranscription(request, MAINNET_CODE_TRANSCRIPTION)
+      const { fromMainnetCode, toMainnetCode } = getCodesWithTranscription(
+        request,
+        MAINNET_CODE_TRANSCRIPTION
+      )
 
       const networkFrom =
         request.fromCurrencyCode ===

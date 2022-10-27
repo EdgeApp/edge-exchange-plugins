@@ -203,12 +203,25 @@ export interface MainnetPluginIdTranscriptionMap {
   [pluginId: string]: string
 }
 
+export interface CurrencyCodeTranscriptionMap {
+  [pluginId: string]: {
+    [currencyCode: string]: string
+  }
+}
+
+const defaultCurrencyCodeTranscriptionMap: CurrencyCodeTranscriptionMap = {
+  ethereum: {
+    REPV2: 'REP'
+  }
+}
+
 /**
- * Returns all four codes with mainnet transcription
+ * Returns all four codes with transcription
  */
-export const getCodesWithMainnetTranscription = (
+export const getCodesWithTranscription = (
   request: EdgeSwapRequest,
-  transcriptionMap: MainnetPluginIdTranscriptionMap
+  mainnetTranscriptionMap: MainnetPluginIdTranscriptionMap,
+  currencyCodeTranscriptionMap: CurrencyCodeTranscriptionMap = {}
 ): AllCodes => {
   const {
     fromCurrencyCode,
@@ -216,14 +229,33 @@ export const getCodesWithMainnetTranscription = (
     fromMainnetCode,
     toMainnetCode
   } = getCodes(request)
+
+  for (const pluginId of Object.keys(defaultCurrencyCodeTranscriptionMap)) {
+    if (currencyCodeTranscriptionMap[pluginId] == null)
+      currencyCodeTranscriptionMap[pluginId] =
+        defaultCurrencyCodeTranscriptionMap[pluginId]
+    else
+      currencyCodeTranscriptionMap[pluginId] = {
+        ...defaultCurrencyCodeTranscriptionMap[pluginId],
+        ...currencyCodeTranscriptionMap[pluginId]
+      }
+  }
+
   return {
     fromMainnetCode:
-      transcriptionMap[request.fromWallet.currencyInfo.pluginId] ??
+      mainnetTranscriptionMap[request.fromWallet.currencyInfo.pluginId] ??
       fromMainnetCode,
     toMainnetCode:
-      transcriptionMap[request.toWallet.currencyInfo.pluginId] ?? toMainnetCode,
-    fromCurrencyCode: fromCurrencyCode,
-    toCurrencyCode: toCurrencyCode
+      mainnetTranscriptionMap[request.toWallet.currencyInfo.pluginId] ??
+      toMainnetCode,
+    fromCurrencyCode:
+      currencyCodeTranscriptionMap[request.fromWallet.currencyInfo.pluginId][
+        fromCurrencyCode
+      ] ?? fromCurrencyCode,
+    toCurrencyCode:
+      currencyCodeTranscriptionMap[request.toWallet.currencyInfo.pluginId][
+        toCurrencyCode
+      ] ?? toCurrencyCode
   }
 }
 
