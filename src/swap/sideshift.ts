@@ -23,15 +23,16 @@ import {
 
 import {
   checkInvalidCodes,
+  CurrencyCodeTranscriptionMap,
   ensureInFuture,
+  getCodesWithTranscription,
   InvalidCurrencyCodes,
-  makeSwapPluginQuote,
-  safeCurrencyCodes
+  makeSwapPluginQuote
 } from '../swap-helpers'
 
 // Invalid currency codes should *not* have transcribed codes
 // because currency codes with transcribed versions are NOT invalid
-const CURRENCY_CODE_TRANSCRIPTION = {
+const CURRENCY_CODE_TRANSCRIPTION: CurrencyCodeTranscriptionMap = {
   // Edge currencyCode: exchangeCurrencyCode
   ethereum: {
     USDT: 'usdtErc20'
@@ -81,8 +82,6 @@ const swapInfo: EdgeSwapInfo = {
   supportEmail: 'help@sideshift.ai'
 }
 const ORDER_STATUS_URL = 'https://sideshift.ai/orders/'
-
-const LOWER_CASE_CODES = true
 
 async function getAddress(
   wallet: EdgeCurrencyWallet,
@@ -179,11 +178,14 @@ const createFetchSwapQuote = (api: SideshiftApi, affiliateId: string) =>
       getAddress(request.toWallet, request.toCurrencyCode)
     ])
 
-    const { safeFromCurrencyCode, safeToCurrencyCode } = safeCurrencyCodes(
-      CURRENCY_CODE_TRANSCRIPTION,
+    const { fromCurrencyCode, toCurrencyCode } = getCodesWithTranscription(
       request,
-      LOWER_CASE_CODES
+      {},
+      CURRENCY_CODE_TRANSCRIPTION
     )
+
+    const safeFromCurrencyCode = fromCurrencyCode.toLowerCase()
+    const safeToCurrencyCode = toCurrencyCode.toLowerCase()
 
     const rate = asRate(
       await api.get<typeof asRate>(

@@ -165,40 +165,6 @@ export interface CurrencyCodeTranscriptions {
   }
 }
 
-/**
- * Transcribes requested currency codes into plugin compatible unique IDs
- */
-export function safeCurrencyCodes(
-  transcriptionMap: CurrencyCodeTranscriptions,
-  request: EdgeSwapRequest,
-  toLowerCase: boolean = false
-): {
-  safeFromCurrencyCode: string
-  safeToCurrencyCode: string
-} {
-  const { fromPluginId, toPluginId } = getPluginIds(request)
-  const { fromCurrencyCode, toCurrencyCode } = getCodes(request)
-
-  const out = {
-    safeFromCurrencyCode: fromCurrencyCode,
-    safeToCurrencyCode: toCurrencyCode
-  }
-  if (transcriptionMap[fromPluginId]?.[request.fromCurrencyCode] != null) {
-    out.safeFromCurrencyCode =
-      transcriptionMap[fromPluginId][request.fromCurrencyCode]
-  }
-  if (transcriptionMap[toPluginId]?.[request.toCurrencyCode] != null) {
-    out.safeToCurrencyCode =
-      transcriptionMap[toPluginId][request.toCurrencyCode]
-  }
-
-  if (toLowerCase) {
-    out.safeFromCurrencyCode = out.safeFromCurrencyCode.toLowerCase()
-    out.safeToCurrencyCode = out.safeToCurrencyCode.toLowerCase()
-  }
-  return out
-}
-
 export interface MainnetPluginIdTranscriptionMap {
   [pluginId: string]: string
 }
