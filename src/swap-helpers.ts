@@ -113,6 +113,11 @@ export interface InvalidCurrencyCodes {
   to: { [pluginId: string]: 'allCodes' | 'allTokens' | string[] }
 }
 
+const defaultInvalidCodes: InvalidCurrencyCodes = {
+  from: { ethereum: ['REP'] },
+  to: { ethereum: ['REP'] }
+}
+
 /**
  * Throws if either currency code has been disabled by the plugin
  */
@@ -135,12 +140,13 @@ export function checkInvalidCodes(
     request.fromCurrencyCode === request.toCurrencyCode
 
   function check(
+    codeMap: InvalidCurrencyCodes,
     direction: 'from' | 'to',
     pluginId: string,
     main: string,
     token: string
   ): boolean {
-    const codes = invalidCodes[direction][pluginId]
+    const codes = codeMap[direction][pluginId]
     if (codes == null) return false
     if (codes === 'allCodes') return true
     if (codes === 'allTokens') return main !== token
@@ -148,8 +154,28 @@ export function checkInvalidCodes(
   }
 
   if (
-    check('from', fromPluginId, fromMainnetCode, fromCurrencyCode) ||
-    check('to', toPluginId, toMainnetCode, toCurrencyCode) ||
+    check(
+      invalidCodes,
+      'from',
+      fromPluginId,
+      fromMainnetCode,
+      fromCurrencyCode
+    ) ||
+    check(
+      defaultInvalidCodes,
+      'from',
+      fromPluginId,
+      fromMainnetCode,
+      fromCurrencyCode
+    ) ||
+    check(invalidCodes, 'to', toPluginId, toMainnetCode, toCurrencyCode) ||
+    check(
+      defaultInvalidCodes,
+      'to',
+      toPluginId,
+      toMainnetCode,
+      toCurrencyCode
+    ) ||
     isSameAsset(request)
   )
     throw new SwapCurrencyError(
