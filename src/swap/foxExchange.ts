@@ -260,7 +260,8 @@ export function makeFoxExchangePlugin(
               await request.toWallet.denominationToNative(
                 String(rateResp.limitMinDestinationCoin),
                 request.toCurrencyCode
-              )
+              ),
+              'to'
             )
           } else if (
             rateReq.destinationCoinAmount != null &&
@@ -272,7 +273,8 @@ export function makeFoxExchangePlugin(
               await request.toWallet.denominationToNative(
                 String(rateResp.limitMaxDestinationCoin),
                 request.toCurrencyCode
-              )
+              ),
+              'to'
             )
           } else {
             throw new SwapCurrencyError(

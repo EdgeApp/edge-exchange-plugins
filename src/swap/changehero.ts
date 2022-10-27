@@ -212,10 +212,10 @@ export function makeChangeHeroPlugin(
       }
     } else {
       if (gt(quoteAmount, maxTo)) {
-        throw new SwapAboveLimitError(swapInfo, maxToNative)
+        throw new SwapAboveLimitError(swapInfo, maxToNative, 'to')
       }
       if (lt(quoteAmount, minTo)) {
-        throw new SwapBelowLimitError(swapInfo, minToNative)
+        throw new SwapBelowLimitError(swapInfo, minToNative, 'to')
       }
     }
 
