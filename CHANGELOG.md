@@ -1,5 +1,12 @@
 # edge-exchange-plugins
 
+# 0.16.1 (2022-10-31)
+
+- Thorchain: Fix minimum quotes
+- Thorchain: Remove minAmount support
+- ChangeHero: Reimplement restricted currency codes
+- Swapuz: Fix returned native amount from quote
+
 # 0.16.0 (2022-10-24)
 
 - Add Swapuz
