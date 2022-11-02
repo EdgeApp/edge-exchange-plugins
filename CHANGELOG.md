@@ -1,5 +1,8 @@
 # edge-exchange-plugins
 
+# 0.16.2 (2022-11-02)
+- Swapuz: Implement TO quotes for like-kind assets
+
 # 0.16.1 (2022-10-31)
 
 - Thorchain: Fix minimum quotes
