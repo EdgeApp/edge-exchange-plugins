@@ -25,6 +25,7 @@ import {
   ensureInFuture,
   getCodesWithTranscription,
   InvalidCurrencyCodes,
+  isLikeKind,
   makeSwapPluginQuote
 } from '../swap-helpers'
 import { div18 } from '../util/biggystringplus'
@@ -82,15 +83,7 @@ export function makeSwapuzPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
   const fetchSwapQuoteInner = async (
     request: EdgeSwapRequest
   ): Promise<EdgeSwapQuote> => {
-    const { fromWallet, toWallet, nativeAmount, quoteFor } = request
-
-    if (quoteFor === 'to') {
-      throw new SwapCurrencyError(
-        swapInfo,
-        request.fromCurrencyCode,
-        request.toCurrencyCode
-      )
-    }
+    const { fromWallet, toWallet, nativeAmount } = request
 
     checkInvalidCodes(INVALID_CURRENCY_CODES, request, swapInfo)
 
@@ -250,10 +243,17 @@ export function makeSwapuzPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
       if (quoteFor === 'from') {
         return await fetchSwapQuoteInner(requestTop)
       } else {
+        // Exit early if trade isn't like kind assets
+        if (!isLikeKind(fromCurrencyCode, toCurrencyCode)) {
+          throw new SwapCurrencyError(
+            swapInfo,
+            fromCurrencyCode,
+            toCurrencyCode
+          )
+        }
         // Must make a copy of the request because this is a shared object
         // reused between requests to other exchange plugins
         const requestToHack = { ...requestTop }
-        requestToHack.quoteFor = 'from'
         const requestToExchangeAmount = await toWallet.nativeToDenomination(
           nativeAmount,
           toCurrencyCode
