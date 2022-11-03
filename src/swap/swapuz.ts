@@ -240,7 +240,6 @@ export function makeSwapuzPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
 
     async fetchSwapQuote(requestTop: EdgeSwapRequest): Promise<EdgeSwapQuote> {
       const {
-        fromWallet,
         fromCurrencyCode,
         toWallet,
         toCurrencyCode,
@@ -255,9 +254,9 @@ export function makeSwapuzPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
         // reused between requests to other exchange plugins
         const requestToHack = { ...requestTop }
         requestToHack.quoteFor = 'from'
-        const requestToExchangeAmount = await fromWallet.nativeToDenomination(
+        const requestToExchangeAmount = await toWallet.nativeToDenomination(
           nativeAmount,
-          fromCurrencyCode
+          toCurrencyCode
         )
         let fromQuoteNativeAmount = nativeAmount
         let retries = 5
