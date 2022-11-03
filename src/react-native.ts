@@ -2,5 +2,9 @@ import 'regenerator-runtime/runtime'
 
 import edgeCorePlugins from './index'
 
-// @ts-expect-error
-window.addEdgeCorePlugins(edgeCorePlugins)
+if (
+  typeof window !== 'undefined' &&
+  typeof window.addEdgeCorePlugins === 'function'
+) {
+  window.addEdgeCorePlugins(edgeCorePlugins)
+}
