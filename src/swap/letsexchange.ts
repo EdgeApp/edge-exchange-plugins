@@ -109,7 +109,7 @@ export function makeLetsExchangePlugin(
 
     const headers = {
       'Content-Type': 'application/json',
-      Authorization: `Bearer ${initOptions.apiKey.toString()}`,
+      Authorization: `Bearer ${initOptions.apiKey}`,
       Accept: 'application/json'
     }
     const response = await fetchCors(url, { method: 'POST', body, headers })

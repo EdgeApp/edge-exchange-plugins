@@ -70,7 +70,7 @@ export function makeNomicsPlugin(opts: EdgeCorePluginOptions): EdgeRatePlugin {
           })
         } catch (e: any) {
           log.warn(
-            `Issue with Nomics rate data structure. Error: ${e.message ?? ''}`
+            `Issue with Nomics rate data structure. ${String(e.message)}`
           )
         }
       }

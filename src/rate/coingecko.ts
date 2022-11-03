@@ -191,7 +191,7 @@ export function makeCoinGeckoPlugin(
             })
         })
       } catch (e) {
-        log.warn(`Issue with Coingecko rate data structure ${e}`)
+        log.warn(`Issue with Coingecko rate data structure ${String(e)}`)
       }
       return pairs
     }
