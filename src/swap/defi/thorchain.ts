@@ -992,8 +992,11 @@ export const calcNetworkFee = (
         )
         return convertChainAmountToAsset(pools, chain, asset, ethAmount)
       }
+    default:
+      throw new Error(
+        `could not calculate inbound fee for ${String(chain)}.${asset}`
+      )
   }
-  throw new Error(`could not calculate inbound fee for ${chain}.${asset}`)
 }
 
 const convertChainAmountToAsset = (
