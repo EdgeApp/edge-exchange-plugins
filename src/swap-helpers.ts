@@ -241,11 +241,11 @@ export const getCodesWithTranscription = (
       mainnetTranscriptionMap[request.toWallet.currencyInfo.pluginId] ??
       toMainnetCode,
     fromCurrencyCode:
-      currencyCodeTranscriptionMap[request.fromWallet.currencyInfo.pluginId][
+      currencyCodeTranscriptionMap[request.fromWallet.currencyInfo.pluginId]?.[
         fromCurrencyCode
       ] ?? fromCurrencyCode,
     toCurrencyCode:
-      currencyCodeTranscriptionMap[request.toWallet.currencyInfo.pluginId][
+      currencyCodeTranscriptionMap[request.toWallet.currencyInfo.pluginId]?.[
         toCurrencyCode
       ] ?? toCurrencyCode
   }
