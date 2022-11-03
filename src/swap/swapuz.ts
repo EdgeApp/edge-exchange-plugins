@@ -23,7 +23,7 @@ import {
 import {
   checkInvalidCodes,
   ensureInFuture,
-  getCodesWithMainnetTranscription,
+  getCodesWithTranscription,
   InvalidCurrencyCodes,
   makeSwapPluginQuote
 } from '../swap-helpers'
@@ -105,7 +105,7 @@ export function makeSwapuzPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
       toCurrencyCode,
       fromMainnetCode,
       toMainnetCode
-    } = getCodesWithMainnetTranscription(request, MAINNET_CODE_TRANSCRIPTION)
+    } = getCodesWithTranscription(request, MAINNET_CODE_TRANSCRIPTION)
 
     const largeDenomAmount = await fromWallet.nativeToDenomination(
       nativeAmount,

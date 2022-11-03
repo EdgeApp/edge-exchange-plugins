@@ -16,7 +16,7 @@ import {
 
 import {
   checkInvalidCodes,
-  getCodesWithMainnetTranscription,
+  getCodesWithTranscription,
   InvalidCurrencyCodes,
   makeSwapPluginQuote
 } from '../swap-helpers'
@@ -204,10 +204,10 @@ export function makeGodexPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
       log('toNativeAmount' + toNativeAmount)
 
       const { promoCode } = opts
-      const {
-        fromMainnetCode,
-        toMainnetCode
-      } = getCodesWithMainnetTranscription(request, MAINNET_CODE_TRANSCRIPTION)
+      const { fromMainnetCode, toMainnetCode } = getCodesWithTranscription(
+        request,
+        MAINNET_CODE_TRANSCRIPTION
+      )
       const sendReply = await call(
         uri + 'transaction' + (promoCode != null ? `?promo=${promoCode}` : ''),
         request,

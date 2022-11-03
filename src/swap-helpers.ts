@@ -113,6 +113,11 @@ export interface InvalidCurrencyCodes {
   to: { [pluginId: string]: 'allCodes' | 'allTokens' | string[] }
 }
 
+const defaultInvalidCodes: InvalidCurrencyCodes = {
+  from: { ethereum: ['REP'] },
+  to: { ethereum: ['REP'] }
+}
+
 /**
  * Throws if either currency code has been disabled by the plugin
  */
@@ -135,12 +140,13 @@ export function checkInvalidCodes(
     request.fromCurrencyCode === request.toCurrencyCode
 
   function check(
+    codeMap: InvalidCurrencyCodes,
     direction: 'from' | 'to',
     pluginId: string,
     main: string,
     token: string
   ): boolean {
-    const codes = invalidCodes[direction][pluginId]
+    const codes = codeMap[direction][pluginId]
     if (codes == null) return false
     if (codes === 'allCodes') return true
     if (codes === 'allTokens') return main !== token
@@ -148,8 +154,28 @@ export function checkInvalidCodes(
   }
 
   if (
-    check('from', fromPluginId, fromMainnetCode, fromCurrencyCode) ||
-    check('to', toPluginId, toMainnetCode, toCurrencyCode) ||
+    check(
+      invalidCodes,
+      'from',
+      fromPluginId,
+      fromMainnetCode,
+      fromCurrencyCode
+    ) ||
+    check(
+      defaultInvalidCodes,
+      'from',
+      fromPluginId,
+      fromMainnetCode,
+      fromCurrencyCode
+    ) ||
+    check(invalidCodes, 'to', toPluginId, toMainnetCode, toCurrencyCode) ||
+    check(
+      defaultInvalidCodes,
+      'to',
+      toPluginId,
+      toMainnetCode,
+      toCurrencyCode
+    ) ||
     isSameAsset(request)
   )
     throw new SwapCurrencyError(
@@ -165,50 +191,29 @@ export interface CurrencyCodeTranscriptions {
   }
 }
 
-/**
- * Transcribes requested currency codes into plugin compatible unique IDs
- */
-export function safeCurrencyCodes(
-  transcriptionMap: CurrencyCodeTranscriptions,
-  request: EdgeSwapRequest,
-  toLowerCase: boolean = false
-): {
-  safeFromCurrencyCode: string
-  safeToCurrencyCode: string
-} {
-  const { fromPluginId, toPluginId } = getPluginIds(request)
-  const { fromCurrencyCode, toCurrencyCode } = getCodes(request)
-
-  const out = {
-    safeFromCurrencyCode: fromCurrencyCode,
-    safeToCurrencyCode: toCurrencyCode
-  }
-  if (transcriptionMap[fromPluginId]?.[request.fromCurrencyCode] != null) {
-    out.safeFromCurrencyCode =
-      transcriptionMap[fromPluginId][request.fromCurrencyCode]
-  }
-  if (transcriptionMap[toPluginId]?.[request.toCurrencyCode] != null) {
-    out.safeToCurrencyCode =
-      transcriptionMap[toPluginId][request.toCurrencyCode]
-  }
-
-  if (toLowerCase) {
-    out.safeFromCurrencyCode = out.safeFromCurrencyCode.toLowerCase()
-    out.safeToCurrencyCode = out.safeToCurrencyCode.toLowerCase()
-  }
-  return out
-}
-
 export interface MainnetPluginIdTranscriptionMap {
   [pluginId: string]: string
 }
 
+export interface CurrencyCodeTranscriptionMap {
+  [pluginId: string]: {
+    [currencyCode: string]: string
+  }
+}
+
+const defaultCurrencyCodeTranscriptionMap: CurrencyCodeTranscriptionMap = {
+  ethereum: {
+    REPV2: 'REP'
+  }
+}
+
 /**
- * Returns all four codes with mainnet transcription
+ * Returns all four codes with transcription
  */
-export const getCodesWithMainnetTranscription = (
+export const getCodesWithTranscription = (
   request: EdgeSwapRequest,
-  transcriptionMap: MainnetPluginIdTranscriptionMap
+  mainnetTranscriptionMap: MainnetPluginIdTranscriptionMap,
+  currencyCodeTranscriptionMap: CurrencyCodeTranscriptionMap = {}
 ): AllCodes => {
   const {
     fromCurrencyCode,
@@ -216,14 +221,33 @@ export const getCodesWithMainnetTranscription = (
     fromMainnetCode,
     toMainnetCode
   } = getCodes(request)
+
+  for (const pluginId of Object.keys(defaultCurrencyCodeTranscriptionMap)) {
+    if (currencyCodeTranscriptionMap[pluginId] == null)
+      currencyCodeTranscriptionMap[pluginId] =
+        defaultCurrencyCodeTranscriptionMap[pluginId]
+    else
+      currencyCodeTranscriptionMap[pluginId] = {
+        ...defaultCurrencyCodeTranscriptionMap[pluginId],
+        ...currencyCodeTranscriptionMap[pluginId]
+      }
+  }
+
   return {
     fromMainnetCode:
-      transcriptionMap[request.fromWallet.currencyInfo.pluginId] ??
+      mainnetTranscriptionMap[request.fromWallet.currencyInfo.pluginId] ??
       fromMainnetCode,
     toMainnetCode:
-      transcriptionMap[request.toWallet.currencyInfo.pluginId] ?? toMainnetCode,
-    fromCurrencyCode: fromCurrencyCode,
-    toCurrencyCode: toCurrencyCode
+      mainnetTranscriptionMap[request.toWallet.currencyInfo.pluginId] ??
+      toMainnetCode,
+    fromCurrencyCode:
+      currencyCodeTranscriptionMap[request.fromWallet.currencyInfo.pluginId][
+        fromCurrencyCode
+      ] ?? fromCurrencyCode,
+    toCurrencyCode:
+      currencyCodeTranscriptionMap[request.toWallet.currencyInfo.pluginId][
+        toCurrencyCode
+      ] ?? toCurrencyCode
   }
 }
 
