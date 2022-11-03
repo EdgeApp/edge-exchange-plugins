@@ -251,7 +251,10 @@ export function makeSwapuzPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
       if (quoteFor === 'from') {
         return await fetchSwapQuoteInner(requestTop)
       } else {
-        requestTop.quoteFor = 'from'
+        // Must make a copy of the request because this is a shared object
+        // reused between requests to other exchange plugins
+        const requestToHack = { ...requestTop }
+        requestToHack.quoteFor = 'from'
         const requestToExchangeAmount = await fromWallet.nativeToDenomination(
           nativeAmount,
           fromCurrencyCode
@@ -259,8 +262,8 @@ export function makeSwapuzPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
         let fromQuoteNativeAmount = nativeAmount
         let retries = 5
         while (--retries !== 0) {
-          requestTop.nativeAmount = fromQuoteNativeAmount
-          const quote = await fetchSwapQuoteInner(requestTop)
+          requestToHack.nativeAmount = fromQuoteNativeAmount
+          const quote = await fetchSwapQuoteInner(requestToHack)
           const toExchangeAmount = await toWallet.nativeToDenomination(
             quote.toNativeAmount,
             toCurrencyCode
