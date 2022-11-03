@@ -27,6 +27,16 @@ import { checkInvalidCodes, InvalidCurrencyCodes } from '../swap-helpers'
 
 const pluginId = 'foxExchange'
 
+const swapInfo: EdgeSwapInfo = {
+  pluginId,
+  displayName: 'Fox Exchange',
+  supportEmail: 'support@fox.exchange'
+}
+
+const asInitOptions = asObject({
+  apiKey: asString
+})
+
 const asPostResponse = asOptional(
   asObject({
     success: asOptional(asBoolean),
@@ -35,12 +45,6 @@ const asPostResponse = asOptional(
     data: asObject(asUnknown)
   })
 )
-
-const swapInfo: EdgeSwapInfo = {
-  pluginId,
-  displayName: 'Fox Exchange',
-  supportEmail: 'support@fox.exchange'
-}
 
 const orderUri = 'https://fox.exchange/tx/'
 const uri = 'https://fox.exchange/api/cs'
@@ -122,13 +126,9 @@ async function getAddress(
 export function makeFoxExchangePlugin(
   opts: EdgeCorePluginOptions
 ): EdgeSwapPlugin {
-  const { initOptions, io, log } = opts
+  const { io, log } = opts
   const { fetchCors = io.fetch } = io
-
-  if (initOptions.apiKey == null) {
-    throw new Error('No fox.exchange apiKey provided.')
-  }
-  const { apiKey } = initOptions
+  const { apiKey } = asInitOptions(opts.initOptions)
 
   const out: EdgeSwapPlugin = {
     swapInfo,

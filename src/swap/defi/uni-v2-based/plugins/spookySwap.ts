@@ -1,3 +1,4 @@
+import { asObject, asOptional, asString } from 'cleaners'
 import {
   EdgeCorePluginOptions,
   EdgeSpendInfo,
@@ -17,19 +18,24 @@ import {
   makeUniV2EdgeSwapQuote
 } from '../uniV2Utils'
 
-const EXPIRATION_MS = 1000 * 60
-const SLIPPAGE = '0.05'
-
 const swapInfo: EdgeSwapInfo = {
   pluginId: 'spookySwap',
   displayName: 'SpookySwap',
   supportEmail: 'support@edge.app'
 }
 
+const asInitOptions = asObject({
+  quiknodeApiKey: asOptional(asString)
+})
+
+const EXPIRATION_MS = 1000 * 60
+const SLIPPAGE = '0.05'
+
 export function makeSpookySwapPlugin(
   opts: EdgeCorePluginOptions
 ): EdgeSwapPlugin {
-  const provider = getFtmProvider(opts.initOptions.quiknodeApiKey)
+  const { quiknodeApiKey } = asInitOptions(opts.initOptions)
+  const provider = getFtmProvider(quiknodeApiKey)
 
   const out: EdgeSwapPlugin = {
     swapInfo,

@@ -27,6 +27,19 @@ import {
   InvalidCurrencyCodes,
   makeSwapPluginQuote
 } from '../swap-helpers'
+
+const pluginId = 'changehero'
+
+const swapInfo: EdgeSwapInfo = {
+  pluginId,
+  displayName: 'ChangeHero',
+  supportEmail: 'support@changehero.io'
+}
+
+const asInitOptions = asObject({
+  apiKey: asString
+})
+
 const INVALID_CURRENCY_CODES: InvalidCurrencyCodes = {
   from: {
     ethereum: ['MATIC', 'AVAX', 'BNB', 'FTM', 'CELO'],
@@ -45,13 +58,6 @@ const INVALID_CURRENCY_CODES: InvalidCurrencyCodes = {
     polygon: 'allCodes',
     zcash: ['ZEC'] // Was not able to validate a sapling address in the ChangeHero UI
   }
-}
-
-const pluginId = 'changehero'
-const swapInfo: EdgeSwapInfo = {
-  pluginId,
-  displayName: 'ChangeHero',
-  supportEmail: 'support@changehero.io'
 }
 
 const orderUri = 'https://changehero.io/transaction/'
@@ -122,13 +128,9 @@ function checkReply(
 export function makeChangeHeroPlugin(
   opts: EdgeCorePluginOptions
 ): EdgeSwapPlugin {
-  const { initOptions, io } = opts
+  const { io } = opts
   const { fetchCors = io.fetch } = io
-
-  if (initOptions.apiKey == null) {
-    throw new Error('No ChangeHero apiKey or secret provided.')
-  }
-  const { apiKey } = initOptions
+  const { apiKey } = asInitOptions(opts.initOptions)
 
   async function call(json: any): Promise<any> {
     const body = JSON.stringify(json)

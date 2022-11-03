@@ -5,6 +5,10 @@ import {
   EdgeRatePlugin
 } from 'edge-core-js/types'
 
+const asInitOptions = asObject({
+  apiKey: asString
+})
+
 const asNomicsResponse = asArray(
   asObject({
     price: asOptional(asString),
@@ -17,9 +21,9 @@ const UNIQUE_ID_MAP: { [cc: string]: string } = {
 }
 
 export function makeNomicsPlugin(opts: EdgeCorePluginOptions): EdgeRatePlugin {
-  const { io, initOptions, log } = opts
+  const { io, log } = opts
   const { fetchCors = io.fetch } = io
-  const { apiKey } = initOptions
+  const { apiKey } = asInitOptions(opts.initOptions)
 
   if (apiKey == null) {
     throw new Error('No Nomics exchange rates API key provided')

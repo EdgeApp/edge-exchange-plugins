@@ -31,11 +31,16 @@ import {
 import { div18 } from '../util/biggystringplus'
 
 const pluginId = 'swapuz'
+
 const swapInfo: EdgeSwapInfo = {
   pluginId,
   displayName: 'Swapuz',
   supportEmail: 'support@swapuz.com'
 }
+
+const asInitOptions = asObject({
+  apiKey: asString
+})
 
 const orderUri = 'https://swapuz.com/order/'
 const uri = 'https://api.swapuz.com/api/home/v1/'
@@ -67,13 +72,9 @@ async function getAddress(
 }
 
 export function makeSwapuzPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
-  const { initOptions, io } = opts
+  const { io } = opts
   const fetch = io.fetchCors ?? io.fetch
-
-  if (initOptions.apiKey == null) {
-    throw new Error('No Swapuz apiKey provided.')
-  }
-  const { apiKey } = initOptions
+  const { apiKey } = asInitOptions(opts.initOptions)
 
   const headers = {
     'Content-Type': 'application/json',

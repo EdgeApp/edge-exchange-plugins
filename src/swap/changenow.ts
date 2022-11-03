@@ -31,11 +31,16 @@ import {
 } from '../swap-helpers'
 
 const pluginId = 'changenow'
+
 const swapInfo: EdgeSwapInfo = {
   pluginId,
   displayName: 'Change NOW',
   supportEmail: 'support@changenow.io'
 }
+
+const asInitOptions = asObject({
+  apiKey: asString
+})
 
 const orderUri = 'https://changenow.io/exchange/txs/'
 const uri = 'https://api.changenow.io/v2/'
@@ -69,13 +74,9 @@ async function getAddress(
 export function makeChangeNowPlugin(
   opts: EdgeCorePluginOptions
 ): EdgeSwapPlugin {
-  const { initOptions, io } = opts
+  const { io } = opts
   const { fetch } = io
-
-  if (initOptions.apiKey == null) {
-    throw new Error('No ChangeNow apiKey provided.')
-  }
-  const { apiKey } = initOptions
+  const { apiKey } = asInitOptions(opts.initOptions)
 
   const headers = {
     'Content-Type': 'application/json',

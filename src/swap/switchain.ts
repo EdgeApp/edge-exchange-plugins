@@ -21,11 +21,16 @@ import {
 import { checkInvalidCodes, InvalidCurrencyCodes } from '../swap-helpers'
 
 const pluginId = 'switchain'
+
 const swapInfo: EdgeSwapInfo = {
   pluginId,
   displayName: 'Switchain',
   supportEmail: 'help@switchain.com'
 }
+
+const asInitOptions = asObject({
+  apiKey: asString
+})
 
 let apiUrl = 'https://api.switchain.com/rest/v1'
 const orderUri = 'https://www.switchain.com/order-status/'
@@ -114,11 +119,8 @@ const dummyAddresses: { [cc: string]: string } = {
 export function makeSwitchainPlugin(
   opts: EdgeCorePluginOptions
 ): EdgeSwapPlugin {
-  const { initOptions, io } = opts
-
-  if (initOptions.apiKey == null) {
-    throw new Error('No Switchain API key provided.')
-  }
+  const { io } = opts
+  const initOptions = asInitOptions(opts.initOptions)
 
   async function getAddress(
     wallet: EdgeCurrencyWallet,
