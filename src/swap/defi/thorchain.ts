@@ -236,13 +236,13 @@ export function makeThorchainPlugin(
         fetchWaterfall(fetch, midgardServers, 'v2/pools', { headers })
       ])
 
-      if (iaResponse.ok === false) {
+      if (!iaResponse.ok) {
         const responseText = await iaResponse.text()
         throw new Error(
           `Thorchain could not fetch inbound_addresses: ${responseText}`
         )
       }
-      if (poolResponse.ok === false) {
+      if (!poolResponse.ok) {
         const responseText = await poolResponse.text()
         throw new Error(`Thorchain could not fetch pools: ${responseText}`)
       }

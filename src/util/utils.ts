@@ -1,4 +1,4 @@
-import { EdgeFetchFunction } from 'edge-core-js'
+import { EdgeFetchFunction, EdgeFetchResponse } from 'edge-core-js'
 const INFO_SERVERS = ['https://info1.edge.app', 'https://info2.edge.app']
 const RATES_SERVERS = ['https://rates1.edge.app', 'https://rates2.edge.app']
 
@@ -94,8 +94,7 @@ export async function fetchWaterfall(
   path: string,
   options?: any,
   timeout: number = 5000
-): Promise<any> {
-  if (servers == null) return
+): Promise<EdgeFetchResponse> {
   const funcs = servers.map(server => async () => {
     const result = await fetch(server + '/' + path, options)
     if (typeof result !== 'object') {
