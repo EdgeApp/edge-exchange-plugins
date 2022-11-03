@@ -1,5 +1,8 @@
 # edge-exchange-plugins
 
+# 0.16.3 (2022-11-02)
+- Fix requesting multiple quotes simultaneously giving incorrect quotes when Swapuz is enabled.
+
 # 0.16.2 (2022-11-02)
 - Swapuz: Implement TO quotes for like-kind assets
 
