@@ -1,5 +1,14 @@
 # edge-exchange-plugins
 
+## 0.16.4 (2022-11-03)
+
+- Swapuz: Fix requestToExchangeAmount denomination
+- Swapuz: Replace 'to' swap early exit with like kind asset check
+- Block REPv1 trading across all partners
+- Change helper function name and expand ability to accept currency code transcription map
+- Fix missing 'to' identifiers on min/max errors
+- Sideshift: Replace safeCurrencyCodes helper function with getCodesWithTranscription
+
 ## 0.16.3 (2022-11-02)
 
 - Fix requesting multiple quotes simultaneously giving incorrect quotes when Swapuz is enabled.
