@@ -1,5 +1,5 @@
 import { lt } from 'biggystring'
-import { asObject, asString } from 'cleaners'
+import { asObject, asOptional, asString } from 'cleaners'
 import {
   EdgeCorePluginOptions,
   EdgeCurrencyWallet,
@@ -22,11 +22,17 @@ import {
 import { asOptionalBlank } from './changenow'
 
 const pluginId = 'letsexchange'
+
 const swapInfo: EdgeSwapInfo = {
   pluginId,
   displayName: 'LetsExchange',
   supportEmail: 'support@letsexchange.io'
 }
+
+const asInitOptions = asObject({
+  apiKey: asString,
+  affiliateId: asOptional(asString)
+})
 
 const orderUri = 'https://letsexchange.io/?exchangeId='
 const uri = 'https://api.letsexchange.io/api/v1/'
@@ -90,8 +96,9 @@ async function getAddress(
 export function makeLetsExchangePlugin(
   opts: EdgeCorePluginOptions
 ): EdgeSwapPlugin {
-  const { initOptions, io, log } = opts
+  const { io, log } = opts
   const { fetchCors = io.fetch } = io
+  const initOptions = asInitOptions(opts.initOptions)
 
   async function call(
     url: string,
@@ -102,7 +109,7 @@ export function makeLetsExchangePlugin(
 
     const headers = {
       'Content-Type': 'application/json',
-      Authorization: `Bearer ${initOptions.apiKey.toString()}`,
+      Authorization: `Bearer ${initOptions.apiKey}`,
       Accept: 'application/json'
     }
     const response = await fetchCors(url, { method: 'POST', body, headers })

@@ -20,6 +20,18 @@ import {
   makeSwapPluginQuote
 } from '../swap-helpers'
 
+const pluginId = 'exolix'
+
+const swapInfo: EdgeSwapInfo = {
+  pluginId,
+  displayName: 'Exolix',
+  supportEmail: 'support@exolix.com'
+}
+
+const asInitOptions = asObject({
+  apiKey: asString
+})
+
 const INVALID_CURRENCY_CODES: InvalidCurrencyCodes = {
   from: {
     binancesmartchain: 'allCodes'
@@ -28,14 +40,6 @@ const INVALID_CURRENCY_CODES: InvalidCurrencyCodes = {
     binancesmartchain: 'allCodes',
     zcash: ['ZEC']
   }
-}
-
-const pluginId = 'exolix'
-
-const swapInfo: EdgeSwapInfo = {
-  pluginId,
-  displayName: 'Exolix',
-  supportEmail: 'support@exolix.com'
 }
 
 const orderUri = 'https://exolix.com/transaction/'
@@ -73,14 +77,9 @@ async function getAddress(
 }
 
 export function makeExolixPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
-  const { initOptions, io } = opts
+  const { io } = opts
   const { fetchCors = io.fetch } = io
-
-  if (initOptions.apiKey == null) {
-    throw new Error('No Exolix apiKey provided.')
-  }
-
-  const { apiKey } = initOptions
+  const { apiKey } = asInitOptions(opts.initOptions)
 
   async function call(route: string, params: any): Promise<Object> {
     const body = JSON.stringify(params)

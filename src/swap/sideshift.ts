@@ -30,6 +30,18 @@ import {
   makeSwapPluginQuote
 } from '../swap-helpers'
 
+const pluginId = 'sideshift'
+
+const swapInfo: EdgeSwapInfo = {
+  pluginId,
+  displayName: 'SideShift.ai',
+  supportEmail: 'help@sideshift.ai'
+}
+
+const asInitOptions = asObject({
+  affiliateId: asString
+})
+
 // Invalid currency codes should *not* have transcribed codes
 // because currency codes with transcribed versions are NOT invalid
 const CURRENCY_CODE_TRANSCRIPTION: CurrencyCodeTranscriptionMap = {
@@ -75,12 +87,6 @@ const INVALID_CURRENCY_CODES: InvalidCurrencyCodes = {
   }
 }
 const SIDESHIFT_BASE_URL = 'https://sideshift.ai/api/v1'
-const pluginId = 'sideshift'
-const swapInfo: EdgeSwapInfo = {
-  pluginId,
-  displayName: 'SideShift.ai',
-  supportEmail: 'help@sideshift.ai'
-}
 const ORDER_STATUS_URL = 'https://sideshift.ai/orders/'
 
 async function getAddress(
@@ -320,12 +326,13 @@ const createFetchSwapQuote = (api: SideshiftApi, affiliateId: string) =>
 export function makeSideshiftPlugin(
   opts: EdgeCorePluginOptions
 ): EdgeSwapPlugin {
-  const { io, initOptions } = opts
+  const { io } = opts
+  const { affiliateId } = asInitOptions(opts.initOptions)
   const fetch = io.fetchCors ?? io.fetch
 
   const api = createSideshiftApi(SIDESHIFT_BASE_URL, fetch)
 
-  const fetchSwapQuote = createFetchSwapQuote(api, initOptions.affiliateId)
+  const fetchSwapQuote = createFetchSwapQuote(api, affiliateId)
 
   return {
     swapInfo,

@@ -1,5 +1,5 @@
 import { lt } from 'biggystring'
-import { asEither, asNull, asObject, asString } from 'cleaners'
+import { asEither, asNull, asObject, asOptional, asString } from 'cleaners'
 import {
   EdgeCorePluginOptions,
   EdgeCurrencyWallet,
@@ -22,11 +22,16 @@ import {
 } from '../swap-helpers'
 
 const pluginId = 'godex'
+
 const swapInfo: EdgeSwapInfo = {
   pluginId,
   displayName: 'Godex',
   supportEmail: 'support@godex.io'
 }
+
+const asInitOptions = asObject({
+  apiKey: asOptional(asString)
+})
 
 const orderUri = 'https://godex.io/exchange/waiting/'
 const uri = 'https://api.godex.io/api/v1/'
@@ -89,8 +94,9 @@ async function getAddress(
 }
 
 export function makeGodexPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
-  const { initOptions, io, log } = opts
+  const { io, log } = opts
   const { fetchCors = io.fetch } = io
+  const initOptions = asInitOptions(opts.initOptions)
 
   async function call(
     url: string,

@@ -5,6 +5,10 @@ import {
   EdgeRatePlugin
 } from 'edge-core-js/types'
 
+const asInitOptions = asObject({
+  apiKey: asString
+})
+
 const asRates = asObject(asNumber)
 
 const asCurrencyConverterResponse = asObject({
@@ -26,11 +30,7 @@ export function makeCurrencyconverterapiPlugin(
 ): EdgeRatePlugin {
   const { io, log } = opts
   const { fetchCors = io.fetch } = io
-
-  const { apiKey } = opts.initOptions
-  if (apiKey == null) {
-    throw new Error('No currencyconverterapi apiKey provided')
-  }
+  const { apiKey } = asInitOptions(opts.initOptions)
 
   return {
     rateInfo: {

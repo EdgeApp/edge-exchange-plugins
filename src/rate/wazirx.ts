@@ -53,7 +53,7 @@ export function makeWazirxPlugin(opts: EdgeCorePluginOptions): EdgeRatePlugin {
             })
           }
         } catch (e) {
-          log.warn(`Issue with Wazirx rate data structure ${e}`)
+          log.warn(`Issue with Wazirx rate data structure ${String(e)}`)
         }
       }
       return pairs

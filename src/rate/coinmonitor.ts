@@ -31,7 +31,7 @@ export function makeCoinmonitorPlugin(
               rate
             })
           } catch (e) {
-            log.warn(`Issue with Coinmonitor rate data structure ${e}`)
+            log.warn(`Issue with Coinmonitor rate data structure ${String(e)}`)
           }
           break
         }

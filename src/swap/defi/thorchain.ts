@@ -38,11 +38,14 @@ const swapInfo: EdgeSwapInfo = {
   supportEmail: 'support@edge.app'
 }
 
+const asInitOptions = asObject({
+  affiliateFeeBasis: asOptional(asString, '50'),
+  thorname: asOptional(asString, 'ej')
+})
+
 const EXPIRATION_MS = 1000 * 60
 const MIDGARD_SERVERS_DEFAULT = ['https://midgard.thorchain.info']
 const DIVIDE_PRECISION = 16
-const AFFILIATE_FEE_BASIS_DEFAULT = '50'
-const THORNAME_DEFAULT = 'ej'
 const VOLATILITY_SPREAD_DEFAULT = 0.01
 const LIKE_KIND_VOLATILITY_SPREAD_DEFAULT = 0.0025
 const EXCHANGE_INFO_UPDATE_FREQ_MS = 60000
@@ -134,13 +137,9 @@ let exchangeInfoLastUpdate: number = 0
 export function makeThorchainPlugin(
   opts: EdgeCorePluginOptions
 ): EdgeSwapPlugin {
-  const { initOptions, io, log } = opts
+  const { io, log } = opts
   const { fetch } = io
-  const {
-    thorname = THORNAME_DEFAULT,
-    affiliateFeeBasis = AFFILIATE_FEE_BASIS_DEFAULT
-  } = initOptions
-  // eslint-disable-next-line no-console
+  const { thorname, affiliateFeeBasis } = asInitOptions(opts.initOptions)
   const affiliateFee = div(affiliateFeeBasis, '10000', DIVIDE_PRECISION)
 
   const headers = {
@@ -236,13 +235,13 @@ export function makeThorchainPlugin(
         fetchWaterfall(fetch, midgardServers, 'v2/pools', { headers })
       ])
 
-      if (iaResponse.ok === false) {
+      if (!iaResponse.ok) {
         const responseText = await iaResponse.text()
         throw new Error(
           `Thorchain could not fetch inbound_addresses: ${responseText}`
         )
       }
-      if (poolResponse.ok === false) {
+      if (!poolResponse.ok) {
         const responseText = await poolResponse.text()
         throw new Error(`Thorchain could not fetch pools: ${responseText}`)
       }
@@ -993,8 +992,11 @@ export const calcNetworkFee = (
         )
         return convertChainAmountToAsset(pools, chain, asset, ethAmount)
       }
+    default:
+      throw new Error(
+        `could not calculate inbound fee for ${String(chain)}.${asset}`
+      )
   }
-  throw new Error(`could not calculate inbound fee for ${chain}.${asset}`)
 }
 
 const convertChainAmountToAsset = (

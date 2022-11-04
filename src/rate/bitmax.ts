@@ -35,7 +35,7 @@ export function makeBitMaxPlugin(opts: EdgeCorePluginOptions): EdgeRatePlugin {
             }
           ]
         } catch (e) {
-          log.warn(`Issue with Bitmax rate data structure ${e}`)
+          log.warn(`Issue with Bitmax rate data structure ${String(e)}`)
           break
         }
       }

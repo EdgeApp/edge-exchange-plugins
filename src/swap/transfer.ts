@@ -11,6 +11,7 @@ import {
 import { makeSwapPluginQuote } from '../swap-helpers'
 
 const pluginId = 'transfer'
+
 const swapInfo: EdgeSwapInfo = {
   pluginId,
   displayName: 'Transfer',

@@ -41,7 +41,7 @@ export function makeCoinbasePlugin(
           })
         }
       } catch (e) {
-        log.warn(`Issue with Coinbase rate data structure ${e}`)
+        log.warn(`Issue with Coinbase rate data structure ${String(e)}`)
       }
       return pairs
     }
