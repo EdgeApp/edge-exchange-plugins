@@ -95,6 +95,7 @@ const asInboundAddresses = asArray(
     address: asString,
     chain: asString,
     gas_rate: asString,
+    outbound_fee: asString,
     halted: asBoolean,
     pub_key: asString,
     router: asOptional(asString)
@@ -263,8 +264,10 @@ export function makeThorchainPlugin(
       if (inAddressObject == null) {
         throw new SwapCurrencyError(swapInfo, fromCurrencyCode, toCurrencyCode)
       }
-      const { address: thorAddress, gas_rate: gasRate } = inAddressObject
-      log(`${fromMainnetCode}.${fromCurrencyCode} gasRate ${gasRate}`)
+      const { address: thorAddress, gas_rate: inAssetGasRate } = inAddressObject
+      log(
+        `${fromMainnetCode}.${fromCurrencyCode} inAssetGasRate ${inAssetGasRate}`
+      )
 
       const outAddressObject = inboundAddresses.find(
         addrObj => !addrObj.halted && addrObj.chain === toMainnetCode
@@ -272,9 +275,9 @@ export function makeThorchainPlugin(
       if (outAddressObject == null) {
         throw new SwapCurrencyError(swapInfo, fromCurrencyCode, toCurrencyCode)
       }
-      const { gas_rate: outboundGasRate } = outAddressObject
+      const { outbound_fee: outAssetOutboundFee } = outAddressObject
       log(
-        `${toMainnetCode}.${toCurrencyCode} outboundGasRate ${outboundGasRate}`
+        `${toMainnetCode}.${toCurrencyCode} outAssetOutboundFee ${outAssetOutboundFee}`
       )
 
       const sourcePool = pools.find(pool => {
@@ -303,22 +306,13 @@ export function makeThorchainPlugin(
       }
 
       // Add outbound fee
-      const networkFee = calcNetworkFee(
+      const feeInDestCurrency = calcNetworkFee(
         toMainnetCode,
         toCurrencyCode,
-        outboundGasRate,
+        outAssetOutboundFee,
         pools
       )
-
-      // Per Thorchain specs, user pays 2x the outbound transaction networkfee
-      let feeInDestCurrency = mul(networkFee, '2')
       log(`feeInDestCurrency: ${feeInDestCurrency}`)
-
-      const assetInUsd = mul(feeInDestCurrency, destPool.assetPriceUSD)
-      if (lt(assetInUsd, '1')) {
-        feeInDestCurrency = div('1', destPool.assetPriceUSD, DIVIDE_PRECISION)
-        log(`feeInDestCurrency adjusted to $1 min: ${feeInDestCurrency}`)
-      }
 
       let calcResponse
       if (quoteFor === 'from') {
@@ -365,7 +359,7 @@ export function makeThorchainPlugin(
         [])[0]
       const fromCurrencyInfo = fromWallet.currencyInfo
       if (customFeeTemplate?.type === 'nativeAmount') {
-        customNetworkFee = gasRate
+        customNetworkFee = inAssetGasRate
         customNetworkFeeKey = customFeeTemplate.key
       } else if (fromCurrencyInfo.defaultSettings?.customFeeSettings != null) {
         const customFeeSettings = asCustomFeeSettings(
@@ -374,7 +368,7 @@ export function makeThorchainPlugin(
         // Only know about the key 'gasPrice'
         const usesGasPrice = customFeeSettings.find(f => f === 'gasPrice')
         if (usesGasPrice != null) {
-          customNetworkFee = gasRate
+          customNetworkFee = inAssetGasRate
           customNetworkFeeKey = 'gasPrice'
         }
       }
@@ -942,10 +936,8 @@ type ChainTypes =
   | 'BNB'
   | 'THOR'
 
-const GWEI_UNITS = '1000000000'
 const SAT_UNITS = '100000000'
 const THOR_UNITS = SAT_UNITS
-const BNB_UNITS = '10000000'
 
 export const getGasLimit = (
   chain: ChainTypes,
@@ -964,32 +956,24 @@ export const getGasLimit = (
 export const calcNetworkFee = (
   chain: ChainTypes,
   asset: string,
-  gasRate: string,
+  outboundFee: string,
   pools: Pool[]
 ): string => {
   switch (chain) {
     case 'BTC':
-      return div(mul(gasRate, '1000'), SAT_UNITS, DIVIDE_PRECISION)
     case 'BCH':
-      return div(mul(gasRate, '1500'), SAT_UNITS, DIVIDE_PRECISION)
     case 'LTC':
-      return div(mul(gasRate, '250'), SAT_UNITS, DIVIDE_PRECISION)
     case 'DOGE':
-      return div(mul(gasRate, '1000'), SAT_UNITS, DIVIDE_PRECISION)
     case 'BNB':
-      return div(gasRate, BNB_UNITS, DIVIDE_PRECISION)
+      return div(outboundFee, THOR_UNITS, DIVIDE_PRECISION)
     case 'THOR':
       return div('2000000', THOR_UNITS, DIVIDE_PRECISION)
     case 'AVAX':
     case 'ETH':
       if (asset === chain) {
-        return div(mul(gasRate, EVM_SEND_GAS), GWEI_UNITS, DIVIDE_PRECISION)
+        return div(outboundFee, THOR_UNITS, DIVIDE_PRECISION)
       } else {
-        const ethAmount = div(
-          mul(gasRate, EVM_TOKEN_SEND_GAS),
-          GWEI_UNITS,
-          DIVIDE_PRECISION
-        )
+        const ethAmount = div(outboundFee, THOR_UNITS, DIVIDE_PRECISION)
         return convertChainAmountToAsset(pools, chain, asset, ethAmount)
       }
     default:
