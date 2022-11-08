@@ -1,4 +1,8 @@
 # edge-exchange-plugins
+## 0.16.5 (2022-11-07)
+
+- Use Midgard API to calculate Thorchain network fees
+- Turn on remaining linting rules and fix issues
 
 ## 0.16.4 (2022-11-03)
 
