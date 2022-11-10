@@ -1,4 +1,9 @@
 # edge-exchange-plugins
+
+## 0.16.6 (2022-11-10)
+
+- Exolix: Restrict all swaps on Polygon
+
 ## 0.16.5 (2022-11-07)
 
 - Use Midgard API to calculate Thorchain network fees
