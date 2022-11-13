@@ -22,6 +22,7 @@ import {
   SwapCurrencyError
 } from 'edge-core-js/types'
 
+// import nodeFetch from 'node-fetch'
 import {
   checkInvalidCodes,
   ensureInFuture,
@@ -29,7 +30,6 @@ import {
   InvalidCurrencyCodes,
   makeSwapPluginQuote
 } from '../swap-helpers'
-
 const pluginId = 'changenow'
 
 const swapInfo: EdgeSwapInfo = {
@@ -119,15 +119,12 @@ export function makeChangeNowPlugin(
         const type = isSelling ? 'direct' : 'reverse'
 
         // Get rateId and Date
-        const exchangeAmountResponse = await fetch(
-          uri +
-            `exchange/estimated-amount?flow=${flow}&useRateId=${String(
-              flow === 'fixed-rate'
-            )}&${
-              isSelling ? 'fromAmount' : 'toAmount'
-            }=${largeDenomAmount}&type=${type}&${currencyString}`,
-          { headers }
-        )
+        const url = `exchange/estimated-amount?flow=${flow}&useRateId=${String(
+          flow === 'fixed-rate'
+        )}&${
+          isSelling ? 'fromAmount' : 'toAmount'
+        }=${largeDenomAmount}&type=${type}&${currencyString}`
+        const exchangeAmountResponse = await fetch(uri + url, { headers })
         const exchangeAmountResponseJson = await exchangeAmountResponse.json()
 
         if (exchangeAmountResponseJson.error != null)
@@ -161,8 +158,9 @@ export function makeChangeNowPlugin(
           headers
         })
         if (!orderResponse.ok) {
+          const text = await orderResponse.text()
           throw new Error(
-            `ChangeNow call returned error code ${orderResponse.status}`
+            `ChangeNow call returned error code ${orderResponse.status}, ${text}`
           )
         }
         const orderResponseJson = await orderResponse.json()
@@ -272,6 +270,7 @@ export function makeChangeNowPlugin(
 
         const {
           fromAmount,
+          toAmount,
           payinAddress,
           payinExtraId,
           id,
@@ -281,6 +280,11 @@ export function makeChangeNowPlugin(
         const fromNativeAmount = await request.fromWallet.denominationToNative(
           fromAmount.toString(),
           fromCurrencyCode
+        )
+
+        const toNativeAmount = await request.toWallet.denominationToNative(
+          toAmount.toString(),
+          toCurrencyCode
         )
 
         const spendInfo: EdgeSpendInfo = {
@@ -312,7 +316,7 @@ export function makeChangeNowPlugin(
         return makeSwapPluginQuote(
           request,
           fromNativeAmount,
-          nativeAmount,
+          toNativeAmount,
           tx,
           toAddress,
           pluginId,
