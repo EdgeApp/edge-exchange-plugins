@@ -41,22 +41,11 @@ const expirationMs = 1000 * 60
 
 const asQuoteInfo = asObject({
   transaction_id: asString,
-  status: asString,
-  coin_from: asString,
-  coin_to: asString,
-  coin_from_network: asString,
-  coin_to_network: asString,
   deposit_amount: asString,
-  withdrawal_amount: asString,
   deposit: asString,
   deposit_extra_id: asOptionalBlank(asString),
-  withdrawal: asString,
-  withdrawal_extra_id: asOptionalBlank(asString),
-  rate: asString,
-  fee: asString,
-  return: asString,
-  hash_in: asOptionalBlank(asString),
-  hash_out: asOptionalBlank(asString)
+  withdrawal_amount: asString,
+  withdrawal_extra_id: asOptionalBlank(asString)
 })
 
 const asInfoReply = asObject({
