@@ -1,11 +1,4 @@
-import {
-  asBoolean,
-  asEither,
-  asNumber,
-  asObject,
-  asOptional,
-  asString
-} from 'cleaners'
+import { asBoolean, asEither, asObject, asOptional, asString } from 'cleaners'
 import {
   EdgeCorePluginOptions,
   EdgeCurrencyWallet,
@@ -15,6 +8,7 @@ import {
   EdgeSwapPlugin,
   EdgeSwapQuote,
   EdgeSwapRequest,
+  JsonObject,
   SwapAboveLimitError,
   SwapBelowLimitError,
   SwapCurrencyError,
@@ -22,71 +16,23 @@ import {
 } from 'edge-core-js/types'
 
 import {
-  checkInvalidCodes,
-  CurrencyCodeTranscriptionMap,
   ensureInFuture,
   getCodesWithTranscription,
-  InvalidCurrencyCodes,
   makeSwapPluginQuote
 } from '../swap-helpers'
 
-const pluginId = 'sideshift'
+const MAINNET_CODE_TRANSCRIPTION = {
+  zcash: 'shielded',
+  binancesmartchain: 'bsc'
+}
 
+const SIDESHIFT_BASE_URL = 'https://sideshift.ai/api/v2'
+const pluginId = 'sideshift'
 const swapInfo: EdgeSwapInfo = {
   pluginId,
   displayName: 'SideShift.ai',
   supportEmail: 'help@sideshift.ai'
 }
-
-const asInitOptions = asObject({
-  affiliateId: asString
-})
-
-// Invalid currency codes should *not* have transcribed codes
-// because currency codes with transcribed versions are NOT invalid
-const CURRENCY_CODE_TRANSCRIPTION: CurrencyCodeTranscriptionMap = {
-  // Edge currencyCode: exchangeCurrencyCode
-  ethereum: {
-    USDT: 'usdtErc20'
-  },
-  binancesmartchain: {
-    BNB: 'bsc'
-  },
-  zcash: {
-    ZEC: 'zaddr'
-  },
-  avalanche: {
-    AVAX: 'avaxc',
-    'USDT.e': 'usdtavaxc'
-  },
-  polygon: {
-    MATIC: 'polygon'
-  },
-  AVAX: {
-    AVAX: 'avaxc'
-  }
-}
-const INVALID_CURRENCY_CODES: InvalidCurrencyCodes = {
-  from: {
-    ethereum: ['FTM', 'MATIC'],
-    avalanche: 'allTokens',
-    binancesmartchain: 'allTokens',
-    celo: 'allTokens',
-    fantom: 'allCodes',
-    binance: 'allCodes',
-    polygon: 'allTokens'
-  },
-  to: {
-    ethereum: ['FTM', 'MATIC'],
-    avalanche: 'allTokens',
-    binancesmartchain: 'allTokens',
-    celo: 'allTokens',
-    fantom: 'allCodes',
-    binance: 'allCodes',
-    polygon: 'allTokens'
-  }
-}
-const SIDESHIFT_BASE_URL = 'https://sideshift.ai/api/v1'
 const ORDER_STATUS_URL = 'https://sideshift.ai/orders/'
 
 async function getAddress(
@@ -133,7 +79,7 @@ async function checkQuoteError(
   throw new Error(`SideShift.ai error ${quoteErrorMessage}`)
 }
 
-interface SideshiftApi {
+interface CreateSideshiftApiResponse {
   get: <R>(path: string) => Promise<R>
   post: <R>(path: string, body: {}) => Promise<R>
 }
@@ -141,11 +87,11 @@ interface SideshiftApi {
 const createSideshiftApi = (
   baseUrl: string,
   fetch: EdgeFetchFunction
-): SideshiftApi => {
+): CreateSideshiftApiResponse => {
   async function request<R>(
     method: 'GET' | 'POST',
     path: string,
-    body: Object = {}
+    body?: JsonObject
   ): Promise<R> {
     const url = `${baseUrl}${path}`
 
@@ -177,25 +123,21 @@ const createFetchSwapQuote = (api: SideshiftApi, affiliateId: string) =>
   async function fetchSwapQuote(
     request: EdgeSwapRequest
   ): Promise<EdgeSwapQuote> {
-    checkInvalidCodes(INVALID_CURRENCY_CODES, request, swapInfo)
-
-    const [depositAddress, settleAddress] = await Promise.all([
+    const [refundAddress, settleAddress] = await Promise.all([
       getAddress(request.fromWallet, request.fromCurrencyCode),
       getAddress(request.toWallet, request.toCurrencyCode)
     ])
 
-    const { fromCurrencyCode, toCurrencyCode } = getCodesWithTranscription(
-      request,
-      {},
-      CURRENCY_CODE_TRANSCRIPTION
-    )
-
-    const safeFromCurrencyCode = fromCurrencyCode.toLowerCase()
-    const safeToCurrencyCode = toCurrencyCode.toLowerCase()
+    const {
+      fromCurrencyCode,
+      toCurrencyCode,
+      fromMainnetCode,
+      toMainnetCode
+    } = getCodesWithTranscription(request, MAINNET_CODE_TRANSCRIPTION)
 
     const rate = asRate(
       await api.get<typeof asRate>(
-        `/pairs/${safeFromCurrencyCode}/${safeToCurrencyCode}`
+        `/pair/${fromCurrencyCode}-${fromMainnetCode}/${toCurrencyCode}-${toMainnetCode}`
       )
     )
 
@@ -207,9 +149,11 @@ const createFetchSwapQuote = (api: SideshiftApi, affiliateId: string) =>
       )
     }
 
-    const permissions = asPermissions(await api.get<Permission>('/permissions'))
+    const permissions = asPermissions(
+      await api.get<typeof asPermissions>('/permissions')
+    )
 
-    if (!permissions.createOrder || !permissions.createQuote) {
+    if (!permissions.createShift) {
       throw new SwapPermissionError(swapInfo, 'geoRestriction')
     }
 
@@ -223,17 +167,14 @@ const createFetchSwapQuote = (api: SideshiftApi, affiliateId: string) =>
           request.toCurrencyCode
         ))
 
-    const depositAmount =
-      request.quoteFor === 'from'
-        ? quoteAmount
-        : (parseFloat(quoteAmount) / parseFloat(rate.rate))
-            .toFixed(8)
-            .toString()
-
     const fixedQuoteRequest = asFixedQuoteRequest({
-      depositMethod: safeFromCurrencyCode,
-      settleMethod: safeToCurrencyCode,
-      depositAmount
+      depositCoin: fromCurrencyCode,
+      depositNetwork: fromMainnetCode,
+      settleCoin: toCurrencyCode,
+      settleNetwork: toMainnetCode,
+      depositAmount: request.quoteFor === 'from' ? quoteAmount : undefined,
+      settleAmount: request.quoteFor === 'to' ? quoteAmount : undefined,
+      affiliateId
     })
 
     const fixedQuote = asFixedQuote(
@@ -245,27 +186,21 @@ const createFetchSwapQuote = (api: SideshiftApi, affiliateId: string) =>
       throw new Error(`SideShift.ai error ${fixedQuote.error.message}`)
     }
 
-    const orderRequest = asOrderRequest({
-      type: 'fixed',
+    const shiftRequest = asShiftRequest({
       quoteId: fixedQuote.id,
       affiliateId,
       settleAddress,
-      refundAddress: depositAddress
+      refundAddress
     })
 
     const order = asOrder(
-      await api.post<typeof asOrder>('/orders', orderRequest)
+      await api.post<typeof asOrder>('/shifts/fixed', shiftRequest)
     )
 
     if ('error' in order) {
       await checkQuoteError(rate, request, order.error.message)
       throw new Error(`SideShift.ai error ${order.error.message}`)
     }
-
-    const spendInfoAmount = await request.fromWallet.denominationToNative(
-      order.depositAmount,
-      request.fromCurrencyCode.toUpperCase()
-    )
 
     const amountExpectedFromNative = await request.fromWallet.denominationToNative(
       order.depositAmount,
@@ -279,32 +214,27 @@ const createFetchSwapQuote = (api: SideshiftApi, affiliateId: string) =>
 
     const isEstimate = false
 
-    const destinationTag =
-      order.depositAddress.destinationTag != null
-        ? `${order.depositAddress.destinationTag}`
-        : undefined
-
     const spendInfo: EdgeSpendInfo = {
       currencyCode: request.fromCurrencyCode,
       spendTargets: [
         {
-          nativeAmount: spendInfoAmount,
-          publicAddress: order.depositAddress.address,
-          uniqueIdentifier: order.depositAddress.memo ?? destinationTag
+          nativeAmount: amountExpectedFromNative,
+          publicAddress: order.depositAddress,
+          uniqueIdentifier: order.depositMemo
         }
       ],
       networkFeeOption:
         request.fromCurrencyCode.toUpperCase() === 'BTC' ? 'high' : 'standard',
       swapData: {
-        orderId: order.orderId,
-        orderUri: ORDER_STATUS_URL + order.orderId,
+        orderId: order.id,
+        orderUri: ORDER_STATUS_URL + order.id,
         isEstimate,
         payoutAddress: settleAddress,
         payoutCurrencyCode: request.toCurrencyCode,
         payoutNativeAmount: amountExpectedToNative,
         payoutWalletId: request.toWallet.id,
         plugin: { ...swapInfo },
-        refundAddress: depositAddress
+        refundAddress
       }
     }
 
@@ -318,7 +248,7 @@ const createFetchSwapQuote = (api: SideshiftApi, affiliateId: string) =>
       settleAddress,
       pluginId,
       isEstimate,
-      ensureInFuture(new Date(order.expiresAtISO)),
+      ensureInFuture(new Date(order.expiresAt)),
       order.id
     )
   }
@@ -326,28 +256,14 @@ const createFetchSwapQuote = (api: SideshiftApi, affiliateId: string) =>
 export function makeSideshiftPlugin(
   opts: EdgeCorePluginOptions
 ): EdgeSwapPlugin {
-  const { io } = opts
-  const { affiliateId } = asInitOptions(opts.initOptions)
-  const fetch = io.fetchCors ?? io.fetch
-
-  const api = createSideshiftApi(SIDESHIFT_BASE_URL, fetch)
-
-  const fetchSwapQuote = createFetchSwapQuote(api, affiliateId)
+  const { io, initOptions } = opts
+  const api = createSideshiftApi(SIDESHIFT_BASE_URL, io.fetchCors ?? io.fetch)
+  const fetchSwapQuote = createFetchSwapQuote(api, initOptions.affiliateId)
 
   return {
     swapInfo,
     fetchSwapQuote
   }
-}
-
-interface SideshiftApi {
-  get: <R>(path: string) => Promise<R>
-  post: <R>(path: string, body: {}) => Promise<R>
-}
-
-interface Permission {
-  createOrder: boolean
-  createQuote: boolean
 }
 
 interface Rate {
@@ -356,26 +272,38 @@ interface Rate {
   max: string
 }
 
+interface SideshiftApi {
+  get: <R>(path: string) => Promise<R>
+  post: <R>(path: string, body: {}) => Promise<R>
+}
+
 const asError = asObject({ error: asObject({ message: asString }) })
 
 const asPermissions = asObject({
-  createOrder: asBoolean,
-  createQuote: asBoolean
+  createShift: asBoolean
 })
 
 const asRate = asEither(
   asObject({
     rate: asString,
     min: asString,
-    max: asString
+    max: asString,
+    depositCoin: asString,
+    depositNetwork: asString,
+    settleCoin: asString,
+    settleNetwork: asString
   }),
   asError
 )
 
 const asFixedQuoteRequest = asObject({
-  depositMethod: asString,
-  settleMethod: asString,
-  depositAmount: asString
+  depositCoin: asString,
+  depositNetwork: asString,
+  settleCoin: asString,
+  settleNetwork: asString,
+  depositAmount: asOptional(asString),
+  settleAmount: asOptional(asString),
+  affiliateId: asString
 })
 
 const asFixedQuote = asEither(
@@ -385,8 +313,7 @@ const asFixedQuote = asEither(
   asError
 )
 
-const asOrderRequest = asObject({
-  type: asString,
+const asShiftRequest = asObject({
   quoteId: asString,
   affiliateId: asString,
   settleAddress: asString,
@@ -395,14 +322,10 @@ const asOrderRequest = asObject({
 
 const asOrder = asEither(
   asObject({
-    expiresAtISO: asString,
-    depositAddress: asObject({
-      address: asString,
-      memo: asOptional(asString),
-      destinationTag: asOptional(asNumber)
-    }),
     id: asString,
-    orderId: asString,
+    expiresAt: asString,
+    depositAddress: asString,
+    depositMemo: asOptional(asString),
     settleAmount: asString,
     depositAmount: asString
   }),
