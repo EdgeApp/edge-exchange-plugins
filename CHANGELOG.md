@@ -1,5 +1,10 @@
 # edge-exchange-plugins
 
+## 0.16.7 (2022-11-15)
+
+- Sideshift: Update to API v2
+- Add testing framework to run plugins in Node
+
 ## 0.16.6 (2022-11-10)
 
 - Exolix: Restrict all swaps on Polygon
