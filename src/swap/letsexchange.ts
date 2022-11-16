@@ -1,4 +1,4 @@
-import { lt } from 'biggystring'
+import { gt, lt } from 'biggystring'
 import { asObject, asOptional, asString } from 'cleaners'
 import {
   EdgeCorePluginOptions,
@@ -9,6 +9,7 @@ import {
   EdgeSwapQuote,
   EdgeSwapRequest,
   EdgeTransaction,
+  SwapAboveLimitError,
   SwapBelowLimitError,
   SwapCurrencyError
 } from 'edge-core-js/types'
@@ -41,26 +42,16 @@ const expirationMs = 1000 * 60
 
 const asQuoteInfo = asObject({
   transaction_id: asString,
-  status: asString,
-  coin_from: asString,
-  coin_to: asString,
-  coin_from_network: asString,
-  coin_to_network: asString,
   deposit_amount: asString,
-  withdrawal_amount: asString,
   deposit: asString,
   deposit_extra_id: asOptionalBlank(asString),
-  withdrawal: asString,
-  withdrawal_extra_id: asOptionalBlank(asString),
-  rate: asString,
-  fee: asString,
-  return: asString,
-  hash_in: asOptionalBlank(asString),
-  hash_out: asOptionalBlank(asString)
+  withdrawal_amount: asString,
+  withdrawal_extra_id: asOptionalBlank(asString)
 })
 
 const asInfoReply = asObject({
   min_amount: asString,
+  max_amount: asString,
   amount: asString
 })
 const dontUseLegacy: { [cc: string]: boolean } = {
@@ -135,6 +126,7 @@ export function makeLetsExchangePlugin(
       opts: { promoCode?: string }
     ): Promise<EdgeSwapQuote> {
       checkInvalidCodes(INVALID_CURRENCY_CODES, request, swapInfo)
+      const reverseQuote = request.quoteFor === 'to'
 
       // Grab addresses:
       const [fromAddress, toAddress] = await Promise.all([
@@ -182,61 +174,64 @@ export function makeLetsExchangePlugin(
       log('quoteParams:', quoteParams)
 
       // Calculate the amounts:
-      let fromAmount, fromNativeAmount, toNativeAmount, reply
+      let fromAmount, toAmount, endpoint
       if (request.quoteFor === 'from') {
-        reply = asInfoReply(
-          await call(uri + 'info', request, {
-            params: quoteParams
-          })
-        )
-
-        fromNativeAmount = request.nativeAmount
-
-        // Check the minimum:
-        const nativeMin = await request.fromWallet.denominationToNative(
-          reply.min_amount,
-          request.fromCurrencyCode
-        )
-
-        if (lt(fromNativeAmount, nativeMin)) {
-          throw new SwapBelowLimitError(swapInfo, nativeMin)
-        }
-
         fromAmount = quoteAmount
-        toNativeAmount = await request.toWallet.denominationToNative(
-          reply.amount.toString(),
-          request.toCurrencyCode
-        )
+        endpoint = 'info'
       } else {
-        reply = await asInfoReply(
-          call(uri + 'info-revert', request, {
-            params: quoteParams
-          })
-        )
+        toAmount = quoteAmount
+        endpoint = 'info-revert'
+      }
+      const response = await call(uri + endpoint, request, {
+        params: quoteParams
+      })
+      const reply = asInfoReply(response)
 
-        toNativeAmount = request.nativeAmount
+      // Check the min/max:
+      const nativeMin = reverseQuote
+        ? await request.toWallet.denominationToNative(
+            reply.min_amount,
+            request.toCurrencyCode
+          )
+        : await request.fromWallet.denominationToNative(
+            reply.min_amount,
+            request.fromCurrencyCode
+          )
 
-        // Check the minimum:
-        const nativeMin = await request.toWallet.denominationToNative(
-          reply.min_amount,
-          request.toCurrencyCode
-        )
-
-        if (lt(toNativeAmount, nativeMin)) {
-          throw new SwapBelowLimitError(swapInfo, nativeMin, 'to')
-        }
-
-        fromAmount = reply.amount
-        fromNativeAmount = await request.fromWallet.denominationToNative(
-          fromAmount.toString(),
-          request.fromCurrencyCode
+      if (lt(request.nativeAmount, nativeMin)) {
+        throw new SwapBelowLimitError(
+          swapInfo,
+          nativeMin,
+          reverseQuote ? 'to' : 'from'
         )
       }
 
+      const nativeMax = reverseQuote
+        ? await request.toWallet.denominationToNative(
+            reply.max_amount,
+            request.toCurrencyCode
+          )
+        : await request.fromWallet.denominationToNative(
+            reply.max_amount,
+            request.fromCurrencyCode
+          )
+
+      if (gt(nativeMax, '0')) {
+        if (lt(request.nativeAmount, nativeMax)) {
+          throw new SwapAboveLimitError(
+            swapInfo,
+            nativeMin,
+            reverseQuote ? 'to' : 'from'
+          )
+        }
+      }
+
       const { promoCode } = opts
-      const sendReply = await call(uri + 'transaction', request, {
+      endpoint = reverseQuote ? 'transaction-revert' : 'transaction'
+      const sendReply = await call(uri + endpoint, request, {
         params: {
-          deposit_amount: fromAmount,
+          deposit_amount: reverseQuote ? undefined : fromAmount,
+          withdrawal_amount: reverseQuote ? toAmount : undefined,
           coin_from: request.fromCurrencyCode,
           coin_to: request.toCurrencyCode,
           network_from: networkFrom,
@@ -255,6 +250,15 @@ export function makeLetsExchangePlugin(
 
       log('sendReply', sendReply)
       const quoteInfo = asQuoteInfo(sendReply)
+
+      const fromNativeAmount = await request.fromWallet.denominationToNative(
+        quoteInfo.deposit_amount,
+        request.fromCurrencyCode
+      )
+      const toNativeAmount = await request.toWallet.denominationToNative(
+        quoteInfo.withdrawal_amount,
+        request.toCurrencyCode
+      )
 
       // Make the transaction:
       const spendInfo: EdgeSpendInfo = {

@@ -1,5 +1,12 @@
 import { lt } from 'biggystring'
-import { asEither, asNull, asObject, asOptional, asString } from 'cleaners'
+import {
+  asEither,
+  asNull,
+  asNumber,
+  asObject,
+  asOptional,
+  asString
+} from 'cleaners'
 import {
   EdgeCorePluginOptions,
   EdgeCurrencyWallet,
@@ -38,17 +45,23 @@ const uri = 'https://api.godex.io/api/v1/'
 
 const expirationMs = 1000 * 60
 
+const asNumberString = (raw: any): string => {
+  const n = asEither(asString, asNumber)(raw)
+  return n.toString()
+}
+
 const asApiInfo = asObject({
-  amount: asString,
-  min_amount: asString
+  min_amount: asNumberString
 })
 
 const asQuoteInfo = asObject({
   transaction_id: asString,
   deposit: asString,
   deposit_extra_id: asEither(asString, asNull),
+  deposit_amount: asString,
   withdrawal: asString,
   withdrawal_extra_id: asEither(asString, asNull),
+  withdrawal_amount: asString,
   return: asString,
   return_extra_id: asEither(asString, asNull)
 })
@@ -132,6 +145,7 @@ export function makeGodexPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
       opts: { promoCode?: string }
     ): Promise<EdgeSwapQuote> {
       checkInvalidCodes(INVALID_CURRENCY_CODES, request, swapInfo)
+      const reverseQuote = request.quoteFor === 'to'
 
       // Grab addresses:
       const [fromAddress, toAddress] = await Promise.all([
@@ -159,67 +173,53 @@ export function makeGodexPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
       }
       log('quoteParams:', quoteParams)
 
-      // Calculate the amounts:
-      let fromAmount, fromNativeAmount, toNativeAmount, reply
+      // Check if we are below the minimum limit:
+      let fromAmount, toAmount, endpoint
       if (request.quoteFor === 'from') {
-        const response = await call(uri + 'info', request, {
-          params: quoteParams
-        })
-        reply = asApiInfo(response)
-
-        fromNativeAmount = request.nativeAmount
-
-        // Check the minimum:
-        const nativeMin = await request.fromWallet.denominationToNative(
-          reply.min_amount,
-          request.fromCurrencyCode
-        )
-        if (lt(fromNativeAmount, nativeMin)) {
-          throw new SwapBelowLimitError(swapInfo, nativeMin)
-        }
-
         fromAmount = quoteAmount
-        toNativeAmount = await request.toWallet.denominationToNative(
-          reply.amount.toString(),
-          request.toCurrencyCode
-        )
+        endpoint = 'info'
       } else {
-        const response = await call(uri + 'info-revert', request, {
-          params: quoteParams
-        })
-        reply = asApiInfo(response)
+        toAmount = quoteAmount
+        endpoint = 'info-revert'
+      }
+      const response = await call(uri + endpoint, request, {
+        params: quoteParams
+      })
+      const reply = asApiInfo(response)
 
-        toNativeAmount = request.nativeAmount
+      // Check the minimum:
+      const nativeMin = reverseQuote
+        ? await request.toWallet.denominationToNative(
+            reply.min_amount,
+            request.toCurrencyCode
+          )
+        : await request.fromWallet.denominationToNative(
+            reply.min_amount,
+            request.fromCurrencyCode
+          )
 
-        // Check the minimum:
-        const nativeMin = await request.toWallet.denominationToNative(
-          reply.min_amount,
-          request.toCurrencyCode
-        )
-        if (lt(toNativeAmount, nativeMin)) {
-          throw new SwapBelowLimitError(swapInfo, nativeMin, 'to')
-        }
-
-        fromAmount = reply.amount
-        fromNativeAmount = await request.fromWallet.denominationToNative(
-          fromAmount.toString(),
-          request.fromCurrencyCode
+      if (lt(request.nativeAmount, nativeMin)) {
+        throw new SwapBelowLimitError(
+          swapInfo,
+          nativeMin,
+          reverseQuote ? 'to' : 'from'
         )
       }
-      log('fromNativeAmount' + fromNativeAmount)
-      log('toNativeAmount' + toNativeAmount)
 
       const { promoCode } = opts
       const { fromMainnetCode, toMainnetCode } = getCodesWithTranscription(
         request,
         MAINNET_CODE_TRANSCRIPTION
       )
+
+      endpoint = reverseQuote ? 'transaction-revert' : 'transaction'
       const sendReply = await call(
-        uri + 'transaction' + (promoCode != null ? `?promo=${promoCode}` : ''),
+        uri + endpoint + (promoCode != null ? `?promo=${promoCode}` : ''),
         request,
         {
           params: {
-            deposit_amount: fromAmount,
+            deposit_amount: reverseQuote ? undefined : fromAmount,
+            withdrawal_amount: reverseQuote ? toAmount : undefined,
             coin_from: request.fromCurrencyCode,
             coin_to: request.toCurrencyCode,
             withdrawal: toAddress,
@@ -236,6 +236,17 @@ export function makeGodexPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
       )
       log('sendReply' + JSON.stringify(sendReply, null, 2))
       const quoteInfo = asQuoteInfo(sendReply)
+      const fromNativeAmount = await request.fromWallet.denominationToNative(
+        quoteInfo.deposit_amount,
+        request.fromCurrencyCode
+      )
+      const toNativeAmount = await request.toWallet.denominationToNative(
+        quoteInfo.withdrawal_amount,
+        request.toCurrencyCode
+      )
+
+      log('fromNativeAmount: ' + fromNativeAmount)
+      log('toNativeAmount: ' + toNativeAmount)
 
       // Make the transaction:
       const spendInfo: EdgeSpendInfo = {
