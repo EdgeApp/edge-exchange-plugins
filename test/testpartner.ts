@@ -6,6 +6,7 @@ import {
 } from 'edge-core-js'
 
 import edgeExchangePlugins from '../src'
+import { avaxCurrencyInfo } from './fakeAvaxInfo'
 import { btcCurrencyInfo } from './fakeBtcInfo'
 import { makeFakePlugin } from './fakeCurrencyPlugin'
 import { ethCurrencyInfo } from './fakeEthInfo'
@@ -14,6 +15,7 @@ async function main(): Promise<void> {
   const allPlugins = {
     bitcoin: makeFakePlugin(btcCurrencyInfo),
     ethereum: makeFakePlugin(ethCurrencyInfo),
+    avalanche: makeFakePlugin(avaxCurrencyInfo),
     ...edgeExchangePlugins
   }
 
@@ -27,9 +29,8 @@ async function main(): Promise<void> {
     plugins: {
       bitcoin: true,
       ethereum: true,
-      godex: {
-        apiKey: 'XXXXX'
-      }
+      avalanche: true,
+      thorchainda: true
     }
   })
   const account = await context.createAccount('bob', 'bob123', '1111')
@@ -41,19 +42,27 @@ async function main(): Promise<void> {
     fiatCurrencyCode: 'iso:EUR',
     name: 'My Fake Bitcoin'
   })
-  const enabledTokens = ethWallet.currencyInfo.metaTokens.map(
+  const avaxWallet = await account.createCurrencyWallet('wallet:avalanche', {
+    fiatCurrencyCode: 'iso:EUR',
+    name: 'My Fake Avalanche'
+  })
+  const ethEnabledTokens = ethWallet.currencyInfo.metaTokens.map(
     token => token.currencyCode
   )
+  await ethWallet.enableTokens(ethEnabledTokens)
 
-  await ethWallet.enableTokens(enabledTokens)
+  const avaxEnabledTokens = avaxWallet.currencyInfo.metaTokens.map(
+    token => token.currencyCode
+  )
+  await avaxWallet.enableTokens(avaxEnabledTokens)
 
   // Test a FROM quote
   const fromRequest: EdgeSwapRequest = {
-    fromWallet: btcWallet,
-    fromCurrencyCode: 'BTC',
-    toWallet: ethWallet,
-    toCurrencyCode: 'ETH',
-    nativeAmount: await btcWallet.denominationToNative('0.004', 'BTC'),
+    fromWallet: ethWallet,
+    fromCurrencyCode: 'UNI',
+    toWallet: avaxWallet,
+    toCurrencyCode: 'JOE',
+    nativeAmount: await ethWallet.denominationToNative('100', 'UNI'),
     quoteFor: 'from'
   }
   console.log(`fromRequest:`)
@@ -84,7 +93,7 @@ async function main(): Promise<void> {
     )
   )
 
-  const quote = await account.fetchSwapQuote(toRequest).catch(e => {
+  const quote = await account.fetchSwapQuote(fromRequest).catch(e => {
     console.log(e)
     console.log(e.message)
   })
