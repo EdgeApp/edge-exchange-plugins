@@ -94,7 +94,6 @@ export const asInboundAddresses = asArray(
   asObject({
     address: asString,
     chain: asString,
-    gas_rate: asString,
     outbound_fee: asString,
     halted: asBoolean,
     pub_key: asString,
@@ -125,8 +124,6 @@ export const asExchangeInfo = asObject({
     })
   })
 })
-
-const asCustomFeeSettings = asArray(asString)
 
 const asPools = asArray(asPool)
 
@@ -266,10 +263,7 @@ export function makeThorchainPlugin(
       if (inAddressObject == null) {
         throw new SwapCurrencyError(swapInfo, fromCurrencyCode, toCurrencyCode)
       }
-      const { address: thorAddress, gas_rate: inAssetGasRate } = inAddressObject
-      log(
-        `${fromMainnetCode}.${fromCurrencyCode} inAssetGasRate ${inAssetGasRate}`
-      )
+      const { address: thorAddress } = inAddressObject
 
       const outAddressObject = inboundAddresses.find(
         addrObj => !addrObj.halted && addrObj.chain === toMainnetCode
@@ -354,31 +348,6 @@ export function makeThorchainPlugin(
       }
       const { fromNativeAmount, toNativeAmount, limit } = calcResponse
 
-      let customNetworkFee
-      let customNetworkFeeKey
-
-      const customFeeTemplate = (fromWallet.currencyInfo.customFeeTemplate ??
-        [])[0]
-      const fromCurrencyInfo = fromWallet.currencyInfo
-      if (customFeeTemplate?.type === 'nativeAmount') {
-        customNetworkFee = inAssetGasRate
-        customNetworkFeeKey = customFeeTemplate.key
-      } else if (fromCurrencyInfo.defaultSettings?.customFeeSettings != null) {
-        const customFeeSettings = asCustomFeeSettings(
-          fromCurrencyInfo.defaultSettings.customFeeSettings
-        )
-        // Only know about the key 'gasPrice'
-        const usesGasPrice = customFeeSettings.find(f => f === 'gasPrice')
-        if (usesGasPrice != null) {
-          customNetworkFee = inAssetGasRate
-          customNetworkFeeKey = 'gasPrice'
-        }
-      }
-
-      if (customNetworkFee == null || customNetworkFeeKey == null) {
-        throw new SwapCurrencyError(swapInfo, fromCurrencyCode, toCurrencyCode)
-      }
-
       let memo = buildSwapMemo({
         chain: toMainnetCode,
         asset: toCurrencyCode,
@@ -445,10 +414,6 @@ export function makeThorchainPlugin(
               publicAddress: sourceTokenContractAddress
             }
           ],
-          networkFeeOption: 'custom',
-          customNetworkFee: {
-            [customNetworkFeeKey]: customNetworkFee
-          },
           metadata: {
             name: 'Thorchain',
             category: 'expense:Token Approval'
@@ -466,10 +431,6 @@ export function makeThorchainPlugin(
             publicAddress
           }
         ],
-        networkFeeOption: 'custom',
-        customNetworkFee: {
-          [customNetworkFeeKey]: customNetworkFee
-        },
 
         swapData: {
           isEstimate: false,
