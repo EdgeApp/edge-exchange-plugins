@@ -1,11 +1,14 @@
 import { add } from 'biggystring'
+import { asBoolean, asEither, asMap, asNumber, asString } from 'cleaners'
 import {
+  EdgeCurrencyWallet,
   EdgeSwapApproveOptions,
   EdgeSwapInfo,
   EdgeSwapQuote,
   EdgeSwapRequest,
   EdgeSwapResult,
   EdgeTransaction,
+  JsonObject,
   SwapCurrencyError
 } from 'edge-core-js/types'
 
@@ -14,6 +17,9 @@ const likeKindAssets = [
   ['ETH', 'WETH'],
   ['USDC', 'USDT', 'DAI']
 ]
+
+const asQueryParams = asMap(asEither(asString, asNumber, asBoolean))
+export type QueryParams = ReturnType<typeof asQueryParams>
 
 /**
  * Ensures that a date is in the future by at least the given amount.
@@ -37,7 +43,8 @@ export function makeSwapPluginQuote(
   isEstimate: boolean = false,
   expirationDate?: Date,
   quoteId?: string,
-  preTx?: EdgeTransaction
+  preTx?: EdgeTransaction,
+  metadataNotes?: string
 ): EdgeSwapQuote {
   const { fromWallet } = request
 
@@ -69,6 +76,10 @@ export function makeSwapPluginQuote(
         await fromWallet.saveTx(broadcastedTransaction)
       }
       tx.metadata = { ...(opts?.metadata ?? {}), ...tx.metadata }
+      if (metadataNotes != null) {
+        tx.metadata.notes = `${metadataNotes}\n\n` + (tx.metadata.notes ?? '')
+      }
+
       const signedTransaction = await fromWallet.signTx(tx)
       const broadcastedTransaction = await fromWallet.broadcastTx(
         signedTransaction
@@ -266,4 +277,24 @@ export const isLikeKind = (
     }
   }
   return false
+}
+
+export const getTokenId = (
+  coreWallet: EdgeCurrencyWallet,
+  currencyCode: string
+): string | undefined => {
+  const { allTokens } = coreWallet.currencyConfig
+  return Object.keys(allTokens).find(
+    edgeToken => allTokens[edgeToken].currencyCode === currencyCode
+  )
+}
+
+export const consify = (val: any): void =>
+  console.log(JSON.stringify(val, null, 2))
+
+export const makeQueryParams = (params: JsonObject): string => {
+  const cleaned = asQueryParams(params)
+  return Object.entries(cleaned)
+    .map(([key, value]) => `${key}=${value.toString()}`)
+    .join('&')
 }
