@@ -1,7 +1,13 @@
-import { asMap, asObject, asOptional, asString, asUnknown } from 'cleaners'
+import {
+  asDate,
+  asMap,
+  asObject,
+  asOptional,
+  asString,
+  asUnknown
+} from 'cleaners'
 import {
   addEdgeCorePlugins,
-  EdgeFakeUser,
   EdgeSwapRequest,
   lockEdgeCorePlugins,
   makeFakeEdgeWorld
@@ -14,14 +20,11 @@ import { btcCurrencyInfo } from './fakeBtcInfo'
 import { makeFakePlugin } from './fakeCurrencyPlugin'
 import { ethCurrencyInfo } from './fakeEthInfo'
 
-const DUMP_USER = false
 const DUMP_USER_FILE = './test/fakeUserDump.json'
-
-const asDateStr = (raw: string): Date => new Date(raw)
 
 const asFakeUser = asObject({
   username: asString,
-  lastLogin: asOptional(asDateStr),
+  lastLogin: asOptional(asDate),
   loginId: asString,
   loginKey: asString,
   repos: asMap(asMap(asUnknown)),
@@ -44,15 +47,11 @@ async function main(): Promise<void> {
   addEdgeCorePlugins(allPlugins)
   lockEdgeCorePlugins()
 
-  const fakeUsers: EdgeFakeUser[] = []
-  let loginKey: string = ''
-  if (!DUMP_USER) {
-    const userFile = fs.readFileSync(DUMP_USER_FILE, { encoding: 'utf8' })
-    const json = JSON.parse(userFile)
-    const dump = asUserDump(json)
-    loginKey = dump.loginKey
-    fakeUsers.push(dump.data)
-  }
+  const userFile = fs.readFileSync(DUMP_USER_FILE, { encoding: 'utf8' })
+  const json = JSON.parse(userFile)
+  const dump = asUserDump(json)
+  const loginKey = dump.loginKey
+  const fakeUsers = [dump.data]
 
   const world = await makeFakeEdgeWorld(fakeUsers, {})
   const context = await world.makeEdgeContext({
@@ -65,38 +64,6 @@ async function main(): Promise<void> {
       thorchainda: true
     }
   })
-  if (DUMP_USER) {
-    const account = await context.createAccount('bob', 'bob123', '1111')
-    await account.createCurrencyWallet('wallet:bitcoin', {
-      fiatCurrencyCode: 'iso:EUR',
-      name: 'My Fake Bitcoin'
-    })
-    const ethWallet = await account.createCurrencyWallet('wallet:ethereum', {
-      fiatCurrencyCode: 'iso:EUR',
-      name: 'My Fake Bitcoin'
-    })
-    const avaxWallet = await account.createCurrencyWallet('wallet:avalanche', {
-      fiatCurrencyCode: 'iso:EUR',
-      name: 'My Fake Avalanche'
-    })
-    const ethEnabledTokens = ethWallet.currencyInfo.metaTokens.map(
-      token => token.currencyCode
-    )
-    await ethWallet.enableTokens(ethEnabledTokens)
-
-    const avaxEnabledTokens = avaxWallet.currencyInfo.metaTokens.map(
-      token => token.currencyCode
-    )
-    await avaxWallet.enableTokens(avaxEnabledTokens)
-
-    const data = await world.dumpFakeUser(account)
-    const dump = {
-      loginKey: account.loginKey,
-      data
-    }
-    fs.writeFileSync(DUMP_USER_FILE, JSON.stringify(dump), { encoding: 'utf8' })
-    process.exit(0)
-  }
 
   const account = await context.loginWithKey('bob', loginKey)
   const btcInfo = await account.getFirstWalletInfo('wallet:bitcoin')
