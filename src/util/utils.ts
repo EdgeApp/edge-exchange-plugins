@@ -2,6 +2,10 @@ import { EdgeFetchFunction, EdgeFetchResponse } from 'edge-core-js'
 const INFO_SERVERS = ['https://info1.edge.app', 'https://info2.edge.app']
 const RATES_SERVERS = ['https://rates1.edge.app', 'https://rates2.edge.app']
 
+export interface QueryParams {
+  [key: string]: string | number | boolean | null
+}
+
 export const promiseWithTimeout = async <T>(
   promise: Promise<T>,
   timeoutMs: number = 5000
@@ -138,4 +142,16 @@ export const fetchRates = async (
   timeout?: number
 ): Promise<any> => {
   return await multiFetch(fetch, RATES_SERVERS, path, options, timeout)
+}
+
+export const prettyLogObject = (val: any): void =>
+  console.log(JSON.stringify(val, null, 2))
+
+export const makeQueryParams = (params: QueryParams): string => {
+  return Object.keys(params)
+    .map(key => {
+      const value = params[key]
+      return value == null ? key : `${key}=${encodeURIComponent(value)}`
+    })
+    .join('&')
 }

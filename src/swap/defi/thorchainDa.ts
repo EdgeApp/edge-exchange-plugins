@@ -23,14 +23,20 @@ import {
 } from 'edge-core-js/types'
 import { ethers } from 'ethers'
 
+// io.fetch is broken with some APIs when running under node. For now, leave this here as a convenience
+// and reminder to fix io.fetch for runnings tests
 // import nodeFetch from 'node-fetch'
 import {
   checkInvalidCodes,
   getTokenId,
-  makeQueryParams,
   makeSwapPluginQuote
 } from '../../swap-helpers'
-import { fetchInfo, fetchWaterfall, promiseWithTimeout } from '../../util/utils'
+import {
+  fetchInfo,
+  fetchWaterfall,
+  makeQueryParams,
+  promiseWithTimeout
+} from '../../util/utils'
 import { abiMap } from './abi/abiMap'
 import {
   asExchangeInfo,
@@ -58,7 +64,8 @@ const asInitOptions = asObject({
   thorname: asOptional(asString, 'ej')
 })
 
-interface ThorSwapQuoteParams {
+// This needs to be a type so adding the '& {}' prevents auto correction to an interface
+type ThorSwapQuoteParams = {
   sellAsset: string
   buyAsset: string
   sellAmount: string
@@ -67,7 +74,7 @@ interface ThorSwapQuoteParams {
   senderAddress?: string
   affiliateAddress: string
   affiliateBasisPoints: string // '50' => 0.5%
-}
+} & {}
 
 const asCalldata = asObject({
   tcMemo: asOptional(asString),

@@ -1,5 +1,4 @@
 import { add } from 'biggystring'
-import { asBoolean, asEither, asMap, asNumber, asString } from 'cleaners'
 import {
   EdgeCurrencyWallet,
   EdgeSwapApproveOptions,
@@ -8,7 +7,6 @@ import {
   EdgeSwapRequest,
   EdgeSwapResult,
   EdgeTransaction,
-  JsonObject,
   SwapCurrencyError
 } from 'edge-core-js/types'
 
@@ -17,9 +15,6 @@ const likeKindAssets = [
   ['ETH', 'WETH'],
   ['USDC', 'USDT', 'DAI']
 ]
-
-const asQueryParams = asMap(asEither(asString, asNumber, asBoolean))
-export type QueryParams = ReturnType<typeof asQueryParams>
 
 /**
  * Ensures that a date is in the future by at least the given amount.
@@ -283,6 +278,7 @@ export const getTokenId = (
   coreWallet: EdgeCurrencyWallet,
   currencyCode: string
 ): string | undefined => {
+  if (coreWallet.currencyInfo.currencyCode === currencyCode) return
   const { allTokens } = coreWallet.currencyConfig
   return Object.keys(allTokens).find(
     edgeToken => allTokens[edgeToken].currencyCode === currencyCode
@@ -291,10 +287,3 @@ export const getTokenId = (
 
 export const consify = (val: any): void =>
   console.log(JSON.stringify(val, null, 2))
-
-export const makeQueryParams = (params: JsonObject): string => {
-  const cleaned = asQueryParams(params)
-  return Object.entries(cleaned)
-    .map(([key, value]) => `${key}=${value.toString()}`)
-    .join('&')
-}
