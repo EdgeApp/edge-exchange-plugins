@@ -1,5 +1,9 @@
 # edge-exchange-plugins
 
+## 0.16.8 (2022-11-22)
+
+- ChangeHero: Prevent 'to' quotes due to over-precise amounts breaking data encoding.
+
 ## 0.16.7 (2022-11-15)
 
 - Sideshift: Update to API v2
