@@ -9,7 +9,8 @@ const defaultSettings: FakeSettings = {
   parentNetworkFee: '1000000000000000',
   balances: {
     ETH: '1.234', // balances in exchange amount
-    USDC: '10000'
+    USDC: '10000',
+    UNI: '100000'
   }
 }
 

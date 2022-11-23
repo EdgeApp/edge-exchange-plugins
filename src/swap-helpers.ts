@@ -1,5 +1,6 @@
 import { add } from 'biggystring'
 import {
+  EdgeCurrencyWallet,
   EdgeSwapApproveOptions,
   EdgeSwapInfo,
   EdgeSwapQuote,
@@ -37,7 +38,8 @@ export function makeSwapPluginQuote(
   isEstimate: boolean = false,
   expirationDate?: Date,
   quoteId?: string,
-  preTx?: EdgeTransaction
+  preTx?: EdgeTransaction,
+  metadataNotes?: string
 ): EdgeSwapQuote {
   const { fromWallet } = request
 
@@ -69,6 +71,10 @@ export function makeSwapPluginQuote(
         await fromWallet.saveTx(broadcastedTransaction)
       }
       tx.metadata = { ...(opts?.metadata ?? {}), ...tx.metadata }
+      if (metadataNotes != null) {
+        tx.metadata.notes = `${metadataNotes}\n\n` + (tx.metadata.notes ?? '')
+      }
+
       const signedTransaction = await fromWallet.signTx(tx)
       const broadcastedTransaction = await fromWallet.broadcastTx(
         signedTransaction
@@ -267,3 +273,17 @@ export const isLikeKind = (
   }
   return false
 }
+
+export const getTokenId = (
+  coreWallet: EdgeCurrencyWallet,
+  currencyCode: string
+): string | undefined => {
+  if (coreWallet.currencyInfo.currencyCode === currencyCode) return
+  const { allTokens } = coreWallet.currencyConfig
+  return Object.keys(allTokens).find(
+    edgeToken => allTokens[edgeToken].currencyCode === currencyCode
+  )
+}
+
+export const consify = (val: any): void =>
+  console.log(JSON.stringify(val, null, 2))

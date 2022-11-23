@@ -1,59 +1,86 @@
 import {
+  asDate,
+  asMap,
+  asObject,
+  asOptional,
+  asString,
+  asUnknown
+} from 'cleaners'
+import {
   addEdgeCorePlugins,
   EdgeSwapRequest,
   lockEdgeCorePlugins,
   makeFakeEdgeWorld
 } from 'edge-core-js'
+import fs from 'fs'
 
 import edgeExchangePlugins from '../src'
+import { avaxCurrencyInfo } from './fakeAvaxInfo'
 import { btcCurrencyInfo } from './fakeBtcInfo'
 import { makeFakePlugin } from './fakeCurrencyPlugin'
 import { ethCurrencyInfo } from './fakeEthInfo'
+
+const DUMP_USER_FILE = './test/fakeUserDump.json'
+
+const asFakeUser = asObject({
+  username: asString,
+  lastLogin: asOptional(asDate),
+  loginId: asString,
+  loginKey: asString,
+  repos: asMap(asMap(asUnknown)),
+  server: asUnknown
+})
+
+const asUserDump = asObject({
+  loginKey: asString,
+  data: asFakeUser
+})
 
 async function main(): Promise<void> {
   const allPlugins = {
     bitcoin: makeFakePlugin(btcCurrencyInfo),
     ethereum: makeFakePlugin(ethCurrencyInfo),
+    avalanche: makeFakePlugin(avaxCurrencyInfo),
     ...edgeExchangePlugins
   }
 
   addEdgeCorePlugins(allPlugins)
   lockEdgeCorePlugins()
 
-  const world = await makeFakeEdgeWorld([], {})
+  const userFile = fs.readFileSync(DUMP_USER_FILE, { encoding: 'utf8' })
+  const json = JSON.parse(userFile)
+  const dump = asUserDump(json)
+  const loginKey = dump.loginKey
+  const fakeUsers = [dump.data]
+
+  const world = await makeFakeEdgeWorld(fakeUsers, {})
   const context = await world.makeEdgeContext({
     apiKey: '',
     appId: '',
     plugins: {
       bitcoin: true,
       ethereum: true,
-      godex: {
-        apiKey: 'XXXXX'
-      }
+      avalanche: true,
+      thorchainda: true
     }
   })
-  const account = await context.createAccount('bob', 'bob123', '1111')
-  const btcWallet = await account.createCurrencyWallet('wallet:bitcoin', {
-    fiatCurrencyCode: 'iso:EUR',
-    name: 'My Fake Bitcoin'
-  })
-  const ethWallet = await account.createCurrencyWallet('wallet:ethereum', {
-    fiatCurrencyCode: 'iso:EUR',
-    name: 'My Fake Bitcoin'
-  })
-  const enabledTokens = ethWallet.currencyInfo.metaTokens.map(
-    token => token.currencyCode
-  )
 
-  await ethWallet.enableTokens(enabledTokens)
+  const account = await context.loginWithKey('bob', loginKey)
+  const btcInfo = await account.getFirstWalletInfo('wallet:bitcoin')
+  const ethInfo = await account.getFirstWalletInfo('wallet:ethereum')
+  const avaxInfo = await account.getFirstWalletInfo('wallet:avalanche')
+
+  const btcWallet = await account.waitForCurrencyWallet(btcInfo?.id ?? '')
+  const ethWallet = await account.waitForCurrencyWallet(ethInfo?.id ?? '')
+  const avaxWallet = await account.waitForCurrencyWallet(avaxInfo?.id ?? '')
 
   // Test a FROM quote
   const fromRequest: EdgeSwapRequest = {
-    fromWallet: btcWallet,
-    fromCurrencyCode: 'BTC',
-    toWallet: ethWallet,
-    toCurrencyCode: 'ETH',
-    nativeAmount: await btcWallet.denominationToNative('0.004', 'BTC'),
+    fromWallet: ethWallet,
+    fromCurrencyCode: 'UNI',
+    toWallet: avaxWallet,
+    toCurrencyCode: 'JOE',
+    nativeAmount: await ethWallet.denominationToNative('100', 'UNI'),
     quoteFor: 'from'
   }
   console.log(`fromRequest:`)
@@ -84,7 +111,7 @@ async function main(): Promise<void> {
     )
   )
 
-  const quote = await account.fetchSwapQuote(toRequest).catch(e => {
+  const quote = await account.fetchSwapQuote(fromRequest).catch(e => {
     console.log(e)
     console.log(e.message)
   })

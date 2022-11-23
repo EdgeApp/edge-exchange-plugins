@@ -43,25 +43,25 @@ const asInitOptions = asObject({
   thorname: asOptional(asString, 'ej')
 })
 
-const EXPIRATION_MS = 1000 * 60
-const MIDGARD_SERVERS_DEFAULT = ['https://midgard.thorchain.info']
-const DIVIDE_PRECISION = 16
-const VOLATILITY_SPREAD_DEFAULT = 0.01
-const LIKE_KIND_VOLATILITY_SPREAD_DEFAULT = 0.0025
-const EXCHANGE_INFO_UPDATE_FREQ_MS = 60000
-const EVM_SEND_GAS = '80000'
-const EVM_TOKEN_SEND_GAS = '80000'
-const MIN_USD_SWAP = '30'
+export const MIDGARD_SERVERS_DEFAULT = ['https://midgard.thorchain.info']
+export const EXPIRATION_MS = 1000 * 60
+export const DIVIDE_PRECISION = 16
+export const VOLATILITY_SPREAD_DEFAULT = 0.01
+export const LIKE_KIND_VOLATILITY_SPREAD_DEFAULT = 0.0025
+export const EXCHANGE_INFO_UPDATE_FREQ_MS = 60000
+export const EVM_SEND_GAS = '80000'
+export const EVM_TOKEN_SEND_GAS = '80000'
+export const MIN_USD_SWAP = '30'
 export const THOR_LIMIT_UNITS = '100000000'
 
-const INVALID_CURRENCY_CODES: InvalidCurrencyCodes = {
+export const INVALID_CURRENCY_CODES: InvalidCurrencyCodes = {
   from: {},
   to: {
     zcash: ['ZEC']
   }
 }
 
-const EVM_CURRENCY_CODES: { [cc: string]: boolean } = {
+export const EVM_CURRENCY_CODES: { [cc: string]: boolean } = {
   ETH: true,
   AVAX: true,
   FTM: true,
@@ -75,7 +75,7 @@ const EVM_CURRENCY_CODES: { [cc: string]: boolean } = {
 }
 
 // Network names that don't match parent network currency code
-const MAINNET_CODE_TRANSCRIPTION: { [cc: string]: ChainTypes } = {
+export const MAINNET_CODE_TRANSCRIPTION: { [cc: string]: ChainTypes } = {
   bitcoin: 'BTC',
   bitcoincash: 'BCH',
   binancechain: 'BNB',
@@ -90,11 +90,10 @@ const asMinAmount = asObject({
   minInputAmount: asString
 })
 
-const asInboundAddresses = asArray(
+export const asInboundAddresses = asArray(
   asObject({
     address: asString,
     chain: asString,
-    gas_rate: asString,
     outbound_fee: asString,
     halted: asBoolean,
     pub_key: asString,
@@ -111,20 +110,20 @@ export const asPool = asObject({
   runeDepth: asString
 })
 
-const asExchangeInfo = asObject({
+export const asExchangeInfo = asObject({
   swap: asObject({
     plugins: asObject({
       thorchain: asObject({
         volatilitySpread: asNumber,
         likeKindVolatilitySpread: asNumber,
+        daVolatilitySpread: asNumber,
         midgardServers: asArray(asString),
-        nineRealmsServers: asOptional(asArray(asString))
+        nineRealmsServers: asOptional(asArray(asString)),
+        thorSwapServers: asOptional(asArray(asString))
       })
     })
   })
 })
-
-const asCustomFeeSettings = asArray(asString)
 
 const asPools = asArray(asPool)
 
@@ -264,10 +263,7 @@ export function makeThorchainPlugin(
       if (inAddressObject == null) {
         throw new SwapCurrencyError(swapInfo, fromCurrencyCode, toCurrencyCode)
       }
-      const { address: thorAddress, gas_rate: inAssetGasRate } = inAddressObject
-      log(
-        `${fromMainnetCode}.${fromCurrencyCode} inAssetGasRate ${inAssetGasRate}`
-      )
+      const { address: thorAddress } = inAddressObject
 
       const outAddressObject = inboundAddresses.find(
         addrObj => !addrObj.halted && addrObj.chain === toMainnetCode
@@ -352,31 +348,6 @@ export function makeThorchainPlugin(
       }
       const { fromNativeAmount, toNativeAmount, limit } = calcResponse
 
-      let customNetworkFee
-      let customNetworkFeeKey
-
-      const customFeeTemplate = (fromWallet.currencyInfo.customFeeTemplate ??
-        [])[0]
-      const fromCurrencyInfo = fromWallet.currencyInfo
-      if (customFeeTemplate?.type === 'nativeAmount') {
-        customNetworkFee = inAssetGasRate
-        customNetworkFeeKey = customFeeTemplate.key
-      } else if (fromCurrencyInfo.defaultSettings?.customFeeSettings != null) {
-        const customFeeSettings = asCustomFeeSettings(
-          fromCurrencyInfo.defaultSettings.customFeeSettings
-        )
-        // Only know about the key 'gasPrice'
-        const usesGasPrice = customFeeSettings.find(f => f === 'gasPrice')
-        if (usesGasPrice != null) {
-          customNetworkFee = inAssetGasRate
-          customNetworkFeeKey = 'gasPrice'
-        }
-      }
-
-      if (customNetworkFee == null || customNetworkFeeKey == null) {
-        throw new SwapCurrencyError(swapInfo, fromCurrencyCode, toCurrencyCode)
-      }
-
       let memo = buildSwapMemo({
         chain: toMainnetCode,
         asset: toCurrencyCode,
@@ -443,10 +414,6 @@ export function makeThorchainPlugin(
               publicAddress: sourceTokenContractAddress
             }
           ],
-          networkFeeOption: 'custom',
-          customNetworkFee: {
-            [customNetworkFeeKey]: customNetworkFee
-          },
           metadata: {
             name: 'Thorchain',
             category: 'expense:Token Approval'
@@ -464,10 +431,6 @@ export function makeThorchainPlugin(
             publicAddress
           }
         ],
-        networkFeeOption: 'custom',
-        customNetworkFee: {
-          [customNetworkFeeKey]: customNetworkFee
-        },
 
         swapData: {
           isEstimate: false,
@@ -782,7 +745,7 @@ const getCheckSumAddress = (assetAddress: string): string => {
   return ethers.utils.getAddress(assetAddress.toLowerCase())
 }
 
-const getApprovalData = async (params: {
+export const getApprovalData = async (params: {
   contractAddress: string
   assetAddress: string
   publicAddress: string
@@ -821,7 +784,7 @@ const getApprovalData = async (params: {
   }
 }
 
-const getEvmTokenData = async (params: {
+export const getEvmTokenData = async (params: {
   memo: string
   // usersSendingAddress: string,
   assetAddress: string
