@@ -198,6 +198,8 @@ export function makeChangeHeroPlugin(
     }
     const fixedRateQuote = await call(fixRate)
 
+    checkReply(fixedRateQuote, request)
+
     const [
       { id: responseId, maxFrom, maxTo, minFrom, minTo }
     ] = asGetFixRateReply(fixedRateQuote).result
