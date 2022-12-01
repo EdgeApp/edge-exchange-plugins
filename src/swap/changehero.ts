@@ -150,19 +150,6 @@ export function makeChangeHeroPlugin(
   async function getFixedQuote(
     request: EdgeSwapRequest
   ): Promise<EdgeSwapQuote> {
-    // FIXME: ChangeHero's API is returning invalid send amounts when requesting a 'to' quote.
-    // The issue is the amount contains more precision than what is possible
-    // ie. 33.438381768448776243 USDT (USDT only supports 6 decimals places). This causes
-    // issues down the line when converting to native -> to hex -> data encoding. Best to ignore
-    // these until it's fixed.
-    if (request.quoteFor === 'to') {
-      throw new SwapCurrencyError(
-        swapInfo,
-        request.fromCurrencyCode,
-        request.toCurrencyCode
-      )
-    }
-
     const [fromAddress, toAddress] = await Promise.all([
       getAddress(request.fromWallet, request.fromCurrencyCode),
       getAddress(request.toWallet, request.toCurrencyCode)
