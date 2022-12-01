@@ -41,22 +41,9 @@ const asInitOptions = asObject({
 })
 
 const INVALID_CURRENCY_CODES: InvalidCurrencyCodes = {
-  from: {
-    ethereum: ['MATIC', 'AVAX', 'BNB', 'FTM', 'CELO'],
-    avalanche: 'allCodes',
-    binancesmartchain: 'allCodes',
-    celo: 'allCodes',
-    fantom: 'allCodes',
-    polygon: 'allCodes'
-  },
+  from: {},
   to: {
-    ethereum: ['MATIC', 'AVAX', 'BNB', 'FTM', 'CELO'],
-    avalanche: 'allCodes',
-    binancesmartchain: 'allCodes',
-    celo: 'allCodes',
-    fantom: 'allCodes',
-    polygon: 'allCodes',
-    zcash: ['ZEC'] // Was not able to validate a sapling address in the ChangeHero UI
+    zcash: ['ZEC'] // ChangeHero doesn't support sending to shielded addresses
   }
 }
 
@@ -156,8 +143,7 @@ export function makeChangeHeroPlugin(
     ])
     const { fromCurrencyCode, toCurrencyCode } = getCodes(request)
 
-    // FIXME: It's not likely ChangeHero uses our pluginIds for their chain identifiers but I'm leaving this until the API docs are updated
-    // https://api-docs.changehero.io/
+    // The chain codes are undocumented but ChangeHero uses Edge pluginIds for these values (confirmed via Slack)
     const fromMainnetCode = request.fromWallet.currencyInfo.pluginId
     const toMainnetCode = request.toWallet.currencyInfo.pluginId
 
