@@ -381,7 +381,6 @@ export function makeThorchainDaPlugin(
           approvalData = await getApprovalData({
             contractAddress: tokenProxyMap[fromWallet.currencyInfo.pluginId],
             assetAddress: sourceTokenContractAddress,
-            publicAddress: fromAddress,
             nativeAmount: nativeAmount
           })
         } else {
