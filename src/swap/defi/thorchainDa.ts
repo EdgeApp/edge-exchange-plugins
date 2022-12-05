@@ -81,7 +81,7 @@ const asCalldata = asObject({
   memo: asOptional(asString)
 })
 
-const asThorSwapQuoteResponse = asObject({
+const asThorSwapRoute = asObject({
   contract: asEither(asString, asNull),
   contractMethod: asEither(asString, asNull),
   contractInfo: asOptional(asString),
@@ -94,6 +94,10 @@ const asThorSwapQuoteResponse = asObject({
   expectedOutputUSD: asString,
   expectedOutputMaxSlippageUSD: asString,
   deadline: asOptional(asString)
+})
+
+const asThorSwapQuoteResponse = asObject({
+  routes: asArray(asThorSwapRoute)
 })
 
 const DA_VOLATILITY_SPREAD_DEFAULT = 0.03
@@ -273,7 +277,7 @@ export function makeThorchainDaPlugin(
       const inboundAddresses = asInboundAddresses(iaJson)
 
       const thorSwapJson = await thorSwapResponse.json()
-      const thorSwap = asThorSwapQuoteResponse(thorSwapJson)
+      const thorSwapQuote = asThorSwapQuoteResponse(thorSwapJson)
 
       // Check for supported chain and asset
       const inAddressObject = inboundAddresses.find(
@@ -283,6 +287,11 @@ export function makeThorchainDaPlugin(
         throw new SwapCurrencyError(swapInfo, fromCurrencyCode, toCurrencyCode)
       }
       const { router, address: thorAddress } = inAddressObject
+      const { routes } = thorSwapQuote
+      const [thorSwap] = routes
+
+      if (thorSwap == null)
+        throw new SwapCurrencyError(swapInfo, fromCurrencyCode, toCurrencyCode)
 
       const {
         providers,
@@ -290,6 +299,7 @@ export function makeThorchainDaPlugin(
         contractMethod,
         expectedOutputMaxSlippage
       } = thorSwap
+
       const calldata = asCalldata(thorSwap.calldata)
 
       if (providers.length <= 1) {
