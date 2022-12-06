@@ -1,5 +1,12 @@
 # edge-exchange-plugins
 
+## 0.16.10 (2022-12-06)
+
+- ChangeHero: Re-enable 'to' quotes
+- ChangeHero: Re-enable token swaps
+- Thorchain DA: Update cleaners
+- Deprecate FoxExchange
+
 ## 0.16.9 (2022-11-23)
 
 - Add Thorchain DEX aggregator
