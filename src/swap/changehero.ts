@@ -41,22 +41,9 @@ const asInitOptions = asObject({
 })
 
 const INVALID_CURRENCY_CODES: InvalidCurrencyCodes = {
-  from: {
-    ethereum: ['MATIC', 'AVAX', 'BNB', 'FTM', 'CELO'],
-    avalanche: 'allCodes',
-    binancesmartchain: 'allCodes',
-    celo: 'allCodes',
-    fantom: 'allCodes',
-    polygon: 'allCodes'
-  },
+  from: {},
   to: {
-    ethereum: ['MATIC', 'AVAX', 'BNB', 'FTM', 'CELO'],
-    avalanche: 'allCodes',
-    binancesmartchain: 'allCodes',
-    celo: 'allCodes',
-    fantom: 'allCodes',
-    polygon: 'allCodes',
-    zcash: ['ZEC'] // Was not able to validate a sapling address in the ChangeHero UI
+    zcash: ['ZEC'] // ChangeHero doesn't support sending to shielded addresses
   }
 }
 
@@ -150,27 +137,13 @@ export function makeChangeHeroPlugin(
   async function getFixedQuote(
     request: EdgeSwapRequest
   ): Promise<EdgeSwapQuote> {
-    // FIXME: ChangeHero's API is returning invalid send amounts when requesting a 'to' quote.
-    // The issue is the amount contains more precision than what is possible
-    // ie. 33.438381768448776243 USDT (USDT only supports 6 decimals places). This causes
-    // issues down the line when converting to native -> to hex -> data encoding. Best to ignore
-    // these until it's fixed.
-    if (request.quoteFor === 'to') {
-      throw new SwapCurrencyError(
-        swapInfo,
-        request.fromCurrencyCode,
-        request.toCurrencyCode
-      )
-    }
-
     const [fromAddress, toAddress] = await Promise.all([
       getAddress(request.fromWallet, request.fromCurrencyCode),
       getAddress(request.toWallet, request.toCurrencyCode)
     ])
     const { fromCurrencyCode, toCurrencyCode } = getCodes(request)
 
-    // FIXME: It's not likely ChangeHero uses our pluginIds for their chain identifiers but I'm leaving this until the API docs are updated
-    // https://api-docs.changehero.io/
+    // The chain codes are undocumented but ChangeHero uses Edge pluginIds for these values (confirmed via Slack)
     const fromMainnetCode = request.fromWallet.currencyInfo.pluginId
     const toMainnetCode = request.toWallet.currencyInfo.pluginId
 
@@ -197,6 +170,8 @@ export function makeChangeHeroPlugin(
       }
     }
     const fixedRateQuote = await call(fixRate)
+
+    checkReply(fixedRateQuote, request)
 
     const [
       { id: responseId, maxFrom, maxTo, minFrom, minTo }
