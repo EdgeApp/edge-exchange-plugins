@@ -5,7 +5,7 @@ import {
   EdgeSwapResult,
   EdgeTransaction
 } from 'edge-core-js/types'
-import { Contract, ethers, PopulatedTransaction } from 'ethers'
+import { BigNumber, Contract, ethers, PopulatedTransaction } from 'ethers'
 
 import { round } from '../../../util/biggystringplus'
 import { getMetaTokenAddress } from '../defiUtils'
@@ -57,7 +57,6 @@ export const getSwapTransactions = async (
     currencyCode: nativeCurrencyCode,
     metaTokens
   } = fromWallet.currencyInfo
-  const fromAddress = (await fromWallet.getReceiveAddress()).publicAddress
 
   // TODO: Use our new denom implementation to get native amounts
   const wrappedCurrencyCode = `W${nativeCurrencyCode}`
@@ -87,19 +86,12 @@ export const getSwapTransactions = async (
     contractAddress: string
   ): Promise<Array<Promise<ethers.PopulatedTransaction>>> => {
     const tokenContract = makeErc20Contract(provider, tokenAddress)
-    const allowance: ethers.BigNumber = await tokenContract.allowance(
-      fromAddress,
-      contractAddress
+    const promise = tokenContract.populateTransaction.approve(
+      contractAddress,
+      BigNumber.from(amountToSwap),
+      { gasLimit: '60000', gasPrice }
     )
-    if (allowance.sub(amountToSwap).lt(0)) {
-      const promise = tokenContract.populateTransaction.approve(
-        contractAddress,
-        ethers.constants.MaxUint256,
-        { gasLimit: '60000', gasPrice }
-      )
-      return [promise]
-    }
-    return []
+    return [promise]
   }
 
   const txPromises: Array<Promise<PopulatedTransaction>> = []
