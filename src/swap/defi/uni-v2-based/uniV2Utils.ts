@@ -81,17 +81,17 @@ export const getSwapTransactions = async (
 
   const gasPrice = await provider.getGasPrice()
 
-  const addressToApproveTxs = async (
+  const addressToApproveTx = async (
     tokenAddress: string,
     contractAddress: string
-  ): Promise<Array<Promise<ethers.PopulatedTransaction>>> => {
+  ): Promise<ethers.PopulatedTransaction> => {
     const tokenContract = makeErc20Contract(provider, tokenAddress)
     const promise = tokenContract.populateTransaction.approve(
       contractAddress,
       BigNumber.from(amountToSwap),
       { gasLimit: '60000', gasPrice }
     )
-    return [promise]
+    return await promise
   }
 
   const txPromises: Array<Promise<PopulatedTransaction>> = []
@@ -140,7 +140,7 @@ export const getSwapTransactions = async (
     else if (!isFromNativeCurrency && isToNativeCurrency) {
       txPromises.push(
         // Approve TX
-        ...(await addressToApproveTxs(path[0], router.address)),
+        addressToApproveTx(path[0], router.address),
         // Swap Tx
         router.populateTransaction.swapExactTokensForETH(
           amountToSwap,
@@ -156,7 +156,7 @@ export const getSwapTransactions = async (
     else if (!isFromNativeCurrency && !isToNativeCurrency) {
       txPromises.push(
         // Approve TX
-        ...(await addressToApproveTxs(path[0], router.address)),
+        addressToApproveTx(path[0], router.address),
         // Swap Tx
         router.populateTransaction.swapExactTokensForTokens(
           amountToSwap,
