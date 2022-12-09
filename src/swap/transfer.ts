@@ -9,6 +9,7 @@ import {
 } from 'edge-core-js/types'
 
 import { makeSwapPluginQuote } from '../swap-helpers'
+import { fixRequest } from '../util/utils'
 
 const pluginId = 'transfer'
 
@@ -28,7 +29,8 @@ export function makeTransferPlugin(
   const out: EdgeSwapPlugin = {
     swapInfo,
 
-    async fetchSwapQuote(request: EdgeSwapRequest): Promise<EdgeSwapQuote> {
+    async fetchSwapQuote(rawRequest: EdgeSwapRequest): Promise<EdgeSwapQuote> {
+      const request = fixRequest(rawRequest)
       if (
         request.fromWallet.currencyInfo.pluginId !==
           request.toWallet.currencyInfo.pluginId ||

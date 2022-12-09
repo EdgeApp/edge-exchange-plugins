@@ -34,6 +34,7 @@ import {
 import {
   fetchInfo,
   fetchWaterfall,
+  fixRequest,
   makeQueryParams,
   promiseWithTimeout
 } from '../../util/utils'
@@ -130,7 +131,8 @@ export function makeThorchainDaPlugin(
   const out: EdgeSwapPlugin = {
     swapInfo,
 
-    async fetchSwapQuote(request: EdgeSwapRequest): Promise<EdgeSwapQuote> {
+    async fetchSwapQuote(rawRequest: EdgeSwapRequest): Promise<EdgeSwapQuote> {
+      const request = fixRequest(rawRequest)
       const {
         fromCurrencyCode,
         toCurrencyCode,

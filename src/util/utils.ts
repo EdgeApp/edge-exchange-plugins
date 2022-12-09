@@ -1,9 +1,26 @@
-import { EdgeFetchFunction, EdgeFetchResponse } from 'edge-core-js'
+import {
+  EdgeFetchFunction,
+  EdgeFetchResponse,
+  EdgeSwapRequest
+} from 'edge-core-js'
 const INFO_SERVERS = ['https://info1.edge.app', 'https://info2.edge.app']
 const RATES_SERVERS = ['https://rates1.edge.app', 'https://rates2.edge.app']
 
 export interface QueryParams {
   [key: string]: string | number | boolean | null
+}
+
+export type FixedRequest = EdgeSwapRequest & {
+  fromCurrencyCode: string
+  toCurrencyCode: string
+}
+
+export function fixRequest(request: EdgeSwapRequest): FixedRequest {
+  const { fromCurrencyCode, toCurrencyCode } = request
+  if (fromCurrencyCode == null || toCurrencyCode == null) {
+    throw new Error('Expecting fromCurrencyCode and toCurrencyCode')
+  }
+  return { ...request, fromCurrencyCode, toCurrencyCode }
 }
 
 export const promiseWithTimeout = async <T>(

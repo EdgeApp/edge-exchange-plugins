@@ -20,6 +20,7 @@ import {
   InvalidCurrencyCodes,
   makeSwapPluginQuote
 } from '../swap-helpers'
+import { fixRequest } from '../util/utils'
 import { asOptionalBlank } from './changenow'
 
 const pluginId = 'letsexchange'
@@ -93,9 +94,10 @@ export function makeLetsExchangePlugin(
 
   async function call(
     url: string,
-    request: EdgeSwapRequest,
+    rawRequest: EdgeSwapRequest,
     data: { params: Object }
   ): Promise<Object> {
+    const request = fixRequest(rawRequest)
     const body = JSON.stringify(data.params)
 
     const headers = {
@@ -121,10 +123,11 @@ export function makeLetsExchangePlugin(
     swapInfo,
 
     async fetchSwapQuote(
-      request: EdgeSwapRequest,
+      rawRequest: EdgeSwapRequest,
       userSettings: Object | undefined,
       opts: { promoCode?: string }
     ): Promise<EdgeSwapQuote> {
+      const request = fixRequest(rawRequest)
       checkInvalidCodes(INVALID_CURRENCY_CODES, request, swapInfo)
       const reverseQuote = request.quoteFor === 'to'
 

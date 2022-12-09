@@ -308,6 +308,7 @@ class FakeCurrencyEngine {
 
     // TODO: Return a high-fidelity transaction
     return {
+      walletId: '',
       blockHeight: 0,
       currencyCode,
       date: defaultTx.date,
