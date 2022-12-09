@@ -1,5 +1,8 @@
 # edge-exchange-plugins
 
+## 0.16.11 (2022-12-08)
+- TombSwap: Restrict token allowances to only what is needed for each smart contract call.
+
 ## 0.16.10 (2022-12-06)
 
 - ChangeHero: Re-enable 'to' quotes
