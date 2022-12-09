@@ -10,6 +10,8 @@ import {
   SwapCurrencyError
 } from 'edge-core-js/types'
 
+import { fixRequest } from './util/utils'
+
 const likeKindAssets = [
   ['BTC', 'WBTC', 'SBTC', 'RBTC'],
   ['ETH', 'WETH'],
@@ -53,6 +55,7 @@ export function makeSwapPluginQuote(
     )
 
   const out: EdgeSwapQuote = {
+    request,
     fromNativeAmount,
     toNativeAmount,
     networkFee: {
@@ -100,12 +103,15 @@ interface AllCodes {
   toCurrencyCode: string
 }
 
-export const getCodes = (request: EdgeSwapRequest): AllCodes => ({
-  fromMainnetCode: request.fromWallet.currencyInfo.currencyCode,
-  toMainnetCode: request.toWallet.currencyInfo.currencyCode,
-  fromCurrencyCode: request.fromCurrencyCode,
-  toCurrencyCode: request.toCurrencyCode
-})
+export const getCodes = (rawRequest: EdgeSwapRequest): AllCodes => {
+  const request = fixRequest(rawRequest)
+  return {
+    fromMainnetCode: request.fromWallet.currencyInfo.currencyCode,
+    toMainnetCode: request.toWallet.currencyInfo.currencyCode,
+    fromCurrencyCode: request.fromCurrencyCode,
+    toCurrencyCode: request.toCurrencyCode
+  }
+}
 
 const getPluginIds = (
   request: EdgeSwapRequest
@@ -129,9 +135,10 @@ const defaultInvalidCodes: InvalidCurrencyCodes = {
  */
 export function checkInvalidCodes(
   invalidCodes: InvalidCurrencyCodes,
-  request: EdgeSwapRequest,
+  rawRequest: EdgeSwapRequest,
   swapInfo: EdgeSwapInfo
 ): void {
+  const request = fixRequest(rawRequest)
   const { fromPluginId, toPluginId } = getPluginIds(request)
   const {
     fromMainnetCode,

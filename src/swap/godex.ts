@@ -27,6 +27,7 @@ import {
   InvalidCurrencyCodes,
   makeSwapPluginQuote
 } from '../swap-helpers'
+import { fixRequest } from '../util/utils'
 
 const pluginId = 'godex'
 
@@ -113,9 +114,10 @@ export function makeGodexPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
 
   async function call(
     url: string,
-    request: EdgeSwapRequest,
+    rawRequest: EdgeSwapRequest,
     data: { params: JsonObject }
   ): Promise<JsonObject> {
+    const request = fixRequest(rawRequest)
     const body = JSON.stringify(data.params)
 
     const headers = {
@@ -140,10 +142,11 @@ export function makeGodexPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
     swapInfo,
 
     async fetchSwapQuote(
-      request: EdgeSwapRequest,
+      rawRequest: EdgeSwapRequest,
       userSettings: Object | undefined,
       opts: { promoCode?: string }
     ): Promise<EdgeSwapQuote> {
+      const request = fixRequest(rawRequest)
       checkInvalidCodes(INVALID_CURRENCY_CODES, request, swapInfo)
       const reverseQuote = request.quoteFor === 'to'
 

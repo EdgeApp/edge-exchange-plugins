@@ -75,7 +75,7 @@
     "buffer": "^6.0.3",
     "chai": "^4.2.0",
     "chai-as-promised": "^7.1.1",
-    "edge-core-js": "^0.19.29",
+    "edge-core-js": "^0.19.33",
     "eslint": "^7.14.0",
     "eslint-config-standard-kit": "0.15.1",
     "eslint-plugin-flowtype": "^5.2.0",

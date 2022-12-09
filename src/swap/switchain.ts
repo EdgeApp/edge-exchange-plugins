@@ -7,6 +7,8 @@ import {
   SwapCurrencyError
 } from 'edge-core-js'
 
+import { fixRequest } from '../util/utils'
+
 const pluginId = 'switchain'
 
 const swapInfo: EdgeSwapInfo = {
@@ -21,7 +23,8 @@ export function makeSwitchainPlugin(
   const out: EdgeSwapPlugin = {
     swapInfo,
 
-    async fetchSwapQuote(request: EdgeSwapRequest): Promise<EdgeSwapQuote> {
+    async fetchSwapQuote(rawRequest: EdgeSwapRequest): Promise<EdgeSwapQuote> {
+      const request = fixRequest(rawRequest)
       throw new SwapCurrencyError(
         swapInfo,
         request.fromCurrencyCode,
