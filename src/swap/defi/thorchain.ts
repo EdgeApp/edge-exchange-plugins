@@ -27,7 +27,12 @@ import {
   isLikeKind,
   makeSwapPluginQuote
 } from '../../swap-helpers'
-import { fetchInfo, fetchWaterfall, promiseWithTimeout } from '../../util/utils'
+import {
+  convertRequest,
+  fetchInfo,
+  fetchWaterfall,
+  promiseWithTimeout
+} from '../../util/utils'
 import abi from './abi/THORCHAIN_SWAP_ABI'
 import erc20Abi from './abi/UNISWAP_V2_ERC20_ABI'
 
@@ -149,7 +154,8 @@ export function makeThorchainPlugin(
   const out: EdgeSwapPlugin = {
     swapInfo,
 
-    async fetchSwapQuote(request: EdgeSwapRequest): Promise<EdgeSwapQuote> {
+    async fetchSwapQuote(req: EdgeSwapRequest): Promise<EdgeSwapQuote> {
+      const request = convertRequest(req)
       const {
         fromCurrencyCode,
         toCurrencyCode,

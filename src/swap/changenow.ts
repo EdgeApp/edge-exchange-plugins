@@ -30,6 +30,7 @@ import {
   InvalidCurrencyCodes,
   makeSwapPluginQuote
 } from '../swap-helpers'
+import { convertRequest } from '../util/utils'
 const pluginId = 'changenow'
 
 const swapInfo: EdgeSwapInfo = {
@@ -87,10 +88,11 @@ export function makeChangeNowPlugin(
     swapInfo,
 
     async fetchSwapQuote(
-      request: EdgeSwapRequest,
+      req: EdgeSwapRequest,
       userSettings: Object | undefined,
       opts: { promoCode?: string }
     ): Promise<EdgeSwapQuote> {
+      const request = convertRequest(req)
       const { promoCode } = opts
 
       checkInvalidCodes(INVALID_CURRENCY_CODES, request, swapInfo)

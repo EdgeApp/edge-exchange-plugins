@@ -10,6 +10,7 @@ import {
 } from 'edge-core-js/types'
 import { ethers } from 'ethers'
 
+import { convertRequest } from '../../../../util/utils'
 import { getInOutTokenAddresses } from '../../defiUtils'
 import { getFtmProvider, makeSpookySwapRouterContract } from '../uniV2Contracts'
 import {
@@ -39,7 +40,8 @@ export function makeSpookySwapPlugin(
 
   const out: EdgeSwapPlugin = {
     swapInfo,
-    async fetchSwapQuote(request: EdgeSwapRequest): Promise<EdgeSwapQuote> {
+    async fetchSwapQuote(req: EdgeSwapRequest): Promise<EdgeSwapQuote> {
+      const request = convertRequest(req)
       const {
         fromWallet,
         toWallet,

@@ -29,6 +29,8 @@ import {
   makeSwapPluginQuote
 } from '../swap-helpers'
 import { div18 } from '../util/biggystringplus'
+import { convertRequest } from '../util/utils'
+import { EdgeSwapRequestPlugin } from './types'
 
 const pluginId = 'swapuz'
 
@@ -82,7 +84,7 @@ export function makeSwapuzPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
   }
 
   const fetchSwapQuoteInner = async (
-    request: EdgeSwapRequest
+    request: EdgeSwapRequestPlugin
   ): Promise<EdgeSwapQuote> => {
     const { fromWallet, toWallet, nativeAmount } = request
 
@@ -232,7 +234,8 @@ export function makeSwapuzPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
   const out: EdgeSwapPlugin = {
     swapInfo,
 
-    async fetchSwapQuote(requestTop: EdgeSwapRequest): Promise<EdgeSwapQuote> {
+    async fetchSwapQuote(req: EdgeSwapRequest): Promise<EdgeSwapQuote> {
+      const requestTop = convertRequest(req)
       const {
         fromCurrencyCode,
         toWallet,
