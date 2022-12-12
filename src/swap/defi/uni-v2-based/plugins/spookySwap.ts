@@ -11,7 +11,11 @@ import {
 import { ethers } from 'ethers'
 
 import { getInOutTokenAddresses } from '../../defiUtils'
-import { getFtmProvider, makeSpookySwapRouterContract } from '../uniV2Contracts'
+import {
+  getEvmProvider,
+  makeSpookySwapRouterContract,
+  WFTM_TOKEN_ADDRESS
+} from '../uniV2Contracts'
 import {
   getSwapAmounts,
   getSwapTransactions,
@@ -35,7 +39,7 @@ export function makeSpookySwapPlugin(
   opts: EdgeCorePluginOptions
 ): EdgeSwapPlugin {
   const { quiknodeApiKey } = asInitOptions(opts.initOptions)
-  const provider = getFtmProvider(quiknodeApiKey)
+  const provider = getEvmProvider(swapInfo.pluginId, quiknodeApiKey)
 
   const out: EdgeSwapPlugin = {
     swapInfo,
@@ -92,7 +96,8 @@ export function makeSpookySwapPlugin(
         expectedAmountOut,
         toAddress,
         SLIPPAGE,
-        deadline
+        deadline,
+        WFTM_TOKEN_ADDRESS
       )
 
       const pluginId = swapInfo.pluginId

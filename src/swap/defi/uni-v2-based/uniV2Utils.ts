@@ -9,7 +9,7 @@ import { BigNumber, Contract, ethers, PopulatedTransaction } from 'ethers'
 
 import { round } from '../../../util/biggystringplus'
 import { getMetaTokenAddress } from '../defiUtils'
-import { makeErc20Contract, makeWrappedFtmContract } from './uniV2Contracts'
+import { makeErc20Contract, makeWethContract } from './uniV2Contracts'
 /**
  * Get the output swap amounts based on the requested input amount.
  * Call the router contract to calculate amounts and check if the swap path is
@@ -50,7 +50,8 @@ export const getSwapTransactions = async (
   expectedAmountOut: string,
   toAddress: string,
   slippage: string,
-  deadline: number
+  deadline: number,
+  wethAddress: string
 ): Promise<PopulatedTransaction[]> => {
   const { fromWallet, fromCurrencyCode, toCurrencyCode } = swapRequest
   const {
@@ -100,7 +101,7 @@ export const getSwapTransactions = async (
   if (isFromNativeCurrency && isToWrappedCurrency) {
     txPromises.push(
       ...[
-        makeWrappedFtmContract(provider).populateTransaction.deposit({
+        makeWethContract(provider, wethAddress).populateTransaction.deposit({
           gasLimit: '51000',
           gasPrice,
           value: amountToSwap
@@ -112,7 +113,7 @@ export const getSwapTransactions = async (
   else if (isFromWrappedCurrency && isToNativeCurrency) {
     txPromises.push(
       // Deposit Tx
-      makeWrappedFtmContract(provider).populateTransaction.withdraw(
+      makeWethContract(provider, wethAddress).populateTransaction.withdraw(
         amountToSwap,
         {
           gasLimit: '51000',

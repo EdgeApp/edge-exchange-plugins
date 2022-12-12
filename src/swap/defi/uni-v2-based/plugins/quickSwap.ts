@@ -1,4 +1,3 @@
-import { asObject, asOptional, asString } from 'cleaners'
 import {
   EdgeCorePluginOptions,
   EdgeSpendInfo,
@@ -13,8 +12,8 @@ import { ethers } from 'ethers'
 import { getInOutTokenAddresses } from '../../defiUtils'
 import {
   getEvmProvider,
-  makeTombSwapRouterContract,
-  WFTM_TOKEN_ADDRESS
+  makeQuickswapRouterContract,
+  WMATIC_TOKEN_ADDRESS
 } from '../uniV2Contracts'
 import {
   getSwapAmounts,
@@ -23,23 +22,18 @@ import {
 } from '../uniV2Utils'
 
 const swapInfo: EdgeSwapInfo = {
-  pluginId: 'tombSwap',
-  displayName: 'TombSwap',
+  pluginId: 'quickSwap',
+  displayName: 'QuickSwap',
   supportEmail: 'support@edge.app'
 }
 
-const asInitOptions = asObject({
-  quiknodeApiKey: asOptional(asString)
-})
-
-const EXPIRATION_MS = 1000 * 60
+const EXPIRATION_MS = 5000 * 60
 const SLIPPAGE = '0.05'
 
-export function makeTombSwapPlugin(
+export function makeQuickSwapPlugin(
   opts: EdgeCorePluginOptions
 ): EdgeSwapPlugin {
-  const { quiknodeApiKey } = asInitOptions(opts.initOptions)
-  const provider = getEvmProvider(swapInfo.pluginId, quiknodeApiKey)
+  const provider = getEvmProvider(swapInfo.pluginId)
 
   const out: EdgeSwapPlugin = {
     swapInfo,
@@ -72,9 +66,9 @@ export function makeTombSwapPlugin(
       )
 
       // Calculate swap amounts
-      const tombSwapRouter = makeTombSwapRouterContract(provider)
+      const quickswapRouter = makeQuickswapRouterContract(provider)
       const { amountToSwap, expectedAmountOut } = await getSwapAmounts(
-        tombSwapRouter,
+        quickswapRouter,
         quoteFor,
         request.nativeAmount,
         fromTokenAddress,
@@ -89,13 +83,13 @@ export function makeTombSwapPlugin(
       const swapTxs = await getSwapTransactions(
         provider,
         request,
-        tombSwapRouter,
+        quickswapRouter,
         amountToSwap,
         expectedAmountOut,
         toAddress,
         SLIPPAGE,
         deadline,
-        WFTM_TOKEN_ADDRESS
+        WMATIC_TOKEN_ADDRESS
       )
 
       const fromAddress = (await fromWallet.getReceiveAddress()).publicAddress
