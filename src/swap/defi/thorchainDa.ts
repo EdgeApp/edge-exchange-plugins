@@ -32,6 +32,7 @@ import {
   makeSwapPluginQuote
 } from '../../swap-helpers'
 import {
+  convertRequest,
   fetchInfo,
   fetchWaterfall,
   makeQueryParams,
@@ -130,7 +131,8 @@ export function makeThorchainDaPlugin(
   const out: EdgeSwapPlugin = {
     swapInfo,
 
-    async fetchSwapQuote(request: EdgeSwapRequest): Promise<EdgeSwapQuote> {
+    async fetchSwapQuote(req: EdgeSwapRequest): Promise<EdgeSwapQuote> {
+      const request = convertRequest(req)
       const {
         fromCurrencyCode,
         toCurrencyCode,

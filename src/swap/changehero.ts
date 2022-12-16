@@ -27,6 +27,8 @@ import {
   InvalidCurrencyCodes,
   makeSwapPluginQuote
 } from '../swap-helpers'
+import { convertRequest } from '../util/utils'
+import { EdgeSwapRequestPlugin } from './types'
 
 const pluginId = 'changehero'
 
@@ -96,7 +98,7 @@ async function getAddress(
 
 function checkReply(
   reply: { error?: { code?: number; message?: string } },
-  request: EdgeSwapRequest
+  request: EdgeSwapRequestPlugin
 ): void {
   if (reply.error != null) {
     if (
@@ -135,7 +137,7 @@ export function makeChangeHeroPlugin(
   }
 
   async function getFixedQuote(
-    request: EdgeSwapRequest
+    request: EdgeSwapRequestPlugin
   ): Promise<EdgeSwapQuote> {
     const [fromAddress, toAddress] = await Promise.all([
       getAddress(request.fromWallet, request.fromCurrencyCode),
@@ -299,7 +301,8 @@ export function makeChangeHeroPlugin(
 
   const out: EdgeSwapPlugin = {
     swapInfo,
-    async fetchSwapQuote(request: EdgeSwapRequest): Promise<EdgeSwapQuote> {
+    async fetchSwapQuote(req: EdgeSwapRequest): Promise<EdgeSwapQuote> {
+      const request = convertRequest(req)
       checkInvalidCodes(INVALID_CURRENCY_CODES, request, swapInfo)
       return await getFixedQuote(request)
     }

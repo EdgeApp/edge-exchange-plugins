@@ -1,4 +1,10 @@
-import { EdgeFetchFunction, EdgeFetchResponse } from 'edge-core-js'
+import {
+  EdgeFetchFunction,
+  EdgeFetchResponse,
+  EdgeSwapRequest
+} from 'edge-core-js'
+
+import { EdgeSwapRequestPlugin } from '../swap/types'
 const INFO_SERVERS = ['https://info1.edge.app', 'https://info2.edge.app']
 const RATES_SERVERS = ['https://rates1.edge.app', 'https://rates2.edge.app']
 
@@ -154,4 +160,14 @@ export const makeQueryParams = (params: QueryParams): string => {
       return value == null ? key : `${key}=${encodeURIComponent(value)}`
     })
     .join('&')
+}
+
+export const convertRequest = (
+  request: EdgeSwapRequest
+): EdgeSwapRequestPlugin => {
+  if (request.fromCurrencyCode == null || request.toCurrencyCode == null) {
+    throw new Error('Missing request fields')
+  }
+  const out: any = request
+  return out
 }

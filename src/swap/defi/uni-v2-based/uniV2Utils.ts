@@ -8,6 +8,7 @@ import {
 import { BigNumber, Contract, ethers, PopulatedTransaction } from 'ethers'
 
 import { round } from '../../../util/biggystringplus'
+import { EdgeSwapRequestPlugin } from '../../types'
 import { getMetaTokenAddress } from '../defiUtils'
 import { makeErc20Contract, makeWrappedFtmContract } from './uniV2Contracts'
 /**
@@ -44,7 +45,7 @@ export const getSwapAmounts = async (
  */
 export const getSwapTransactions = async (
   provider: ethers.providers.Provider,
-  swapRequest: EdgeSwapRequest,
+  swapRequest: EdgeSwapRequestPlugin,
   router: Contract,
   amountToSwap: string,
   expectedAmountOut: string,
@@ -192,6 +193,7 @@ export function makeUniV2EdgeSwapQuote(
   const swapTx = txs[txs.length - 1]
 
   const out: EdgeSwapQuote = {
+    request,
     fromNativeAmount,
     toNativeAmount,
     networkFee: {

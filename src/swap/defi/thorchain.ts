@@ -27,7 +27,12 @@ import {
   isLikeKind,
   makeSwapPluginQuote
 } from '../../swap-helpers'
-import { fetchInfo, fetchWaterfall, promiseWithTimeout } from '../../util/utils'
+import {
+  convertRequest,
+  fetchInfo,
+  fetchWaterfall,
+  promiseWithTimeout
+} from '../../util/utils'
 import abi from './abi/THORCHAIN_SWAP_ABI'
 import erc20Abi from './abi/UNISWAP_V2_ERC20_ABI'
 
@@ -46,13 +51,56 @@ const asInitOptions = asObject({
 export const MIDGARD_SERVERS_DEFAULT = ['https://midgard.thorchain.info']
 export const EXPIRATION_MS = 1000 * 60
 export const DIVIDE_PRECISION = 16
-export const VOLATILITY_SPREAD_DEFAULT = 0.01
-export const LIKE_KIND_VOLATILITY_SPREAD_DEFAULT = 0.0025
 export const EXCHANGE_INFO_UPDATE_FREQ_MS = 60000
 export const EVM_SEND_GAS = '80000'
 export const EVM_TOKEN_SEND_GAS = '80000'
 export const MIN_USD_SWAP = '30'
 export const THOR_LIMIT_UNITS = '100000000'
+
+// ----------------------------------------------------------------------------
+// Volatility spread logic
+//
+// BTC/BCH have 10 min block times which can lead to more volatility
+// so set them at the highest volatility of 1.5%
+//
+// LTC/DOGE have ~2min block time creating medium volatility so set to 1%
+// Remaining chains are faster EVM chains so use the default 0.75% for most
+// assets and 0.5% for like-kind assets
+//
+// These are all defaults and can be changed via the info server
+// ----------------------------------------------------------------------------
+export const VOLATILITY_SPREAD_DEFAULT = 0.0075
+export const LIKE_KIND_VOLATILITY_SPREAD_DEFAULT = 0.005
+export const PER_ASSET_SPREAD_DEFAULT: AssetSpread[] = [
+  {
+    sourcePluginId: 'bitcoin',
+    volatilitySpread: 0.015,
+    sourceTokenId: undefined,
+    destPluginId: undefined,
+    destTokenId: undefined
+  },
+  {
+    sourcePluginId: 'bitcoincash',
+    volatilitySpread: 0.015,
+    sourceTokenId: undefined,
+    destPluginId: undefined,
+    destTokenId: undefined
+  },
+  {
+    sourcePluginId: 'dogecoin',
+    volatilitySpread: 0.01,
+    sourceTokenId: undefined,
+    destPluginId: undefined,
+    destTokenId: undefined
+  },
+  {
+    sourcePluginId: 'litecoin',
+    volatilitySpread: 0.01,
+    sourceTokenId: undefined,
+    destPluginId: undefined,
+    destTokenId: undefined
+  }
+]
 
 export const INVALID_CURRENCY_CODES: InvalidCurrencyCodes = {
   from: {},
@@ -110,10 +158,19 @@ export const asPool = asObject({
   runeDepth: asString
 })
 
+export const asAssetSpread = asObject({
+  sourcePluginId: asOptional(asString),
+  sourceTokenId: asOptional(asString),
+  destPluginId: asOptional(asString),
+  destTokenId: asOptional(asString),
+  volatilitySpread: asNumber
+})
+
 export const asExchangeInfo = asObject({
   swap: asObject({
     plugins: asObject({
       thorchain: asObject({
+        perAssetSpread: asArray(asAssetSpread),
         volatilitySpread: asNumber,
         likeKindVolatilitySpread: asNumber,
         daVolatilitySpread: asNumber,
@@ -127,6 +184,7 @@ export const asExchangeInfo = asObject({
 
 const asPools = asArray(asPool)
 
+type AssetSpread = ReturnType<typeof asAssetSpread>
 type Pool = ReturnType<typeof asPool>
 type ExchangeInfo = ReturnType<typeof asExchangeInfo>
 type MinAmount = ReturnType<typeof asMinAmount>
@@ -149,10 +207,13 @@ export function makeThorchainPlugin(
   const out: EdgeSwapPlugin = {
     swapInfo,
 
-    async fetchSwapQuote(request: EdgeSwapRequest): Promise<EdgeSwapQuote> {
+    async fetchSwapQuote(req: EdgeSwapRequest): Promise<EdgeSwapQuote> {
+      const request = convertRequest(req)
       const {
         fromCurrencyCode,
+        fromTokenId,
         toCurrencyCode,
+        toTokenId,
         nativeAmount,
         fromWallet,
         toWallet,
@@ -165,11 +226,11 @@ export function makeThorchainPlugin(
       ) {
         throw new SwapCurrencyError(swapInfo, fromCurrencyCode, toCurrencyCode)
       }
-      const likeKind = isLikeKind(fromCurrencyCode, toCurrencyCode)
 
       let midgardServers: string[] = MIDGARD_SERVERS_DEFAULT
       let likeKindVolatilitySpread: number = LIKE_KIND_VOLATILITY_SPREAD_DEFAULT
       let volatilitySpread: number = VOLATILITY_SPREAD_DEFAULT
+      let perAssetSpread: AssetSpread[] = PER_ASSET_SPREAD_DEFAULT
 
       checkInvalidCodes(INVALID_CURRENCY_CODES, request, swapInfo)
 
@@ -211,15 +272,27 @@ export function makeThorchainPlugin(
       }
 
       if (exchangeInfo != null) {
+        const { thorchain } = exchangeInfo.swap.plugins
         likeKindVolatilitySpread =
           exchangeInfo.swap.plugins.thorchain.likeKindVolatilitySpread
-        volatilitySpread = exchangeInfo.swap.plugins.thorchain.volatilitySpread
-        midgardServers = exchangeInfo.swap.plugins.thorchain.midgardServers
+        volatilitySpread = thorchain.volatilitySpread
+        midgardServers = thorchain.midgardServers
+        perAssetSpread = thorchain.perAssetSpread
       }
 
-      const volatilitySpreadFinal = likeKind
-        ? likeKindVolatilitySpread.toString()
-        : volatilitySpread.toString()
+      const volatilitySpreadFinal = getVolatilitySpread({
+        fromPluginId: fromWallet.currencyInfo.pluginId,
+        fromTokenId,
+        fromCurrencyCode,
+        toPluginId: toWallet.currencyInfo.pluginId,
+        toTokenId,
+        toCurrencyCode,
+        likeKindVolatilitySpread,
+        volatilitySpread,
+        perAssetSpread
+      })
+
+      log.warn(`getVolatilitySpread: ${volatilitySpreadFinal.toString()}`)
 
       // Get current pool
       const [iaResponse, poolResponse] = await Promise.all([
@@ -954,4 +1027,54 @@ const convertChainAmountToAsset = (
   const destRate = destPool.assetPrice
   const out = div(mul(amount, sourceRate), destRate, DIVIDE_PRECISION)
   return out
+}
+
+export const getVolatilitySpread = ({
+  fromPluginId,
+  fromTokenId,
+  fromCurrencyCode,
+  toPluginId,
+  toTokenId,
+  toCurrencyCode,
+  likeKindVolatilitySpread,
+  volatilitySpread,
+  perAssetSpread
+}: {
+  fromPluginId: string
+  fromTokenId?: string
+  fromCurrencyCode: string
+  toPluginId: string
+  toTokenId?: string
+  toCurrencyCode: string
+  likeKindVolatilitySpread: number
+  volatilitySpread: number
+  perAssetSpread: AssetSpread[]
+}): string => {
+  let volatilitySpreadFinal: number | undefined
+
+  for (const spread of perAssetSpread) {
+    const {
+      sourcePluginId,
+      sourceTokenId,
+      destPluginId,
+      destTokenId,
+      volatilitySpread
+    } = spread
+    if (sourcePluginId != null && sourcePluginId !== fromPluginId) continue
+    if (sourceTokenId != null && sourceTokenId !== fromTokenId) continue
+    if (destPluginId != null && destPluginId !== toPluginId) continue
+    if (destTokenId != null && destTokenId !== toTokenId) continue
+    volatilitySpreadFinal = volatilitySpread
+    break
+  }
+
+  if (volatilitySpreadFinal == null) {
+    const likeKind = isLikeKind(fromCurrencyCode, toCurrencyCode)
+
+    volatilitySpreadFinal = likeKind
+      ? likeKindVolatilitySpread
+      : volatilitySpread
+  }
+
+  return volatilitySpreadFinal.toString()
 }

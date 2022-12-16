@@ -19,6 +19,8 @@ import {
   InvalidCurrencyCodes,
   makeSwapPluginQuote
 } from '../swap-helpers'
+import { convertRequest } from '../util/utils'
+import { EdgeSwapRequestPlugin } from './types'
 
 const pluginId = 'exolix'
 
@@ -113,9 +115,11 @@ export function makeExolixPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
   const out: EdgeSwapPlugin = {
     swapInfo,
     async fetchSwapQuote(
-      request: EdgeSwapRequest,
+      req: EdgeSwapRequest,
       userSettings: Object | undefined
     ): Promise<EdgeSwapQuote> {
+      const request = convertRequest(req)
+
       checkInvalidCodes(INVALID_CURRENCY_CODES, request, swapInfo)
 
       const fixedPromise = getFixedQuote(request, userSettings)
@@ -126,7 +130,7 @@ export function makeExolixPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
   }
 
   const getFixedQuote = async (
-    request: EdgeSwapRequest,
+    request: EdgeSwapRequestPlugin,
     _userSettings: Object | undefined
   ): Promise<EdgeSwapQuote> => {
     const [fromAddress, toAddress] = await Promise.all([

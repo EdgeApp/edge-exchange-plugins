@@ -20,6 +20,8 @@ import {
   getCodesWithTranscription,
   makeSwapPluginQuote
 } from '../swap-helpers'
+import { convertRequest } from '../util/utils'
+import { EdgeSwapRequestPlugin } from './types'
 
 const MAINNET_CODE_TRANSCRIPTION = {
   zcash: 'shielded',
@@ -45,7 +47,7 @@ async function getAddress(
 
 async function checkQuoteError(
   rate: Rate,
-  request: EdgeSwapRequest,
+  request: EdgeSwapRequestPlugin,
   quoteErrorMessage: string
 ): Promise<void> {
   const { fromCurrencyCode, fromWallet, toCurrencyCode } = request
@@ -120,9 +122,9 @@ const createSideshiftApi = (
 }
 
 const createFetchSwapQuote = (api: SideshiftApi, affiliateId: string) =>
-  async function fetchSwapQuote(
-    request: EdgeSwapRequest
-  ): Promise<EdgeSwapQuote> {
+  async function fetchSwapQuote(req: EdgeSwapRequest): Promise<EdgeSwapQuote> {
+    const request = convertRequest(req)
+
     const [refundAddress, settleAddress] = await Promise.all([
       getAddress(request.fromWallet, request.fromCurrencyCode),
       getAddress(request.toWallet, request.toCurrencyCode)
