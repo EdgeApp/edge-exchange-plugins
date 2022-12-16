@@ -174,7 +174,6 @@ export function makeThorchainPlugin(
       checkInvalidCodes(INVALID_CURRENCY_CODES, request, swapInfo)
 
       // Grab addresses:
-      const fromAddress = await getAddress(fromWallet, fromCurrencyCode)
       const toAddress = await getAddress(toWallet, toCurrencyCode)
 
       const fromMainnetCode =
@@ -386,7 +385,6 @@ export function makeThorchainPlugin(
           approvalData = await getApprovalData({
             contractAddress: router,
             assetAddress: sourceTokenContractAddress,
-            publicAddress: fromAddress,
             nativeAmount: fromNativeAmount
           })
         } else {
@@ -748,40 +746,25 @@ const getCheckSumAddress = (assetAddress: string): string => {
 export const getApprovalData = async (params: {
   contractAddress: string
   assetAddress: string
-  publicAddress: string
   nativeAmount: string
 }): Promise<string | undefined> => {
-  const { contractAddress, assetAddress, publicAddress, nativeAmount } = params
+  const { contractAddress, assetAddress, nativeAmount } = params
   const contract = new ethers.Contract(
     assetAddress,
     erc20Abi,
     ethers.providers.getDefaultProvider()
   )
 
-  let allowance
-  try {
-    allowance = await // promiseWithTimeout(
-    contract.allowance(publicAddress, contractAddress)
-    // )
-  } catch (e) {
-    // If we fail to get an allowance, just send an approval
-  }
-
   const bnNativeAmount = ethers.BigNumber.from(nativeAmount)
-
-  if (allowance == null || allowance.sub(bnNativeAmount).gte(0) === false) {
-    try {
-      const approveTx = await contract.populateTransaction.approve(
-        contractAddress,
-        ethers.constants.MaxUint256,
-        {
-          gasLimit: '500000',
-          gasPrice: '20'
-        }
-      )
-      return approveTx.data
-    } catch (e) {}
-  }
+  const approveTx = await contract.populateTransaction.approve(
+    contractAddress,
+    bnNativeAmount,
+    {
+      gasLimit: '500000',
+      gasPrice: '20'
+    }
+  )
+  return approveTx.data
 }
 
 export const getEvmTokenData = async (params: {
