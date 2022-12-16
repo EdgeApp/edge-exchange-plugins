@@ -1,6 +1,13 @@
 # edge-exchange-plugins
 
+## 0.16.12 (2022-12-16)
+
+- Change: Limit Thorchain token approvals to amount needed for deposit
+- Change: Add ability to tweak Thorchain volatility % based on asset pair via info server
+- Upgrade edge-core-js -> 0.19.33
+
 ## 0.16.11 (2022-12-08)
+
 - TombSwap: Restrict token allowances to only what is needed for each smart contract call.
 
 ## 0.16.10 (2022-12-06)
