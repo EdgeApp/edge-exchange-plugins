@@ -1,5 +1,13 @@
 import { lt } from 'biggystring'
-import { asEither, asNull, asObject, asOptional, asString } from 'cleaners'
+import {
+  asArray,
+  asEither,
+  asMaybe,
+  asNull,
+  asObject,
+  asOptional,
+  asString
+} from 'cleaners'
 import {
   EdgeCorePluginOptions,
   EdgeCurrencyWallet,
@@ -41,7 +49,21 @@ const uri = 'https://api.godex.io/api/v1/'
 const expirationMs = 1000 * 60
 
 const asApiInfo = asObject({
-  min_amount: asNumberString
+  min_amount: asNumberString,
+  networks_from: asMaybe(
+    asArray(
+      asObject({
+        network: asString
+      })
+    )
+  ),
+  networks_to: asMaybe(
+    asArray(
+      asObject({
+        network: asString
+      })
+    )
+  )
 })
 
 const asQuoteInfo = asObject({
@@ -144,6 +166,11 @@ export function makeGodexPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
         getAddress(request.toWallet, request.toCurrencyCode)
       ])
 
+      const { fromMainnetCode, toMainnetCode } = getCodesWithTranscription(
+        request,
+        MAINNET_CODE_TRANSCRIPTION
+      )
+
       // Convert the native amount to a denomination:
       const quoteAmount =
         request.quoteFor === 'from'
@@ -178,6 +205,21 @@ export function makeGodexPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
       })
       const reply = asApiInfo(response)
 
+      // Check the networks. Networks aren't present for disabled assets.
+      if (
+        reply.networks_from?.find(
+          network => network.network === fromMainnetCode
+        ) == null ||
+        reply.networks_to?.find(network => network.network === toMainnetCode) ==
+          null
+      ) {
+        throw new SwapCurrencyError(
+          swapInfo,
+          request.fromCurrencyCode,
+          request.toCurrencyCode
+        )
+      }
+
       // Check the minimum:
       const nativeMin = reverseQuote
         ? await request.toWallet.denominationToNative(
@@ -198,10 +240,6 @@ export function makeGodexPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
       }
 
       const { promoCode } = opts
-      const { fromMainnetCode, toMainnetCode } = getCodesWithTranscription(
-        request,
-        MAINNET_CODE_TRANSCRIPTION
-      )
 
       endpoint = reverseQuote ? 'transaction-revert' : 'transaction'
       const sendReply = await call(
