@@ -18,7 +18,8 @@ import {
 import {
   ensureInFuture,
   getCodesWithTranscription,
-  makeSwapPluginQuote
+  makeSwapPluginQuote,
+  SwapOrder
 } from '../swap-helpers'
 import { convertRequest } from '../util/utils'
 import { EdgeSwapRequestPlugin } from './types'
@@ -137,117 +138,124 @@ const createFetchSwapQuote = (api: SideshiftApi, affiliateId: string) =>
       toMainnetCode
     } = getCodesWithTranscription(request, MAINNET_CODE_TRANSCRIPTION)
 
-    const rate = asRate(
-      await api.get<typeof asRate>(
-        `/pair/${fromCurrencyCode}-${fromMainnetCode}/${toCurrencyCode}-${toMainnetCode}`
+    const fetchSwapQuoteInner = async (): Promise<SwapOrder> => {
+      const rate = asRate(
+        await api.get<typeof asRate>(
+          `/pair/${fromCurrencyCode}-${fromMainnetCode}/${toCurrencyCode}-${toMainnetCode}`
+        )
       )
-    )
 
-    if ('error' in rate) {
-      throw new SwapCurrencyError(
-        swapInfo,
-        request.fromCurrencyCode,
+      if ('error' in rate) {
+        throw new SwapCurrencyError(
+          swapInfo,
+          request.fromCurrencyCode,
+          request.toCurrencyCode
+        )
+      }
+
+      const permissions = asPermissions(
+        await api.get<typeof asPermissions>('/permissions')
+      )
+
+      if (!permissions.createShift) {
+        throw new SwapPermissionError(swapInfo, 'geoRestriction')
+      }
+
+      const quoteAmount = await (request.quoteFor === 'from'
+        ? request.fromWallet.nativeToDenomination(
+            request.nativeAmount,
+            request.fromCurrencyCode
+          )
+        : request.toWallet.nativeToDenomination(
+            request.nativeAmount,
+            request.toCurrencyCode
+          ))
+
+      const fixedQuoteRequest = asFixedQuoteRequest({
+        depositCoin: fromCurrencyCode,
+        depositNetwork: fromMainnetCode,
+        settleCoin: toCurrencyCode,
+        settleNetwork: toMainnetCode,
+        depositAmount: request.quoteFor === 'from' ? quoteAmount : undefined,
+        settleAmount: request.quoteFor === 'to' ? quoteAmount : undefined,
+        affiliateId
+      })
+
+      const fixedQuote = asFixedQuote(
+        await api.post<typeof asFixedQuote>('/quotes', fixedQuoteRequest)
+      )
+
+      if ('error' in fixedQuote) {
+        await checkQuoteError(rate, request, fixedQuote.error.message)
+        throw new Error(`SideShift.ai error ${fixedQuote.error.message}`)
+      }
+
+      const shiftRequest = asShiftRequest({
+        quoteId: fixedQuote.id,
+        affiliateId,
+        settleAddress,
+        refundAddress
+      })
+
+      const order = asOrder(
+        await api.post<typeof asOrder>('/shifts/fixed', shiftRequest)
+      )
+
+      if ('error' in order) {
+        await checkQuoteError(rate, request, order.error.message)
+        throw new Error(`SideShift.ai error ${order.error.message}`)
+      }
+
+      const amountExpectedFromNative = await request.fromWallet.denominationToNative(
+        order.depositAmount,
+        request.fromCurrencyCode
+      )
+
+      const amountExpectedToNative = await request.toWallet.denominationToNative(
+        order.settleAmount,
         request.toCurrencyCode
       )
-    }
 
-    const permissions = asPermissions(
-      await api.get<typeof asPermissions>('/permissions')
-    )
+      const isEstimate = false
 
-    if (!permissions.createShift) {
-      throw new SwapPermissionError(swapInfo, 'geoRestriction')
-    }
-
-    const quoteAmount = await (request.quoteFor === 'from'
-      ? request.fromWallet.nativeToDenomination(
-          request.nativeAmount,
-          request.fromCurrencyCode
-        )
-      : request.toWallet.nativeToDenomination(
-          request.nativeAmount,
-          request.toCurrencyCode
-        ))
-
-    const fixedQuoteRequest = asFixedQuoteRequest({
-      depositCoin: fromCurrencyCode,
-      depositNetwork: fromMainnetCode,
-      settleCoin: toCurrencyCode,
-      settleNetwork: toMainnetCode,
-      depositAmount: request.quoteFor === 'from' ? quoteAmount : undefined,
-      settleAmount: request.quoteFor === 'to' ? quoteAmount : undefined,
-      affiliateId
-    })
-
-    const fixedQuote = asFixedQuote(
-      await api.post<typeof asFixedQuote>('/quotes', fixedQuoteRequest)
-    )
-
-    if ('error' in fixedQuote) {
-      await checkQuoteError(rate, request, fixedQuote.error.message)
-      throw new Error(`SideShift.ai error ${fixedQuote.error.message}`)
-    }
-
-    const shiftRequest = asShiftRequest({
-      quoteId: fixedQuote.id,
-      affiliateId,
-      settleAddress,
-      refundAddress
-    })
-
-    const order = asOrder(
-      await api.post<typeof asOrder>('/shifts/fixed', shiftRequest)
-    )
-
-    if ('error' in order) {
-      await checkQuoteError(rate, request, order.error.message)
-      throw new Error(`SideShift.ai error ${order.error.message}`)
-    }
-
-    const amountExpectedFromNative = await request.fromWallet.denominationToNative(
-      order.depositAmount,
-      request.fromCurrencyCode
-    )
-
-    const amountExpectedToNative = await request.toWallet.denominationToNative(
-      order.settleAmount,
-      request.toCurrencyCode
-    )
-
-    const isEstimate = false
-
-    const spendInfo: EdgeSpendInfo = {
-      currencyCode: request.fromCurrencyCode,
-      spendTargets: [
-        {
-          nativeAmount: amountExpectedFromNative,
-          publicAddress: order.depositAddress,
-          uniqueIdentifier: order.depositMemo
+      const spendInfo: EdgeSpendInfo = {
+        currencyCode: request.fromCurrencyCode,
+        spendTargets: [
+          {
+            nativeAmount: amountExpectedFromNative,
+            publicAddress: order.depositAddress,
+            uniqueIdentifier: order.depositMemo
+          }
+        ],
+        networkFeeOption:
+          request.fromCurrencyCode.toUpperCase() === 'BTC'
+            ? 'high'
+            : 'standard',
+        swapData: {
+          orderId: order.id,
+          orderUri: ORDER_STATUS_URL + order.id,
+          isEstimate,
+          payoutAddress: settleAddress,
+          payoutCurrencyCode: request.toCurrencyCode,
+          payoutNativeAmount: amountExpectedToNative,
+          payoutWalletId: request.toWallet.id,
+          plugin: { ...swapInfo },
+          refundAddress
         }
-      ],
-      networkFeeOption:
-        request.fromCurrencyCode.toUpperCase() === 'BTC' ? 'high' : 'standard',
-      swapData: {
-        orderId: order.id,
-        orderUri: ORDER_STATUS_URL + order.id,
-        isEstimate,
-        payoutAddress: settleAddress,
-        payoutCurrencyCode: request.toCurrencyCode,
-        payoutNativeAmount: amountExpectedToNative,
-        payoutWalletId: request.toWallet.id,
-        plugin: { ...swapInfo },
-        refundAddress
       }
+
+      const orderQuote = {
+        request,
+        spendInfo,
+        pluginId,
+        expirationDate: ensureInFuture(new Date(order.expiresAt))
+      }
+
+      return orderQuote
     }
 
-    const orderQuote = {
-      request,
-      spendInfo,
-      pluginId,
-      expirationDate: ensureInFuture(new Date(order.expiresAt))
-    }
-
-    return await makeSwapPluginQuote(orderQuote)
+    const swapOrder = await fetchSwapQuoteInner()
+    return await makeSwapPluginQuote(swapOrder)
   }
 
 export function makeSideshiftPlugin(

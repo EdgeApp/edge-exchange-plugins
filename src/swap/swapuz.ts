@@ -25,7 +25,8 @@ import {
   getCodesWithTranscription,
   InvalidCurrencyCodes,
   isLikeKind,
-  makeSwapPluginQuote
+  makeSwapPluginQuote,
+  SwapOrder
 } from '../swap-helpers'
 import { div18 } from '../util/biggystringplus'
 import { convertRequest } from '../util/utils'
@@ -85,7 +86,7 @@ export function makeSwapuzPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
   const fetchSwapQuoteInner = async (
     request: EdgeSwapRequestPlugin
   ): Promise<EdgeSwapQuote> => {
-    const { fromWallet, toWallet, nativeAmount } = request
+    const { fromWallet, toWallet } = request
 
     checkInvalidCodes(INVALID_CURRENCY_CODES, request, swapInfo)
 
@@ -102,12 +103,14 @@ export function makeSwapuzPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
       toMainnetCode
     } = getCodesWithTranscription(request, MAINNET_CODE_TRANSCRIPTION)
 
-    const largeDenomAmount = await fromWallet.nativeToDenomination(
-      nativeAmount,
-      fromCurrencyCode
-    )
+    const getQuote = async (mode: 'fix' | 'float'): Promise<SwapOrder> => {
+      const { nativeAmount } = request
 
-    const getQuote = async (mode: 'fix' | 'float'): Promise<EdgeSwapQuote> => {
+      const largeDenomAmount = await fromWallet.nativeToDenomination(
+        nativeAmount,
+        fromCurrencyCode
+      )
+
       const getRateResponse = await fetch(
         uri +
           `rate/?mode=${mode}&amount=${largeDenomAmount}&from=${fromCurrencyCode}&to=${toCurrencyCode}&fromNetwork=${fromMainnetCode}&toNetwork=${toMainnetCode}`,
@@ -209,15 +212,17 @@ export function makeSwapuzPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
         expirationDate: ensureInFuture(finishPayment)
       }
 
-      return await makeSwapPluginQuote(order)
+      return order
     }
 
     // Try them all
     try {
-      return await getQuote('fix')
+      const swapOrder = await getQuote('fix')
+      return await makeSwapPluginQuote(swapOrder)
     } catch (e) {
       try {
-        return await getQuote('float')
+        const swapOrder = await getQuote('float')
+        return await makeSwapPluginQuote(swapOrder)
       } catch (e2) {
         // Should throw the fixed-rate error
         throw e

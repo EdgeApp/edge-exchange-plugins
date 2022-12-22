@@ -27,7 +27,8 @@ import {
   ensureInFuture,
   getCodesWithTranscription,
   InvalidCurrencyCodes,
-  makeSwapPluginQuote
+  makeSwapPluginQuote,
+  SwapOrder
 } from '../swap-helpers'
 import { convertRequest } from '../util/utils'
 const pluginId = 'changenow'
@@ -110,7 +111,7 @@ export function makeChangeNowPlugin(
       } = getCodesWithTranscription(request, MAINNET_CODE_TRANSCRIPTION)
       const currencyString = `fromCurrency=${fromCurrencyCode}&toCurrency=${toCurrencyCode}&fromNetwork=${fromMainnetCode}&toNetwork=${toMainnetCode}`
 
-      const { nativeAmount, quoteFor } = request
+      const { quoteFor } = request
 
       async function createOrder(
         flow: 'fixed-rate' | 'standard',
@@ -171,7 +172,9 @@ export function makeChangeNowPlugin(
 
       async function swapSell(
         flow: 'fixed-rate' | 'standard'
-      ): Promise<EdgeSwapQuote> {
+      ): Promise<SwapOrder> {
+        const { nativeAmount } = request
+
         const largeDenomAmount = await request.fromWallet.nativeToDenomination(
           nativeAmount,
           fromCurrencyCode
@@ -255,10 +258,12 @@ export function makeChangeNowPlugin(
               : new Date(Date.now() + 1000 * 60)
         }
 
-        return await makeSwapPluginQuote(order)
+        return order
       }
 
-      async function swapBuy(flow: 'fixed-rate'): Promise<EdgeSwapQuote> {
+      async function swapBuy(flow: 'fixed-rate'): Promise<SwapOrder> {
+        const { nativeAmount } = request
+
         // Skip min/max check when requesting a purchase amount
         const largeDenomAmount = await request.toWallet.nativeToDenomination(
           nativeAmount,
@@ -311,23 +316,26 @@ export function makeChangeNowPlugin(
               : new Date(Date.now() + 1000 * 60)
         }
 
-        return await makeSwapPluginQuote(order)
+        return order
       }
 
       // Try them all
       if (quoteFor === 'from') {
         try {
-          return await swapSell('fixed-rate')
+          const swapOrder = await swapSell('fixed-rate')
+          return await makeSwapPluginQuote(swapOrder)
         } catch (e) {
           try {
-            return await swapSell('standard')
+            const swapOrder = await swapSell('standard')
+            return await makeSwapPluginQuote(swapOrder)
           } catch (e2) {
             // Should throw the fixed-rate error
             throw e
           }
         }
       } else {
-        return await swapBuy('fixed-rate')
+        const swapOrder = await swapBuy('fixed-rate')
+        return await makeSwapPluginQuote(swapOrder)
       }
     }
   }

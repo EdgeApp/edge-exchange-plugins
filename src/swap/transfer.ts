@@ -7,7 +7,7 @@ import {
   SwapCurrencyError
 } from 'edge-core-js/types'
 
-import { makeSwapPluginQuote } from '../swap-helpers'
+import { makeSwapPluginQuote, SwapOrder } from '../swap-helpers'
 import { convertRequest } from '../util/utils'
 
 const pluginId = 'transfer'
@@ -40,27 +40,32 @@ export function makeTransferPlugin(
         )
       }
 
-      const {
-        publicAddress: toAddress
-      } = await request.toWallet.getReceiveAddress()
+      const fetchSwapQuoteInner = async (): Promise<SwapOrder> => {
+        const {
+          publicAddress: toAddress
+        } = await request.toWallet.getReceiveAddress()
 
-      const spendInfo = {
-        currencyCode: request.fromCurrencyCode,
-        spendTargets: [
-          {
-            nativeAmount: request.nativeAmount,
-            publicAddress: toAddress
-          }
-        ]
+        const spendInfo = {
+          currencyCode: request.fromCurrencyCode,
+          spendTargets: [
+            {
+              nativeAmount: request.nativeAmount,
+              publicAddress: toAddress
+            }
+          ]
+        }
+
+        const order = {
+          request,
+          spendInfo,
+          pluginId
+        }
+
+        return order
       }
 
-      const order = {
-        request,
-        spendInfo,
-        pluginId
-      }
-
-      const quote = await makeSwapPluginQuote(order)
+      const swapOrder = await fetchSwapQuoteInner()
+      const quote = await makeSwapPluginQuote(swapOrder)
       return quote
     }
   }
