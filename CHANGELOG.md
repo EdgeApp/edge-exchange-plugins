@@ -1,5 +1,9 @@
 # edge-exchange-plugins
 
+## 0.16.13 (2022-12-21)
+
+- Fix: Remove extra slash in path to Thorswap API to prevent 301 redirects
+
 ## 0.16.12 (2022-12-16)
 
 - Change: Limit Thorchain token approvals to amount needed for deposit
