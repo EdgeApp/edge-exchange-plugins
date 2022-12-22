@@ -240,7 +240,7 @@ export function makeThorchainDaPlugin(
       const sourceTokenContractAddress = fromTokenId?.replace('-0x', '0x')
 
       const queryParams = makeQueryParams(quoteParams)
-      const uri = `/tokens/quote?${queryParams}`
+      const uri = `tokens/quote?${queryParams}`
 
       log.warn(uri)
 
