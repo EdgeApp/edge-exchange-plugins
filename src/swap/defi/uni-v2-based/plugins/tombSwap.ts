@@ -10,8 +10,13 @@ import {
 } from 'edge-core-js/types'
 import { ethers } from 'ethers'
 
-import { makeSwapPluginQuote, SwapOrder } from '../../../../swap-helpers'
+import {
+  getMaxSwappable,
+  makeSwapPluginQuote,
+  SwapOrder
+} from '../../../../swap-helpers'
 import { convertRequest } from '../../../../util/utils'
+import { EdgeSwapRequestPlugin } from '../../../types'
 import { getInOutTokenAddresses } from '../../defiUtils'
 import { getFtmProvider, makeTombSwapRouterContract } from '../uniV2Contracts'
 import { getSwapAmounts, getSwapTransactions } from '../uniV2Utils'
@@ -40,14 +45,16 @@ export function makeTombSwapPlugin(
     async fetchSwapQuote(req: EdgeSwapRequest): Promise<EdgeSwapQuote> {
       const request = convertRequest(req)
 
-      const fetchSwapQuoteInner = async (): Promise<SwapOrder> => {
+      const fetchSwapQuoteInner = async (
+        requestInner: EdgeSwapRequestPlugin
+      ): Promise<SwapOrder> => {
         const {
           fromWallet,
           toWallet,
           fromCurrencyCode,
           toCurrencyCode,
           quoteFor
-        } = request
+        } = requestInner
 
         // Sanity check: Both wallets should be of the same chain.
         if (
@@ -73,7 +80,7 @@ export function makeTombSwapPlugin(
         const { amountToSwap, expectedAmountOut } = await getSwapAmounts(
           tombSwapRouter,
           quoteFor,
-          request.nativeAmount,
+          requestInner.nativeAmount,
           fromTokenAddress,
           toTokenAddress,
           isWrappingSwap
@@ -85,7 +92,7 @@ export function makeTombSwapPlugin(
         const deadline = Math.round(expirationDate.getTime() / 1000) // unix timestamp
         const swapTxs = await getSwapTransactions(
           provider,
-          request,
+          requestInner,
           tombSwapRouter,
           amountToSwap,
           expectedAmountOut,
@@ -100,7 +107,7 @@ export function makeTombSwapPlugin(
         const edgeSpendInfos = swapTxs.map(swapTx => {
           // Convert to our spendInfo
           const edgeSpendInfo: EdgeSpendInfo = {
-            currencyCode: request.fromCurrencyCode, // what is being sent out, only if token. Blank if not token
+            currencyCode: requestInner.fromCurrencyCode, // what is being sent out, only if token. Blank if not token
             spendTargets: [
               {
                 nativeAmount:
@@ -123,9 +130,9 @@ export function makeTombSwapPlugin(
             swapData: {
               isEstimate: false,
               payoutAddress: toAddress,
-              payoutCurrencyCode: request.toCurrencyCode,
+              payoutCurrencyCode: requestInner.toCurrencyCode,
               payoutNativeAmount: expectedAmountOut.toString(),
-              payoutWalletId: request.toWallet.id,
+              payoutWalletId: requestInner.toWallet.id,
               plugin: { ...swapInfo },
               refundAddress: fromAddress
             }
@@ -139,11 +146,11 @@ export function makeTombSwapPlugin(
         if (edgeSpendInfos.length > 1) {
           spendInfo = edgeSpendInfos[1]
           edgeSpendInfos[0].metadata = { category: 'expense:Token Approval' }
-          preTx = await request.fromWallet.makeSpend(edgeSpendInfos[0])
+          preTx = await requestInner.fromWallet.makeSpend(edgeSpendInfos[0])
         }
 
         const order = {
-          request,
+          request: requestInner,
           spendInfo,
           pluginId,
           expirationDate,
@@ -153,7 +160,8 @@ export function makeTombSwapPlugin(
         return order
       }
 
-      const swapOrder = await fetchSwapQuoteInner()
+      const newRequest = await getMaxSwappable(fetchSwapQuoteInner, request)
+      const swapOrder = await fetchSwapQuoteInner(newRequest)
       return await makeSwapPluginQuote(swapOrder)
     }
   }

@@ -15,6 +15,7 @@ import {
 import {
   checkInvalidCodes,
   getCodes,
+  getMaxSwappable,
   InvalidCurrencyCodes,
   makeSwapPluginQuote,
   SwapOrder
@@ -122,7 +123,11 @@ export function makeExolixPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
 
       checkInvalidCodes(INVALID_CURRENCY_CODES, request, swapInfo)
 
-      const fixedOrder = await getFixedQuote(request, userSettings)
+      const newRequest = await getMaxSwappable(
+        async request => await getFixedQuote(request, userSettings),
+        request
+      )
+      const fixedOrder = await getFixedQuote(newRequest, userSettings)
       const fixedResult = await makeSwapPluginQuote(fixedOrder)
 
       return fixedResult

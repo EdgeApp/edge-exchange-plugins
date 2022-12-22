@@ -7,8 +7,13 @@ import {
   SwapCurrencyError
 } from 'edge-core-js/types'
 
-import { makeSwapPluginQuote, SwapOrder } from '../swap-helpers'
+import {
+  getMaxSwappable,
+  makeSwapPluginQuote,
+  SwapOrder
+} from '../swap-helpers'
 import { convertRequest } from '../util/utils'
+import { EdgeSwapRequestPlugin } from './types'
 
 const pluginId = 'transfer'
 
@@ -40,23 +45,33 @@ export function makeTransferPlugin(
         )
       }
 
-      const fetchSwapQuoteInner = async (): Promise<SwapOrder> => {
+      const fetchSwapQuoteInner = async (
+        requestInner: EdgeSwapRequestPlugin
+      ): Promise<SwapOrder> => {
         const {
           publicAddress: toAddress
-        } = await request.toWallet.getReceiveAddress()
+        } = await requestInner.toWallet.getReceiveAddress()
 
         const spendInfo = {
-          currencyCode: request.fromCurrencyCode,
+          currencyCode: requestInner.fromCurrencyCode,
           spendTargets: [
             {
-              nativeAmount: request.nativeAmount,
+              nativeAmount: requestInner.nativeAmount,
               publicAddress: toAddress
             }
-          ]
+          ],
+          swapData: {
+            isEstimate: false,
+            plugin: { ...swapInfo },
+            payoutAddress: toAddress,
+            payoutCurrencyCode: requestInner.fromCurrencyCode,
+            payoutNativeAmount: requestInner.nativeAmount, // Wrong
+            payoutWalletId: requestInner.toWallet.id
+          }
         }
 
         const order = {
-          request,
+          request: requestInner,
           spendInfo,
           pluginId
         }
@@ -64,7 +79,8 @@ export function makeTransferPlugin(
         return order
       }
 
-      const swapOrder = await fetchSwapQuoteInner()
+      const newRequest = await getMaxSwappable(fetchSwapQuoteInner, request)
+      const swapOrder = await fetchSwapQuoteInner(newRequest)
       const quote = await makeSwapPluginQuote(swapOrder)
       return quote
     }

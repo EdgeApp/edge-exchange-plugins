@@ -23,6 +23,7 @@ import {
 import {
   checkInvalidCodes,
   getCodes,
+  getMaxSwappable,
   InvalidCurrencyCodes,
   makeSwapPluginQuote,
   SwapOrder
@@ -301,7 +302,8 @@ export function makeChangeHeroPlugin(
     async fetchSwapQuote(req: EdgeSwapRequest): Promise<EdgeSwapQuote> {
       const request = convertRequest(req)
       checkInvalidCodes(INVALID_CURRENCY_CODES, request, swapInfo)
-      const swapOrder = await getFixedQuote(request)
+      const newRequest = await getMaxSwappable(getFixedQuote, request)
+      const swapOrder = await getFixedQuote(newRequest)
       return await makeSwapPluginQuote(swapOrder)
     }
   }

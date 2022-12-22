@@ -24,6 +24,7 @@ import {
 import {
   checkInvalidCodes,
   getCodesWithTranscription,
+  getMaxSwappable,
   InvalidCurrencyCodes,
   makeSwapPluginQuote,
   SwapOrder
@@ -171,17 +172,19 @@ export function makeGodexPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
         MAINNET_CODE_TRANSCRIPTION
       )
 
-      const fetchSwapQuoteInner = async (): Promise<SwapOrder> => {
+      const fetchSwapQuoteInner = async (
+        requestInner: EdgeSwapRequestPlugin
+      ): Promise<SwapOrder> => {
         // Convert the native amount to a denomination:
         const quoteAmount =
-          request.quoteFor === 'from'
-            ? await request.fromWallet.nativeToDenomination(
-                request.nativeAmount,
-                request.fromCurrencyCode
+          requestInner.quoteFor === 'from'
+            ? await requestInner.fromWallet.nativeToDenomination(
+                requestInner.nativeAmount,
+                requestInner.fromCurrencyCode
               )
-            : await request.toWallet.nativeToDenomination(
-                request.nativeAmount,
-                request.toCurrencyCode
+            : await requestInner.toWallet.nativeToDenomination(
+                requestInner.nativeAmount,
+                requestInner.toCurrencyCode
               )
 
         // Swap the currencies if we need a reverse quote:
@@ -194,14 +197,14 @@ export function makeGodexPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
 
         // Check if we are below the minimum limit:
         let fromAmount, toAmount, endpoint
-        if (request.quoteFor === 'from') {
+        if (requestInner.quoteFor === 'from') {
           fromAmount = quoteAmount
           endpoint = 'info'
         } else {
           toAmount = quoteAmount
           endpoint = 'info-revert'
         }
-        const response = await call(uri + endpoint, request, {
+        const response = await call(uri + endpoint, requestInner, {
           params: quoteParams
         })
         const reply = asApiInfo(response)
@@ -217,23 +220,23 @@ export function makeGodexPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
         ) {
           throw new SwapCurrencyError(
             swapInfo,
-            request.fromCurrencyCode,
-            request.toCurrencyCode
+            requestInner.fromCurrencyCode,
+            requestInner.toCurrencyCode
           )
         }
 
         // Check the minimum:
         const nativeMin = reverseQuote
-          ? await request.toWallet.denominationToNative(
+          ? await requestInner.toWallet.denominationToNative(
               reply.min_amount,
-              request.toCurrencyCode
+              requestInner.toCurrencyCode
             )
-          : await request.fromWallet.denominationToNative(
+          : await requestInner.fromWallet.denominationToNative(
               reply.min_amount,
-              request.fromCurrencyCode
+              requestInner.fromCurrencyCode
             )
 
-        if (lt(request.nativeAmount, nativeMin)) {
+        if (lt(requestInner.nativeAmount, nativeMin)) {
           throw new SwapBelowLimitError(
             swapInfo,
             nativeMin,
@@ -246,13 +249,13 @@ export function makeGodexPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
         endpoint = reverseQuote ? 'transaction-revert' : 'transaction'
         const sendReply = await call(
           uri + endpoint + (promoCode != null ? `?promo=${promoCode}` : ''),
-          request,
+          requestInner,
           {
             params: {
               deposit_amount: reverseQuote ? undefined : fromAmount,
               withdrawal_amount: reverseQuote ? toAmount : undefined,
-              coin_from: request.fromCurrencyCode,
-              coin_to: request.toCurrencyCode,
+              coin_from: requestInner.fromCurrencyCode,
+              coin_to: requestInner.toCurrencyCode,
               withdrawal: toAddress,
               return: fromAddress,
               return_extra_id: null,
@@ -267,13 +270,13 @@ export function makeGodexPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
         )
         log('sendReply' + JSON.stringify(sendReply, null, 2))
         const quoteInfo = asQuoteInfo(sendReply)
-        const fromNativeAmount = await request.fromWallet.denominationToNative(
+        const fromNativeAmount = await requestInner.fromWallet.denominationToNative(
           quoteInfo.deposit_amount,
-          request.fromCurrencyCode
+          requestInner.fromCurrencyCode
         )
-        const toNativeAmount = await request.toWallet.denominationToNative(
+        const toNativeAmount = await requestInner.toWallet.denominationToNative(
           quoteInfo.withdrawal_amount,
-          request.toCurrencyCode
+          requestInner.toCurrencyCode
         )
 
         log('fromNativeAmount: ' + fromNativeAmount)
@@ -281,7 +284,7 @@ export function makeGodexPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
 
         // Make the transaction:
         const spendInfo: EdgeSpendInfo = {
-          currencyCode: request.fromCurrencyCode,
+          currencyCode: requestInner.fromCurrencyCode,
           spendTargets: [
             {
               nativeAmount: fromNativeAmount,
@@ -290,7 +293,7 @@ export function makeGodexPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
             }
           ],
           networkFeeOption:
-            request.fromCurrencyCode.toUpperCase() === 'BTC'
+            requestInner.fromCurrencyCode.toUpperCase() === 'BTC'
               ? 'high'
               : 'standard',
           swapData: {
@@ -298,9 +301,9 @@ export function makeGodexPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
             orderUri: orderUri + quoteInfo.transaction_id,
             isEstimate: false,
             payoutAddress: toAddress,
-            payoutCurrencyCode: request.toCurrencyCode,
+            payoutCurrencyCode: requestInner.toCurrencyCode,
             payoutNativeAmount: toNativeAmount,
-            payoutWalletId: request.toWallet.id,
+            payoutWalletId: requestInner.toWallet.id,
             plugin: { ...swapInfo },
             refundAddress: fromAddress
           }
@@ -308,7 +311,7 @@ export function makeGodexPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
         log('spendInfo', spendInfo)
 
         const order = {
-          request,
+          request: requestInner,
           spendInfo,
           pluginId,
           expirationDate: new Date(Date.now() + expirationMs)
@@ -317,7 +320,8 @@ export function makeGodexPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
         return order
       }
 
-      const swapOrder = await fetchSwapQuoteInner()
+      const newRequest = await getMaxSwappable(fetchSwapQuoteInner, request)
+      const swapOrder = await fetchSwapQuoteInner(newRequest)
       return await makeSwapPluginQuote(swapOrder)
     }
   }

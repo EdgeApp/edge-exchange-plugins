@@ -28,6 +28,7 @@ import { ethers } from 'ethers'
 // import nodeFetch from 'node-fetch'
 import {
   checkInvalidCodes,
+  getMaxSwappable,
   getTokenId,
   makeSwapPluginQuote,
   SwapOrder
@@ -39,6 +40,7 @@ import {
   makeQueryParams,
   promiseWithTimeout
 } from '../../util/utils'
+import { EdgeSwapRequestPlugin } from '../types'
 import { abiMap } from './abi/abiMap'
 import {
   asExchangeInfo,
@@ -135,7 +137,9 @@ export function makeThorchainDaPlugin(
     async fetchSwapQuote(req: EdgeSwapRequest): Promise<EdgeSwapQuote> {
       const request = convertRequest(req)
 
-      const fetchSwapQuoteInner = async (): Promise<SwapOrder> => {
+      const fetchSwapQuoteInner = async (
+        requestInner: EdgeSwapRequestPlugin
+      ): Promise<SwapOrder> => {
         const {
           fromCurrencyCode,
           toCurrencyCode,
@@ -143,11 +147,11 @@ export function makeThorchainDaPlugin(
           fromWallet,
           toWallet,
           quoteFor
-        } = request
+        } = requestInner
         // Do not support transfer between same assets
         if (
           fromWallet.currencyInfo.pluginId === toWallet.currencyInfo.pluginId &&
-          request.fromCurrencyCode === request.toCurrencyCode
+          requestInner.fromCurrencyCode === requestInner.toCurrencyCode
         ) {
           throw new SwapCurrencyError(
             swapInfo,
@@ -162,7 +166,7 @@ export function makeThorchainDaPlugin(
         let daVolatilitySpread: number = DA_VOLATILITY_SPREAD_DEFAULT
         let thorswapServers: string[] = THORSWAP_DEFAULT_SERVERS
 
-        checkInvalidCodes(INVALID_CURRENCY_CODES, request, swapInfo)
+        checkInvalidCodes(INVALID_CURRENCY_CODES, requestInner, swapInfo)
 
         // Grab addresses:
         const fromAddress = await getAddress(fromWallet, fromCurrencyCode)
@@ -453,11 +457,11 @@ export function makeThorchainDaPlugin(
               category: 'expense:Token Approval'
             }
           }
-          preTx = await request.fromWallet.makeSpend(spendInfo)
+          preTx = await requestInner.fromWallet.makeSpend(spendInfo)
         }
 
         const spendInfo: EdgeSpendInfo = {
-          currencyCode: request.fromCurrencyCode,
+          currencyCode: requestInner.fromCurrencyCode,
           spendTargets: [
             {
               memo,
@@ -497,7 +501,7 @@ export function makeThorchainDaPlugin(
         const notes = `DEX Providers: ${providersStr}\nPath: ${path}`
 
         const order = {
-          request,
+          request: requestInner,
           spendInfo,
           pluginId,
           expirationDate: new Date(Date.now() + EXPIRATION_MS),
@@ -508,7 +512,8 @@ export function makeThorchainDaPlugin(
         return order
       }
 
-      const swapOrder = await fetchSwapQuoteInner()
+      const newRequest = await getMaxSwappable(fetchSwapQuoteInner, request)
+      const swapOrder = await fetchSwapQuoteInner(newRequest)
       return await makeSwapPluginQuote(swapOrder)
     }
   }

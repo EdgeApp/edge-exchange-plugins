@@ -23,6 +23,7 @@ import {
   checkInvalidCodes,
   ensureInFuture,
   getCodesWithTranscription,
+  getMaxSwappable,
   InvalidCurrencyCodes,
   isLikeKind,
   makeSwapPluginQuote,
@@ -103,8 +104,11 @@ export function makeSwapuzPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
       toMainnetCode
     } = getCodesWithTranscription(request, MAINNET_CODE_TRANSCRIPTION)
 
-    const getQuote = async (mode: 'fix' | 'float'): Promise<SwapOrder> => {
-      const { nativeAmount } = request
+    const getQuote = async (
+      requestInner: EdgeSwapRequestPlugin,
+      mode: 'fix' | 'float'
+    ): Promise<SwapOrder> => {
+      const { nativeAmount } = requestInner
 
       const largeDenomAmount = await fromWallet.nativeToDenomination(
         nativeAmount,
@@ -186,7 +190,7 @@ export function makeSwapuzPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
         currencyCode: fromCurrencyCode,
         spendTargets: [
           {
-            nativeAmount: request.nativeAmount,
+            nativeAmount: requestInner.nativeAmount,
             publicAddress: addressFrom,
             uniqueIdentifier: memoFrom
           }
@@ -199,14 +203,14 @@ export function makeSwapuzPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
           payoutAddress: toAddress,
           payoutCurrencyCode: toCurrencyCode,
           payoutNativeAmount: toNativeAmount,
-          payoutWalletId: request.toWallet.id,
+          payoutWalletId: requestInner.toWallet.id,
           plugin: { ...swapInfo },
           refundAddress: fromAddress
         }
       }
 
       const order = {
-        request,
+        request: requestInner,
         spendInfo,
         pluginId,
         expirationDate: ensureInFuture(finishPayment)
@@ -215,13 +219,17 @@ export function makeSwapuzPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
       return order
     }
 
+    const newRequest = await getMaxSwappable(
+      async request => await getQuote(request, 'fix'),
+      request
+    )
     // Try them all
     try {
-      const swapOrder = await getQuote('fix')
+      const swapOrder = await getQuote(newRequest, 'fix')
       return await makeSwapPluginQuote(swapOrder)
     } catch (e) {
       try {
-        const swapOrder = await getQuote('float')
+        const swapOrder = await getQuote(newRequest, 'float')
         return await makeSwapPluginQuote(swapOrder)
       } catch (e2) {
         // Should throw the fixed-rate error
@@ -243,7 +251,7 @@ export function makeSwapuzPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
         quoteFor
       } = requestTop
 
-      if (quoteFor === 'from') {
+      if (quoteFor !== 'to') {
         return await fetchSwapQuoteInner(requestTop)
       } else {
         // Exit early if trade isn't like kind assets

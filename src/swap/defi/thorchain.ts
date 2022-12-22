@@ -23,6 +23,7 @@ import { ethers } from 'ethers'
 
 import {
   checkInvalidCodes,
+  getMaxSwappable,
   InvalidCurrencyCodes,
   isLikeKind,
   makeSwapPluginQuote,
@@ -34,6 +35,7 @@ import {
   fetchWaterfall,
   promiseWithTimeout
 } from '../../util/utils'
+import { EdgeSwapRequestPlugin } from '../types'
 import abi from './abi/THORCHAIN_SWAP_ABI'
 import erc20Abi from './abi/UNISWAP_V2_ERC20_ABI'
 
@@ -221,7 +223,9 @@ export function makeThorchainPlugin(
     async fetchSwapQuote(req: EdgeSwapRequest): Promise<EdgeSwapQuote> {
       const request = convertRequest(req)
 
-      const fetchSwapQuoteInner = async (): Promise<SwapOrder> => {
+      const fetchSwapQuoteInner = async (
+        requestInner: EdgeSwapRequestPlugin
+      ): Promise<SwapOrder> => {
         const {
           fromCurrencyCode,
           fromTokenId,
@@ -231,11 +235,11 @@ export function makeThorchainPlugin(
           fromWallet,
           toWallet,
           quoteFor
-        } = request
+        } = requestInner
         // Do not support transfer between same assets
         if (
           fromWallet.currencyInfo.pluginId === toWallet.currencyInfo.pluginId &&
-          request.fromCurrencyCode === request.toCurrencyCode
+          requestInner.fromCurrencyCode === requestInner.toCurrencyCode
         ) {
           throw new SwapCurrencyError(
             swapInfo,
@@ -249,7 +253,7 @@ export function makeThorchainPlugin(
         let volatilitySpread: number = VOLATILITY_SPREAD_DEFAULT
         let perAssetSpread: AssetSpread[] = PER_ASSET_SPREAD_DEFAULT
 
-        checkInvalidCodes(INVALID_CURRENCY_CODES, request, swapInfo)
+        checkInvalidCodes(INVALID_CURRENCY_CODES, requestInner, swapInfo)
 
         // Grab addresses:
         const toAddress = await getAddress(toWallet, toCurrencyCode)
@@ -514,7 +518,7 @@ export function makeThorchainPlugin(
         let preTx: EdgeTransaction | undefined
         if (approvalData != null) {
           const spendInfo: EdgeSpendInfo = {
-            currencyCode: request.fromCurrencyCode,
+            currencyCode: requestInner.fromCurrencyCode,
             spendTargets: [
               {
                 memo: approvalData,
@@ -527,11 +531,11 @@ export function makeThorchainPlugin(
               category: 'expense:Token Approval'
             }
           }
-          preTx = await request.fromWallet.makeSpend(spendInfo)
+          preTx = await requestInner.fromWallet.makeSpend(spendInfo)
         }
 
         const spendInfo: EdgeSpendInfo = {
-          currencyCode: request.fromCurrencyCode,
+          currencyCode: requestInner.fromCurrencyCode,
           spendTargets: [
             {
               memo,
@@ -568,7 +572,7 @@ export function makeThorchainPlugin(
         }
 
         const order = {
-          request,
+          request: requestInner,
           spendInfo,
           pluginId,
           expirationDate: new Date(Date.now() + EXPIRATION_MS),
@@ -578,7 +582,8 @@ export function makeThorchainPlugin(
         return order
       }
 
-      const swapOrder = await fetchSwapQuoteInner()
+      const newRequest = await getMaxSwappable(fetchSwapQuoteInner, request)
+      const swapOrder = await fetchSwapQuoteInner(newRequest)
       return await makeSwapPluginQuote(swapOrder)
     }
   }

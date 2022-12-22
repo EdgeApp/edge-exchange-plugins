@@ -16,6 +16,7 @@ import {
 import {
   checkInvalidCodes,
   getCodesWithTranscription,
+  getMaxSwappable,
   InvalidCurrencyCodes,
   makeSwapPluginQuote,
   SwapOrder
@@ -137,39 +138,42 @@ export function makeLetsExchangePlugin(
         getAddress(request.toWallet, request.toCurrencyCode)
       ])
 
-      const fetchSwapQuoteInner = async (): Promise<SwapOrder> => {
+      const fetchSwapQuoteInner = async (
+        requestInner: EdgeSwapRequestPlugin
+      ): Promise<SwapOrder> => {
         // Convert the native amount to a denomination:
         const quoteAmount =
-          request.quoteFor === 'from'
-            ? await request.fromWallet.nativeToDenomination(
-                request.nativeAmount,
-                request.fromCurrencyCode
+          requestInner.quoteFor === 'from'
+            ? await requestInner.fromWallet.nativeToDenomination(
+                requestInner.nativeAmount,
+                requestInner.fromCurrencyCode
               )
-            : await request.toWallet.nativeToDenomination(
-                request.nativeAmount,
-                request.toCurrencyCode
+            : await requestInner.toWallet.nativeToDenomination(
+                requestInner.nativeAmount,
+                requestInner.toCurrencyCode
               )
 
         const { fromMainnetCode, toMainnetCode } = getCodesWithTranscription(
-          request,
+          requestInner,
           MAINNET_CODE_TRANSCRIPTION
         )
 
         const networkFrom =
-          request.fromCurrencyCode ===
-          request.fromWallet.currencyInfo.currencyCode
-            ? request.fromCurrencyCode
+          requestInner.fromCurrencyCode ===
+          requestInner.fromWallet.currencyInfo.currencyCode
+            ? requestInner.fromCurrencyCode
             : fromMainnetCode
 
         const networkTo =
-          request.toCurrencyCode === request.toWallet.currencyInfo.currencyCode
-            ? request.toCurrencyCode
+          requestInner.toCurrencyCode ===
+          requestInner.toWallet.currencyInfo.currencyCode
+            ? requestInner.toCurrencyCode
             : toMainnetCode
 
         // Swap the currencies if we need a reverse quote:
         const quoteParams = {
-          from: request.fromCurrencyCode,
-          to: request.toCurrencyCode,
+          from: requestInner.fromCurrencyCode,
+          to: requestInner.toCurrencyCode,
           network_from: networkFrom,
           network_to: networkTo,
           amount: quoteAmount
@@ -179,30 +183,30 @@ export function makeLetsExchangePlugin(
 
         // Calculate the amounts:
         let fromAmount, toAmount, endpoint
-        if (request.quoteFor === 'from') {
+        if (requestInner.quoteFor === 'from') {
           fromAmount = quoteAmount
           endpoint = 'info'
         } else {
           toAmount = quoteAmount
           endpoint = 'info-revert'
         }
-        const response = await call(uri + endpoint, request, {
+        const response = await call(uri + endpoint, requestInner, {
           params: quoteParams
         })
         const reply = asInfoReply(response)
 
         // Check the min/max:
         const nativeMin = reverseQuote
-          ? await request.toWallet.denominationToNative(
+          ? await requestInner.toWallet.denominationToNative(
               reply.min_amount,
-              request.toCurrencyCode
+              requestInner.toCurrencyCode
             )
-          : await request.fromWallet.denominationToNative(
+          : await requestInner.fromWallet.denominationToNative(
               reply.min_amount,
-              request.fromCurrencyCode
+              requestInner.fromCurrencyCode
             )
 
-        if (lt(request.nativeAmount, nativeMin)) {
+        if (lt(requestInner.nativeAmount, nativeMin)) {
           throw new SwapBelowLimitError(
             swapInfo,
             nativeMin,
@@ -211,13 +215,13 @@ export function makeLetsExchangePlugin(
         }
 
         const nativeMax = reverseQuote
-          ? await request.toWallet.denominationToNative(
+          ? await requestInner.toWallet.denominationToNative(
               reply.max_amount,
-              request.toCurrencyCode
+              requestInner.toCurrencyCode
             )
-          : await request.fromWallet.denominationToNative(
+          : await requestInner.fromWallet.denominationToNative(
               reply.max_amount,
-              request.fromCurrencyCode
+              requestInner.fromCurrencyCode
             )
 
         if (gt(nativeMax, '0')) {
@@ -232,12 +236,12 @@ export function makeLetsExchangePlugin(
 
         const { promoCode } = opts
         endpoint = reverseQuote ? 'transaction-revert' : 'transaction'
-        const sendReply = await call(uri + endpoint, request, {
+        const sendReply = await call(uri + endpoint, requestInner, {
           params: {
             deposit_amount: reverseQuote ? undefined : fromAmount,
             withdrawal_amount: reverseQuote ? toAmount : undefined,
-            coin_from: request.fromCurrencyCode,
-            coin_to: request.toCurrencyCode,
+            coin_from: requestInner.fromCurrencyCode,
+            coin_to: requestInner.toCurrencyCode,
             network_from: networkFrom,
             network_to: networkTo,
             withdrawal: toAddress,
@@ -255,18 +259,18 @@ export function makeLetsExchangePlugin(
         log('sendReply', sendReply)
         const quoteInfo = asQuoteInfo(sendReply)
 
-        const fromNativeAmount = await request.fromWallet.denominationToNative(
+        const fromNativeAmount = await requestInner.fromWallet.denominationToNative(
           quoteInfo.deposit_amount,
-          request.fromCurrencyCode
+          requestInner.fromCurrencyCode
         )
-        const toNativeAmount = await request.toWallet.denominationToNative(
+        const toNativeAmount = await requestInner.toWallet.denominationToNative(
           quoteInfo.withdrawal_amount,
-          request.toCurrencyCode
+          requestInner.toCurrencyCode
         )
 
         // Make the transaction:
         const spendInfo: EdgeSpendInfo = {
-          currencyCode: request.fromCurrencyCode,
+          currencyCode: requestInner.fromCurrencyCode,
           spendTargets: [
             {
               nativeAmount: fromNativeAmount,
@@ -275,7 +279,7 @@ export function makeLetsExchangePlugin(
             }
           ],
           networkFeeOption:
-            request.fromCurrencyCode.toUpperCase() === 'BTC'
+            requestInner.fromCurrencyCode.toUpperCase() === 'BTC'
               ? 'high'
               : 'standard',
           swapData: {
@@ -283,9 +287,9 @@ export function makeLetsExchangePlugin(
             orderUri: orderUri + quoteInfo.transaction_id,
             isEstimate: false,
             payoutAddress: toAddress,
-            payoutCurrencyCode: request.toCurrencyCode,
+            payoutCurrencyCode: requestInner.toCurrencyCode,
             payoutNativeAmount: toNativeAmount,
-            payoutWalletId: request.toWallet.id,
+            payoutWalletId: requestInner.toWallet.id,
             plugin: { ...swapInfo },
             refundAddress: fromAddress
           }
@@ -294,7 +298,7 @@ export function makeLetsExchangePlugin(
         log('spendInfo', spendInfo)
 
         const order = {
-          request,
+          request: requestInner,
           spendInfo,
           pluginId,
           expirationDate: new Date(Date.now() + expirationMs)
@@ -303,7 +307,8 @@ export function makeLetsExchangePlugin(
         return order
       }
 
-      const swapOrder = await fetchSwapQuoteInner()
+      const newRequest = await getMaxSwappable(fetchSwapQuoteInner, request)
+      const swapOrder = await fetchSwapQuoteInner(newRequest)
       return await makeSwapPluginQuote(swapOrder)
     }
   }

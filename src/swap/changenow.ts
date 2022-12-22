@@ -26,11 +26,13 @@ import {
   checkInvalidCodes,
   ensureInFuture,
   getCodesWithTranscription,
+  getMaxSwappable,
   InvalidCurrencyCodes,
   makeSwapPluginQuote,
   SwapOrder
 } from '../swap-helpers'
 import { convertRequest } from '../util/utils'
+import { EdgeSwapRequestPlugin } from './types'
 const pluginId = 'changenow'
 
 const swapInfo: EdgeSwapInfo = {
@@ -171,11 +173,12 @@ export function makeChangeNowPlugin(
       }
 
       async function swapSell(
+        requestInner: EdgeSwapRequestPlugin,
         flow: 'fixed-rate' | 'standard'
       ): Promise<SwapOrder> {
-        const { nativeAmount } = request
+        const { nativeAmount } = requestInner
 
-        const largeDenomAmount = await request.fromWallet.nativeToDenomination(
+        const largeDenomAmount = await requestInner.fromWallet.nativeToDenomination(
           nativeAmount,
           fromCurrencyCode
         )
@@ -197,7 +200,7 @@ export function makeChangeNowPlugin(
         const { minAmount, maxAmount } = asMarketRange(marketRangeResponseJson)
 
         if (lt(largeDenomAmount, minAmount.toString())) {
-          const minNativeAmount = await request.fromWallet.denominationToNative(
+          const minNativeAmount = await requestInner.fromWallet.denominationToNative(
             minAmount.toString(),
             fromCurrencyCode
           )
@@ -205,7 +208,7 @@ export function makeChangeNowPlugin(
         }
 
         if (maxAmount != null && gt(largeDenomAmount, maxAmount.toString())) {
-          const maxNativeAmount = await request.fromWallet.denominationToNative(
+          const maxNativeAmount = await requestInner.fromWallet.denominationToNative(
             maxAmount.toString(),
             fromCurrencyCode
           )
@@ -220,7 +223,7 @@ export function makeChangeNowPlugin(
           validUntil
         } = await createOrder(flow, true, largeDenomAmount)
 
-        const toNativeAmount = await request.toWallet.denominationToNative(
+        const toNativeAmount = await requestInner.toWallet.denominationToNative(
           toAmount.toString(),
           toCurrencyCode
         )
@@ -242,14 +245,14 @@ export function makeChangeNowPlugin(
             payoutAddress: toAddress,
             payoutCurrencyCode: toCurrencyCode,
             payoutNativeAmount: toNativeAmount,
-            payoutWalletId: request.toWallet.id,
+            payoutWalletId: requestInner.toWallet.id,
             plugin: { ...swapInfo },
             refundAddress: fromAddress
           }
         }
 
         const order = {
-          request,
+          request: requestInner,
           spendInfo,
           pluginId,
           expirationDate:
@@ -261,11 +264,14 @@ export function makeChangeNowPlugin(
         return order
       }
 
-      async function swapBuy(flow: 'fixed-rate'): Promise<SwapOrder> {
-        const { nativeAmount } = request
+      async function swapBuy(
+        requestInner: EdgeSwapRequestPlugin,
+        flow: 'fixed-rate'
+      ): Promise<SwapOrder> {
+        const { nativeAmount } = requestInner
 
         // Skip min/max check when requesting a purchase amount
-        const largeDenomAmount = await request.toWallet.nativeToDenomination(
+        const largeDenomAmount = await requestInner.toWallet.nativeToDenomination(
           nativeAmount,
           toCurrencyCode
         )
@@ -278,7 +284,7 @@ export function makeChangeNowPlugin(
           validUntil
         } = await createOrder(flow, false, largeDenomAmount)
 
-        const fromNativeAmount = await request.fromWallet.denominationToNative(
+        const fromNativeAmount = await requestInner.fromWallet.denominationToNative(
           fromAmount.toString(),
           fromCurrencyCode
         )
@@ -300,14 +306,14 @@ export function makeChangeNowPlugin(
             payoutAddress: toAddress,
             payoutCurrencyCode: toCurrencyCode,
             payoutNativeAmount: nativeAmount,
-            payoutWalletId: request.toWallet.id,
+            payoutWalletId: requestInner.toWallet.id,
             plugin: { ...swapInfo },
             refundAddress: fromAddress
           }
         }
 
         const order = {
-          request,
+          request: requestInner,
           spendInfo,
           pluginId,
           expirationDate:
@@ -320,13 +326,17 @@ export function makeChangeNowPlugin(
       }
 
       // Try them all
-      if (quoteFor === 'from') {
+      if (quoteFor !== 'to') {
+        const newRequest = await getMaxSwappable(
+          async request => await swapSell(request, 'fixed-rate'),
+          request
+        )
         try {
-          const swapOrder = await swapSell('fixed-rate')
+          const swapOrder = await swapSell(newRequest, 'fixed-rate')
           return await makeSwapPluginQuote(swapOrder)
         } catch (e) {
           try {
-            const swapOrder = await swapSell('standard')
+            const swapOrder = await swapSell(newRequest, 'standard')
             return await makeSwapPluginQuote(swapOrder)
           } catch (e2) {
             // Should throw the fixed-rate error
@@ -334,7 +344,7 @@ export function makeChangeNowPlugin(
           }
         }
       } else {
-        const swapOrder = await swapBuy('fixed-rate')
+        const swapOrder = await swapBuy(request, 'fixed-rate')
         return await makeSwapPluginQuote(swapOrder)
       }
     }
