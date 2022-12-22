@@ -10,14 +10,11 @@ import {
 } from 'edge-core-js/types'
 import { ethers } from 'ethers'
 
+import { makeSwapPluginQuote } from '../../../../swap-helpers'
 import { convertRequest } from '../../../../util/utils'
 import { getInOutTokenAddresses } from '../../defiUtils'
 import { getFtmProvider, makeSpookySwapRouterContract } from '../uniV2Contracts'
-import {
-  getSwapAmounts,
-  getSwapTransactions,
-  makeUniV2EdgeSwapQuote
-} from '../uniV2Utils'
+import { getSwapAmounts, getSwapTransactions } from '../uniV2Utils'
 
 const swapInfo: EdgeSwapInfo = {
   pluginId: 'spookySwap',
@@ -98,59 +95,67 @@ export function makeSpookySwapPlugin(
       )
 
       const pluginId = swapInfo.pluginId
-      const edgeUnsignedTxs = await Promise.all(
-        swapTxs.map(async swapTx => {
-          // Convert to our spendInfo
-          const edgeSpendInfo: EdgeSpendInfo = {
-            currencyCode: request.fromCurrencyCode, // what is being sent out, only if token. Blank if not token
-            spendTargets: [
-              {
-                nativeAmount:
-                  swapTx.value != null ? swapTx.value.toString() : '0', // biggy/number string integer
-                publicAddress: swapTx.to,
+      const edgeSpendInfos = swapTxs.map(swapTx => {
+        // Convert to our spendInfo
+        const edgeSpendInfo: EdgeSpendInfo = {
+          currencyCode: request.fromCurrencyCode, // what is being sent out, only if token. Blank if not token
+          spendTargets: [
+            {
+              nativeAmount:
+                swapTx.value != null ? swapTx.value.toString() : '0', // biggy/number string integer
+              publicAddress: swapTx.to,
 
-                otherParams: {
-                  data: swapTx.data
-                }
+              otherParams: {
+                data: swapTx.data
               }
-            ],
-            customNetworkFee: {
-              gasPrice:
-                swapTx.gasPrice != null
-                  ? ethers.utils.formatUnits(swapTx.gasPrice, 'gwei').toString()
-                  : '0',
-              gasLimit: swapTx.gasLimit?.toString() ?? '0'
-            },
-            networkFeeOption: 'custom',
-            swapData: {
-              isEstimate: false,
-              payoutAddress: toAddress,
-              payoutCurrencyCode: request.toCurrencyCode,
-              payoutNativeAmount: expectedAmountOut.toString(),
-              payoutWalletId: request.toWallet.id,
-              plugin: { ...swapInfo },
-              refundAddress: fromAddress
             }
+          ],
+          customNetworkFee: {
+            gasPrice:
+              swapTx.gasPrice != null
+                ? ethers.utils.formatUnits(swapTx.gasPrice, 'gwei').toString()
+                : '0',
+            gasLimit: swapTx.gasLimit?.toString() ?? '0'
+          },
+          networkFeeOption: 'custom',
+          swapData: {
+            isEstimate: false,
+            payoutAddress: toAddress,
+            payoutCurrencyCode: request.toCurrencyCode,
+            payoutNativeAmount: expectedAmountOut.toString(),
+            payoutWalletId: request.toWallet.id,
+            plugin: { ...swapInfo },
+            refundAddress: fromAddress
           }
+        }
 
-          const edgeUnsignedTx: EdgeTransaction = await request.fromWallet.makeSpend(
-            edgeSpendInfo
-          )
+        return edgeSpendInfo
+      })
 
-          return edgeUnsignedTx
-        })
+      let spendInfo = edgeSpendInfos[0]
+      let preTx: EdgeTransaction | undefined
+      if (edgeSpendInfos.length > 1) {
+        spendInfo = edgeSpendInfos[1]
+        edgeSpendInfos[0].metadata = { category: 'expense:Token Approval' }
+        preTx = await request.fromWallet.makeSpend(edgeSpendInfos[0])
+      }
+
+      const edgeUnsignedTx: EdgeTransaction = await request.fromWallet.makeSpend(
+        spendInfo
       )
 
       // Convert that to the EdgeSwapQuote format:
-      return makeUniV2EdgeSwapQuote(
+      return makeSwapPluginQuote(
         request,
         amountToSwap.toString(),
         expectedAmountOut.toString(),
-        edgeUnsignedTxs,
+        edgeUnsignedTx,
         pluginId,
         swapInfo.displayName,
         true,
-        expirationDate
+        expirationDate,
+        undefined,
+        preTx
       )
     }
   }
