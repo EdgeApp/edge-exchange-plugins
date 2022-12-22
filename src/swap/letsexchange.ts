@@ -8,7 +8,6 @@ import {
   EdgeSwapPlugin,
   EdgeSwapQuote,
   EdgeSwapRequest,
-  EdgeTransaction,
   SwapAboveLimitError,
   SwapBelowLimitError,
   SwapCurrencyError
@@ -292,20 +291,14 @@ export function makeLetsExchangePlugin(
 
       log('spendInfo', spendInfo)
 
-      const tx: EdgeTransaction = await request.fromWallet.makeSpend(spendInfo)
-
-      // Convert that to the output format:
-      return makeSwapPluginQuote(
+      const order = {
         request,
-        fromNativeAmount,
-        toNativeAmount,
-        tx,
-        toAddress,
-        'letsexchange',
-        false, // isEstimate, correct?
-        new Date(Date.now() + expirationMs),
-        quoteInfo.transaction_id
-      )
+        spendInfo,
+        pluginId,
+        expirationDate: new Date(Date.now() + expirationMs)
+      }
+
+      return await makeSwapPluginQuote(order)
     }
   }
 

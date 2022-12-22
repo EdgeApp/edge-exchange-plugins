@@ -1,6 +1,7 @@
 import { add } from 'biggystring'
 import {
   EdgeCurrencyWallet,
+  EdgeSpendInfo,
   EdgeSwapApproveOptions,
   EdgeSwapInfo,
   EdgeSwapQuote,
@@ -30,20 +31,41 @@ export function ensureInFuture(
   return target < date.valueOf() ? date : new Date(target)
 }
 
-export function makeSwapPluginQuote(
-  request: EdgeSwapRequest,
-  fromNativeAmount: string,
-  toNativeAmount: string,
-  tx: EdgeTransaction,
-  destinationAddress: string,
-  pluginId: string,
-  isEstimate: boolean = false,
-  expirationDate?: Date,
-  quoteId?: string,
-  preTx?: EdgeTransaction,
+interface SwapOrder {
+  request: EdgeSwapRequest
+  spendInfo: EdgeSpendInfo
+  pluginId: string
+  expirationDate?: Date
+  preTx?: EdgeTransaction
   metadataNotes?: string
-): EdgeSwapQuote {
+}
+
+export async function makeSwapPluginQuote(
+  order: SwapOrder
+): Promise<EdgeSwapQuote> {
+  const {
+    request,
+    spendInfo,
+    pluginId,
+    expirationDate,
+    preTx,
+    metadataNotes
+  } = order
+
   const { fromWallet } = request
+  const tx = await fromWallet.makeSpend(spendInfo)
+  const fromNativeAmount = spendInfo.spendTargets[0].nativeAmount
+  const toNativeAmount = spendInfo.swapData?.payoutNativeAmount
+  const destinationAddress = spendInfo.swapData?.payoutAddress
+  const isEstimate = spendInfo.swapData?.isEstimate ?? false
+  const quoteId = spendInfo.swapData?.orderId
+  if (
+    fromNativeAmount == null ||
+    toNativeAmount == null ||
+    destinationAddress == null
+  ) {
+    throw new Error(`Invalid makeSwapPluginQuote args from ${pluginId}`)
+  }
 
   let nativeAmount =
     tx.parentNetworkFee != null ? tx.parentNetworkFee : tx.networkFee

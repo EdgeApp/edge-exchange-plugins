@@ -15,7 +15,6 @@ import {
   EdgeSwapPlugin,
   EdgeSwapQuote,
   EdgeSwapRequest,
-  EdgeTransaction,
   SwapBelowLimitError,
   SwapCurrencyError
 } from 'edge-core-js/types'
@@ -203,19 +202,14 @@ export function makeSwapuzPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
         }
       }
 
-      const tx: EdgeTransaction = await request.fromWallet.makeSpend(spendInfo)
-
-      return makeSwapPluginQuote(
+      const order = {
         request,
-        request.nativeAmount,
-        toNativeAmount,
-        tx,
-        toAddress,
+        spendInfo,
         pluginId,
-        mode === 'float',
-        ensureInFuture(finishPayment),
-        uid
-      )
+        expirationDate: ensureInFuture(finishPayment)
+      }
+
+      return await makeSwapPluginQuote(order)
     }
 
     // Try them all

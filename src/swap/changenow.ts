@@ -16,7 +16,6 @@ import {
   EdgeSwapPlugin,
   EdgeSwapQuote,
   EdgeSwapRequest,
-  EdgeTransaction,
   SwapAboveLimitError,
   SwapBelowLimitError,
   SwapCurrencyError
@@ -245,22 +244,18 @@ export function makeChangeNowPlugin(
             refundAddress: fromAddress
           }
         }
-        const tx: EdgeTransaction = await request.fromWallet.makeSpend(
-          spendInfo
-        )
-        return makeSwapPluginQuote(
+
+        const order = {
           request,
-          nativeAmount,
-          toNativeAmount,
-          tx,
-          toAddress,
+          spendInfo,
           pluginId,
-          flow === 'standard',
-          validUntil != null
-            ? ensureInFuture(validUntil)
-            : new Date(Date.now() + 1000 * 60),
-          id
-        )
+          expirationDate:
+            validUntil != null
+              ? ensureInFuture(validUntil)
+              : new Date(Date.now() + 1000 * 60)
+        }
+
+        return await makeSwapPluginQuote(order)
       }
 
       async function swapBuy(flow: 'fixed-rate'): Promise<EdgeSwapQuote> {
@@ -272,7 +267,6 @@ export function makeChangeNowPlugin(
 
         const {
           fromAmount,
-          toAmount,
           payinAddress,
           payinExtraId,
           id,
@@ -282,11 +276,6 @@ export function makeChangeNowPlugin(
         const fromNativeAmount = await request.fromWallet.denominationToNative(
           fromAmount.toString(),
           fromCurrencyCode
-        )
-
-        const toNativeAmount = await request.toWallet.denominationToNative(
-          toAmount.toString(),
-          toCurrencyCode
         )
 
         const spendInfo: EdgeSpendInfo = {
@@ -312,22 +301,17 @@ export function makeChangeNowPlugin(
           }
         }
 
-        const tx: EdgeTransaction = await request.fromWallet.makeSpend(
-          spendInfo
-        )
-        return makeSwapPluginQuote(
+        const order = {
           request,
-          fromNativeAmount,
-          toNativeAmount,
-          tx,
-          toAddress,
+          spendInfo,
           pluginId,
-          false,
-          validUntil != null
-            ? ensureInFuture(validUntil)
-            : new Date(Date.now() + 1000 * 60),
-          id
-        )
+          expirationDate:
+            validUntil != null
+              ? ensureInFuture(validUntil)
+              : new Date(Date.now() + 1000 * 60)
+        }
+
+        return await makeSwapPluginQuote(order)
       }
 
       // Try them all

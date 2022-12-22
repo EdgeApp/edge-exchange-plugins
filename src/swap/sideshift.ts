@@ -240,19 +240,14 @@ const createFetchSwapQuote = (api: SideshiftApi, affiliateId: string) =>
       }
     }
 
-    const tx = await request.fromWallet.makeSpend(spendInfo)
-
-    return makeSwapPluginQuote(
+    const orderQuote = {
       request,
-      amountExpectedFromNative,
-      amountExpectedToNative,
-      tx,
-      settleAddress,
+      spendInfo,
       pluginId,
-      isEstimate,
-      ensureInFuture(new Date(order.expiresAt)),
-      order.id
-    )
+      expirationDate: ensureInFuture(new Date(order.expiresAt))
+    }
+
+    return await makeSwapPluginQuote(orderQuote)
   }
 
 export function makeSideshiftPlugin(

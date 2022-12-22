@@ -4,7 +4,6 @@ import {
   EdgeSwapPlugin,
   EdgeSwapQuote,
   EdgeSwapRequest,
-  EdgeTransaction,
   SwapCurrencyError
 } from 'edge-core-js/types'
 
@@ -45,7 +44,7 @@ export function makeTransferPlugin(
         publicAddress: toAddress
       } = await request.toWallet.getReceiveAddress()
 
-      const tx: EdgeTransaction = await request.fromWallet.makeSpend({
+      const spendInfo = {
         currencyCode: request.fromCurrencyCode,
         spendTargets: [
           {
@@ -53,16 +52,15 @@ export function makeTransferPlugin(
             publicAddress: toAddress
           }
         ]
-      })
+      }
 
-      const quote = makeSwapPluginQuote(
+      const order = {
         request,
-        request.nativeAmount,
-        request.nativeAmount,
-        tx,
-        toAddress,
-        'transfer'
-      )
+        spendInfo,
+        pluginId
+      }
+
+      const quote = await makeSwapPluginQuote(order)
       return quote
     }
   }

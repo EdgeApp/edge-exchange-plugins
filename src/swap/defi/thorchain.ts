@@ -539,20 +539,16 @@ export function makeThorchainPlugin(
           }
         }
       }
-      const tx: EdgeTransaction = await request.fromWallet.makeSpend(spendInfo)
 
-      return makeSwapPluginQuote(
+      const order = {
         request,
-        fromNativeAmount,
-        toNativeAmount,
-        tx,
-        toAddress,
+        spendInfo,
         pluginId,
-        false,
-        new Date(Date.now() + EXPIRATION_MS),
-        tx.txid,
+        expirationDate: new Date(Date.now() + EXPIRATION_MS),
         preTx
-      )
+      }
+
+      return await makeSwapPluginQuote(order)
     }
   }
   return out

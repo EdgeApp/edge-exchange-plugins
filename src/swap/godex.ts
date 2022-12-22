@@ -16,7 +16,6 @@ import {
   EdgeSwapPlugin,
   EdgeSwapQuote,
   EdgeSwapRequest,
-  EdgeTransaction,
   JsonObject,
   SwapBelowLimitError,
   SwapCurrencyError
@@ -305,20 +304,14 @@ export function makeGodexPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
       }
       log('spendInfo', spendInfo)
 
-      const tx: EdgeTransaction = await request.fromWallet.makeSpend(spendInfo)
-
-      // Convert that to the output format:
-      return makeSwapPluginQuote(
+      const order = {
         request,
-        fromNativeAmount,
-        toNativeAmount,
-        tx,
-        toAddress,
-        'godex',
-        false, // isEstimate, correct?
-        new Date(Date.now() + expirationMs),
-        quoteInfo.transaction_id
-      )
+        spendInfo,
+        pluginId,
+        expirationDate: new Date(Date.now() + expirationMs)
+      }
+
+      return await makeSwapPluginQuote(order)
     }
   }
 
