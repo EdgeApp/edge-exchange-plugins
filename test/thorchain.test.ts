@@ -68,6 +68,8 @@ describe(`getVolatilitySpread`, function () {
           sourceTokenId: undefined,
           destPluginId: undefined,
           destTokenId: undefined,
+          sourceCurrencyCode: undefined,
+          destCurrencyCode: undefined,
           volatilitySpread: 0.001
         },
         {
@@ -75,6 +77,8 @@ describe(`getVolatilitySpread`, function () {
           sourceTokenId: undefined,
           destPluginId: undefined,
           destTokenId: undefined,
+          sourceCurrencyCode: undefined,
+          destCurrencyCode: undefined,
           volatilitySpread: 0.003
         }
       ]
@@ -100,6 +104,8 @@ describe(`getVolatilitySpread`, function () {
           sourceTokenId: undefined,
           destPluginId: 'ethereum',
           destTokenId: 'someothertokenid',
+          sourceCurrencyCode: undefined,
+          destCurrencyCode: undefined,
           volatilitySpread: 0.001
         },
         {
@@ -107,6 +113,8 @@ describe(`getVolatilitySpread`, function () {
           sourceTokenId: undefined,
           destPluginId: undefined,
           destTokenId: undefined,
+          sourceCurrencyCode: undefined,
+          destCurrencyCode: undefined,
           volatilitySpread: 0.003
         },
         {
@@ -114,6 +122,8 @@ describe(`getVolatilitySpread`, function () {
           sourceTokenId: undefined,
           destPluginId: 'ethereum',
           destTokenId: 'usdctokenid',
+          sourceCurrencyCode: undefined,
+          destCurrencyCode: undefined,
           volatilitySpread: 0.00321
         }
       ]
@@ -139,6 +149,8 @@ describe(`getVolatilitySpread`, function () {
           sourceTokenId: undefined,
           destPluginId: undefined,
           destTokenId: undefined,
+          sourceCurrencyCode: undefined,
+          destCurrencyCode: undefined,
           volatilitySpread: 0.001
         },
         {
@@ -146,6 +158,8 @@ describe(`getVolatilitySpread`, function () {
           sourceTokenId: undefined,
           destPluginId: undefined,
           destTokenId: undefined,
+          sourceCurrencyCode: undefined,
+          destCurrencyCode: undefined,
           volatilitySpread: 0.003
         },
         {
@@ -153,6 +167,8 @@ describe(`getVolatilitySpread`, function () {
           sourceTokenId: undefined,
           destPluginId: 'ethereum',
           destTokenId: 'usdctokenid',
+          sourceCurrencyCode: undefined,
+          destCurrencyCode: undefined,
           volatilitySpread: 0.00321
         }
       ]
@@ -178,6 +194,8 @@ describe(`getVolatilitySpread`, function () {
           sourceTokenId: undefined,
           destPluginId: undefined,
           destTokenId: undefined,
+          sourceCurrencyCode: undefined,
+          destCurrencyCode: undefined,
           volatilitySpread: 0.1
         },
         {
@@ -185,6 +203,8 @@ describe(`getVolatilitySpread`, function () {
           sourceTokenId: undefined,
           destPluginId: undefined,
           destTokenId: undefined,
+          sourceCurrencyCode: undefined,
+          destCurrencyCode: undefined,
           volatilitySpread: 0.3
         },
         {
@@ -192,6 +212,8 @@ describe(`getVolatilitySpread`, function () {
           sourceTokenId: undefined,
           destPluginId: 'ethereum',
           destTokenId: 'usdctokenid',
+          sourceCurrencyCode: undefined,
+          destCurrencyCode: undefined,
           volatilitySpread: 0.321
         }
       ]
