@@ -194,7 +194,7 @@ export const asExchangeInfo = asObject({
 
 const asPools = asArray(asPool)
 
-type AssetSpread = ReturnType<typeof asAssetSpread>
+export type AssetSpread = ReturnType<typeof asAssetSpread>
 type Pool = ReturnType<typeof asPool>
 type ExchangeInfo = ReturnType<typeof asExchangeInfo>
 type MinAmount = ReturnType<typeof asMinAmount>
@@ -1048,6 +1048,7 @@ export const getVolatilitySpread = ({
   toCurrencyCode,
   likeKindVolatilitySpread,
   volatilitySpread,
+  daVolatilitySpread,
   perAssetSpread
 }: {
   fromPluginId: string
@@ -1057,7 +1058,8 @@ export const getVolatilitySpread = ({
   toTokenId?: string
   toCurrencyCode: string
   likeKindVolatilitySpread: number
-  volatilitySpread: number
+  volatilitySpread?: number
+  daVolatilitySpread?: number
   perAssetSpread: AssetSpread[]
 }): string => {
   let volatilitySpreadFinal: number | undefined
@@ -1087,9 +1089,16 @@ export const getVolatilitySpread = ({
   if (volatilitySpreadFinal == null) {
     const likeKind = isLikeKind(fromCurrencyCode, toCurrencyCode)
 
+    if (volatilitySpread == null && daVolatilitySpread == null)
+      throw new Error(
+        'Must have at least one of volatilitySpread or daVolatilitySpread'
+      )
+
+    // The 0.05 is there to make TS happy. We can never have both
+    // volatilitySpread and daVolatilitySpread undefined
     volatilitySpreadFinal = likeKind
       ? likeKindVolatilitySpread
-      : volatilitySpread
+      : volatilitySpread ?? daVolatilitySpread ?? 0.05
   }
 
   return volatilitySpreadFinal.toString()

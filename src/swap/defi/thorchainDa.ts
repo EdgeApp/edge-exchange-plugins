@@ -26,11 +26,7 @@ import { ethers } from 'ethers'
 // io.fetch is broken with some APIs when running under node. For now, leave this here as a convenience
 // and reminder to fix io.fetch for runnings tests
 // import nodeFetch from 'node-fetch'
-import {
-  checkInvalidCodes,
-  getTokenId,
-  makeSwapPluginQuote
-} from '../../swap-helpers'
+import { checkInvalidCodes, makeSwapPluginQuote } from '../../swap-helpers'
 import {
   convertRequest,
   fetchInfo,
@@ -42,15 +38,19 @@ import { abiMap } from './abi/abiMap'
 import {
   asExchangeInfo,
   asInboundAddresses,
+  AssetSpread,
   EVM_CURRENCY_CODES,
   EXCHANGE_INFO_UPDATE_FREQ_MS,
   EXPIRATION_MS,
   getApprovalData,
   getEvmTokenData,
   getGasLimit,
+  getVolatilitySpread,
   INVALID_CURRENCY_CODES,
+  LIKE_KIND_VOLATILITY_SPREAD_DEFAULT,
   MAINNET_CODE_TRANSCRIPTION,
-  MIDGARD_SERVERS_DEFAULT
+  MIDGARD_SERVERS_DEFAULT,
+  PER_ASSET_SPREAD_DEFAULT
 } from './thorchain'
 
 const pluginId = 'thorchainda'
@@ -136,6 +136,8 @@ export function makeThorchainDaPlugin(
       const {
         fromCurrencyCode,
         toCurrencyCode,
+        fromTokenId,
+        toTokenId,
         nativeAmount,
         fromWallet,
         toWallet,
@@ -154,6 +156,9 @@ export function makeThorchainDaPlugin(
       let midgardServers: string[] = MIDGARD_SERVERS_DEFAULT
       let daVolatilitySpread: number = DA_VOLATILITY_SPREAD_DEFAULT
       let thorswapServers: string[] = THORSWAP_DEFAULT_SERVERS
+
+      let likeKindVolatilitySpread: number = LIKE_KIND_VOLATILITY_SPREAD_DEFAULT
+      let perAssetSpread: AssetSpread[] = PER_ASSET_SPREAD_DEFAULT
 
       checkInvalidCodes(INVALID_CURRENCY_CODES, request, swapInfo)
 
@@ -200,11 +205,27 @@ export function makeThorchainDaPlugin(
       if (exchangeInfo != null) {
         const { thorchain } = exchangeInfo.swap.plugins
         daVolatilitySpread = thorchain.daVolatilitySpread
+        thorswapServers = thorchain.thorSwapServers ?? thorswapServers
+        likeKindVolatilitySpread = thorchain.likeKindVolatilitySpread
         midgardServers = thorchain.midgardServers
-        thorswapServers = thorchain.thorSwapServers ?? THORSWAP_DEFAULT_SERVERS
+        perAssetSpread = thorchain.perAssetSpread
       }
 
-      const volatilitySpreadFinal = daVolatilitySpread // Might add a likeKind spread later
+      const volatilitySpreadFinal = Number(
+        getVolatilitySpread({
+          fromPluginId: fromWallet.currencyInfo.pluginId,
+          fromTokenId,
+          fromCurrencyCode,
+          toPluginId: toWallet.currencyInfo.pluginId,
+          toTokenId,
+          toCurrencyCode,
+          likeKindVolatilitySpread,
+          daVolatilitySpread,
+          perAssetSpread
+        })
+      )
+
+      log.warn(`getVolatilitySpread: ${volatilitySpreadFinal.toString()}`)
 
       //
       // Get Quote
@@ -218,18 +239,15 @@ export function makeThorchainDaPlugin(
         fromCurrencyCode
       )
 
-      const fromIsToken = fromMainnetCode !== fromCurrencyCode
-      const fromTokenId = fromIsToken
-        ? `-0x${getTokenId(fromWallet, fromCurrencyCode) ?? ''}`
-        : undefined
-      const toIsToken = toMainnetCode !== toCurrencyCode
-      const toTokenId = toIsToken
-        ? `-0x${getTokenId(toWallet, toCurrencyCode) ?? ''}`
-        : undefined
+      const fromThorTokenId =
+        fromTokenId != null ? `-0x${fromTokenId ?? ''}` : undefined
+      const toThorTokenId =
+        toTokenId != null ? `-0x${toTokenId ?? ''}` : undefined
+
       const quoteParams: ThorSwapQuoteParams = {
         sellAsset:
-          `${fromMainnetCode}.${fromCurrencyCode}` + (fromTokenId ?? ''),
-        buyAsset: `${toMainnetCode}.${toCurrencyCode}` + (toTokenId ?? ''),
+          `${fromMainnetCode}.${fromCurrencyCode}` + (fromThorTokenId ?? ''),
+        buyAsset: `${toMainnetCode}.${toCurrencyCode}` + (toThorTokenId ?? ''),
         sellAmount,
         slippage: (volatilitySpreadFinal * 100).toString(),
         recipientAddress: toAddress,
