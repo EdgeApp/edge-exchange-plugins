@@ -24,8 +24,6 @@ const swapInfo: EdgeSwapInfo = {
 export function makeTransferPlugin(
   opts: EdgeCorePluginOptions
 ): EdgeSwapPlugin {
-  const { log } = opts
-
   const out: EdgeSwapPlugin = {
     swapInfo,
 
@@ -65,7 +63,6 @@ export function makeTransferPlugin(
         toAddress,
         'transfer'
       )
-      log(quote)
       return quote
     }
   }
