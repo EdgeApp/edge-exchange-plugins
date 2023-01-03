@@ -76,29 +76,37 @@ export const PER_ASSET_SPREAD_DEFAULT: AssetSpread[] = [
     sourcePluginId: 'bitcoin',
     volatilitySpread: 0.015,
     sourceTokenId: undefined,
+    sourceCurrencyCode: undefined,
     destPluginId: undefined,
-    destTokenId: undefined
+    destTokenId: undefined,
+    destCurrencyCode: undefined
   },
   {
     sourcePluginId: 'bitcoincash',
     volatilitySpread: 0.015,
     sourceTokenId: undefined,
+    sourceCurrencyCode: undefined,
     destPluginId: undefined,
-    destTokenId: undefined
+    destTokenId: undefined,
+    destCurrencyCode: undefined
   },
   {
     sourcePluginId: 'dogecoin',
     volatilitySpread: 0.01,
     sourceTokenId: undefined,
+    sourceCurrencyCode: undefined,
     destPluginId: undefined,
-    destTokenId: undefined
+    destTokenId: undefined,
+    destCurrencyCode: undefined
   },
   {
     sourcePluginId: 'litecoin',
     volatilitySpread: 0.01,
     sourceTokenId: undefined,
+    sourceCurrencyCode: undefined,
     destPluginId: undefined,
-    destTokenId: undefined
+    destTokenId: undefined,
+    destCurrencyCode: undefined
   }
 ]
 
@@ -161,8 +169,10 @@ export const asPool = asObject({
 export const asAssetSpread = asObject({
   sourcePluginId: asOptional(asString),
   sourceTokenId: asOptional(asString),
+  sourceCurrencyCode: asOptional(asString),
   destPluginId: asOptional(asString),
   destTokenId: asOptional(asString),
+  destCurrencyCode: asOptional(asString),
   volatilitySpread: asNumber
 })
 
@@ -1056,14 +1066,20 @@ export const getVolatilitySpread = ({
     const {
       sourcePluginId,
       sourceTokenId,
+      sourceCurrencyCode,
       destPluginId,
       destTokenId,
+      destCurrencyCode,
       volatilitySpread
     } = spread
     if (sourcePluginId != null && sourcePluginId !== fromPluginId) continue
     if (sourceTokenId != null && sourceTokenId !== fromTokenId) continue
+    if (sourceCurrencyCode != null && sourceCurrencyCode !== fromCurrencyCode)
+      continue
     if (destPluginId != null && destPluginId !== toPluginId) continue
     if (destTokenId != null && destTokenId !== toTokenId) continue
+    if (destCurrencyCode != null && destCurrencyCode !== toCurrencyCode)
+      continue
     volatilitySpreadFinal = volatilitySpread
     break
   }
