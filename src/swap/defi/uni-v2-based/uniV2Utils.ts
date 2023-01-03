@@ -1,5 +1,6 @@
 import { mul, sub } from 'biggystring'
 import {
+  EdgeSwapInfo,
   EdgeSwapQuote,
   EdgeSwapRequest,
   EdgeSwapResult,
@@ -181,6 +182,7 @@ export const getSwapTransactions = async (
  * */
 export function makeUniV2EdgeSwapQuote(
   request: EdgeSwapRequest,
+  swapInfo: EdgeSwapInfo,
   fromNativeAmount: string,
   toNativeAmount: string,
   txs: EdgeTransaction[],
@@ -194,6 +196,7 @@ export function makeUniV2EdgeSwapQuote(
 
   const out: EdgeSwapQuote = {
     request,
+    swapInfo,
     fromNativeAmount,
     toNativeAmount,
     networkFee: {

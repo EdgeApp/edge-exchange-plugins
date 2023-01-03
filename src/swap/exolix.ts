@@ -26,6 +26,7 @@ const pluginId = 'exolix'
 
 const swapInfo: EdgeSwapInfo = {
   pluginId,
+  isDex: false,
   displayName: 'Exolix',
   supportEmail: 'support@exolix.com'
 }
@@ -265,6 +266,7 @@ export function makeExolixPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
 
     return makeSwapPluginQuote(
       request,
+      swapInfo,
       fromNativeAmount,
       toNativeAmount,
       tx,
@@ -272,7 +274,9 @@ export function makeExolixPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
       pluginId,
       false,
       new Date(Date.now() + expirationMs),
-      quoteInfo.id
+      quoteInfo.id,
+      undefined,
+      undefined
     )
   }
 

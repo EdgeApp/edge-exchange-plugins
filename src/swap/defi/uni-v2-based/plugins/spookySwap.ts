@@ -21,6 +21,7 @@ import {
 
 const swapInfo: EdgeSwapInfo = {
   pluginId: 'spookySwap',
+  isDex: true,
   displayName: 'SpookySwap',
   supportEmail: 'support@edge.app'
 }
@@ -144,6 +145,7 @@ export function makeSpookySwapPlugin(
       // Convert that to the EdgeSwapQuote format:
       return makeUniV2EdgeSwapQuote(
         request,
+        swapInfo,
         amountToSwap.toString(),
         expectedAmountOut.toString(),
         edgeUnsignedTxs,

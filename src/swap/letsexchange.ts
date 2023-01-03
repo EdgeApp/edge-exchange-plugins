@@ -28,6 +28,7 @@ const pluginId = 'letsexchange'
 
 const swapInfo: EdgeSwapInfo = {
   pluginId,
+  isDex: false,
   displayName: 'LetsExchange',
   supportEmail: 'support@letsexchange.io'
 }
@@ -297,6 +298,7 @@ export function makeLetsExchangePlugin(
       // Convert that to the output format:
       return makeSwapPluginQuote(
         request,
+        swapInfo,
         fromNativeAmount,
         toNativeAmount,
         tx,
@@ -304,7 +306,9 @@ export function makeLetsExchangePlugin(
         'letsexchange',
         false, // isEstimate, correct?
         new Date(Date.now() + expirationMs),
-        quoteInfo.transaction_id
+        quoteInfo.transaction_id,
+        undefined,
+        undefined
       )
     }
   }

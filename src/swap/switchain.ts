@@ -13,6 +13,7 @@ const pluginId = 'switchain'
 
 const swapInfo: EdgeSwapInfo = {
   pluginId,
+  isDex: false,
   displayName: 'Switchain',
   supportEmail: 'help@switchain.com'
 }

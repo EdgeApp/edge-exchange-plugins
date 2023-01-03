@@ -56,6 +56,7 @@ import {
 const pluginId = 'thorchainda'
 const swapInfo: EdgeSwapInfo = {
   pluginId,
+  isDex: true,
   displayName: 'Thorchain DEX Aggregator',
   supportEmail: 'support@edge.app'
 }
@@ -470,6 +471,7 @@ export function makeThorchainDaPlugin(
       const notes = `DEX Providers: ${providersStr}\nPath: ${path}`
       return makeSwapPluginQuote(
         request,
+        swapInfo,
         nativeAmount,
         toNativeAmount,
         tx,

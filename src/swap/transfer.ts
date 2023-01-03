@@ -16,7 +16,6 @@ const pluginId = 'transfer'
 const swapInfo: EdgeSwapInfo = {
   pluginId,
   displayName: 'Transfer',
-
   orderUri: undefined,
   supportEmail: 'support@edge.com'
 }
@@ -57,11 +56,17 @@ export function makeTransferPlugin(
 
       const quote = makeSwapPluginQuote(
         request,
+        swapInfo,
         request.nativeAmount,
         request.nativeAmount,
         tx,
         toAddress,
-        'transfer'
+        'transfer',
+        false,
+        undefined,
+        undefined,
+        undefined,
+        undefined
       )
       return quote
     }

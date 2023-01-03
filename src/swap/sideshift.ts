@@ -32,6 +32,7 @@ const SIDESHIFT_BASE_URL = 'https://sideshift.ai/api/v2'
 const pluginId = 'sideshift'
 const swapInfo: EdgeSwapInfo = {
   pluginId,
+  isDex: false,
   displayName: 'SideShift.ai',
   supportEmail: 'help@sideshift.ai'
 }
@@ -244,6 +245,7 @@ const createFetchSwapQuote = (api: SideshiftApi, affiliateId: string) =>
 
     return makeSwapPluginQuote(
       request,
+      swapInfo,
       amountExpectedFromNative,
       amountExpectedToNative,
       tx,
@@ -251,7 +253,9 @@ const createFetchSwapQuote = (api: SideshiftApi, affiliateId: string) =>
       pluginId,
       isEstimate,
       ensureInFuture(new Date(order.expiresAt)),
-      order.id
+      order.id,
+      undefined,
+      undefined
     )
   }
 

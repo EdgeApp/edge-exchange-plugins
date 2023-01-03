@@ -39,6 +39,7 @@ import erc20Abi from './abi/UNISWAP_V2_ERC20_ABI'
 const pluginId = 'thorchain'
 const swapInfo: EdgeSwapInfo = {
   pluginId,
+  isDex: true,
   displayName: 'Thorchain',
   supportEmail: 'support@edge.app'
 }
@@ -543,6 +544,7 @@ export function makeThorchainPlugin(
 
       return makeSwapPluginQuote(
         request,
+        swapInfo,
         fromNativeAmount,
         toNativeAmount,
         tx,
@@ -551,7 +553,8 @@ export function makeThorchainPlugin(
         false,
         new Date(Date.now() + EXPIRATION_MS),
         tx.txid,
-        preTx
+        preTx,
+        undefined
       )
     }
   }

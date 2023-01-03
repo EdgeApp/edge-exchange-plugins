@@ -21,6 +21,7 @@ import {
 
 const swapInfo: EdgeSwapInfo = {
   pluginId: 'tombSwap',
+  isDex: true,
   displayName: 'TombSwap',
   supportEmail: 'support@edge.app'
 }
@@ -144,6 +145,7 @@ export function makeTombSwapPlugin(
       // Convert that to the output format:
       return makeUniV2EdgeSwapQuote(
         request,
+        swapInfo,
         amountToSwap.toString(),
         expectedAmountOut.toString(),
         edgeUnsignedTxs,
