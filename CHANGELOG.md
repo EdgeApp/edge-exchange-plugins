@@ -1,5 +1,10 @@
 # edge-exchange-plugins
 
+## 0.16.14 (2023-01-03)
+
+- Fix: Transfer plugin throwing error
+- Change: Allow per asset spreads to be specified by currency code
+
 ## 0.16.13 (2022-12-21)
 
 - Fix: Remove extra slash in path to Thorswap API to prevent 301 redirects
