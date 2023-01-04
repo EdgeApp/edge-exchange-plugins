@@ -512,7 +512,10 @@ export function makeThorchainDaPlugin(
         return order
       }
 
-      const newRequest = await getMaxSwappable(fetchSwapQuoteInner, request)
+      const { request: newRequest } = await getMaxSwappable(
+        fetchSwapQuoteInner,
+        request
+      )
       const swapOrder = await fetchSwapQuoteInner(newRequest)
       return await makeSwapPluginQuote(swapOrder)
     }

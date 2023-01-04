@@ -219,7 +219,7 @@ export function makeSwapuzPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
       return order
     }
 
-    const newRequest = await getMaxSwappable(
+    const { request: newRequest } = await getMaxSwappable(
       async request => await getQuote(request, 'fix'),
       request
     )

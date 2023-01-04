@@ -6,7 +6,8 @@ import {
   EdgeSwapPlugin,
   EdgeSwapQuote,
   EdgeSwapRequest,
-  EdgeTransaction
+  EdgeTransaction,
+  JsonObject
 } from 'edge-core-js/types'
 import { ethers } from 'ethers'
 
@@ -46,7 +47,8 @@ export function makeSpookySwapPlugin(
       const request = convertRequest(req)
 
       const fetchSwapQuoteInner = async (
-        requestInner: EdgeSwapRequestPlugin
+        requestInner: EdgeSwapRequestPlugin,
+        customNetworkFee?: JsonObject
       ): Promise<SwapOrder> => {
         const {
           fromWallet,
@@ -100,7 +102,8 @@ export function makeSpookySwapPlugin(
           expectedAmountOut,
           toAddress,
           SLIPPAGE,
-          deadline
+          deadline,
+          customNetworkFee?.gasPrice
         )
 
         const pluginId = swapInfo.pluginId
@@ -160,9 +163,12 @@ export function makeSpookySwapPlugin(
         return order
       }
 
-      const newRequest = await getMaxSwappable(fetchSwapQuoteInner, request)
-      const swapOrder = await fetchSwapQuoteInner(newRequest)
-      return await makeSwapPluginQuote(swapOrder)
+      const { request: newRequest, customNetworkFee } = await getMaxSwappable(
+        fetchSwapQuoteInner,
+        request
+      )
+      const swapOrder = await fetchSwapQuoteInner(newRequest, customNetworkFee)
+      return await makeSwapPluginQuote({ ...swapOrder, customNetworkFee })
     }
   }
   return out

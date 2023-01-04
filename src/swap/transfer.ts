@@ -79,7 +79,10 @@ export function makeTransferPlugin(
         return order
       }
 
-      const newRequest = await getMaxSwappable(fetchSwapQuoteInner, request)
+      const { request: newRequest } = await getMaxSwappable(
+        fetchSwapQuoteInner,
+        request
+      )
       const swapOrder = await fetchSwapQuoteInner(newRequest)
       const quote = await makeSwapPluginQuote(swapOrder)
       return quote

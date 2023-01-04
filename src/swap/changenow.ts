@@ -327,7 +327,7 @@ export function makeChangeNowPlugin(
 
       // Try them all
       if (quoteFor !== 'to') {
-        const newRequest = await getMaxSwappable(
+        const { request: newRequest } = await getMaxSwappable(
           async request => await swapSell(request, 'fixed-rate'),
           request
         )

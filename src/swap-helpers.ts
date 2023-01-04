@@ -8,6 +8,7 @@ import {
   EdgeSwapRequest,
   EdgeSwapResult,
   EdgeTransaction,
+  JsonObject,
   SwapCurrencyError
 } from 'edge-core-js/types'
 
@@ -38,12 +39,14 @@ export interface SwapOrder {
   expirationDate?: Date
   preTx?: EdgeTransaction
   metadataNotes?: string
+  customNetworkFee?: JsonObject
 }
 
 export async function makeSwapPluginQuote(
   order: SwapOrder
 ): Promise<EdgeSwapQuote> {
   const {
+    customNetworkFee,
     request,
     spendInfo,
     pluginId,
@@ -53,6 +56,10 @@ export async function makeSwapPluginQuote(
   } = order
 
   const { fromWallet } = request
+  if (customNetworkFee != null) {
+    spendInfo.customNetworkFee = customNetworkFee
+    spendInfo.networkFeeOption = 'custom'
+  }
   const tx = await fromWallet.makeSpend(spendInfo)
   const fromNativeAmount = spendInfo.spendTargets[0].nativeAmount
   const toNativeAmount = spendInfo.swapData?.payoutNativeAmount
@@ -118,11 +125,16 @@ export async function makeSwapPluginQuote(
   return out
 }
 
+interface getMaxSwappableRequest {
+  request: EdgeSwapRequestPlugin
+  customNetworkFee?: JsonObject
+}
+
 export const getMaxSwappable = async (
   fetchSwap: (request: EdgeSwapRequestPlugin) => Promise<SwapOrder>,
   request: EdgeSwapRequestPlugin
-): Promise<EdgeSwapRequestPlugin> => {
-  if (request.quoteFor !== 'max') return request
+): Promise<getMaxSwappableRequest> => {
+  if (request.quoteFor !== 'max') return { request }
 
   const requestCopy = { ...request }
   const { fromWallet, fromCurrencyCode } = requestCopy
@@ -147,7 +159,10 @@ export const getMaxSwappable = async (
 
   // Update and return the request object
   requestCopy.nativeAmount = maxAmount
-  return requestCopy
+  return {
+    request: requestCopy,
+    customNetworkFee: swapOrder.spendInfo.customNetworkFee
+  }
 }
 
 interface AllCodes {
