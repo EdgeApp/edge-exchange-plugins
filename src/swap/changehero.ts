@@ -82,18 +82,12 @@ const asCreateFixTransactionReply = asObject({
   })
 })
 
-const dontUseLegacy: { [cc: string]: boolean } = {
-  DGB: true
-}
-
 async function getAddress(
   wallet: EdgeCurrencyWallet,
   currencyCode: string
 ): Promise<string> {
-  const addressInfo = await wallet.getReceiveAddress({ currencyCode })
-  return addressInfo.legacyAddress != null && !dontUseLegacy[currencyCode]
-    ? addressInfo.legacyAddress
-    : addressInfo.publicAddress
+  const { publicAddress } = await wallet.getReceiveAddress({ currencyCode })
+  return publicAddress
 }
 
 function checkReply(
