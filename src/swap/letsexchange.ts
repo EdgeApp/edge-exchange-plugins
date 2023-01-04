@@ -220,7 +220,7 @@ export function makeLetsExchangePlugin(
           )
 
       if (gt(nativeMax, '0')) {
-        if (lt(request.nativeAmount, nativeMax)) {
+        if (gt(request.nativeAmount, nativeMax)) {
           throw new SwapAboveLimitError(
             swapInfo,
             nativeMin,
