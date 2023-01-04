@@ -68,10 +68,6 @@ const asQuoteInfo = asObject({
   return_extra_id: asEither(asString, asNull)
 })
 
-const dontUseLegacy: { [cc: string]: boolean } = {
-  DGB: true
-}
-
 const INVALID_CURRENCY_CODES: InvalidCurrencyCodes = {
   from: {
     ethereum: ['MATIC'],
@@ -102,10 +98,8 @@ async function getAddress(
   wallet: EdgeCurrencyWallet,
   currencyCode: string
 ): Promise<string> {
-  const addressInfo = await wallet.getReceiveAddress({ currencyCode })
-  return addressInfo.legacyAddress != null && !dontUseLegacy[currencyCode]
-    ? addressInfo.legacyAddress
-    : addressInfo.publicAddress
+  const { publicAddress } = await wallet.getReceiveAddress({ currencyCode })
+  return publicAddress
 }
 
 export function makeGodexPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {

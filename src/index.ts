@@ -10,6 +10,7 @@ import { makeEdgeRatesPlugin } from './rate/edgeRates'
 import { makeNomicsPlugin } from './rate/nomics'
 import { makeWazirxPlugin } from './rate/wazirx'
 import { makeChangeHeroPlugin } from './swap/changehero'
+import { makeChangellyPlugin } from './swap/changelly'
 import { makeChangeNowPlugin } from './swap/changenow'
 import { makeThorchainPlugin } from './swap/defi/thorchain'
 import { makeThorchainDaPlugin } from './swap/defi/thorchainDa'
@@ -39,6 +40,7 @@ const edgeCorePlugins = {
 
   // Swap plugins:
   changehero: makeChangeHeroPlugin,
+  changelly: makeChangellyPlugin,
   changenow: makeChangeNowPlugin,
   exolix: makeExolixPlugin,
   godex: makeGodexPlugin,

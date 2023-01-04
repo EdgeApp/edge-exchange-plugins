@@ -47,10 +47,6 @@ const asInitOptions = asObject({
 const orderUri = 'https://swapuz.com/order/'
 const uri = 'https://api.swapuz.com/api/home/v1/'
 
-const dontUseLegacy: { [cc: string]: boolean } = {
-  DGB: true
-}
-
 const INVALID_CURRENCY_CODES: InvalidCurrencyCodes = {
   from: {},
   to: {
@@ -67,10 +63,8 @@ async function getAddress(
   wallet: EdgeCurrencyWallet,
   currencyCode: string
 ): Promise<string> {
-  const addressInfo = await wallet.getReceiveAddress({ currencyCode })
-  return addressInfo.legacyAddress != null && !dontUseLegacy[currencyCode]
-    ? addressInfo.legacyAddress
-    : addressInfo.publicAddress
+  const { publicAddress } = await wallet.getReceiveAddress({ currencyCode })
+  return publicAddress
 }
 
 export function makeSwapuzPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
