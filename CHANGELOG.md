@@ -1,5 +1,9 @@
 # edge-exchange-plugins
 
+## 0.16.15 (2023-01-04)
+
+- LetsExchange: Fix max amount logic
+
 ## 0.16.14 (2023-01-03)
 
 - Fix: Transfer plugin throwing error
