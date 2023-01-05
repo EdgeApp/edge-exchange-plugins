@@ -15,6 +15,7 @@ import {
 import fs from 'fs'
 
 import edgeExchangePlugins from '../src'
+import { arrrCurrencyInfo } from './fakeArrrInfo'
 import { avaxCurrencyInfo } from './fakeAvaxInfo'
 import { btcCurrencyInfo } from './fakeBtcInfo'
 import { makeFakePlugin } from './fakeCurrencyPlugin'
@@ -41,6 +42,7 @@ async function main(): Promise<void> {
     bitcoin: makeFakePlugin(btcCurrencyInfo),
     ethereum: makeFakePlugin(ethCurrencyInfo),
     avalanche: makeFakePlugin(avaxCurrencyInfo),
+    piratechain: makeFakePlugin(arrrCurrencyInfo),
     ...edgeExchangePlugins
   }
 
@@ -61,7 +63,16 @@ async function main(): Promise<void> {
       bitcoin: true,
       ethereum: true,
       avalanche: true,
-      thorchainda: true
+      piratechain: true,
+      thorchainda: true,
+      changelly: {
+        apiKey: '',
+        secret: ''
+      },
+      letsexchange: {
+        apiKey: '',
+        affiliateId: ''
+      }
     }
   })
 
@@ -69,10 +80,12 @@ async function main(): Promise<void> {
   const btcInfo = await account.getFirstWalletInfo('wallet:bitcoin')
   const ethInfo = await account.getFirstWalletInfo('wallet:ethereum')
   const avaxInfo = await account.getFirstWalletInfo('wallet:avalanche')
+  const arrrInfo = await account.getFirstWalletInfo('wallet:piratechain')
 
   const btcWallet = await account.waitForCurrencyWallet(btcInfo?.id ?? '')
   const ethWallet = await account.waitForCurrencyWallet(ethInfo?.id ?? '')
   const avaxWallet = await account.waitForCurrencyWallet(avaxInfo?.id ?? '')
+  const arrrWallet = await account.waitForCurrencyWallet(arrrInfo?.id ?? '')
 
   // Test a FROM quote
   const fromRequest: EdgeSwapRequest = {
@@ -87,6 +100,44 @@ async function main(): Promise<void> {
   console.log(
     JSON.stringify(
       { ...fromRequest, fromWallet: undefined, toWallet: undefined },
+      null,
+      2
+    )
+  )
+  console.log(`------------`)
+
+  // Test a FROM ARRR to BTC quote
+  const fromRequest2: EdgeSwapRequest = {
+    fromWallet: arrrWallet,
+    fromCurrencyCode: 'ARRR',
+    toWallet: btcWallet,
+    toCurrencyCode: 'BTC',
+    nativeAmount: await arrrWallet.denominationToNative('109', 'ARRR'),
+    quoteFor: 'from'
+  }
+  console.log(`fromRequest2:`)
+  console.log(
+    JSON.stringify(
+      { ...fromRequest2, fromWallet: undefined, toWallet: undefined },
+      null,
+      2
+    )
+  )
+  console.log(`------------`)
+
+  // Test a FROM BTC to ARRR quote
+  const fromRequest3: EdgeSwapRequest = {
+    fromWallet: btcWallet,
+    fromCurrencyCode: 'BTC',
+    toWallet: arrrWallet,
+    toCurrencyCode: 'ARRR',
+    nativeAmount: await btcWallet.denominationToNative('0.01', 'BTC'),
+    quoteFor: 'from'
+  }
+  console.log(`fromRequest3:`)
+  console.log(
+    JSON.stringify(
+      { ...fromRequest3, fromWallet: undefined, toWallet: undefined },
       null,
       2
     )
@@ -111,7 +162,7 @@ async function main(): Promise<void> {
     )
   )
 
-  const quote = await account.fetchSwapQuote(fromRequest).catch(e => {
+  const quote = await account.fetchSwapQuote(fromRequest3).catch(e => {
     console.log(e)
     console.log(e.message)
   })
