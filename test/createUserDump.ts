@@ -7,6 +7,7 @@ import {
 import fs from 'fs'
 
 import edgeExchangePlugins from '../src'
+import { arrrCurrencyInfo } from './fakeArrrInfo'
 import { avaxCurrencyInfo } from './fakeAvaxInfo'
 import { btcCurrencyInfo } from './fakeBtcInfo'
 import { makeFakePlugin } from './fakeCurrencyPlugin'
@@ -19,6 +20,7 @@ async function main(): Promise<void> {
     bitcoin: makeFakePlugin(btcCurrencyInfo),
     ethereum: makeFakePlugin(ethCurrencyInfo),
     avalanche: makeFakePlugin(avaxCurrencyInfo),
+    piratechain: makeFakePlugin(arrrCurrencyInfo),
     ...edgeExchangePlugins
   }
 
@@ -35,6 +37,7 @@ async function main(): Promise<void> {
       bitcoin: true,
       ethereum: true,
       avalanche: true,
+      piratechain: true,
       thorchainda: true
     }
   })
@@ -42,6 +45,10 @@ async function main(): Promise<void> {
   await account.createCurrencyWallet('wallet:bitcoin', {
     fiatCurrencyCode: 'iso:EUR',
     name: 'My Fake Bitcoin'
+  })
+  await account.createCurrencyWallet('wallet:piratechain', {
+    fiatCurrencyCode: 'iso:EUR',
+    name: 'My Fake Arrr'
   })
   const ethWallet = await account.createCurrencyWallet('wallet:ethereum', {
     fiatCurrencyCode: 'iso:EUR',
