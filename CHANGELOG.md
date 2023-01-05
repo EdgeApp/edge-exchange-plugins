@@ -1,5 +1,10 @@
 # edge-exchange-plugins
 
+## 0.16.16 (2023-01-05)
+
+- LetsExchange: Update asInfoReply cleaner to support numbers or strings
+- Add BTC/ARRR tests
+
 ## 0.16.15 (2023-01-04)
 
 - LetsExchange: Fix max amount logic
