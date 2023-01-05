@@ -100,7 +100,7 @@ export const getSwapTransactions = async (
     txPromises.push(
       ...[
         makeWrappedFtmContract(provider).populateTransaction.deposit({
-          gasLimit: '51000',
+          gasLimit: '60000',
           gasPrice,
           value: amountToSwap
         })
@@ -114,7 +114,7 @@ export const getSwapTransactions = async (
       makeWrappedFtmContract(provider).populateTransaction.withdraw(
         amountToSwap,
         {
-          gasLimit: '51000',
+          gasLimit: '60000',
           gasPrice
         }
       )
