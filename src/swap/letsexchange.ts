@@ -22,7 +22,7 @@ import {
 } from '../swap-helpers'
 import { convertRequest } from '../util/utils'
 import { asOptionalBlank } from './changenow'
-import { EdgeSwapRequestPlugin } from './types'
+import { asNumberString, EdgeSwapRequestPlugin } from './types'
 
 const pluginId = 'letsexchange'
 
@@ -52,9 +52,9 @@ const asQuoteInfo = asObject({
 })
 
 const asInfoReply = asObject({
-  min_amount: asString,
-  max_amount: asString,
-  amount: asString
+  min_amount: asNumberString,
+  max_amount: asNumberString,
+  amount: asNumberString
 })
 const dontUseLegacy: { [cc: string]: boolean } = {
   DGB: true

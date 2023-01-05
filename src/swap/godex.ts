@@ -1,12 +1,5 @@
 import { lt } from 'biggystring'
-import {
-  asEither,
-  asNull,
-  asNumber,
-  asObject,
-  asOptional,
-  asString
-} from 'cleaners'
+import { asEither, asNull, asObject, asOptional, asString } from 'cleaners'
 import {
   EdgeCorePluginOptions,
   EdgeCurrencyWallet,
@@ -28,7 +21,7 @@ import {
   makeSwapPluginQuote
 } from '../swap-helpers'
 import { convertRequest } from '../util/utils'
-import { EdgeSwapRequestPlugin } from './types'
+import { asNumberString, EdgeSwapRequestPlugin } from './types'
 
 const pluginId = 'godex'
 
@@ -46,11 +39,6 @@ const orderUri = 'https://godex.io/exchange/waiting/'
 const uri = 'https://api.godex.io/api/v1/'
 
 const expirationMs = 1000 * 60
-
-const asNumberString = (raw: any): string => {
-  const n = asEither(asString, asNumber)(raw)
-  return n.toString()
-}
 
 const asApiInfo = asObject({
   min_amount: asNumberString
