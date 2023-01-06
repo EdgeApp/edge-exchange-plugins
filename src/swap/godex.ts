@@ -27,6 +27,7 @@ const pluginId = 'godex'
 
 const swapInfo: EdgeSwapInfo = {
   pluginId,
+  isDex: false,
   displayName: 'Godex',
   supportEmail: 'support@godex.io'
 }
@@ -272,6 +273,7 @@ export function makeGodexPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
       // Convert that to the output format:
       return makeSwapPluginQuote(
         request,
+        swapInfo,
         fromNativeAmount,
         toNativeAmount,
         tx,
@@ -279,7 +281,9 @@ export function makeGodexPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
         'godex',
         false, // isEstimate, correct?
         new Date(Date.now() + expirationMs),
-        quoteInfo.transaction_id
+        quoteInfo.transaction_id,
+        undefined,
+        undefined
       )
     }
   }

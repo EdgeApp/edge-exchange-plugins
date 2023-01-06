@@ -35,6 +35,7 @@ const pluginId = 'changenow'
 
 const swapInfo: EdgeSwapInfo = {
   pluginId,
+  isDex: false,
   displayName: 'Change NOW',
   supportEmail: 'support@changenow.io'
 }
@@ -250,6 +251,7 @@ export function makeChangeNowPlugin(
         )
         return makeSwapPluginQuote(
           request,
+          swapInfo,
           nativeAmount,
           toNativeAmount,
           tx,
@@ -259,7 +261,9 @@ export function makeChangeNowPlugin(
           validUntil != null
             ? ensureInFuture(validUntil)
             : new Date(Date.now() + 1000 * 60),
-          id
+          id,
+          undefined,
+          undefined
         )
       }
 
@@ -317,6 +321,7 @@ export function makeChangeNowPlugin(
         )
         return makeSwapPluginQuote(
           request,
+          swapInfo,
           fromNativeAmount,
           toNativeAmount,
           tx,
@@ -326,7 +331,9 @@ export function makeChangeNowPlugin(
           validUntil != null
             ? ensureInFuture(validUntil)
             : new Date(Date.now() + 1000 * 60),
-          id
+          id,
+          undefined,
+          undefined
         )
       }
 

@@ -32,6 +32,7 @@ export function ensureInFuture(
 
 export function makeSwapPluginQuote(
   request: EdgeSwapRequest,
+  swapInfo: EdgeSwapInfo,
   fromNativeAmount: string,
   toNativeAmount: string,
   tx: EdgeTransaction,
@@ -56,6 +57,7 @@ export function makeSwapPluginQuote(
 
   const out: EdgeSwapQuote = {
     request,
+    swapInfo,
     fromNativeAmount,
     toNativeAmount,
     networkFee: {

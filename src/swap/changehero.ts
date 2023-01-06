@@ -34,6 +34,7 @@ const pluginId = 'changehero'
 
 const swapInfo: EdgeSwapInfo = {
   pluginId,
+  isDex: false,
   displayName: 'ChangeHero',
   supportEmail: 'support@changehero.io'
 }
@@ -288,6 +289,7 @@ export function makeChangeHeroPlugin(
 
     return makeSwapPluginQuote(
       request,
+      swapInfo,
       amountExpectedFromNative,
       amountExpectedToNative,
       tx,
@@ -295,7 +297,9 @@ export function makeChangeHeroPlugin(
       pluginId,
       false,
       new Date(Date.now() + expirationFixedMs),
-      quoteInfo.id
+      quoteInfo.id,
+      undefined,
+      undefined
     )
   }
 

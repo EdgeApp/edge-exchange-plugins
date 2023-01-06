@@ -36,6 +36,7 @@ const pluginId = 'swapuz'
 
 const swapInfo: EdgeSwapInfo = {
   pluginId,
+  isDex: false,
   displayName: 'Swapuz',
   supportEmail: 'support@swapuz.com'
 }
@@ -207,6 +208,7 @@ export function makeSwapuzPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
 
       return makeSwapPluginQuote(
         request,
+        swapInfo,
         request.nativeAmount,
         toNativeAmount,
         tx,
@@ -214,7 +216,9 @@ export function makeSwapuzPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
         pluginId,
         mode === 'float',
         ensureInFuture(finishPayment),
-        uid
+        uid,
+        undefined,
+        undefined
       )
     }
 
