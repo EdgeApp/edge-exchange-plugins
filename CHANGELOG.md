@@ -1,5 +1,9 @@
 # edge-exchange-plugins
 
+## 0.16.17 (2023-01-06)
+
+- Add: isDex and swapPlugType to plugins and quotes
+
 ## 0.16.16 (2023-01-05)
 
 - LetsExchange: Update asInfoReply cleaner to support numbers or strings
