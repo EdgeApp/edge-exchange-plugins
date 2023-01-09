@@ -502,6 +502,7 @@ export function makeThorchainDaPlugin(
 
         const order = {
           request: requestInner,
+          amountToSwap: nativeAmount,
           spendInfo,
           pluginId,
           expirationDate: new Date(Date.now() + EXPIRATION_MS),

@@ -154,6 +154,7 @@ export function makeSpookySwapPlugin(
 
         const order = {
           request: requestInner,
+          amountToSwap,
           spendInfo,
           pluginId,
           expirationDate,

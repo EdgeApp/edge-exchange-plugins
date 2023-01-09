@@ -154,6 +154,7 @@ export function makeTombSwapPlugin(
 
         const order = {
           request: requestInner,
+          amountToSwap,
           spendInfo,
           pluginId,
           expirationDate,

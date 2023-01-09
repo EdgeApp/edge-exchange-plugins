@@ -35,6 +35,7 @@ export function ensureInFuture(
 export interface SwapOrder {
   request: EdgeSwapRequest
   spendInfo: EdgeSpendInfo
+  amountToSwap?: string
   pluginId: string
   expirationDate?: Date
   preTx?: EdgeTransaction
@@ -48,6 +49,7 @@ export async function makeSwapPluginQuote(
   const {
     customNetworkFee,
     request,
+    amountToSwap,
     spendInfo,
     pluginId,
     expirationDate,
@@ -61,7 +63,8 @@ export async function makeSwapPluginQuote(
     spendInfo.networkFeeOption = 'custom'
   }
   const tx = await fromWallet.makeSpend(spendInfo)
-  const fromNativeAmount = spendInfo.spendTargets[0].nativeAmount
+  const fromNativeAmount =
+    amountToSwap ?? spendInfo.spendTargets[0].nativeAmount
   const toNativeAmount = spendInfo.swapData?.payoutNativeAmount
   const destinationAddress = spendInfo.swapData?.payoutAddress
   const isEstimate = spendInfo.swapData?.isEstimate ?? false
