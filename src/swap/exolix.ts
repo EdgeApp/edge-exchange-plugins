@@ -54,10 +54,6 @@ const uri = 'https://exolix.com/api/'
 
 const expirationMs = 1000 * 60
 
-const dontUseLegacy: { [cc: string]: boolean } = {
-  DGB: true
-}
-
 const asRateResponse = asObject({
   min_amount: asString
 })
@@ -74,13 +70,8 @@ async function getAddress(
   wallet: EdgeCurrencyWallet,
   currencyCode: string
 ): Promise<string> {
-  const addressInfo = await wallet.getReceiveAddress({
-    currencyCode
-  })
-
-  return addressInfo.legacyAddress != null && !dontUseLegacy[currencyCode]
-    ? addressInfo.legacyAddress
-    : addressInfo.publicAddress
+  const { publicAddress } = await wallet.getReceiveAddress({ currencyCode })
+  return publicAddress
 }
 
 export function makeExolixPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {

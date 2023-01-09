@@ -57,10 +57,6 @@ const asInfoReply = asObject({
   max_amount: asNumberString,
   amount: asNumberString
 })
-const dontUseLegacy: { [cc: string]: boolean } = {
-  DGB: true
-}
-
 const INVALID_CURRENCY_CODES: InvalidCurrencyCodes = {
   from: {},
   to: {
@@ -81,10 +77,8 @@ async function getAddress(
   wallet: EdgeCurrencyWallet,
   currencyCode: string
 ): Promise<string> {
-  const addressInfo = await wallet.getReceiveAddress({ currencyCode })
-  return addressInfo.legacyAddress != null && !dontUseLegacy[currencyCode]
-    ? addressInfo.legacyAddress
-    : addressInfo.publicAddress
+  const { publicAddress } = await wallet.getReceiveAddress({ currencyCode })
+  return publicAddress
 }
 
 export function makeLetsExchangePlugin(
