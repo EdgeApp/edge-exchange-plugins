@@ -61,7 +61,6 @@ export function makeTransferPlugin(
         request.nativeAmount,
         tx,
         toAddress,
-        'transfer',
         false,
         undefined,
         undefined,

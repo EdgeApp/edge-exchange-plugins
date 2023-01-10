@@ -207,7 +207,6 @@ export function makeSwapuzPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
         toNativeAmount,
         tx,
         toAddress,
-        pluginId,
         mode === 'float',
         ensureInFuture(finishPayment),
         uid,

@@ -250,7 +250,6 @@ const createFetchSwapQuote = (api: SideshiftApi, affiliateId: string) =>
       amountExpectedToNative,
       tx,
       settleAddress,
-      pluginId,
       isEstimate,
       ensureInFuture(new Date(order.expiresAt)),
       order.id,

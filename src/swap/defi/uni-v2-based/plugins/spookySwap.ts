@@ -98,7 +98,6 @@ export function makeSpookySwapPlugin(
         deadline
       )
 
-      const pluginId = swapInfo.pluginId
       const edgeUnsignedTxs = await Promise.all(
         swapTxs.map(async swapTx => {
           // Convert to our spendInfo
@@ -149,7 +148,6 @@ export function makeSpookySwapPlugin(
         amountToSwap.toString(),
         expectedAmountOut.toString(),
         edgeUnsignedTxs,
-        pluginId,
         swapInfo.displayName,
         true,
         expirationDate

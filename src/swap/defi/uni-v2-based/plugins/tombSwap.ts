@@ -97,7 +97,6 @@ export function makeTombSwapPlugin(
       )
 
       const fromAddress = (await fromWallet.getReceiveAddress()).publicAddress
-      const pluginId = swapInfo.pluginId
       // toEdgeUnsignedTxs
       const edgeUnsignedTxs = await Promise.all(
         swapTxs.map(async swapTx => {
@@ -149,7 +148,6 @@ export function makeTombSwapPlugin(
         amountToSwap.toString(),
         expectedAmountOut.toString(),
         edgeUnsignedTxs,
-        pluginId,
         swapInfo.displayName,
         true,
         expirationDate

@@ -297,7 +297,6 @@ export function makeLetsExchangePlugin(
         toNativeAmount,
         tx,
         toAddress,
-        'letsexchange',
         false, // isEstimate, correct?
         new Date(Date.now() + expirationMs),
         quoteInfo.transaction_id,

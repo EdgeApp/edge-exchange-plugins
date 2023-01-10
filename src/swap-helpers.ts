@@ -37,7 +37,6 @@ export function makeSwapPluginQuote(
   toNativeAmount: string,
   tx: EdgeTransaction,
   destinationAddress: string,
-  pluginId: string,
   isEstimate: boolean = false,
   expirationDate?: Date,
   quoteId?: string,
@@ -64,7 +63,7 @@ export function makeSwapPluginQuote(
       currencyCode: fromWallet.currencyInfo.currencyCode,
       nativeAmount
     },
-    pluginId,
+    pluginId: swapInfo.pluginId,
     expirationDate,
     isEstimate,
     async approve(opts?: EdgeSwapApproveOptions): Promise<EdgeSwapResult> {

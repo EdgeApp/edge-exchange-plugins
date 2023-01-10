@@ -186,7 +186,6 @@ export function makeUniV2EdgeSwapQuote(
   fromNativeAmount: string,
   toNativeAmount: string,
   txs: EdgeTransaction[],
-  pluginId: string,
   displayName: string,
   isEstimate: boolean = false,
   expirationDate?: Date
@@ -206,7 +205,7 @@ export function makeUniV2EdgeSwapQuote(
           ? swapTx.parentNetworkFee
           : swapTx.networkFee
     },
-    pluginId,
+    pluginId: swapInfo.pluginId,
     expirationDate,
     isEstimate,
     async approve(opts): Promise<EdgeSwapResult> {
@@ -237,7 +236,8 @@ export function makeUniV2EdgeSwapQuote(
         await fromWallet.saveTx(signedTransaction)
         index++
       }
-      if (swapTx == null) throw new Error(`No ${pluginId} swapTx generated.`)
+      if (swapTx == null)
+        throw new Error(`No ${swapInfo.pluginId} swapTx generated.`)
       return {
         transaction: swapTx,
         orderId: swapTx.txid

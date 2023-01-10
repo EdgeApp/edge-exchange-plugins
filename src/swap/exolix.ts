@@ -262,7 +262,6 @@ export function makeExolixPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
       toNativeAmount,
       tx,
       toAddress,
-      pluginId,
       false,
       new Date(Date.now() + expirationMs),
       quoteInfo.id,

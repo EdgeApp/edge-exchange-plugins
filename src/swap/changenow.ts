@@ -250,7 +250,6 @@ export function makeChangeNowPlugin(
           toNativeAmount,
           tx,
           toAddress,
-          pluginId,
           flow === 'standard',
           validUntil != null
             ? ensureInFuture(validUntil)
@@ -320,7 +319,6 @@ export function makeChangeNowPlugin(
           toNativeAmount,
           tx,
           toAddress,
-          pluginId,
           false,
           validUntil != null
             ? ensureInFuture(validUntil)

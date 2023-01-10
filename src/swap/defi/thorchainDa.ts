@@ -476,7 +476,6 @@ export function makeThorchainDaPlugin(
         toNativeAmount,
         tx,
         toAddress,
-        pluginId,
         isEstimate,
         new Date(Date.now() + EXPIRATION_MS),
         tx.txid,

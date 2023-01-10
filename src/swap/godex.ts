@@ -310,7 +310,6 @@ export function makeGodexPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
         toNativeAmount,
         tx,
         toAddress,
-        'godex',
         false, // isEstimate, correct?
         new Date(Date.now() + expirationMs),
         quoteInfo.transaction_id,
