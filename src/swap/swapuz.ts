@@ -23,6 +23,7 @@ import {
   checkInvalidCodes,
   ensureInFuture,
   getCodesWithTranscription,
+  getMaxSwappable,
   InvalidCurrencyCodes,
   isLikeKind,
   makeSwapPluginQuote,
@@ -235,8 +236,12 @@ export function makeSwapuzPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
         quoteFor
       } = requestTop
 
-      if (quoteFor === 'from') {
-        const swapOrder = await fetchSwapQuoteInner(requestTop)
+      if (quoteFor !== 'to') {
+        const newRequest = await getMaxSwappable(
+          fetchSwapQuoteInner,
+          requestTop
+        )
+        const swapOrder = await fetchSwapQuoteInner(newRequest)
         return await makeSwapPluginQuote(swapOrder)
       } else {
         // Exit early if trade isn't like kind assets

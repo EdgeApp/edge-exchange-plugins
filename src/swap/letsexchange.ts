@@ -16,6 +16,7 @@ import {
 import {
   checkInvalidCodes,
   getCodesWithTranscription,
+  getMaxSwappable,
   InvalidCurrencyCodes,
   makeSwapPluginQuote,
   SwapOrder
@@ -298,7 +299,12 @@ export function makeLetsExchangePlugin(
       const request = convertRequest(req)
       checkInvalidCodes(INVALID_CURRENCY_CODES, request, swapInfo)
 
-      const swapOrder = await fetchSwapQuoteInner(request, opts)
+      const newRequest = await getMaxSwappable(
+        fetchSwapQuoteInner,
+        request,
+        opts
+      )
+      const swapOrder = await fetchSwapQuoteInner(newRequest, opts)
       return await makeSwapPluginQuote(swapOrder)
     }
   }

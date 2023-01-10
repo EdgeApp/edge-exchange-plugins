@@ -18,6 +18,7 @@ import {
 import {
   ensureInFuture,
   getCodesWithTranscription,
+  getMaxSwappable,
   makeSwapPluginQuote,
   SwapOrder
 } from '../swap-helpers'
@@ -256,7 +257,13 @@ const createFetchSwapQuote = (api: SideshiftApi, affiliateId: string) =>
   async function fetchSwapQuote(req: EdgeSwapRequest): Promise<EdgeSwapQuote> {
     const request = convertRequest(req)
 
-    const swapOrder = await fetchSwapQuoteInner(request, api, affiliateId)
+    const newRequest = await getMaxSwappable(
+      fetchSwapQuoteInner,
+      request,
+      api,
+      affiliateId
+    )
+    const swapOrder = await fetchSwapQuoteInner(newRequest, api, affiliateId)
     return await makeSwapPluginQuote(swapOrder)
   }
 

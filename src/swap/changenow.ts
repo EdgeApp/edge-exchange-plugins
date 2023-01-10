@@ -26,6 +26,7 @@ import {
   checkInvalidCodes,
   ensureInFuture,
   getCodesWithTranscription,
+  getMaxSwappable,
   InvalidCurrencyCodes,
   makeSwapPluginQuote,
   SwapOrder
@@ -324,7 +325,12 @@ export function makeChangeNowPlugin(
 
       checkInvalidCodes(INVALID_CURRENCY_CODES, request, swapInfo)
 
-      const swapOrder = await fetchSwapQuoteInner(request, opts)
+      const newRequest = await getMaxSwappable(
+        fetchSwapQuoteInner,
+        request,
+        opts
+      )
+      const swapOrder = await fetchSwapQuoteInner(newRequest, opts)
       return await makeSwapPluginQuote(swapOrder)
     }
   }

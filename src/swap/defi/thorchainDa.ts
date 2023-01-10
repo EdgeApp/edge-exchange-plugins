@@ -28,6 +28,7 @@ import { ethers } from 'ethers'
 // import nodeFetch from 'node-fetch'
 import {
   checkInvalidCodes,
+  getMaxSwappable,
   getTokenId,
   makeSwapPluginQuote,
   SwapOrder
@@ -476,7 +477,8 @@ export function makeThorchainDaPlugin(
     async fetchSwapQuote(req: EdgeSwapRequest): Promise<EdgeSwapQuote> {
       const request = convertRequest(req)
 
-      const swapOrder = await fetchSwapQuoteInner(request)
+      const newRequest = await getMaxSwappable(fetchSwapQuoteInner, request)
+      const swapOrder = await fetchSwapQuoteInner(newRequest)
       return await makeSwapPluginQuote(swapOrder)
     }
   }

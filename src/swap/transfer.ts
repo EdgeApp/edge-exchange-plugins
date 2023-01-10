@@ -7,7 +7,11 @@ import {
   SwapCurrencyError
 } from 'edge-core-js/types'
 
-import { makeSwapPluginQuote, SwapOrder } from '../swap-helpers'
+import {
+  getMaxSwappable,
+  makeSwapPluginQuote,
+  SwapOrder
+} from '../swap-helpers'
 import { convertRequest } from '../util/utils'
 import { EdgeSwapRequestPlugin } from './types'
 
@@ -73,7 +77,8 @@ export function makeTransferPlugin(
         )
       }
 
-      const swapOrder = await fetchSwapQuoteInner(request)
+      const newRequest = await getMaxSwappable(fetchSwapQuoteInner, request)
+      const swapOrder = await fetchSwapQuoteInner(newRequest)
       return await makeSwapPluginQuote(swapOrder)
     }
   }

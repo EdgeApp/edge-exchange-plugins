@@ -23,6 +23,7 @@ import { ethers } from 'ethers'
 
 import {
   checkInvalidCodes,
+  getMaxSwappable,
   InvalidCurrencyCodes,
   isLikeKind,
   makeSwapPluginQuote,
@@ -548,7 +549,8 @@ export function makeThorchainPlugin(
     async fetchSwapQuote(req: EdgeSwapRequest): Promise<EdgeSwapQuote> {
       const request = convertRequest(req)
 
-      const swapOrder = await fetchSwapQuoteInner(request)
+      const newRequest = await getMaxSwappable(fetchSwapQuoteInner, request)
+      const swapOrder = await fetchSwapQuoteInner(newRequest)
       return await makeSwapPluginQuote(swapOrder)
     }
   }

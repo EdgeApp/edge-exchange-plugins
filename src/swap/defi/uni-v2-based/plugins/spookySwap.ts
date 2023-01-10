@@ -10,7 +10,11 @@ import {
 } from 'edge-core-js/types'
 import { ethers } from 'ethers'
 
-import { makeSwapPluginQuote, SwapOrder } from '../../../../swap-helpers'
+import {
+  getMaxSwappable,
+  makeSwapPluginQuote,
+  SwapOrder
+} from '../../../../swap-helpers'
 import { convertRequest } from '../../../../util/utils'
 import { EdgeSwapRequestPlugin } from '../../../types'
 import { getInOutTokenAddresses } from '../../defiUtils'
@@ -154,7 +158,8 @@ export function makeSpookySwapPlugin(
     async fetchSwapQuote(req: EdgeSwapRequest): Promise<EdgeSwapQuote> {
       const request = convertRequest(req)
 
-      const swapOrder = await fetchSwapQuoteInner(request)
+      const newRequest = await getMaxSwappable(fetchSwapQuoteInner, request)
+      const swapOrder = await fetchSwapQuoteInner(newRequest)
       return await makeSwapPluginQuote(swapOrder)
     }
   }

@@ -1,4 +1,4 @@
-import { add } from 'biggystring'
+import { add, sub } from 'biggystring'
 import {
   EdgeCurrencyWallet,
   EdgeSpendInfo,
@@ -120,6 +120,39 @@ export async function makeSwapPluginQuote(
     async close() {}
   }
   return out
+}
+
+export const getMaxSwappable = async <T extends any[]>(
+  fetchSwap: (request: EdgeSwapRequestPlugin, ...args: T) => Promise<SwapOrder>,
+  request: EdgeSwapRequestPlugin,
+  ...args: T
+): Promise<EdgeSwapRequestPlugin> => {
+  if (request.quoteFor !== 'max') return request
+
+  const requestCopy = { ...request }
+  const { fromWallet, fromCurrencyCode } = requestCopy
+
+  // First attempt a swap that uses the entire balance
+  const balance = fromWallet.balances[fromCurrencyCode] ?? '0'
+  requestCopy.nativeAmount = balance
+  requestCopy.quoteFor = 'from'
+  const swapOrder = await fetchSwap(requestCopy, ...args)
+
+  // Then use getMaxSpendable with the partner's address
+  delete swapOrder.spendInfo.spendTargets[0].nativeAmount
+  let maxAmount = await fromWallet.getMaxSpendable(swapOrder.spendInfo)
+
+  // Subtract fee from pretx
+  if (
+    swapOrder.preTx != null &&
+    fromCurrencyCode === fromWallet.currencyInfo.currencyCode
+  ) {
+    maxAmount = sub(maxAmount, swapOrder.preTx.networkFee)
+  }
+
+  // Update and return the request object
+  requestCopy.nativeAmount = maxAmount
+  return requestCopy
 }
 
 interface AllCodes {
