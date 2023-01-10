@@ -465,23 +465,19 @@ export function makeThorchainDaPlugin(
           }
         }
       }
-      const tx: EdgeTransaction = await request.fromWallet.makeSpend(spendInfo)
 
       const providersStr = providers.join(' -> ')
       const notes = `DEX Providers: ${providersStr}\nPath: ${path}`
-      return makeSwapPluginQuote(
+
+      return await makeSwapPluginQuote({
         request,
+        spendInfo,
         swapInfo,
-        nativeAmount,
-        toNativeAmount,
-        tx,
-        toAddress,
-        isEstimate,
-        new Date(Date.now() + EXPIRATION_MS),
-        tx.txid,
+        fromNativeAmount: nativeAmount,
+        expirationDate: new Date(Date.now() + EXPIRATION_MS),
         preTx,
-        notes
-      )
+        metadataNotes: notes
+      })
     }
   }
   return out

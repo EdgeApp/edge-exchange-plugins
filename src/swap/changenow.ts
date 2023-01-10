@@ -16,7 +16,6 @@ import {
   EdgeSwapPlugin,
   EdgeSwapQuote,
   EdgeSwapRequest,
-  EdgeTransaction,
   SwapAboveLimitError,
   SwapBelowLimitError,
   SwapCurrencyError
@@ -240,24 +239,17 @@ export function makeChangeNowPlugin(
             refundAddress: fromAddress
           }
         }
-        const tx: EdgeTransaction = await request.fromWallet.makeSpend(
-          spendInfo
-        )
-        return makeSwapPluginQuote(
+
+        return await makeSwapPluginQuote({
           request,
+          spendInfo,
           swapInfo,
-          nativeAmount,
-          toNativeAmount,
-          tx,
-          toAddress,
-          flow === 'standard',
-          validUntil != null
-            ? ensureInFuture(validUntil)
-            : new Date(Date.now() + 1000 * 60),
-          id,
-          undefined,
-          undefined
-        )
+          fromNativeAmount: nativeAmount,
+          expirationDate:
+            validUntil != null
+              ? ensureInFuture(validUntil)
+              : new Date(Date.now() + 1000 * 60)
+        })
       }
 
       async function swapBuy(flow: 'fixed-rate'): Promise<EdgeSwapQuote> {
@@ -269,7 +261,6 @@ export function makeChangeNowPlugin(
 
         const {
           fromAmount,
-          toAmount,
           payinAddress,
           payinExtraId,
           id,
@@ -279,11 +270,6 @@ export function makeChangeNowPlugin(
         const fromNativeAmount = await request.fromWallet.denominationToNative(
           fromAmount.toString(),
           fromCurrencyCode
-        )
-
-        const toNativeAmount = await request.toWallet.denominationToNative(
-          toAmount.toString(),
-          toCurrencyCode
         )
 
         const spendInfo: EdgeSpendInfo = {
@@ -309,24 +295,16 @@ export function makeChangeNowPlugin(
           }
         }
 
-        const tx: EdgeTransaction = await request.fromWallet.makeSpend(
-          spendInfo
-        )
-        return makeSwapPluginQuote(
+        return await makeSwapPluginQuote({
           request,
+          spendInfo,
           swapInfo,
           fromNativeAmount,
-          toNativeAmount,
-          tx,
-          toAddress,
-          false,
-          validUntil != null
-            ? ensureInFuture(validUntil)
-            : new Date(Date.now() + 1000 * 60),
-          id,
-          undefined,
-          undefined
-        )
+          expirationDate:
+            validUntil != null
+              ? ensureInFuture(validUntil)
+              : new Date(Date.now() + 1000 * 60)
+        })
       }
 
       // Try them all

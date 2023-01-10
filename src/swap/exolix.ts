@@ -8,7 +8,6 @@ import {
   EdgeSwapPlugin,
   EdgeSwapQuote,
   EdgeSwapRequest,
-  EdgeTransaction,
   SwapBelowLimitError,
   SwapCurrencyError
 } from 'edge-core-js/types'
@@ -253,21 +252,13 @@ export function makeExolixPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
       }
     }
 
-    const tx: EdgeTransaction = await request.fromWallet.makeSpend(spendInfo)
-
-    return makeSwapPluginQuote(
+    return await makeSwapPluginQuote({
       request,
+      spendInfo,
       swapInfo,
       fromNativeAmount,
-      toNativeAmount,
-      tx,
-      toAddress,
-      false,
-      new Date(Date.now() + expirationMs),
-      quoteInfo.id,
-      undefined,
-      undefined
-    )
+      expirationDate: new Date(Date.now() + expirationMs)
+    })
   }
 
   return out

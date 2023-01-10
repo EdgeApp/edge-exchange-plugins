@@ -140,23 +140,14 @@ export function makeSpookySwapPlugin(
         preTx = await request.fromWallet.makeSpend(edgeSpendInfos[0])
       }
 
-      const edgeUnsignedTx: EdgeTransaction = await request.fromWallet.makeSpend(
-        spendInfo
-      )
-
-      // Convert that to the EdgeSwapQuote format:
-      return makeSwapPluginQuote(
+      return await makeSwapPluginQuote({
         request,
+        spendInfo,
         swapInfo,
-        amountToSwap.toString(),
-        expectedAmountOut.toString(),
-        edgeUnsignedTx,
-        swapInfo.displayName,
-        true,
+        fromNativeAmount: amountToSwap,
         expirationDate,
-        undefined,
         preTx
-      )
+      })
     }
   }
   return out

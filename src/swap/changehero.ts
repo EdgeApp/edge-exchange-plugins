@@ -15,7 +15,6 @@ import {
   EdgeSwapPlugin,
   EdgeSwapQuote,
   EdgeSwapRequest,
-  EdgeTransaction,
   SwapAboveLimitError,
   SwapBelowLimitError,
   SwapCurrencyError
@@ -109,6 +108,7 @@ function checkReply(
     throw new Error('ChangeHero error: ' + JSON.stringify(reply.error))
   }
 }
+
 export function makeChangeHeroPlugin(
   opts: EdgeCorePluginOptions
 ): EdgeSwapPlugin {
@@ -279,21 +279,14 @@ export function makeChangeHeroPlugin(
         refundAddress: fromAddress
       }
     }
-    const tx: EdgeTransaction = await request.fromWallet.makeSpend(spendInfo)
 
-    return makeSwapPluginQuote(
+    return await makeSwapPluginQuote({
       request,
+      spendInfo,
       swapInfo,
-      amountExpectedFromNative,
-      amountExpectedToNative,
-      tx,
-      toAddress,
-      false,
-      new Date(Date.now() + expirationFixedMs),
-      quoteInfo.id,
-      undefined,
-      undefined
-    )
+      fromNativeAmount: amountExpectedFromNative,
+      expirationDate: new Date(Date.now() + expirationFixedMs)
+    })
   }
 
   const out: EdgeSwapPlugin = {
