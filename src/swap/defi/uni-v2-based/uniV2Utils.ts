@@ -45,7 +45,8 @@ export const getSwapTransactions = async (
   expectedAmountOut: string,
   toAddress: string,
   slippage: string,
-  deadline: number
+  deadline: number,
+  previousGasPrice?: string
 ): Promise<PopulatedTransaction[]> => {
   const { fromWallet, fromCurrencyCode, toCurrencyCode } = swapRequest
   const {
@@ -74,7 +75,10 @@ export const getSwapTransactions = async (
     throw new Error('Invalid swap: Cannot swap to the same native currency')
   const path = [fromTokenAddress, toTokenAddress]
 
-  const gasPrice = await provider.getGasPrice()
+  const gasPrice =
+    previousGasPrice != null
+      ? ethers.utils.parseUnits(previousGasPrice, 'gwei')
+      : await provider.getGasPrice()
 
   const addressToApproveTx = async (
     tokenAddress: string,

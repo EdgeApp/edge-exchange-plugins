@@ -11,6 +11,7 @@ import {
 import { ethers } from 'ethers'
 
 import {
+  customFeeCache,
   getMaxSwappable,
   makeSwapPluginQuote,
   SwapOrder
@@ -42,7 +43,8 @@ export function makeTombSwapPlugin(
   const provider = getFtmProvider(quiknodeApiKey)
 
   const fetchSwapQuoteInner = async (
-    request: EdgeSwapRequestPlugin
+    request: EdgeSwapRequestPlugin,
+    uid: string
   ): Promise<SwapOrder> => {
     const {
       fromWallet,
@@ -86,6 +88,7 @@ export function makeTombSwapPlugin(
     const toAddress = (await toWallet.getReceiveAddress()).publicAddress
     const expirationDate = new Date(Date.now() + EXPIRATION_MS)
     const deadline = Math.round(expirationDate.getTime() / 1000) // unix timestamp
+    const customNetworkFee = customFeeCache.getFees(uid)
     const swapTxs = await getSwapTransactions(
       provider,
       request,
@@ -94,7 +97,8 @@ export function makeTombSwapPlugin(
       expectedAmountOut,
       toAddress,
       SLIPPAGE,
-      deadline
+      deadline,
+      customNetworkFee?.gasPrice
     )
 
     const fromAddress = (await fromWallet.getReceiveAddress()).publicAddress
@@ -143,6 +147,8 @@ export function makeTombSwapPlugin(
       preTx = await request.fromWallet.makeSpend(edgeSpendInfos[0])
     }
 
+    customFeeCache.setFees(uid, spendInfo.customNetworkFee)
+
     return {
       request,
       spendInfo,
@@ -158,8 +164,14 @@ export function makeTombSwapPlugin(
     async fetchSwapQuote(req: EdgeSwapRequest): Promise<EdgeSwapQuote> {
       const request = convertRequest(req)
 
-      const newRequest = await getMaxSwappable(fetchSwapQuoteInner, request)
-      const swapOrder = await fetchSwapQuoteInner(newRequest)
+      const uid = customFeeCache.createUid()
+
+      const newRequest = await getMaxSwappable(
+        fetchSwapQuoteInner,
+        request,
+        uid
+      )
+      const swapOrder = await fetchSwapQuoteInner(newRequest, uid)
       return await makeSwapPluginQuote(swapOrder)
     }
   }

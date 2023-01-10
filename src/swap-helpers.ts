@@ -8,6 +8,7 @@ import {
   EdgeSwapRequest,
   EdgeSwapResult,
   EdgeTransaction,
+  JsonObject,
   SwapCurrencyError
 } from 'edge-core-js/types'
 
@@ -153,6 +154,31 @@ export const getMaxSwappable = async <T extends any[]>(
   // Update and return the request object
   requestCopy.nativeAmount = maxAmount
   return requestCopy
+}
+
+// Store custom fees so a request can use consistent fees when calling makeSpend multiple times
+export const customFeeCacheMap: {
+  [uid: string]: { customNetworkFee?: JsonObject; timestamp: number }
+} = {}
+
+let swapId = '0'
+export const customFeeCache = {
+  createUid: (): string => {
+    swapId = add(swapId, '1')
+    customFeeCacheMap[swapId] = { timestamp: Date.now() }
+    return swapId
+  },
+  getFees: (uid: string): JsonObject | undefined => {
+    return customFeeCacheMap?.[uid]?.customNetworkFee
+  },
+  setFees: (uid: string, customNetworkFee?: JsonObject): void => {
+    for (const id of Object.keys(customFeeCacheMap)) {
+      if (Date.now() > customFeeCacheMap[id].timestamp + 30000) {
+        delete customFeeCacheMap[id] // eslint-disable-line
+      }
+    }
+    customFeeCacheMap[uid] = { customNetworkFee, timestamp: Date.now() }
+  }
 }
 
 interface AllCodes {
