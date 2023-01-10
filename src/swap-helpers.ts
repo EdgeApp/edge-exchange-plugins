@@ -31,7 +31,7 @@ export function ensureInFuture(
   return target < date.valueOf() ? date : new Date(target)
 }
 
-interface SwapOrder {
+export interface SwapOrder {
   request: EdgeSwapRequest
   swapInfo: EdgeSwapInfo
   spendInfo: EdgeSpendInfo

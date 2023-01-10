@@ -17,7 +17,8 @@ import {
   checkInvalidCodes,
   getCodesWithTranscription,
   InvalidCurrencyCodes,
-  makeSwapPluginQuote
+  makeSwapPluginQuote,
+  SwapOrder
 } from '../swap-helpers'
 import { convertRequest } from '../util/utils'
 import { asOptionalBlank } from './changenow'
@@ -113,6 +114,179 @@ export function makeLetsExchangePlugin(
     return await response.json()
   }
 
+  const fetchSwapQuoteInner = async (
+    request: EdgeSwapRequestPlugin,
+    opts: { promoCode?: string }
+  ): Promise<SwapOrder> => {
+    const reverseQuote = request.quoteFor === 'to'
+
+    // Grab addresses:
+    const [fromAddress, toAddress] = await Promise.all([
+      getAddress(request.fromWallet, request.fromCurrencyCode),
+      getAddress(request.toWallet, request.toCurrencyCode)
+    ])
+
+    // Convert the native amount to a denomination:
+    const quoteAmount =
+      request.quoteFor === 'from'
+        ? await request.fromWallet.nativeToDenomination(
+            request.nativeAmount,
+            request.fromCurrencyCode
+          )
+        : await request.toWallet.nativeToDenomination(
+            request.nativeAmount,
+            request.toCurrencyCode
+          )
+
+    const { fromMainnetCode, toMainnetCode } = getCodesWithTranscription(
+      request,
+      MAINNET_CODE_TRANSCRIPTION
+    )
+
+    const networkFrom =
+      request.fromCurrencyCode === request.fromWallet.currencyInfo.currencyCode
+        ? request.fromCurrencyCode
+        : fromMainnetCode
+
+    const networkTo =
+      request.toCurrencyCode === request.toWallet.currencyInfo.currencyCode
+        ? request.toCurrencyCode
+        : toMainnetCode
+
+    // Swap the currencies if we need a reverse quote:
+    const quoteParams = {
+      from: request.fromCurrencyCode,
+      to: request.toCurrencyCode,
+      network_from: networkFrom,
+      network_to: networkTo,
+      amount: quoteAmount
+    }
+
+    log('quoteParams:', quoteParams)
+
+    // Calculate the amounts:
+    let fromAmount, toAmount, endpoint
+    if (request.quoteFor === 'from') {
+      fromAmount = quoteAmount
+      endpoint = 'info'
+    } else {
+      toAmount = quoteAmount
+      endpoint = 'info-revert'
+    }
+    const response = await call(uri + endpoint, request, {
+      params: quoteParams
+    })
+    const reply = asInfoReply(response)
+
+    // Check the min/max:
+    const nativeMin = reverseQuote
+      ? await request.toWallet.denominationToNative(
+          reply.min_amount,
+          request.toCurrencyCode
+        )
+      : await request.fromWallet.denominationToNative(
+          reply.min_amount,
+          request.fromCurrencyCode
+        )
+
+    if (lt(request.nativeAmount, nativeMin)) {
+      throw new SwapBelowLimitError(
+        swapInfo,
+        nativeMin,
+        reverseQuote ? 'to' : 'from'
+      )
+    }
+
+    const nativeMax = reverseQuote
+      ? await request.toWallet.denominationToNative(
+          reply.max_amount,
+          request.toCurrencyCode
+        )
+      : await request.fromWallet.denominationToNative(
+          reply.max_amount,
+          request.fromCurrencyCode
+        )
+
+    if (gt(nativeMax, '0')) {
+      if (gt(request.nativeAmount, nativeMax)) {
+        throw new SwapAboveLimitError(
+          swapInfo,
+          nativeMin,
+          reverseQuote ? 'to' : 'from'
+        )
+      }
+    }
+
+    const { promoCode } = opts
+    endpoint = reverseQuote ? 'transaction-revert' : 'transaction'
+    const sendReply = await call(uri + endpoint, request, {
+      params: {
+        deposit_amount: reverseQuote ? undefined : fromAmount,
+        withdrawal_amount: reverseQuote ? toAmount : undefined,
+        coin_from: request.fromCurrencyCode,
+        coin_to: request.toCurrencyCode,
+        network_from: networkFrom,
+        network_to: networkTo,
+        withdrawal: toAddress,
+        return: fromAddress,
+        return_extra_id: null,
+        withdrawal_extra_id: null,
+        affiliate_id: initOptions.affiliateId,
+        promocode: promoCode != null ? promoCode : '',
+        type: 'edge',
+        float: false,
+        isEstimate: false
+      }
+    })
+
+    log('sendReply', sendReply)
+    const quoteInfo = asQuoteInfo(sendReply)
+
+    const fromNativeAmount = await request.fromWallet.denominationToNative(
+      quoteInfo.deposit_amount,
+      request.fromCurrencyCode
+    )
+    const toNativeAmount = await request.toWallet.denominationToNative(
+      quoteInfo.withdrawal_amount,
+      request.toCurrencyCode
+    )
+
+    // Make the transaction:
+    const spendInfo: EdgeSpendInfo = {
+      currencyCode: request.fromCurrencyCode,
+      spendTargets: [
+        {
+          nativeAmount: fromNativeAmount,
+          publicAddress: quoteInfo.deposit,
+          uniqueIdentifier: quoteInfo.deposit_extra_id
+        }
+      ],
+      networkFeeOption:
+        request.fromCurrencyCode.toUpperCase() === 'BTC' ? 'high' : 'standard',
+      swapData: {
+        orderId: quoteInfo.transaction_id,
+        orderUri: orderUri + quoteInfo.transaction_id,
+        isEstimate: false,
+        payoutAddress: toAddress,
+        payoutCurrencyCode: request.toCurrencyCode,
+        payoutNativeAmount: toNativeAmount,
+        payoutWalletId: request.toWallet.id,
+        plugin: { ...swapInfo },
+        refundAddress: fromAddress
+      }
+    }
+
+    log('spendInfo', spendInfo)
+
+    return {
+      request,
+      spendInfo,
+      swapInfo,
+      fromNativeAmount,
+      expirationDate: new Date(Date.now() + expirationMs)
+    }
+  }
+
   const out: EdgeSwapPlugin = {
     swapInfo,
 
@@ -123,176 +297,9 @@ export function makeLetsExchangePlugin(
     ): Promise<EdgeSwapQuote> {
       const request = convertRequest(req)
       checkInvalidCodes(INVALID_CURRENCY_CODES, request, swapInfo)
-      const reverseQuote = request.quoteFor === 'to'
 
-      // Grab addresses:
-      const [fromAddress, toAddress] = await Promise.all([
-        getAddress(request.fromWallet, request.fromCurrencyCode),
-        getAddress(request.toWallet, request.toCurrencyCode)
-      ])
-
-      // Convert the native amount to a denomination:
-      const quoteAmount =
-        request.quoteFor === 'from'
-          ? await request.fromWallet.nativeToDenomination(
-              request.nativeAmount,
-              request.fromCurrencyCode
-            )
-          : await request.toWallet.nativeToDenomination(
-              request.nativeAmount,
-              request.toCurrencyCode
-            )
-
-      const { fromMainnetCode, toMainnetCode } = getCodesWithTranscription(
-        request,
-        MAINNET_CODE_TRANSCRIPTION
-      )
-
-      const networkFrom =
-        request.fromCurrencyCode ===
-        request.fromWallet.currencyInfo.currencyCode
-          ? request.fromCurrencyCode
-          : fromMainnetCode
-
-      const networkTo =
-        request.toCurrencyCode === request.toWallet.currencyInfo.currencyCode
-          ? request.toCurrencyCode
-          : toMainnetCode
-
-      // Swap the currencies if we need a reverse quote:
-      const quoteParams = {
-        from: request.fromCurrencyCode,
-        to: request.toCurrencyCode,
-        network_from: networkFrom,
-        network_to: networkTo,
-        amount: quoteAmount
-      }
-
-      log('quoteParams:', quoteParams)
-
-      // Calculate the amounts:
-      let fromAmount, toAmount, endpoint
-      if (request.quoteFor === 'from') {
-        fromAmount = quoteAmount
-        endpoint = 'info'
-      } else {
-        toAmount = quoteAmount
-        endpoint = 'info-revert'
-      }
-      const response = await call(uri + endpoint, request, {
-        params: quoteParams
-      })
-      const reply = asInfoReply(response)
-
-      // Check the min/max:
-      const nativeMin = reverseQuote
-        ? await request.toWallet.denominationToNative(
-            reply.min_amount,
-            request.toCurrencyCode
-          )
-        : await request.fromWallet.denominationToNative(
-            reply.min_amount,
-            request.fromCurrencyCode
-          )
-
-      if (lt(request.nativeAmount, nativeMin)) {
-        throw new SwapBelowLimitError(
-          swapInfo,
-          nativeMin,
-          reverseQuote ? 'to' : 'from'
-        )
-      }
-
-      const nativeMax = reverseQuote
-        ? await request.toWallet.denominationToNative(
-            reply.max_amount,
-            request.toCurrencyCode
-          )
-        : await request.fromWallet.denominationToNative(
-            reply.max_amount,
-            request.fromCurrencyCode
-          )
-
-      if (gt(nativeMax, '0')) {
-        if (gt(request.nativeAmount, nativeMax)) {
-          throw new SwapAboveLimitError(
-            swapInfo,
-            nativeMin,
-            reverseQuote ? 'to' : 'from'
-          )
-        }
-      }
-
-      const { promoCode } = opts
-      endpoint = reverseQuote ? 'transaction-revert' : 'transaction'
-      const sendReply = await call(uri + endpoint, request, {
-        params: {
-          deposit_amount: reverseQuote ? undefined : fromAmount,
-          withdrawal_amount: reverseQuote ? toAmount : undefined,
-          coin_from: request.fromCurrencyCode,
-          coin_to: request.toCurrencyCode,
-          network_from: networkFrom,
-          network_to: networkTo,
-          withdrawal: toAddress,
-          return: fromAddress,
-          return_extra_id: null,
-          withdrawal_extra_id: null,
-          affiliate_id: initOptions.affiliateId,
-          promocode: promoCode != null ? promoCode : '',
-          type: 'edge',
-          float: false,
-          isEstimate: false
-        }
-      })
-
-      log('sendReply', sendReply)
-      const quoteInfo = asQuoteInfo(sendReply)
-
-      const fromNativeAmount = await request.fromWallet.denominationToNative(
-        quoteInfo.deposit_amount,
-        request.fromCurrencyCode
-      )
-      const toNativeAmount = await request.toWallet.denominationToNative(
-        quoteInfo.withdrawal_amount,
-        request.toCurrencyCode
-      )
-
-      // Make the transaction:
-      const spendInfo: EdgeSpendInfo = {
-        currencyCode: request.fromCurrencyCode,
-        spendTargets: [
-          {
-            nativeAmount: fromNativeAmount,
-            publicAddress: quoteInfo.deposit,
-            uniqueIdentifier: quoteInfo.deposit_extra_id
-          }
-        ],
-        networkFeeOption:
-          request.fromCurrencyCode.toUpperCase() === 'BTC'
-            ? 'high'
-            : 'standard',
-        swapData: {
-          orderId: quoteInfo.transaction_id,
-          orderUri: orderUri + quoteInfo.transaction_id,
-          isEstimate: false,
-          payoutAddress: toAddress,
-          payoutCurrencyCode: request.toCurrencyCode,
-          payoutNativeAmount: toNativeAmount,
-          payoutWalletId: request.toWallet.id,
-          plugin: { ...swapInfo },
-          refundAddress: fromAddress
-        }
-      }
-
-      log('spendInfo', spendInfo)
-
-      return await makeSwapPluginQuote({
-        request,
-        spendInfo,
-        swapInfo,
-        fromNativeAmount,
-        expirationDate: new Date(Date.now() + expirationMs)
-      })
+      const swapOrder = await fetchSwapQuoteInner(request, opts)
+      return await makeSwapPluginQuote(swapOrder)
     }
   }
 

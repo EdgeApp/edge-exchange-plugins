@@ -7,8 +7,9 @@ import {
   SwapCurrencyError
 } from 'edge-core-js/types'
 
-import { makeSwapPluginQuote } from '../swap-helpers'
+import { makeSwapPluginQuote, SwapOrder } from '../swap-helpers'
 import { convertRequest } from '../util/utils'
+import { EdgeSwapRequestPlugin } from './types'
 
 const pluginId = 'transfer'
 
@@ -22,6 +23,39 @@ const swapInfo: EdgeSwapInfo = {
 export function makeTransferPlugin(
   opts: EdgeCorePluginOptions
 ): EdgeSwapPlugin {
+  const fetchSwapQuoteInner = async (
+    request: EdgeSwapRequestPlugin
+  ): Promise<SwapOrder> => {
+    const {
+      publicAddress: toAddress
+    } = await request.toWallet.getReceiveAddress()
+
+    const spendInfo = {
+      currencyCode: request.fromCurrencyCode,
+      spendTargets: [
+        {
+          nativeAmount: request.nativeAmount,
+          publicAddress: toAddress
+        }
+      ],
+      swapData: {
+        isEstimate: false,
+        payoutAddress: toAddress,
+        plugin: { ...swapInfo },
+        payoutCurrencyCode: request.toCurrencyCode,
+        payoutNativeAmount: request.nativeAmount,
+        payoutWalletId: request.toWallet.id
+      }
+    }
+
+    return {
+      request,
+      spendInfo,
+      swapInfo,
+      fromNativeAmount: request.nativeAmount
+    }
+  }
+
   const out: EdgeSwapPlugin = {
     swapInfo,
 
@@ -39,34 +73,8 @@ export function makeTransferPlugin(
         )
       }
 
-      const {
-        publicAddress: toAddress
-      } = await request.toWallet.getReceiveAddress()
-
-      const spendInfo = {
-        currencyCode: request.fromCurrencyCode,
-        spendTargets: [
-          {
-            nativeAmount: request.nativeAmount,
-            publicAddress: toAddress
-          }
-        ],
-        swapData: {
-          isEstimate: false,
-          payoutAddress: toAddress,
-          plugin: { ...swapInfo },
-          payoutCurrencyCode: request.toCurrencyCode,
-          payoutNativeAmount: request.nativeAmount,
-          payoutWalletId: request.toWallet.id
-        }
-      }
-
-      return await makeSwapPluginQuote({
-        request,
-        spendInfo,
-        swapInfo,
-        fromNativeAmount: request.nativeAmount
-      })
+      const swapOrder = await fetchSwapQuoteInner(request)
+      return await makeSwapPluginQuote(swapOrder)
     }
   }
 

@@ -16,7 +16,8 @@ import {
   checkInvalidCodes,
   getCodes,
   InvalidCurrencyCodes,
-  makeSwapPluginQuote
+  makeSwapPluginQuote,
+  SwapOrder
 } from '../swap-helpers'
 import { convertRequest } from '../util/utils'
 import { EdgeSwapRequestPlugin } from './types'
@@ -103,27 +104,10 @@ export function makeExolixPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
     return await response.json()
   }
 
-  const out: EdgeSwapPlugin = {
-    swapInfo,
-    async fetchSwapQuote(
-      req: EdgeSwapRequest,
-      userSettings: Object | undefined
-    ): Promise<EdgeSwapQuote> {
-      const request = convertRequest(req)
-
-      checkInvalidCodes(INVALID_CURRENCY_CODES, request, swapInfo)
-
-      const fixedPromise = getFixedQuote(request, userSettings)
-
-      const fixedResult = await fixedPromise
-      return fixedResult
-    }
-  }
-
   const getFixedQuote = async (
     request: EdgeSwapRequestPlugin,
     _userSettings: Object | undefined
-  ): Promise<EdgeSwapQuote> => {
+  ): Promise<SwapOrder> => {
     const [fromAddress, toAddress] = await Promise.all([
       getAddress(request.fromWallet, request.fromCurrencyCode),
       getAddress(request.toWallet, request.toCurrencyCode)
@@ -252,13 +236,30 @@ export function makeExolixPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
       }
     }
 
-    return await makeSwapPluginQuote({
+    return {
       request,
       spendInfo,
       swapInfo,
       fromNativeAmount,
       expirationDate: new Date(Date.now() + expirationMs)
-    })
+    }
+  }
+
+  const out: EdgeSwapPlugin = {
+    swapInfo,
+    async fetchSwapQuote(
+      req: EdgeSwapRequest,
+      userSettings: Object | undefined
+    ): Promise<EdgeSwapQuote> {
+      const request = convertRequest(req)
+
+      checkInvalidCodes(INVALID_CURRENCY_CODES, request, swapInfo)
+
+      const fixedOrder = await getFixedQuote(request, userSettings)
+      const fixedResult = await makeSwapPluginQuote(fixedOrder)
+
+      return fixedResult
+    }
   }
 
   return out

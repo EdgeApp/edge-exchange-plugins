@@ -25,7 +25,8 @@ import {
   checkInvalidCodes,
   InvalidCurrencyCodes,
   isLikeKind,
-  makeSwapPluginQuote
+  makeSwapPluginQuote,
+  SwapOrder
 } from '../../swap-helpers'
 import {
   convertRequest,
@@ -33,6 +34,7 @@ import {
   fetchWaterfall,
   promiseWithTimeout
 } from '../../util/utils'
+import { EdgeSwapRequestPlugin } from '../types'
 import abi from './abi/THORCHAIN_SWAP_ABI'
 import erc20Abi from './abi/UNISWAP_V2_ERC20_ABI'
 
@@ -215,340 +217,339 @@ export function makeThorchainPlugin(
     'Content-Type': 'application/json'
   }
 
+  const fetchSwapQuoteInner = async (
+    request: EdgeSwapRequestPlugin
+  ): Promise<SwapOrder> => {
+    const {
+      fromCurrencyCode,
+      fromTokenId,
+      toCurrencyCode,
+      toTokenId,
+      nativeAmount,
+      fromWallet,
+      toWallet,
+      quoteFor
+    } = request
+    // Do not support transfer between same assets
+    if (
+      fromWallet.currencyInfo.pluginId === toWallet.currencyInfo.pluginId &&
+      request.fromCurrencyCode === request.toCurrencyCode
+    ) {
+      throw new SwapCurrencyError(swapInfo, fromCurrencyCode, toCurrencyCode)
+    }
+
+    let midgardServers: string[] = MIDGARD_SERVERS_DEFAULT
+    let likeKindVolatilitySpread: number = LIKE_KIND_VOLATILITY_SPREAD_DEFAULT
+    let volatilitySpread: number = VOLATILITY_SPREAD_DEFAULT
+    let perAssetSpread: AssetSpread[] = PER_ASSET_SPREAD_DEFAULT
+
+    checkInvalidCodes(INVALID_CURRENCY_CODES, request, swapInfo)
+
+    // Grab addresses:
+    const toAddress = await getAddress(toWallet, toCurrencyCode)
+
+    const fromMainnetCode =
+      MAINNET_CODE_TRANSCRIPTION[fromWallet.currencyInfo.pluginId]
+    const toMainnetCode =
+      MAINNET_CODE_TRANSCRIPTION[toWallet.currencyInfo.pluginId]
+
+    if (fromMainnetCode == null || toMainnetCode == null) {
+      throw new SwapCurrencyError(swapInfo, fromCurrencyCode, toCurrencyCode)
+    }
+
+    const now = Date.now()
+    if (
+      now - exchangeInfoLastUpdate > EXCHANGE_INFO_UPDATE_FREQ_MS ||
+      exchangeInfo == null
+    ) {
+      try {
+        const exchangeInfoResponse = await promiseWithTimeout(
+          fetchInfo(fetch, 'v1/exchangeInfo/edge')
+        )
+
+        if (exchangeInfoResponse.ok === true) {
+          exchangeInfo = asExchangeInfo(await exchangeInfoResponse.json())
+          exchangeInfoLastUpdate = now
+        } else {
+          // Error is ok. We just use defaults
+          log('Error getting info server exchangeInfo. Using defaults...')
+        }
+      } catch (e: any) {
+        log(
+          'Error getting info server exchangeInfo. Using defaults...',
+          e.message
+        )
+      }
+    }
+
+    if (exchangeInfo != null) {
+      const { thorchain } = exchangeInfo.swap.plugins
+      likeKindVolatilitySpread =
+        exchangeInfo.swap.plugins.thorchain.likeKindVolatilitySpread
+      volatilitySpread = thorchain.volatilitySpread
+      midgardServers = thorchain.midgardServers
+      perAssetSpread = thorchain.perAssetSpread
+    }
+
+    const volatilitySpreadFinal = getVolatilitySpread({
+      fromPluginId: fromWallet.currencyInfo.pluginId,
+      fromTokenId,
+      fromCurrencyCode,
+      toPluginId: toWallet.currencyInfo.pluginId,
+      toTokenId,
+      toCurrencyCode,
+      likeKindVolatilitySpread,
+      volatilitySpread,
+      perAssetSpread
+    })
+
+    log.warn(`getVolatilitySpread: ${volatilitySpreadFinal.toString()}`)
+
+    // Get current pool
+    const [iaResponse, poolResponse] = await Promise.all([
+      fetchWaterfall(fetch, midgardServers, 'v2/thorchain/inbound_addresses', {
+        headers
+      }),
+      fetchWaterfall(fetch, midgardServers, 'v2/pools', { headers })
+    ])
+
+    if (!iaResponse.ok) {
+      const responseText = await iaResponse.text()
+      throw new Error(
+        `Thorchain could not fetch inbound_addresses: ${responseText}`
+      )
+    }
+    if (!poolResponse.ok) {
+      const responseText = await poolResponse.text()
+      throw new Error(`Thorchain could not fetch pools: ${responseText}`)
+    }
+
+    // Nine realms servers removed minAmount support so disable for now but keep all code
+    // logic so we can easily enable in the future with new API
+    const minAmount = undefined
+
+    const iaJson = await iaResponse.json()
+    const inboundAddresses = asInboundAddresses(iaJson)
+
+    const poolJson = await poolResponse.json()
+    const pools = asPools(poolJson)
+
+    // Check for supported chain and asset
+    const inAddressObject = inboundAddresses.find(
+      addrObj => !addrObj.halted && addrObj.chain === fromMainnetCode
+    )
+    if (inAddressObject == null) {
+      throw new SwapCurrencyError(swapInfo, fromCurrencyCode, toCurrencyCode)
+    }
+    const { address: thorAddress } = inAddressObject
+
+    const outAddressObject = inboundAddresses.find(
+      addrObj => !addrObj.halted && addrObj.chain === toMainnetCode
+    )
+    if (outAddressObject == null) {
+      throw new SwapCurrencyError(swapInfo, fromCurrencyCode, toCurrencyCode)
+    }
+    const { outbound_fee: outAssetOutboundFee } = outAddressObject
+    log(
+      `${toMainnetCode}.${toCurrencyCode} outAssetOutboundFee ${outAssetOutboundFee}`
+    )
+
+    const sourcePool = pools.find(pool => {
+      const [asset] = pool.asset.split('-')
+      return asset === `${fromMainnetCode}.${fromCurrencyCode}`
+    })
+    if (sourcePool == null) {
+      throw new SwapCurrencyError(swapInfo, fromCurrencyCode, toCurrencyCode)
+    }
+    const [
+      sourceAsset,
+      sourceTokenContractAddressAllCaps
+    ] = sourcePool.asset.split('-')
+    const sourceTokenContractAddress =
+      sourceTokenContractAddressAllCaps != null
+        ? sourceTokenContractAddressAllCaps.toLowerCase()
+        : undefined
+    log(`sourceAsset: ${sourceAsset}`)
+
+    const destPool = pools.find(pool => {
+      const [asset] = pool.asset.split('-')
+      return asset === `${toMainnetCode}.${toCurrencyCode}`
+    })
+    if (destPool == null) {
+      throw new SwapCurrencyError(swapInfo, fromCurrencyCode, toCurrencyCode)
+    }
+
+    // Add outbound fee
+    const feeInDestCurrency = calcNetworkFee(
+      toMainnetCode,
+      toCurrencyCode,
+      outAssetOutboundFee,
+      pools
+    )
+    log(`feeInDestCurrency: ${feeInDestCurrency}`)
+
+    let calcResponse
+    if (quoteFor === 'from') {
+      calcResponse = await calcSwapFrom(
+        {
+          fromWallet,
+          fromCurrencyCode,
+          toWallet,
+          toCurrencyCode,
+          nativeAmount,
+          minAmount,
+          sourcePool,
+          destPool,
+          volatilitySpreadFinal,
+          affiliateFee,
+          feeInDestCurrency
+        },
+        log
+      )
+    } else {
+      calcResponse = await calcSwapTo(
+        {
+          fromWallet,
+          fromCurrencyCode,
+          toWallet,
+          toCurrencyCode,
+          nativeAmount,
+          minAmount,
+          sourcePool,
+          destPool,
+          volatilitySpreadFinal,
+          affiliateFee,
+          feeInDestCurrency
+        },
+        log
+      )
+    }
+    const { fromNativeAmount, toNativeAmount, limit } = calcResponse
+
+    let memo = buildSwapMemo({
+      chain: toMainnetCode,
+      asset: toCurrencyCode,
+      address: toAddress,
+      limit,
+      affiliateAddress: thorname,
+      points: affiliateFeeBasis
+    })
+
+    let ethNativeAmount = fromNativeAmount
+    let publicAddress = thorAddress
+    let approvalData
+    if (EVM_CURRENCY_CODES[fromMainnetCode]) {
+      if (fromMainnetCode !== fromCurrencyCode) {
+        const { router, address } = inAddressObject
+        if (router == null)
+          throw new Error(`Missing router address for ${fromMainnetCode}`)
+        if (sourceTokenContractAddress == null)
+          throw new Error(
+            `Missing sourceTokenContractAddress for ${fromMainnetCode}`
+          )
+        // Need to use ethers.js to craft a proper tx that calls Thorchain contract, then extract the data payload
+        memo = await getEvmTokenData({
+          assetAddress: sourceTokenContractAddress,
+          amountToSwapWei: Number(fromNativeAmount),
+          contractAddress: router,
+          vaultAddress: address,
+          memo
+        })
+
+        // Token transactions send no ETH (or other EVM mainnet coin)
+        ethNativeAmount = '0'
+        publicAddress = router
+
+        // Check if token approval is required and return necessary data field
+        approvalData = await getApprovalData({
+          contractAddress: router,
+          assetAddress: sourceTokenContractAddress,
+          nativeAmount: fromNativeAmount
+        })
+      } else {
+        memo = '0x' + Buffer.from(memo).toString('hex')
+      }
+    } else {
+      // Cannot yet do tokens on non-EVM chains
+      if (fromMainnetCode !== fromCurrencyCode) {
+        throw new SwapCurrencyError(swapInfo, fromCurrencyCode, toCurrencyCode)
+      }
+    }
+
+    let preTx: EdgeTransaction | undefined
+    if (approvalData != null) {
+      const spendInfo: EdgeSpendInfo = {
+        currencyCode: request.fromCurrencyCode,
+        spendTargets: [
+          {
+            memo: approvalData,
+            nativeAmount: '0',
+            publicAddress: sourceTokenContractAddress
+          }
+        ],
+        metadata: {
+          name: 'Thorchain',
+          category: 'expense:Token Approval'
+        }
+      }
+      preTx = await request.fromWallet.makeSpend(spendInfo)
+    }
+
+    const spendInfo: EdgeSpendInfo = {
+      currencyCode: request.fromCurrencyCode,
+      spendTargets: [
+        {
+          memo,
+          nativeAmount: ethNativeAmount,
+          publicAddress
+        }
+      ],
+
+      swapData: {
+        isEstimate: false,
+        payoutAddress: toAddress,
+        payoutCurrencyCode: toCurrencyCode,
+        payoutNativeAmount: toNativeAmount,
+        payoutWalletId: toWallet.id,
+        plugin: { ...swapInfo }
+      },
+      otherParams: {
+        outputSort: 'targets'
+      }
+    }
+
+    if (EVM_CURRENCY_CODES[fromMainnetCode]) {
+      if (fromMainnetCode === fromCurrencyCode) {
+        // For mainnet coins of EVM chains, use gasLimit override since makeSpend doesn't
+        // know how to estimate an ETH spend with extra data
+        const gasLimit = getGasLimit(fromMainnetCode, fromCurrencyCode)
+        if (gasLimit != null) {
+          spendInfo.customNetworkFee = {
+            ...spendInfo.customNetworkFee,
+            gasLimit
+          }
+        }
+      }
+    }
+
+    return {
+      request,
+      spendInfo,
+      swapInfo,
+      fromNativeAmount,
+      expirationDate: new Date(Date.now() + EXPIRATION_MS),
+      preTx
+    }
+  }
+
   const out: EdgeSwapPlugin = {
     swapInfo,
 
     async fetchSwapQuote(req: EdgeSwapRequest): Promise<EdgeSwapQuote> {
       const request = convertRequest(req)
-      const {
-        fromCurrencyCode,
-        fromTokenId,
-        toCurrencyCode,
-        toTokenId,
-        nativeAmount,
-        fromWallet,
-        toWallet,
-        quoteFor
-      } = request
-      // Do not support transfer between same assets
-      if (
-        fromWallet.currencyInfo.pluginId === toWallet.currencyInfo.pluginId &&
-        request.fromCurrencyCode === request.toCurrencyCode
-      ) {
-        throw new SwapCurrencyError(swapInfo, fromCurrencyCode, toCurrencyCode)
-      }
 
-      let midgardServers: string[] = MIDGARD_SERVERS_DEFAULT
-      let likeKindVolatilitySpread: number = LIKE_KIND_VOLATILITY_SPREAD_DEFAULT
-      let volatilitySpread: number = VOLATILITY_SPREAD_DEFAULT
-      let perAssetSpread: AssetSpread[] = PER_ASSET_SPREAD_DEFAULT
-
-      checkInvalidCodes(INVALID_CURRENCY_CODES, request, swapInfo)
-
-      // Grab addresses:
-      const toAddress = await getAddress(toWallet, toCurrencyCode)
-
-      const fromMainnetCode =
-        MAINNET_CODE_TRANSCRIPTION[fromWallet.currencyInfo.pluginId]
-      const toMainnetCode =
-        MAINNET_CODE_TRANSCRIPTION[toWallet.currencyInfo.pluginId]
-
-      if (fromMainnetCode == null || toMainnetCode == null) {
-        throw new SwapCurrencyError(swapInfo, fromCurrencyCode, toCurrencyCode)
-      }
-
-      const now = Date.now()
-      if (
-        now - exchangeInfoLastUpdate > EXCHANGE_INFO_UPDATE_FREQ_MS ||
-        exchangeInfo == null
-      ) {
-        try {
-          const exchangeInfoResponse = await promiseWithTimeout(
-            fetchInfo(fetch, 'v1/exchangeInfo/edge')
-          )
-
-          if (exchangeInfoResponse.ok === true) {
-            exchangeInfo = asExchangeInfo(await exchangeInfoResponse.json())
-            exchangeInfoLastUpdate = now
-          } else {
-            // Error is ok. We just use defaults
-            log('Error getting info server exchangeInfo. Using defaults...')
-          }
-        } catch (e: any) {
-          log(
-            'Error getting info server exchangeInfo. Using defaults...',
-            e.message
-          )
-        }
-      }
-
-      if (exchangeInfo != null) {
-        const { thorchain } = exchangeInfo.swap.plugins
-        likeKindVolatilitySpread =
-          exchangeInfo.swap.plugins.thorchain.likeKindVolatilitySpread
-        volatilitySpread = thorchain.volatilitySpread
-        midgardServers = thorchain.midgardServers
-        perAssetSpread = thorchain.perAssetSpread
-      }
-
-      const volatilitySpreadFinal = getVolatilitySpread({
-        fromPluginId: fromWallet.currencyInfo.pluginId,
-        fromTokenId,
-        fromCurrencyCode,
-        toPluginId: toWallet.currencyInfo.pluginId,
-        toTokenId,
-        toCurrencyCode,
-        likeKindVolatilitySpread,
-        volatilitySpread,
-        perAssetSpread
-      })
-
-      log.warn(`getVolatilitySpread: ${volatilitySpreadFinal.toString()}`)
-
-      // Get current pool
-      const [iaResponse, poolResponse] = await Promise.all([
-        fetchWaterfall(
-          fetch,
-          midgardServers,
-          'v2/thorchain/inbound_addresses',
-          {
-            headers
-          }
-        ),
-        fetchWaterfall(fetch, midgardServers, 'v2/pools', { headers })
-      ])
-
-      if (!iaResponse.ok) {
-        const responseText = await iaResponse.text()
-        throw new Error(
-          `Thorchain could not fetch inbound_addresses: ${responseText}`
-        )
-      }
-      if (!poolResponse.ok) {
-        const responseText = await poolResponse.text()
-        throw new Error(`Thorchain could not fetch pools: ${responseText}`)
-      }
-
-      // Nine realms servers removed minAmount support so disable for now but keep all code
-      // logic so we can easily enable in the future with new API
-      const minAmount = undefined
-
-      const iaJson = await iaResponse.json()
-      const inboundAddresses = asInboundAddresses(iaJson)
-
-      const poolJson = await poolResponse.json()
-      const pools = asPools(poolJson)
-
-      // Check for supported chain and asset
-      const inAddressObject = inboundAddresses.find(
-        addrObj => !addrObj.halted && addrObj.chain === fromMainnetCode
-      )
-      if (inAddressObject == null) {
-        throw new SwapCurrencyError(swapInfo, fromCurrencyCode, toCurrencyCode)
-      }
-      const { address: thorAddress } = inAddressObject
-
-      const outAddressObject = inboundAddresses.find(
-        addrObj => !addrObj.halted && addrObj.chain === toMainnetCode
-      )
-      if (outAddressObject == null) {
-        throw new SwapCurrencyError(swapInfo, fromCurrencyCode, toCurrencyCode)
-      }
-      const { outbound_fee: outAssetOutboundFee } = outAddressObject
-      log(
-        `${toMainnetCode}.${toCurrencyCode} outAssetOutboundFee ${outAssetOutboundFee}`
-      )
-
-      const sourcePool = pools.find(pool => {
-        const [asset] = pool.asset.split('-')
-        return asset === `${fromMainnetCode}.${fromCurrencyCode}`
-      })
-      if (sourcePool == null) {
-        throw new SwapCurrencyError(swapInfo, fromCurrencyCode, toCurrencyCode)
-      }
-      const [
-        sourceAsset,
-        sourceTokenContractAddressAllCaps
-      ] = sourcePool.asset.split('-')
-      const sourceTokenContractAddress =
-        sourceTokenContractAddressAllCaps != null
-          ? sourceTokenContractAddressAllCaps.toLowerCase()
-          : undefined
-      log(`sourceAsset: ${sourceAsset}`)
-
-      const destPool = pools.find(pool => {
-        const [asset] = pool.asset.split('-')
-        return asset === `${toMainnetCode}.${toCurrencyCode}`
-      })
-      if (destPool == null) {
-        throw new SwapCurrencyError(swapInfo, fromCurrencyCode, toCurrencyCode)
-      }
-
-      // Add outbound fee
-      const feeInDestCurrency = calcNetworkFee(
-        toMainnetCode,
-        toCurrencyCode,
-        outAssetOutboundFee,
-        pools
-      )
-      log(`feeInDestCurrency: ${feeInDestCurrency}`)
-
-      let calcResponse
-      if (quoteFor === 'from') {
-        calcResponse = await calcSwapFrom(
-          {
-            fromWallet,
-            fromCurrencyCode,
-            toWallet,
-            toCurrencyCode,
-            nativeAmount,
-            minAmount,
-            sourcePool,
-            destPool,
-            volatilitySpreadFinal,
-            affiliateFee,
-            feeInDestCurrency
-          },
-          log
-        )
-      } else {
-        calcResponse = await calcSwapTo(
-          {
-            fromWallet,
-            fromCurrencyCode,
-            toWallet,
-            toCurrencyCode,
-            nativeAmount,
-            minAmount,
-            sourcePool,
-            destPool,
-            volatilitySpreadFinal,
-            affiliateFee,
-            feeInDestCurrency
-          },
-          log
-        )
-      }
-      const { fromNativeAmount, toNativeAmount, limit } = calcResponse
-
-      let memo = buildSwapMemo({
-        chain: toMainnetCode,
-        asset: toCurrencyCode,
-        address: toAddress,
-        limit,
-        affiliateAddress: thorname,
-        points: affiliateFeeBasis
-      })
-
-      let ethNativeAmount = fromNativeAmount
-      let publicAddress = thorAddress
-      let approvalData
-      if (EVM_CURRENCY_CODES[fromMainnetCode]) {
-        if (fromMainnetCode !== fromCurrencyCode) {
-          const { router, address } = inAddressObject
-          if (router == null)
-            throw new Error(`Missing router address for ${fromMainnetCode}`)
-          if (sourceTokenContractAddress == null)
-            throw new Error(
-              `Missing sourceTokenContractAddress for ${fromMainnetCode}`
-            )
-          // Need to use ethers.js to craft a proper tx that calls Thorchain contract, then extract the data payload
-          memo = await getEvmTokenData({
-            assetAddress: sourceTokenContractAddress,
-            amountToSwapWei: Number(fromNativeAmount),
-            contractAddress: router,
-            vaultAddress: address,
-            memo
-          })
-
-          // Token transactions send no ETH (or other EVM mainnet coin)
-          ethNativeAmount = '0'
-          publicAddress = router
-
-          // Check if token approval is required and return necessary data field
-          approvalData = await getApprovalData({
-            contractAddress: router,
-            assetAddress: sourceTokenContractAddress,
-            nativeAmount: fromNativeAmount
-          })
-        } else {
-          memo = '0x' + Buffer.from(memo).toString('hex')
-        }
-      } else {
-        // Cannot yet do tokens on non-EVM chains
-        if (fromMainnetCode !== fromCurrencyCode) {
-          throw new SwapCurrencyError(
-            swapInfo,
-            fromCurrencyCode,
-            toCurrencyCode
-          )
-        }
-      }
-
-      let preTx: EdgeTransaction | undefined
-      if (approvalData != null) {
-        const spendInfo: EdgeSpendInfo = {
-          currencyCode: request.fromCurrencyCode,
-          spendTargets: [
-            {
-              memo: approvalData,
-              nativeAmount: '0',
-              publicAddress: sourceTokenContractAddress
-            }
-          ],
-          metadata: {
-            name: 'Thorchain',
-            category: 'expense:Token Approval'
-          }
-        }
-        preTx = await request.fromWallet.makeSpend(spendInfo)
-      }
-
-      const spendInfo: EdgeSpendInfo = {
-        currencyCode: request.fromCurrencyCode,
-        spendTargets: [
-          {
-            memo,
-            nativeAmount: ethNativeAmount,
-            publicAddress
-          }
-        ],
-
-        swapData: {
-          isEstimate: false,
-          payoutAddress: toAddress,
-          payoutCurrencyCode: toCurrencyCode,
-          payoutNativeAmount: toNativeAmount,
-          payoutWalletId: toWallet.id,
-          plugin: { ...swapInfo }
-        },
-        otherParams: {
-          outputSort: 'targets'
-        }
-      }
-
-      if (EVM_CURRENCY_CODES[fromMainnetCode]) {
-        if (fromMainnetCode === fromCurrencyCode) {
-          // For mainnet coins of EVM chains, use gasLimit override since makeSpend doesn't
-          // know how to estimate an ETH spend with extra data
-          const gasLimit = getGasLimit(fromMainnetCode, fromCurrencyCode)
-          if (gasLimit != null) {
-            spendInfo.customNetworkFee = {
-              ...spendInfo.customNetworkFee,
-              gasLimit
-            }
-          }
-        }
-      }
-
-      return await makeSwapPluginQuote({
-        request,
-        spendInfo,
-        swapInfo,
-        fromNativeAmount,
-        expirationDate: new Date(Date.now() + EXPIRATION_MS),
-        preTx
-      })
+      const swapOrder = await fetchSwapQuoteInner(request)
+      return await makeSwapPluginQuote(swapOrder)
     }
   }
   return out
