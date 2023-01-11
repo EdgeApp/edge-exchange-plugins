@@ -1,5 +1,13 @@
 # edge-exchange-plugins
 
+## 0.17.0 (2023-01-10)
+
+- Add 'max' support across all swap plugins
+- Remove legacy address fallback
+- Godex: Add early exit for unsupported chains
+- Remove Switchain
+- Upgrade edge-core-js to v0.19.37
+
 ## 0.16.17 (2023-01-06)
 
 - Add: isDex and swapPlugType to plugins and quotes
