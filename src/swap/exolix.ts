@@ -8,7 +8,6 @@ import {
   EdgeSwapPlugin,
   EdgeSwapQuote,
   EdgeSwapRequest,
-  EdgeTransaction,
   SwapBelowLimitError,
   SwapCurrencyError
 } from 'edge-core-js/types'
@@ -16,8 +15,10 @@ import {
 import {
   checkInvalidCodes,
   getCodes,
+  getMaxSwappable,
   InvalidCurrencyCodes,
-  makeSwapPluginQuote
+  makeSwapPluginQuote,
+  SwapOrder
 } from '../swap-helpers'
 import { convertRequest } from '../util/utils'
 import { EdgeSwapRequestPlugin } from './types'
@@ -104,27 +105,10 @@ export function makeExolixPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
     return await response.json()
   }
 
-  const out: EdgeSwapPlugin = {
-    swapInfo,
-    async fetchSwapQuote(
-      req: EdgeSwapRequest,
-      userSettings: Object | undefined
-    ): Promise<EdgeSwapQuote> {
-      const request = convertRequest(req)
-
-      checkInvalidCodes(INVALID_CURRENCY_CODES, request, swapInfo)
-
-      const fixedPromise = getFixedQuote(request, userSettings)
-
-      const fixedResult = await fixedPromise
-      return fixedResult
-    }
-  }
-
   const getFixedQuote = async (
     request: EdgeSwapRequestPlugin,
     _userSettings: Object | undefined
-  ): Promise<EdgeSwapQuote> => {
+  ): Promise<SwapOrder> => {
     const [fromAddress, toAddress] = await Promise.all([
       getAddress(request.fromWallet, request.fromCurrencyCode),
       getAddress(request.toWallet, request.toCurrencyCode)
@@ -253,22 +237,35 @@ export function makeExolixPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
       }
     }
 
-    const tx: EdgeTransaction = await request.fromWallet.makeSpend(spendInfo)
-
-    return makeSwapPluginQuote(
+    return {
       request,
+      spendInfo,
       swapInfo,
       fromNativeAmount,
-      toNativeAmount,
-      tx,
-      toAddress,
-      pluginId,
-      false,
-      new Date(Date.now() + expirationMs),
-      quoteInfo.id,
-      undefined,
-      undefined
-    )
+      expirationDate: new Date(Date.now() + expirationMs)
+    }
+  }
+
+  const out: EdgeSwapPlugin = {
+    swapInfo,
+    async fetchSwapQuote(
+      req: EdgeSwapRequest,
+      userSettings: Object | undefined
+    ): Promise<EdgeSwapQuote> {
+      const request = convertRequest(req)
+
+      checkInvalidCodes(INVALID_CURRENCY_CODES, request, swapInfo)
+
+      const newRequest = await getMaxSwappable(
+        getFixedQuote,
+        request,
+        userSettings
+      )
+      const fixedOrder = await getFixedQuote(newRequest, userSettings)
+      const fixedResult = await makeSwapPluginQuote(fixedOrder)
+
+      return fixedResult
+    }
   }
 
   return out

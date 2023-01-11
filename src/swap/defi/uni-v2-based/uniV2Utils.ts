@@ -1,11 +1,4 @@
 import { mul, sub } from 'biggystring'
-import {
-  EdgeSwapInfo,
-  EdgeSwapQuote,
-  EdgeSwapRequest,
-  EdgeSwapResult,
-  EdgeTransaction
-} from 'edge-core-js/types'
 import { BigNumber, Contract, ethers, PopulatedTransaction } from 'ethers'
 
 import { round } from '../../../util/biggystringplus'
@@ -52,7 +45,8 @@ export const getSwapTransactions = async (
   expectedAmountOut: string,
   toAddress: string,
   slippage: string,
-  deadline: number
+  deadline: number,
+  previousGasPrice?: string
 ): Promise<PopulatedTransaction[]> => {
   const { fromWallet, fromCurrencyCode, toCurrencyCode } = swapRequest
   const {
@@ -81,7 +75,10 @@ export const getSwapTransactions = async (
     throw new Error('Invalid swap: Cannot swap to the same native currency')
   const path = [fromTokenAddress, toTokenAddress]
 
-  const gasPrice = await provider.getGasPrice()
+  const gasPrice =
+    previousGasPrice != null
+      ? ethers.utils.parseUnits(previousGasPrice, 'gwei')
+      : await provider.getGasPrice()
 
   const addressToApproveTx = async (
     tokenAddress: string,
@@ -103,7 +100,7 @@ export const getSwapTransactions = async (
     txPromises.push(
       ...[
         makeWrappedFtmContract(provider).populateTransaction.deposit({
-          gasLimit: '51000',
+          gasLimit: '60000',
           gasPrice,
           value: amountToSwap
         })
@@ -117,7 +114,7 @@ export const getSwapTransactions = async (
       makeWrappedFtmContract(provider).populateTransaction.withdraw(
         amountToSwap,
         {
-          gasLimit: '51000',
+          gasLimit: '60000',
           gasPrice
         }
       )
@@ -175,76 +172,4 @@ export const getSwapTransactions = async (
   }
 
   return await Promise.all(txPromises)
-}
-
-/**
- * Generate the quote with approve() method
- * */
-export function makeUniV2EdgeSwapQuote(
-  request: EdgeSwapRequest,
-  swapInfo: EdgeSwapInfo,
-  fromNativeAmount: string,
-  toNativeAmount: string,
-  txs: EdgeTransaction[],
-  pluginId: string,
-  displayName: string,
-  isEstimate: boolean = false,
-  expirationDate?: Date
-): EdgeSwapQuote {
-  const { fromWallet } = request
-  const swapTx = txs[txs.length - 1]
-
-  const out: EdgeSwapQuote = {
-    request,
-    swapInfo,
-    fromNativeAmount,
-    toNativeAmount,
-    networkFee: {
-      currencyCode: fromWallet.currencyInfo.currencyCode,
-      nativeAmount:
-        swapTx.parentNetworkFee != null
-          ? swapTx.parentNetworkFee
-          : swapTx.networkFee
-    },
-    pluginId,
-    expirationDate,
-    isEstimate,
-    async approve(opts): Promise<EdgeSwapResult> {
-      let swapTx
-      let index = 0
-      for (let i = 0; i < txs.length; i++) {
-        const tx = txs[i]
-        if (txs.length > 1 && i === 0) {
-          // This is an approval transaction. Tag with some unfortunately non-translatable data but better than nothing
-          tx.metadata = {
-            name: displayName,
-            category: 'expense:Token Approval'
-          }
-        } else {
-          // This is the swap transaction
-          tx.metadata = { ...opts?.metadata, ...tx.metadata }
-        }
-        // for (const tx of txs) {
-        const signedTransaction = await fromWallet.signTx(tx)
-        // NOTE: The swap transaction will always be the last one
-        swapTx = await fromWallet.broadcastTx(signedTransaction)
-        const lastTransactionIndex = txs.length - 1
-        // if it's the last transaction of the array then assign `nativeAmount` data
-        // (after signing and broadcasting) for metadata purposes
-        if (index === lastTransactionIndex) {
-          tx.nativeAmount = `-${fromNativeAmount}`
-        }
-        await fromWallet.saveTx(signedTransaction)
-        index++
-      }
-      if (swapTx == null) throw new Error(`No ${pluginId} swapTx generated.`)
-      return {
-        transaction: swapTx,
-        orderId: swapTx.txid
-      }
-    },
-
-    async close() {}
-  }
-  return out
 }

@@ -15,7 +15,6 @@ import {
   EdgeSwapPlugin,
   EdgeSwapQuote,
   EdgeSwapRequest,
-  EdgeTransaction,
   SwapBelowLimitError,
   SwapCurrencyError
 } from 'edge-core-js/types'
@@ -24,9 +23,11 @@ import {
   checkInvalidCodes,
   ensureInFuture,
   getCodesWithTranscription,
+  getMaxSwappable,
   InvalidCurrencyCodes,
   isLikeKind,
-  makeSwapPluginQuote
+  makeSwapPluginQuote,
+  SwapOrder
 } from '../swap-helpers'
 import { div18 } from '../util/biggystringplus'
 import { convertRequest } from '../util/utils'
@@ -80,8 +81,8 @@ export function makeSwapuzPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
 
   const fetchSwapQuoteInner = async (
     request: EdgeSwapRequestPlugin
-  ): Promise<EdgeSwapQuote> => {
-    const { fromWallet, toWallet, nativeAmount } = request
+  ): Promise<SwapOrder> => {
+    const { fromWallet, toWallet } = request
 
     checkInvalidCodes(INVALID_CURRENCY_CODES, request, swapInfo)
 
@@ -98,12 +99,14 @@ export function makeSwapuzPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
       toMainnetCode
     } = getCodesWithTranscription(request, MAINNET_CODE_TRANSCRIPTION)
 
-    const largeDenomAmount = await fromWallet.nativeToDenomination(
-      nativeAmount,
-      fromCurrencyCode
-    )
+    const getQuote = async (mode: 'fix' | 'float'): Promise<SwapOrder> => {
+      const { nativeAmount } = request
 
-    const getQuote = async (mode: 'fix' | 'float'): Promise<EdgeSwapQuote> => {
+      const largeDenomAmount = await fromWallet.nativeToDenomination(
+        nativeAmount,
+        fromCurrencyCode
+      )
+
       const getRateResponse = await fetch(
         uri +
           `rate/?mode=${mode}&amount=${largeDenomAmount}&from=${fromCurrencyCode}&to=${toCurrencyCode}&fromNetwork=${fromMainnetCode}&toNetwork=${toMainnetCode}`,
@@ -198,22 +201,13 @@ export function makeSwapuzPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
         }
       }
 
-      const tx: EdgeTransaction = await request.fromWallet.makeSpend(spendInfo)
-
-      return makeSwapPluginQuote(
+      return {
         request,
+        spendInfo,
         swapInfo,
-        request.nativeAmount,
-        toNativeAmount,
-        tx,
-        toAddress,
-        pluginId,
-        mode === 'float',
-        ensureInFuture(finishPayment),
-        uid,
-        undefined,
-        undefined
-      )
+        fromNativeAmount: request.nativeAmount,
+        expirationDate: ensureInFuture(finishPayment)
+      }
     }
 
     // Try them all
@@ -242,8 +236,13 @@ export function makeSwapuzPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
         quoteFor
       } = requestTop
 
-      if (quoteFor === 'from') {
-        return await fetchSwapQuoteInner(requestTop)
+      if (quoteFor !== 'to') {
+        const newRequest = await getMaxSwappable(
+          fetchSwapQuoteInner,
+          requestTop
+        )
+        const swapOrder = await fetchSwapQuoteInner(newRequest)
+        return await makeSwapPluginQuote(swapOrder)
       } else {
         // Exit early if trade isn't like kind assets
         if (!isLikeKind(fromCurrencyCode, toCurrencyCode)) {
@@ -264,13 +263,15 @@ export function makeSwapuzPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
         let retries = 5
         while (--retries !== 0) {
           requestToHack.nativeAmount = fromQuoteNativeAmount
-          const quote = await fetchSwapQuoteInner(requestToHack)
+          const swapOrder = await fetchSwapQuoteInner(requestToHack)
+          if (swapOrder.spendInfo.swapData?.payoutNativeAmount == null) break
+
           const toExchangeAmount = await toWallet.nativeToDenomination(
-            quote.toNativeAmount,
+            swapOrder.spendInfo.swapData?.payoutNativeAmount,
             toCurrencyCode
           )
           if (gte(toExchangeAmount, requestToExchangeAmount)) {
-            return quote
+            return await makeSwapPluginQuote(swapOrder)
           } else {
             // Get the % difference between the FROM and TO amounts and increase the FROM amount
             // by that %

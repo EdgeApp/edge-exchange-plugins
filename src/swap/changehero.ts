@@ -15,7 +15,6 @@ import {
   EdgeSwapPlugin,
   EdgeSwapQuote,
   EdgeSwapRequest,
-  EdgeTransaction,
   SwapAboveLimitError,
   SwapBelowLimitError,
   SwapCurrencyError
@@ -24,8 +23,10 @@ import {
 import {
   checkInvalidCodes,
   getCodes,
+  getMaxSwappable,
   InvalidCurrencyCodes,
-  makeSwapPluginQuote
+  makeSwapPluginQuote,
+  SwapOrder
 } from '../swap-helpers'
 import { convertRequest } from '../util/utils'
 import { EdgeSwapRequestPlugin } from './types'
@@ -109,6 +110,7 @@ function checkReply(
     throw new Error('ChangeHero error: ' + JSON.stringify(reply.error))
   }
 }
+
 export function makeChangeHeroPlugin(
   opts: EdgeCorePluginOptions
 ): EdgeSwapPlugin {
@@ -133,7 +135,7 @@ export function makeChangeHeroPlugin(
 
   async function getFixedQuote(
     request: EdgeSwapRequestPlugin
-  ): Promise<EdgeSwapQuote> {
+  ): Promise<SwapOrder> {
     const [fromAddress, toAddress] = await Promise.all([
       getAddress(request.fromWallet, request.fromCurrencyCode),
       getAddress(request.toWallet, request.toCurrencyCode)
@@ -279,22 +281,14 @@ export function makeChangeHeroPlugin(
         refundAddress: fromAddress
       }
     }
-    const tx: EdgeTransaction = await request.fromWallet.makeSpend(spendInfo)
 
-    return makeSwapPluginQuote(
+    return {
       request,
+      spendInfo,
       swapInfo,
-      amountExpectedFromNative,
-      amountExpectedToNative,
-      tx,
-      toAddress,
-      pluginId,
-      false,
-      new Date(Date.now() + expirationFixedMs),
-      quoteInfo.id,
-      undefined,
-      undefined
-    )
+      fromNativeAmount: amountExpectedFromNative,
+      expirationDate: new Date(Date.now() + expirationFixedMs)
+    }
   }
 
   const out: EdgeSwapPlugin = {
@@ -302,7 +296,10 @@ export function makeChangeHeroPlugin(
     async fetchSwapQuote(req: EdgeSwapRequest): Promise<EdgeSwapQuote> {
       const request = convertRequest(req)
       checkInvalidCodes(INVALID_CURRENCY_CODES, request, swapInfo)
-      return await getFixedQuote(request)
+
+      const newRequest = await getMaxSwappable(getFixedQuote, request)
+      const swapOrder = await getFixedQuote(newRequest)
+      return await makeSwapPluginQuote(swapOrder)
     }
   }
 

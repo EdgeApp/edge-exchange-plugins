@@ -1,12 +1,14 @@
-import { add } from 'biggystring'
+import { add, sub } from 'biggystring'
 import {
   EdgeCurrencyWallet,
+  EdgeSpendInfo,
   EdgeSwapApproveOptions,
   EdgeSwapInfo,
   EdgeSwapQuote,
   EdgeSwapRequest,
   EdgeSwapResult,
   EdgeTransaction,
+  JsonObject,
   SwapCurrencyError
 } from 'edge-core-js/types'
 
@@ -30,21 +32,44 @@ export function ensureInFuture(
   return target < date.valueOf() ? date : new Date(target)
 }
 
-export function makeSwapPluginQuote(
-  request: EdgeSwapRequest,
-  swapInfo: EdgeSwapInfo,
-  fromNativeAmount: string,
-  toNativeAmount: string,
-  tx: EdgeTransaction,
-  destinationAddress: string,
-  pluginId: string,
-  isEstimate: boolean = false,
-  expirationDate?: Date,
-  quoteId?: string,
-  preTx?: EdgeTransaction,
+export interface SwapOrder {
+  request: EdgeSwapRequest
+  swapInfo: EdgeSwapInfo
+  spendInfo: EdgeSpendInfo
+  fromNativeAmount: string
+  expirationDate?: Date
+  preTx?: EdgeTransaction
   metadataNotes?: string
-): EdgeSwapQuote {
+}
+
+export async function makeSwapPluginQuote(
+  order: SwapOrder
+): Promise<EdgeSwapQuote> {
+  const {
+    fromNativeAmount,
+    request,
+    swapInfo,
+    spendInfo,
+    expirationDate,
+    preTx,
+    metadataNotes
+  } = order
+
   const { fromWallet } = request
+  const tx = await fromWallet.makeSpend(spendInfo)
+  const toNativeAmount = spendInfo.swapData?.payoutNativeAmount
+  const destinationAddress = spendInfo.swapData?.payoutAddress
+  const isEstimate = spendInfo.swapData?.isEstimate ?? false
+  const quoteId = spendInfo.swapData?.orderId
+  if (
+    fromNativeAmount == null ||
+    toNativeAmount == null ||
+    destinationAddress == null
+  ) {
+    throw new Error(
+      `Invalid makeSwapPluginQuote args from ${swapInfo.pluginId}`
+    )
+  }
 
   let nativeAmount =
     tx.parentNetworkFee != null ? tx.parentNetworkFee : tx.networkFee
@@ -64,7 +89,7 @@ export function makeSwapPluginQuote(
       currencyCode: fromWallet.currencyInfo.currencyCode,
       nativeAmount
     },
-    pluginId,
+    pluginId: swapInfo.pluginId,
     expirationDate,
     isEstimate,
     async approve(opts?: EdgeSwapApproveOptions): Promise<EdgeSwapResult> {
@@ -96,6 +121,64 @@ export function makeSwapPluginQuote(
     async close() {}
   }
   return out
+}
+
+export const getMaxSwappable = async <T extends any[]>(
+  fetchSwap: (request: EdgeSwapRequestPlugin, ...args: T) => Promise<SwapOrder>,
+  request: EdgeSwapRequestPlugin,
+  ...args: T
+): Promise<EdgeSwapRequestPlugin> => {
+  if (request.quoteFor !== 'max') return request
+
+  const requestCopy = { ...request }
+  const { fromWallet, fromCurrencyCode } = requestCopy
+
+  // First attempt a swap that uses the entire balance
+  const balance = fromWallet.balances[fromCurrencyCode] ?? '0'
+  requestCopy.nativeAmount = balance
+  requestCopy.quoteFor = 'from'
+  const swapOrder = await fetchSwap(requestCopy, ...args)
+
+  // Then use getMaxSpendable with the partner's address
+  delete swapOrder.spendInfo.spendTargets[0].nativeAmount
+  let maxAmount = await fromWallet.getMaxSpendable(swapOrder.spendInfo)
+
+  // Subtract fee from pretx
+  if (
+    swapOrder.preTx != null &&
+    fromCurrencyCode === fromWallet.currencyInfo.currencyCode
+  ) {
+    maxAmount = sub(maxAmount, swapOrder.preTx.networkFee)
+  }
+
+  // Update and return the request object
+  requestCopy.nativeAmount = maxAmount
+  return requestCopy
+}
+
+// Store custom fees so a request can use consistent fees when calling makeSpend multiple times
+export const customFeeCacheMap: {
+  [uid: string]: { customNetworkFee?: JsonObject; timestamp: number }
+} = {}
+
+let swapId = '0'
+export const customFeeCache = {
+  createUid: (): string => {
+    swapId = add(swapId, '1')
+    customFeeCacheMap[swapId] = { timestamp: Date.now() }
+    return swapId
+  },
+  getFees: (uid: string): JsonObject | undefined => {
+    return customFeeCacheMap?.[uid]?.customNetworkFee
+  },
+  setFees: (uid: string, customNetworkFee?: JsonObject): void => {
+    for (const id of Object.keys(customFeeCacheMap)) {
+      if (Date.now() > customFeeCacheMap[id].timestamp + 30000) {
+        delete customFeeCacheMap[id] // eslint-disable-line
+      }
+    }
+    customFeeCacheMap[uid] = { customNetworkFee, timestamp: Date.now() }
+  }
 }
 
 interface AllCodes {
