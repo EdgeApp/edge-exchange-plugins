@@ -195,21 +195,8 @@ export function makeGodexPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
     })
     const reply = asApiInfo(response)
 
-    // Check the networks. Networks aren't present for disabled assets.
-    if (
-      reply.networks_from?.find(
-        network => network.network === fromMainnetCode
-      ) == null ||
-      reply.networks_to?.find(network => network.network === toMainnetCode) ==
-        null
-    ) {
-      throw new SwapCurrencyError(
-        swapInfo,
-        request.fromCurrencyCode,
-        request.toCurrencyCode
-      )
-    }
-
+    // The info/info-revert endpoints don't accept the coin_from/coin_to params so the
+    // min_amount returned could be for a different network than the user is requesting.
     // Check the minimum:
     const nativeMin = reverseQuote
       ? await request.toWallet.denominationToNative(
@@ -226,6 +213,21 @@ export function makeGodexPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
         swapInfo,
         nativeMin,
         reverseQuote ? 'to' : 'from'
+      )
+    }
+
+    // Check the networks. Networks aren't present for disabled assets.
+    if (
+      reply.networks_from?.find(
+        network => network.network === fromMainnetCode
+      ) == null ||
+      reply.networks_to?.find(network => network.network === toMainnetCode) ==
+        null
+    ) {
+      throw new SwapCurrencyError(
+        swapInfo,
+        request.fromCurrencyCode,
+        request.toCurrencyCode
       )
     }
 
