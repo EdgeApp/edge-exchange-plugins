@@ -1,5 +1,9 @@
 # edge-exchange-plugins
 
+## 0.17.1 (2023-02-01)
+
+- Godex: Check min amount before supported networks
+
 ## 0.17.0 (2023-01-10)
 
 - Add 'max' support across all swap plugins
