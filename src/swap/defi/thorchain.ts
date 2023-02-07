@@ -53,6 +53,7 @@ const asInitOptions = asObject({
 })
 
 export const MIDGARD_SERVERS_DEFAULT = ['https://midgard.thorchain.info']
+export const THORNODE_SERVERS_DEFAULT = ['https://thornode.ninerealms.com']
 export const EXPIRATION_MS = 1000 * 60
 export const DIVIDE_PRECISION = 16
 export const EXCHANGE_INFO_UPDATE_FREQ_MS = 60000
@@ -190,6 +191,7 @@ export const asExchangeInfo = asObject({
         daVolatilitySpread: asNumber,
         midgardServers: asArray(asString),
         nineRealmsServers: asOptional(asArray(asString)),
+        thornodeServers: asOptional(asArray(asString)),
         thorSwapServers: asOptional(asArray(asString))
       })
     })
@@ -240,6 +242,7 @@ export function makeThorchainPlugin(
     }
 
     let midgardServers: string[] = MIDGARD_SERVERS_DEFAULT
+    let thornodeServers: string[] = THORNODE_SERVERS_DEFAULT
     let likeKindVolatilitySpread: number = LIKE_KIND_VOLATILITY_SPREAD_DEFAULT
     let volatilitySpread: number = VOLATILITY_SPREAD_DEFAULT
     let perAssetSpread: AssetSpread[] = PER_ASSET_SPREAD_DEFAULT
@@ -289,6 +292,7 @@ export function makeThorchainPlugin(
         exchangeInfo.swap.plugins.thorchain.likeKindVolatilitySpread
       volatilitySpread = thorchain.volatilitySpread
       midgardServers = thorchain.midgardServers
+      thornodeServers = thorchain.thornodeServers ?? thornodeServers
       perAssetSpread = thorchain.perAssetSpread
     }
 
@@ -308,7 +312,7 @@ export function makeThorchainPlugin(
 
     // Get current pool
     const [iaResponse, poolResponse] = await Promise.all([
-      fetchWaterfall(fetch, midgardServers, 'v2/thorchain/inbound_addresses', {
+      fetchWaterfall(fetch, thornodeServers, 'thorchain/inbound_addresses', {
         headers
       }),
       fetchWaterfall(fetch, midgardServers, 'v2/pools', { headers })

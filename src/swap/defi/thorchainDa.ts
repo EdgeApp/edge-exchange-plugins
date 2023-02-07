@@ -53,7 +53,7 @@ import {
   getGasLimit,
   INVALID_CURRENCY_CODES,
   MAINNET_CODE_TRANSCRIPTION,
-  MIDGARD_SERVERS_DEFAULT
+  THORNODE_SERVERS_DEFAULT
 } from './thorchain'
 
 const pluginId = 'thorchainda'
@@ -153,8 +153,8 @@ export function makeThorchainDaPlugin(
     const reverseQuote = quoteFor === 'to'
     const isEstimate = false
 
-    let midgardServers: string[] = MIDGARD_SERVERS_DEFAULT
     let daVolatilitySpread: number = DA_VOLATILITY_SPREAD_DEFAULT
+    let thornodeServers: string[] = THORNODE_SERVERS_DEFAULT
     let thorswapServers: string[] = THORSWAP_DEFAULT_SERVERS
 
     checkInvalidCodes(INVALID_CURRENCY_CODES, request, swapInfo)
@@ -200,8 +200,8 @@ export function makeThorchainDaPlugin(
     if (exchangeInfo != null) {
       const { thorchain } = exchangeInfo.swap.plugins
       daVolatilitySpread = thorchain.daVolatilitySpread
-      midgardServers = thorchain.midgardServers
       thorswapServers = thorchain.thorSwapServers ?? THORSWAP_DEFAULT_SERVERS
+      thornodeServers = thorchain.thornodeServers ?? thornodeServers
     }
 
     const volatilitySpreadFinal = daVolatilitySpread // Might add a likeKind spread later
@@ -244,7 +244,7 @@ export function makeThorchainDaPlugin(
     log.warn(uri)
 
     const [iaResponse, thorSwapResponse] = await Promise.all([
-      fetchWaterfall(fetch, midgardServers, 'v2/thorchain/inbound_addresses', {
+      fetchWaterfall(fetch, thornodeServers, 'thorchain/inbound_addresses', {
         headers
       }),
       fetchWaterfall(fetch, thorswapServers, uri, { headers })
