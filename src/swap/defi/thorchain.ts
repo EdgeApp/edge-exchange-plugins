@@ -49,6 +49,7 @@ const swapInfo: EdgeSwapInfo = {
 
 const asInitOptions = asObject({
   affiliateFeeBasis: asOptional(asString, '50'),
+  ninerealmsClientId: asOptional(asString, ''),
   thorname: asOptional(asString, 'ej')
 })
 
@@ -213,11 +214,14 @@ export function makeThorchainPlugin(
 ): EdgeSwapPlugin {
   const { io, log } = opts
   const { fetch } = io
-  const { thorname, affiliateFeeBasis } = asInitOptions(opts.initOptions)
+  const { thorname, affiliateFeeBasis, ninerealmsClientId } = asInitOptions(
+    opts.initOptions
+  )
   const affiliateFee = div(affiliateFeeBasis, '10000', DIVIDE_PRECISION)
 
   const headers = {
-    'Content-Type': 'application/json'
+    'Content-Type': 'application/json',
+    'x-client-id': ninerealmsClientId
   }
 
   const fetchSwapQuoteInner = async (
