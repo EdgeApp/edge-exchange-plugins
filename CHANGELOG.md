@@ -1,5 +1,10 @@
 # edge-exchange-plugins
 
+## 0.17.2 (2023-02-07)
+
+- Fix: Send Ninerealms client-id when doing Thorchain queries
+- Fix: Use Thornode servers instead of Midgard for inbound_addresses
+
 ## 0.17.1 (2023-02-01)
 
 - Godex: Check min amount before supported networks
