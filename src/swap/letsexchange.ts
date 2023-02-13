@@ -2,7 +2,6 @@ import { gt, lt } from 'biggystring'
 import { asObject, asOptional, asString } from 'cleaners'
 import {
   EdgeCorePluginOptions,
-  EdgeCurrencyWallet,
   EdgeSpendInfo,
   EdgeSwapInfo,
   EdgeSwapPlugin,
@@ -21,7 +20,7 @@ import {
   makeSwapPluginQuote,
   SwapOrder
 } from '../swap-helpers'
-import { convertRequest } from '../util/utils'
+import { convertRequest, getAddress } from '../util/utils'
 import { asOptionalBlank } from './changenow'
 import { asNumberString, EdgeSwapRequestPlugin } from './types'
 
@@ -75,14 +74,6 @@ const MAINNET_CODE_TRANSCRIPTION = {
   tron: 'TRC20'
 }
 
-async function getAddress(
-  wallet: EdgeCurrencyWallet,
-  currencyCode: string
-): Promise<string> {
-  const { publicAddress } = await wallet.getReceiveAddress({ currencyCode })
-  return publicAddress
-}
-
 export function makeLetsExchangePlugin(
   opts: EdgeCorePluginOptions
 ): EdgeSwapPlugin {
@@ -124,8 +115,8 @@ export function makeLetsExchangePlugin(
 
     // Grab addresses:
     const [fromAddress, toAddress] = await Promise.all([
-      getAddress(request.fromWallet, request.fromCurrencyCode),
-      getAddress(request.toWallet, request.toCurrencyCode)
+      getAddress(request.fromWallet),
+      getAddress(request.toWallet)
     ])
 
     // Convert the native amount to a denomination:

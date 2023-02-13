@@ -33,6 +33,7 @@ import {
   convertRequest,
   fetchInfo,
   fetchWaterfall,
+  getAddress,
   promiseWithTimeout
 } from '../../util/utils'
 import { EdgeSwapRequestPlugin } from '../types'
@@ -254,7 +255,7 @@ export function makeThorchainPlugin(
     checkInvalidCodes(INVALID_CURRENCY_CODES, request, swapInfo)
 
     // Grab addresses:
-    const toAddress = await getAddress(toWallet, toCurrencyCode)
+    const toAddress = await getAddress(toWallet)
 
     const fromMainnetCode =
       MAINNET_CODE_TRANSCRIPTION[fromWallet.currencyInfo.pluginId]
@@ -563,14 +564,6 @@ export function makeThorchainPlugin(
     }
   }
   return out
-}
-
-async function getAddress(
-  wallet: EdgeCurrencyWallet,
-  currencyCode: string
-): Promise<string> {
-  const addressInfo = await wallet.getReceiveAddress({ currencyCode })
-  return addressInfo.publicAddress
 }
 
 interface BuildSwapMemoParams {

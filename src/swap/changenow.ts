@@ -10,7 +10,6 @@ import {
 } from 'cleaners'
 import {
   EdgeCorePluginOptions,
-  EdgeCurrencyWallet,
   EdgeSpendInfo,
   EdgeSwapInfo,
   EdgeSwapPlugin,
@@ -31,7 +30,7 @@ import {
   makeSwapPluginQuote,
   SwapOrder
 } from '../swap-helpers'
-import { convertRequest } from '../util/utils'
+import { convertRequest, getAddress } from '../util/utils'
 import { EdgeSwapRequestPlugin } from './types'
 const pluginId = 'changenow'
 
@@ -61,14 +60,6 @@ const MAINNET_CODE_TRANSCRIPTION = {
   binancesmartchain: 'BSC'
 }
 
-async function getAddress(
-  wallet: EdgeCurrencyWallet,
-  currencyCode: string
-): Promise<string> {
-  const { publicAddress } = await wallet.getReceiveAddress({ currencyCode })
-  return publicAddress
-}
-
 export function makeChangeNowPlugin(
   opts: EdgeCorePluginOptions
 ): EdgeSwapPlugin {
@@ -90,8 +81,8 @@ export function makeChangeNowPlugin(
 
     // Grab addresses:
     const [fromAddress, toAddress] = await Promise.all([
-      getAddress(request.fromWallet, request.fromCurrencyCode),
-      getAddress(request.toWallet, request.toCurrencyCode)
+      getAddress(request.fromWallet),
+      getAddress(request.toWallet)
     ])
 
     const {

@@ -11,7 +11,6 @@ import {
 } from 'cleaners'
 import {
   EdgeCorePluginOptions,
-  EdgeCurrencyWallet,
   EdgeSpendInfo,
   EdgeSwapInfo,
   EdgeSwapPlugin,
@@ -37,6 +36,7 @@ import {
   convertRequest,
   fetchInfo,
   fetchWaterfall,
+  getAddress,
   makeQueryParams,
   promiseWithTimeout
 } from '../../util/utils'
@@ -164,8 +164,8 @@ export function makeThorchainDaPlugin(
     checkInvalidCodes(INVALID_CURRENCY_CODES, request, swapInfo)
 
     // Grab addresses:
-    const fromAddress = await getAddress(fromWallet, fromCurrencyCode)
-    const toAddress = await getAddress(toWallet, toCurrencyCode)
+    const fromAddress = await getAddress(fromWallet)
+    const toAddress = await getAddress(toWallet)
 
     const fromMainnetCode =
       MAINNET_CODE_TRANSCRIPTION[fromWallet.currencyInfo.pluginId]
@@ -487,14 +487,6 @@ export function makeThorchainDaPlugin(
     }
   }
   return out
-}
-
-async function getAddress(
-  wallet: EdgeCurrencyWallet,
-  currencyCode: string
-): Promise<string> {
-  const addressInfo = await wallet.getReceiveAddress({ currencyCode })
-  return addressInfo.publicAddress
 }
 
 const calldataOrder = {

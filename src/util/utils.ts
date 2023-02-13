@@ -1,4 +1,5 @@
 import {
+  EdgeCurrencyWallet,
   EdgeFetchFunction,
   EdgeFetchResponse,
   EdgeSwapRequest
@@ -170,4 +171,9 @@ export const convertRequest = (
   }
   const out: any = request
   return out
+}
+
+export async function getAddress(wallet: EdgeCurrencyWallet): Promise<string> {
+  const { publicAddress, segwitAddress } = await wallet.getReceiveAddress()
+  return segwitAddress ?? publicAddress
 }
