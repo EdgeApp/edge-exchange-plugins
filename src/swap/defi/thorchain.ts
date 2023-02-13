@@ -48,7 +48,8 @@ const swapInfo: EdgeSwapInfo = {
   supportEmail: 'support@edge.app'
 }
 
-const asInitOptions = asObject({
+export const asInitOptions = asObject({
+  appId: asOptional(asString, 'edge'),
   affiliateFeeBasis: asOptional(asString, '50'),
   ninerealmsClientId: asOptional(asString, ''),
   thorname: asOptional(asString, 'ej')
@@ -215,9 +216,12 @@ export function makeThorchainPlugin(
 ): EdgeSwapPlugin {
   const { io, log } = opts
   const { fetch } = io
-  const { thorname, affiliateFeeBasis, ninerealmsClientId } = asInitOptions(
-    opts.initOptions
-  )
+  const {
+    appId,
+    thorname,
+    affiliateFeeBasis,
+    ninerealmsClientId
+  } = asInitOptions(opts.initOptions)
   const affiliateFee = div(affiliateFeeBasis, '10000', DIVIDE_PRECISION)
 
   const headers = {
@@ -273,7 +277,7 @@ export function makeThorchainPlugin(
     ) {
       try {
         const exchangeInfoResponse = await promiseWithTimeout(
-          fetchInfo(fetch, 'v1/exchangeInfo/edge')
+          fetchInfo(fetch, `v1/exchangeInfo/${appId}`)
         )
 
         if (exchangeInfoResponse.ok === true) {

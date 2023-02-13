@@ -45,6 +45,7 @@ import { abiMap } from './abi/abiMap'
 import {
   asExchangeInfo,
   asInboundAddresses,
+  asInitOptions,
   EVM_CURRENCY_CODES,
   EXCHANGE_INFO_UPDATE_FREQ_MS,
   EXPIRATION_MS,
@@ -63,12 +64,6 @@ const swapInfo: EdgeSwapInfo = {
   displayName: 'Thorchain DEX Aggregator',
   supportEmail: 'support@edge.app'
 }
-
-const asInitOptions = asObject({
-  affiliateFeeBasis: asOptional(asString, '50'),
-  ninerealmsClientId: asOptional(asString, ''),
-  thorname: asOptional(asString, 'ej')
-})
 
 // This needs to be a type so adding the '& {}' prevents auto correction to an interface
 type ThorSwapQuoteParams = {
@@ -127,9 +122,12 @@ export function makeThorchainDaPlugin(
   const { io, log } = opts
   const { fetch } = io
   // const fetch = nodeFetch ?? io.fetch
-  const { affiliateFeeBasis, ninerealmsClientId, thorname } = asInitOptions(
-    opts.initOptions
-  )
+  const {
+    appId,
+    affiliateFeeBasis,
+    ninerealmsClientId,
+    thorname
+  } = asInitOptions(opts.initOptions)
 
   const headers = {
     'Content-Type': 'application/json',
@@ -183,7 +181,7 @@ export function makeThorchainDaPlugin(
     ) {
       try {
         const exchangeInfoResponse = await promiseWithTimeout(
-          fetchInfo(fetch, 'v1/exchangeInfo/edge')
+          fetchInfo(fetch, `v1/exchangeInfo/${appId}`)
         )
 
         if (exchangeInfoResponse.ok === true) {
