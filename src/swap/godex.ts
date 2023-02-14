@@ -82,17 +82,17 @@ const asQuoteInfo = asObject({
 
 const INVALID_CURRENCY_CODES: InvalidCurrencyCodes = {
   from: {
-    ethereum: ['MATIC'],
     avalanche: 'allTokens',
     celo: 'allTokens',
+    digibyte: 'allCodes',
+    ethereum: ['MATIC'],
     fantom: 'allTokens',
-    polygon: 'allCodes',
-    digibyte: 'allCodes'
+    polygon: 'allCodes'
   },
   to: {
-    ethereum: ['MATIC'],
     avalanche: 'allTokens',
     celo: 'allTokens',
+    ethereum: ['MATIC'],
     fantom: 'allTokens',
     polygon: 'allCodes',
     zcash: ['ZEC']

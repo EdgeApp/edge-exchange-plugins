@@ -124,27 +124,27 @@ export const INVALID_CURRENCY_CODES: InvalidCurrencyCodes = {
 }
 
 export const EVM_CURRENCY_CODES: { [cc: string]: boolean } = {
-  ETH: true,
   AVAX: true,
-  FTM: true,
-  ETC: true,
   BCH: false,
   BNB: false,
   BTC: false,
+  DOGE: false,
+  ETC: true,
+  ETH: true,
+  FTM: true,
   LTC: false,
-  THOR: false,
-  DOGE: false
+  THOR: false
 }
 
 // Network names that don't match parent network currency code
 export const MAINNET_CODE_TRANSCRIPTION: { [cc: string]: ChainTypes } = {
+  avalanche: 'AVAX',
+  binancechain: 'BNB',
   bitcoin: 'BTC',
   bitcoincash: 'BCH',
-  binancechain: 'BNB',
-  litecoin: 'LTC',
-  ethereum: 'ETH',
   dogecoin: 'DOGE',
-  avalanche: 'AVAX',
+  ethereum: 'ETH',
+  litecoin: 'LTC',
   thorchain: 'THOR'
 }
 

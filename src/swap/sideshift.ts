@@ -26,8 +26,8 @@ import { convertRequest } from '../util/utils'
 import { EdgeSwapRequestPlugin } from './types'
 
 const MAINNET_CODE_TRANSCRIPTION = {
-  zcash: 'shielded',
-  binancesmartchain: 'bsc'
+  binancesmartchain: 'bsc',
+  zcash: 'shielded'
 }
 
 const SIDESHIFT_BASE_URL = 'https://sideshift.ai/api/v2'
