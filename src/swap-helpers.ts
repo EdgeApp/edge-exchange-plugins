@@ -301,6 +301,10 @@ const defaultCurrencyCodeTranscriptionMap: CurrencyCodeTranscriptionMap = {
   }
 }
 
+const defaultMainnetTranscriptionMap: MainnetPluginIdTranscriptionMap = {
+  optimism: 'OP' // mainnet code is ETH
+}
+
 /**
  * Returns all four codes with transcription
  */
@@ -325,6 +329,12 @@ export const getCodesWithTranscription = (
         ...defaultCurrencyCodeTranscriptionMap[pluginId],
         ...currencyCodeTranscriptionMap[pluginId]
       }
+  }
+
+  for (const pluginId of Object.keys(defaultMainnetTranscriptionMap)) {
+    if (mainnetTranscriptionMap[pluginId] == null)
+      mainnetTranscriptionMap[pluginId] =
+        defaultMainnetTranscriptionMap[pluginId]
   }
 
   return {
