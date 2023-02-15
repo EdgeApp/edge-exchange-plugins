@@ -1,7 +1,6 @@
-import { mul, sub } from 'biggystring'
+import { mul, round, sub } from 'biggystring'
 import { BigNumber, Contract, ethers, PopulatedTransaction } from 'ethers'
 
-import { round } from '../../../util/biggystringplus'
 import { EdgeSwapRequestPlugin } from '../../types'
 import { getMetaTokenAddress } from '../defiUtils'
 import { makeErc20Contract, makeWrappedFtmContract } from './uniV2Contracts'
@@ -127,7 +126,7 @@ export const getSwapTransactions = async (
       txPromises.push(
         // Swap Tx
         router.populateTransaction.swapExactETHForTokens(
-          round(mul(expectedAmountOut, slippageMultiplier)),
+          round(mul(expectedAmountOut, slippageMultiplier), 0),
           path,
           toAddress,
           deadline,
@@ -143,7 +142,7 @@ export const getSwapTransactions = async (
         // Swap Tx
         router.populateTransaction.swapExactTokensForETH(
           amountToSwap,
-          round(mul(expectedAmountOut, slippageMultiplier)),
+          round(mul(expectedAmountOut, slippageMultiplier), 0),
           path,
           toAddress,
           deadline,
@@ -159,7 +158,7 @@ export const getSwapTransactions = async (
         // Swap Tx
         router.populateTransaction.swapExactTokensForTokens(
           amountToSwap,
-          round(mul(expectedAmountOut, slippageMultiplier)),
+          round(mul(expectedAmountOut, slippageMultiplier), 0),
           path,
           toAddress,
           deadline,
