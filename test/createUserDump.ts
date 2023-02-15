@@ -12,6 +12,7 @@ import { avaxCurrencyInfo } from './fakeAvaxInfo'
 import { btcCurrencyInfo } from './fakeBtcInfo'
 import { makeFakePlugin } from './fakeCurrencyPlugin'
 import { ethCurrencyInfo } from './fakeEthInfo'
+import { polygonCurrencyInfo } from './fakePolygonInfo'
 
 const DUMP_USER_FILE = './test/fakeUserDump.json'
 
@@ -21,6 +22,7 @@ async function main(): Promise<void> {
     ethereum: makeFakePlugin(ethCurrencyInfo),
     avalanche: makeFakePlugin(avaxCurrencyInfo),
     piratechain: makeFakePlugin(arrrCurrencyInfo),
+    polygon: makeFakePlugin(polygonCurrencyInfo),
     ...edgeExchangePlugins
   }
 
@@ -38,6 +40,7 @@ async function main(): Promise<void> {
       ethereum: true,
       avalanche: true,
       piratechain: true,
+      polygon: true,
       thorchainda: true
     }
   })
@@ -58,6 +61,10 @@ async function main(): Promise<void> {
     fiatCurrencyCode: 'iso:EUR',
     name: 'My Fake Avalanche'
   })
+  const maticWallet = await account.createCurrencyWallet('wallet:polygon', {
+    fiatCurrencyCode: 'iso:USD',
+    name: 'My Fake Matic'
+  })
   const ethEnabledTokens = ethWallet.currencyInfo.metaTokens.map(
     token => token.currencyCode
   )
@@ -68,12 +75,19 @@ async function main(): Promise<void> {
   )
   await avaxWallet.enableTokens(avaxEnabledTokens)
 
+  const maticEnabledTokens = maticWallet.currencyInfo.metaTokens.map(
+    token => token.currencyCode
+  )
+  await maticWallet.enableTokens(maticEnabledTokens)
+
   const data = await world.dumpFakeUser(account)
   const dump = {
     loginKey: account.loginKey,
     data
   }
-  fs.writeFileSync(DUMP_USER_FILE, JSON.stringify(dump), { encoding: 'utf8' })
+  fs.writeFileSync(DUMP_USER_FILE, JSON.stringify(dump, null, 2), {
+    encoding: 'utf8'
+  })
   process.exit(0)
 }
 
