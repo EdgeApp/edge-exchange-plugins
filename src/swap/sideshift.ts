@@ -27,6 +27,7 @@ import { EdgeSwapRequestPlugin } from './types'
 
 const MAINNET_CODE_TRANSCRIPTION = {
   binancesmartchain: 'bsc',
+  optimism: 'optimism',
   zcash: 'shielded'
 }
 

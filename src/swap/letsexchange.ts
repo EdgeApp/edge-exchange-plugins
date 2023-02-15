@@ -70,6 +70,7 @@ const MAINNET_CODE_TRANSCRIPTION = {
   binance: 'BEP2',
   binancesmartchain: 'BEP20',
   ethereum: 'ERC20',
+  optimism: 'OPTIMISM',
   rsk: 'RSK',
   tron: 'TRC20'
 }

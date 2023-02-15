@@ -40,11 +40,13 @@ const INVALID_CURRENCY_CODES: InvalidCurrencyCodes = {
   from: {
     binancesmartchain: 'allCodes',
     ethereum: ['MATIC'],
+    optimism: 'allCodes',
     polygon: 'allCodes'
   },
   to: {
     binancesmartchain: 'allCodes',
     ethereum: ['MATIC'],
+    optimism: 'allCodes',
     polygon: 'allCodes',
     zcash: ['ZEC']
   }
