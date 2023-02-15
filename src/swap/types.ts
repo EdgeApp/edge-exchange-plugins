@@ -16,3 +16,7 @@ export const asNumberString = (raw: any): string => {
   const n = asEither(asString, asNumber)(raw)
   return n.toString()
 }
+
+export interface StringMap {
+  [key: string]: string
+}
