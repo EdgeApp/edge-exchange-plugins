@@ -19,7 +19,6 @@ import {
   SwapBelowLimitError,
   SwapCurrencyError
 } from 'edge-core-js/types'
-import { ethers } from 'ethers'
 
 import {
   checkInvalidCodes,
@@ -37,8 +36,7 @@ import {
   promiseWithTimeout
 } from '../../util/utils'
 import { EdgeSwapRequestPlugin } from '../types'
-import abi from './abi/THORCHAIN_SWAP_ABI'
-import erc20Abi from './abi/UNISWAP_V2_ERC20_ABI'
+import { getEvmApprovalData, getEvmTokenData } from './defiUtils'
 
 const pluginId = 'thorchain'
 const swapInfo: EdgeSwapInfo = {
@@ -475,7 +473,7 @@ export function makeThorchainPlugin(
         publicAddress = router
 
         // Check if token approval is required and return necessary data field
-        approvalData = await getApprovalData({
+        approvalData = await getEvmApprovalData({
           contractAddress: router,
           assetAddress: sourceTokenContractAddress,
           nativeAmount: fromNativeAmount
@@ -823,78 +821,6 @@ const buildSwapMemo = (params: BuildSwapMemoParams): string => {
   const { chain, asset, address, limit, affiliateAddress, points } = params
   // affiliate address could be a thorname, and the minimum received is not set in this example.
   return `=:${chain}.${asset}:${address}:${limit}:${affiliateAddress}:${points}`
-}
-
-const getCheckSumAddress = (assetAddress: string): string => {
-  // if (assetAddress === ETHAddress) return ETHAddress
-  return ethers.utils.getAddress(assetAddress.toLowerCase())
-}
-
-export const getApprovalData = async (params: {
-  contractAddress: string
-  assetAddress: string
-  nativeAmount: string
-}): Promise<string | undefined> => {
-  const { contractAddress, assetAddress, nativeAmount } = params
-  const contract = new ethers.Contract(
-    assetAddress,
-    erc20Abi,
-    ethers.providers.getDefaultProvider()
-  )
-
-  const bnNativeAmount = ethers.BigNumber.from(nativeAmount)
-  const approveTx = await contract.populateTransaction.approve(
-    contractAddress,
-    bnNativeAmount,
-    {
-      gasLimit: '500000',
-      gasPrice: '20'
-    }
-  )
-  return approveTx.data
-}
-
-export const getEvmTokenData = async (params: {
-  memo: string
-  // usersSendingAddress: string,
-  assetAddress: string
-  contractAddress: string
-  vaultAddress: string
-  amountToSwapWei: number
-}): Promise<string> => {
-  // const isETH = assetAddress === ETHAddress
-  const {
-    // usersSendingAddress,
-    assetAddress,
-    contractAddress,
-    memo,
-    vaultAddress,
-    amountToSwapWei
-  } = params
-
-  // initialize contract
-  const contract = new ethers.Contract(
-    contractAddress,
-    abi,
-    ethers.providers.getDefaultProvider()
-  )
-
-  // Dummy gasPrice that we won't actually use
-  const gasPrice = ethers.BigNumber.from('50')
-
-  // setup contract params
-  const contractParams: any[] = [
-    vaultAddress,
-    getCheckSumAddress(assetAddress),
-    amountToSwapWei.toFixed(),
-    memo,
-    { gasPrice }
-  ]
-
-  // call the deposit method on the thorchain router.
-  const tx = await contract.populateTransaction.deposit(...contractParams)
-  if (tx.data == null) throw new Error('No data in tx object')
-  return tx.data
 }
 
 //

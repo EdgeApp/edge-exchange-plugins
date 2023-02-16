@@ -42,6 +42,7 @@ import {
 } from '../../util/utils'
 import { EdgeSwapRequestPlugin } from '../types'
 import { abiMap } from './abi/abiMap'
+import { getEvmApprovalData, getEvmTokenData } from './defiUtils'
 import {
   asExchangeInfo,
   asInboundAddresses,
@@ -49,8 +50,6 @@ import {
   EVM_CURRENCY_CODES,
   EXCHANGE_INFO_UPDATE_FREQ_MS,
   EXPIRATION_MS,
-  getApprovalData,
-  getEvmTokenData,
   getGasLimit,
   INVALID_CURRENCY_CODES,
   MAINNET_CODE_TRANSCRIPTION,
@@ -388,7 +387,7 @@ export function makeThorchainDaPlugin(
         publicAddress = contractAddress
 
         // Check if token approval is required and return necessary data field
-        approvalData = await getApprovalData({
+        approvalData = await getEvmApprovalData({
           contractAddress: tokenProxyMap[fromWallet.currencyInfo.pluginId],
           assetAddress: sourceTokenContractAddress,
           nativeAmount: nativeAmount
