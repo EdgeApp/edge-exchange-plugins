@@ -66,12 +66,13 @@ const INVALID_CURRENCY_CODES: InvalidCurrencyCodes = {
 }
 
 const MAINNET_CODE_TRANSCRIPTION = {
-  ethereum: 'ERC20',
-  binancesmartchain: 'BEP20',
-  tron: 'TRC20',
+  avalanche: 'AVAXC',
   binance: 'BEP2',
+  binancesmartchain: 'BEP20',
+  ethereum: 'ERC20',
+  optimism: 'OPTIMISM',
   rsk: 'RSK',
-  avalanche: 'AVAXC'
+  tron: 'TRC20'
 }
 
 async function getAddress(

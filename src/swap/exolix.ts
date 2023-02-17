@@ -38,14 +38,16 @@ const asInitOptions = asObject({
 
 const INVALID_CURRENCY_CODES: InvalidCurrencyCodes = {
   from: {
+    binancesmartchain: 'allCodes',
     ethereum: ['MATIC'],
-    polygon: 'allCodes',
-    binancesmartchain: 'allCodes'
+    optimism: 'allCodes',
+    polygon: 'allCodes'
   },
   to: {
-    ethereum: ['MATIC'],
-    polygon: 'allCodes',
     binancesmartchain: 'allCodes',
+    ethereum: ['MATIC'],
+    optimism: 'allCodes',
+    polygon: 'allCodes',
     zcash: ['ZEC']
   }
 }
