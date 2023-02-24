@@ -22,9 +22,6 @@ import {
 } from 'edge-core-js/types'
 import { ethers } from 'ethers'
 
-// io.fetch is broken with some APIs when running under node. For now, leave this here as a convenience
-// and reminder to fix io.fetch for runnings tests
-// import nodeFetch from 'node-fetch'
 import {
   checkInvalidCodes,
   getMaxSwappable,
@@ -120,7 +117,6 @@ export function makeThorchainDaPlugin(
 ): EdgeSwapPlugin {
   const { io, log } = opts
   const { fetch } = io
-  // const fetch = nodeFetch ?? io.fetch
   const {
     appId,
     affiliateFeeBasis,

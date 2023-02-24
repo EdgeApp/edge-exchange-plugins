@@ -59,6 +59,7 @@ async function main(): Promise<void> {
 
   const world = await makeFakeEdgeWorld(fakeUsers, {})
   const context = await world.makeEdgeContext({
+    allowNetworkAccess: true,
     apiKey: '',
     appId: '',
     plugins: {

@@ -20,7 +20,6 @@ import {
   SwapCurrencyError
 } from 'edge-core-js/types'
 
-// import nodeFetch from 'node-fetch'
 import {
   checkInvalidCodes,
   ensureInFuture,
