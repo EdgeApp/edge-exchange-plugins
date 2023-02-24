@@ -10,7 +10,6 @@ import {
 } from 'cleaners'
 import {
   EdgeCorePluginOptions,
-  EdgeCurrencyWallet,
   EdgeSpendInfo,
   EdgeSwapInfo,
   EdgeSwapPlugin,
@@ -29,7 +28,7 @@ import {
   makeSwapPluginQuote,
   SwapOrder
 } from '../swap-helpers'
-import { convertRequest } from '../util/utils'
+import { convertRequest, getAddress } from '../util/utils'
 import { asNumberString, EdgeSwapRequestPlugin } from './types'
 
 const pluginId = 'godex'
@@ -106,14 +105,6 @@ const MAINNET_CODE_TRANSCRIPTION = {
   avalanche: 'AVAXC'
 }
 
-async function getAddress(
-  wallet: EdgeCurrencyWallet,
-  currencyCode: string
-): Promise<string> {
-  const { publicAddress } = await wallet.getReceiveAddress({ currencyCode })
-  return publicAddress
-}
-
 export function makeGodexPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
   const { io, log } = opts
   const { fetchCors = io.fetch } = io
@@ -152,8 +143,8 @@ export function makeGodexPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
 
     // Grab addresses:
     const [fromAddress, toAddress] = await Promise.all([
-      getAddress(request.fromWallet, request.fromCurrencyCode),
-      getAddress(request.toWallet, request.toCurrencyCode)
+      getAddress(request.fromWallet),
+      getAddress(request.toWallet)
     ])
 
     const { fromMainnetCode, toMainnetCode } = getCodesWithTranscription(

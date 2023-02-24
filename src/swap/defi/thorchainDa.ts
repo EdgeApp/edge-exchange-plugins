@@ -11,7 +11,6 @@ import {
 } from 'cleaners'
 import {
   EdgeCorePluginOptions,
-  EdgeCurrencyWallet,
   EdgeSpendInfo,
   EdgeSwapInfo,
   EdgeSwapPlugin,
@@ -23,9 +22,6 @@ import {
 } from 'edge-core-js/types'
 import { ethers } from 'ethers'
 
-// io.fetch is broken with some APIs when running under node. For now, leave this here as a convenience
-// and reminder to fix io.fetch for runnings tests
-// import nodeFetch from 'node-fetch'
 import {
   checkInvalidCodes,
   getMaxSwappable,
@@ -37,19 +33,20 @@ import {
   convertRequest,
   fetchInfo,
   fetchWaterfall,
+  getAddress,
   makeQueryParams,
   promiseWithTimeout
 } from '../../util/utils'
 import { EdgeSwapRequestPlugin } from '../types'
 import { abiMap } from './abi/abiMap'
+import { getEvmApprovalData, getEvmTokenData } from './defiUtils'
 import {
   asExchangeInfo,
   asInboundAddresses,
+  asInitOptions,
   EVM_CURRENCY_CODES,
   EXCHANGE_INFO_UPDATE_FREQ_MS,
   EXPIRATION_MS,
-  getApprovalData,
-  getEvmTokenData,
   getGasLimit,
   INVALID_CURRENCY_CODES,
   MAINNET_CODE_TRANSCRIPTION,
@@ -63,12 +60,6 @@ const swapInfo: EdgeSwapInfo = {
   displayName: 'Thorchain DEX Aggregator',
   supportEmail: 'support@edge.app'
 }
-
-const asInitOptions = asObject({
-  affiliateFeeBasis: asOptional(asString, '50'),
-  ninerealmsClientId: asOptional(asString, ''),
-  thorname: asOptional(asString, 'ej')
-})
 
 // This needs to be a type so adding the '& {}' prevents auto correction to an interface
 type ThorSwapQuoteParams = {
@@ -126,10 +117,12 @@ export function makeThorchainDaPlugin(
 ): EdgeSwapPlugin {
   const { io, log } = opts
   const { fetch } = io
-  // const fetch = nodeFetch ?? io.fetch
-  const { affiliateFeeBasis, ninerealmsClientId, thorname } = asInitOptions(
-    opts.initOptions
-  )
+  const {
+    appId,
+    affiliateFeeBasis,
+    ninerealmsClientId,
+    thorname
+  } = asInitOptions(opts.initOptions)
 
   const headers = {
     'Content-Type': 'application/json',
@@ -164,8 +157,8 @@ export function makeThorchainDaPlugin(
     checkInvalidCodes(INVALID_CURRENCY_CODES, request, swapInfo)
 
     // Grab addresses:
-    const fromAddress = await getAddress(fromWallet, fromCurrencyCode)
-    const toAddress = await getAddress(toWallet, toCurrencyCode)
+    const fromAddress = await getAddress(fromWallet)
+    const toAddress = await getAddress(toWallet)
 
     const fromMainnetCode =
       MAINNET_CODE_TRANSCRIPTION[fromWallet.currencyInfo.pluginId]
@@ -183,7 +176,7 @@ export function makeThorchainDaPlugin(
     ) {
       try {
         const exchangeInfoResponse = await promiseWithTimeout(
-          fetchInfo(fetch, 'v1/exchangeInfo/edge')
+          fetchInfo(fetch, `v1/exchangeInfo/${appId}`)
         )
 
         if (exchangeInfoResponse.ok === true) {
@@ -390,7 +383,7 @@ export function makeThorchainDaPlugin(
         publicAddress = contractAddress
 
         // Check if token approval is required and return necessary data field
-        approvalData = await getApprovalData({
+        approvalData = await getEvmApprovalData({
           contractAddress: tokenProxyMap[fromWallet.currencyInfo.pluginId],
           assetAddress: sourceTokenContractAddress,
           nativeAmount: nativeAmount
@@ -487,14 +480,6 @@ export function makeThorchainDaPlugin(
     }
   }
   return out
-}
-
-async function getAddress(
-  wallet: EdgeCurrencyWallet,
-  currencyCode: string
-): Promise<string> {
-  const addressInfo = await wallet.getReceiveAddress({ currencyCode })
-  return addressInfo.publicAddress
 }
 
 const calldataOrder = {

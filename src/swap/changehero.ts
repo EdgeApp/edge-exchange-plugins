@@ -9,7 +9,6 @@ import {
 } from 'cleaners'
 import {
   EdgeCorePluginOptions,
-  EdgeCurrencyWallet,
   EdgeSpendInfo,
   EdgeSwapInfo,
   EdgeSwapPlugin,
@@ -28,7 +27,7 @@ import {
   makeSwapPluginQuote,
   SwapOrder
 } from '../swap-helpers'
-import { convertRequest } from '../util/utils'
+import { convertRequest, getAddress } from '../util/utils'
 import { EdgeSwapRequestPlugin } from './types'
 
 const pluginId = 'changehero'
@@ -84,14 +83,6 @@ const asCreateFixTransactionReply = asObject({
   })
 })
 
-async function getAddress(
-  wallet: EdgeCurrencyWallet,
-  currencyCode: string
-): Promise<string> {
-  const { publicAddress } = await wallet.getReceiveAddress({ currencyCode })
-  return publicAddress
-}
-
 function checkReply(
   reply: { error?: { code?: number; message?: string } },
   request: EdgeSwapRequestPlugin
@@ -137,8 +128,8 @@ export function makeChangeHeroPlugin(
     request: EdgeSwapRequestPlugin
   ): Promise<SwapOrder> {
     const [fromAddress, toAddress] = await Promise.all([
-      getAddress(request.fromWallet, request.fromCurrencyCode),
-      getAddress(request.toWallet, request.toCurrencyCode)
+      getAddress(request.fromWallet),
+      getAddress(request.toWallet)
     ])
     const { fromCurrencyCode, toCurrencyCode } = getCodes(request)
 

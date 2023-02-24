@@ -2,7 +2,6 @@ import { lt } from 'biggystring'
 import { asNumber, asObject, asOptional, asString } from 'cleaners'
 import {
   EdgeCorePluginOptions,
-  EdgeCurrencyWallet,
   EdgeSpendInfo,
   EdgeSwapInfo,
   EdgeSwapPlugin,
@@ -20,7 +19,7 @@ import {
   makeSwapPluginQuote,
   SwapOrder
 } from '../swap-helpers'
-import { convertRequest } from '../util/utils'
+import { convertRequest, getAddress } from '../util/utils'
 import { EdgeSwapRequestPlugin } from './types'
 
 const pluginId = 'exolix'
@@ -69,14 +68,6 @@ const asQuoteInfo = asObject({
   deposit_extra: asOptional(asString)
 })
 
-async function getAddress(
-  wallet: EdgeCurrencyWallet,
-  currencyCode: string
-): Promise<string> {
-  const { publicAddress } = await wallet.getReceiveAddress({ currencyCode })
-  return publicAddress
-}
-
 export function makeExolixPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
   const { io } = opts
   const { fetchCors = io.fetch } = io
@@ -112,8 +103,8 @@ export function makeExolixPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
     _userSettings: Object | undefined
   ): Promise<SwapOrder> => {
     const [fromAddress, toAddress] = await Promise.all([
-      getAddress(request.fromWallet, request.fromCurrencyCode),
-      getAddress(request.toWallet, request.toCurrencyCode)
+      getAddress(request.fromWallet),
+      getAddress(request.toWallet)
     ])
 
     if (request.quoteFor === 'to') {

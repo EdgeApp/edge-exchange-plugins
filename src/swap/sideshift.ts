@@ -1,7 +1,6 @@
 import { asBoolean, asEither, asObject, asOptional, asString } from 'cleaners'
 import {
   EdgeCorePluginOptions,
-  EdgeCurrencyWallet,
   EdgeFetchFunction,
   EdgeSpendInfo,
   EdgeSwapInfo,
@@ -22,7 +21,7 @@ import {
   makeSwapPluginQuote,
   SwapOrder
 } from '../swap-helpers'
-import { convertRequest } from '../util/utils'
+import { convertRequest, getAddress } from '../util/utils'
 import { EdgeSwapRequestPlugin } from './types'
 
 const MAINNET_CODE_TRANSCRIPTION = {
@@ -40,14 +39,6 @@ const swapInfo: EdgeSwapInfo = {
   supportEmail: 'help@sideshift.ai'
 }
 const ORDER_STATUS_URL = 'https://sideshift.ai/orders/'
-
-async function getAddress(
-  wallet: EdgeCurrencyWallet,
-  currencyCode: string
-): Promise<string> {
-  const addressInfo = await wallet.getReceiveAddress({ currencyCode })
-  return addressInfo.segwitAddress ?? addressInfo.publicAddress
-}
 
 async function checkQuoteError(
   rate: Rate,
@@ -131,8 +122,8 @@ const fetchSwapQuoteInner = async (
   affiliateId: string
 ): Promise<SwapOrder> => {
   const [refundAddress, settleAddress] = await Promise.all([
-    getAddress(request.fromWallet, request.fromCurrencyCode),
-    getAddress(request.toWallet, request.toCurrencyCode)
+    getAddress(request.fromWallet),
+    getAddress(request.toWallet)
   ])
 
   const {

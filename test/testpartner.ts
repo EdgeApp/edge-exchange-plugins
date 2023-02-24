@@ -20,6 +20,7 @@ import { avaxCurrencyInfo } from './fakeAvaxInfo'
 import { btcCurrencyInfo } from './fakeBtcInfo'
 import { makeFakePlugin } from './fakeCurrencyPlugin'
 import { ethCurrencyInfo } from './fakeEthInfo'
+import { polygonCurrencyInfo } from './fakePolygonInfo'
 
 const DUMP_USER_FILE = './test/fakeUserDump.json'
 
@@ -41,6 +42,7 @@ async function main(): Promise<void> {
   const allPlugins = {
     bitcoin: makeFakePlugin(btcCurrencyInfo),
     ethereum: makeFakePlugin(ethCurrencyInfo),
+    polygon: makeFakePlugin(polygonCurrencyInfo),
     avalanche: makeFakePlugin(avaxCurrencyInfo),
     piratechain: makeFakePlugin(arrrCurrencyInfo),
     ...edgeExchangePlugins
@@ -57,22 +59,21 @@ async function main(): Promise<void> {
 
   const world = await makeFakeEdgeWorld(fakeUsers, {})
   const context = await world.makeEdgeContext({
+    allowNetworkAccess: true,
     apiKey: '',
     appId: '',
     plugins: {
       bitcoin: true,
       ethereum: true,
       avalanche: true,
-      piratechain: true,
-      thorchainda: true,
-      changelly: {
-        apiKey: '',
-        secret: ''
-      },
-      letsexchange: {
-        apiKey: '',
-        affiliateId: ''
-      }
+      lifi: true,
+      polygon: true,
+      piratechain: true
+      // thorchainda: true,
+      // letsexchange: {
+      //   apiKey: '',
+      //   affiliateId: ''
+      // }
     }
   })
 
@@ -81,11 +82,13 @@ async function main(): Promise<void> {
   const ethInfo = await account.getFirstWalletInfo('wallet:ethereum')
   const avaxInfo = await account.getFirstWalletInfo('wallet:avalanche')
   const arrrInfo = await account.getFirstWalletInfo('wallet:piratechain')
+  const maticInfo = await account.getFirstWalletInfo('wallet:polygon')
 
   const btcWallet = await account.waitForCurrencyWallet(btcInfo?.id ?? '')
   const ethWallet = await account.waitForCurrencyWallet(ethInfo?.id ?? '')
   const avaxWallet = await account.waitForCurrencyWallet(avaxInfo?.id ?? '')
   const arrrWallet = await account.waitForCurrencyWallet(arrrInfo?.id ?? '')
+  const maticWallet = await account.waitForCurrencyWallet(maticInfo?.id ?? '')
 
   // Test a FROM quote
   const fromRequest: EdgeSwapRequest = {
@@ -162,7 +165,26 @@ async function main(): Promise<void> {
     )
   )
 
-  const quote = await account.fetchSwapQuote(fromRequest3).catch(e => {
+  // Test a FROM quote polygon:USDC to ethereum:WBTC
+  const fromRequest4: EdgeSwapRequest = {
+    fromWallet: maticWallet,
+    fromCurrencyCode: 'USDC',
+    toWallet: ethWallet,
+    toCurrencyCode: 'WBTC',
+    nativeAmount: await maticWallet.denominationToNative('4000', 'USDC'),
+    quoteFor: 'from'
+  }
+  console.log(`fromRequest:`)
+  console.log(
+    JSON.stringify(
+      { ...fromRequest, fromWallet: undefined, toWallet: undefined },
+      null,
+      2
+    )
+  )
+  console.log(`------------`)
+
+  const quote = await account.fetchSwapQuote(fromRequest4).catch(e => {
     console.log(e)
     console.log(e.message)
   })

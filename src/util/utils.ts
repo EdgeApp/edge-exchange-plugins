@@ -1,4 +1,6 @@
+import { add } from 'biggystring'
 import {
+  EdgeCurrencyWallet,
   EdgeFetchFunction,
   EdgeFetchResponse,
   EdgeSwapRequest
@@ -170,4 +172,17 @@ export const convertRequest = (
   }
   const out: any = request
   return out
+}
+
+export async function getAddress(wallet: EdgeCurrencyWallet): Promise<string> {
+  const { publicAddress, segwitAddress } = await wallet.getReceiveAddress()
+  return segwitAddress ?? publicAddress
+}
+
+export const hexToDecimal = (hex: string): string => {
+  if (hex.startsWith('0x')) {
+    return add(hex, '0')
+  } else {
+    return add(`0x${hex}`, '0')
+  }
 }

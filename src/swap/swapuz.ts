@@ -9,7 +9,6 @@ import {
 } from 'cleaners'
 import {
   EdgeCorePluginOptions,
-  EdgeCurrencyWallet,
   EdgeSpendInfo,
   EdgeSwapInfo,
   EdgeSwapPlugin,
@@ -30,7 +29,7 @@ import {
   SwapOrder
 } from '../swap-helpers'
 import { div18 } from '../util/biggystringplus'
-import { convertRequest } from '../util/utils'
+import { convertRequest, getAddress } from '../util/utils'
 import { EdgeSwapRequestPlugin } from './types'
 
 const pluginId = 'swapuz'
@@ -62,14 +61,6 @@ const MAINNET_CODE_TRANSCRIPTION = {
   optimism: 'OPTIMISM'
 }
 
-async function getAddress(
-  wallet: EdgeCurrencyWallet,
-  currencyCode: string
-): Promise<string> {
-  const { publicAddress } = await wallet.getReceiveAddress({ currencyCode })
-  return publicAddress
-}
-
 export function makeSwapuzPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
   const { io } = opts
   const fetch = io.fetchCors ?? io.fetch
@@ -89,8 +80,8 @@ export function makeSwapuzPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
 
     // Grab addresses:
     const [fromAddress, toAddress] = await Promise.all([
-      getAddress(fromWallet, request.fromCurrencyCode),
-      getAddress(toWallet, request.toCurrencyCode)
+      getAddress(fromWallet),
+      getAddress(toWallet)
     ])
 
     const {
