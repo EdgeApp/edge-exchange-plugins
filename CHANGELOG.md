@@ -1,14 +1,18 @@
 # edge-exchange-plugins
 
+## 0.17.4 (2023-02-24)
+
+- added: Add LI.FI DEX exchange.
+
 ## 0.17.3 (2023-02-21)
 
-- Add Optimism support across swap plugins
-- Add default mainnet transcription map
+- added: Add Optimism support across swap plugins
+- added: Add default mainnet transcription map
 
 ## 0.17.2 (2023-02-07)
 
-- Fix: Send Ninerealms client-id when doing Thorchain queries
-- Fix: Use Thornode servers instead of Midgard for inbound_addresses
+- fixed: Send Ninerealms client-id when doing Thorchain queries
+- fixed: Use Thornode servers instead of Midgard for inbound_addresses
 
 ## 0.17.1 (2023-02-01)
 

@@ -1,6 +1,6 @@
 {
   "name": "edge-exchange-plugins",
-  "version": "0.17.3",
+  "version": "0.17.4",
   "description": "Exchange-rate sources for the Edge core",
   "repository": {
     "type": "git",
@@ -16,12 +16,12 @@
   "module": "lib/index.js",
   "react-native": "lib/index.js",
   "files": [
-    "CHANGELOG.md",
-    "index.js",
-    "lib/*",
-    "LICENSE",
-    "package.json",
-    "README.md"
+    "/CHANGELOG.md",
+    "/index.js",
+    "/lib/",
+    "/LICENSE",
+    "/package.json",
+    "/README.md"
   ],
   "scripts": {
     "build": "husky install && npm-run-all clean -p lib types",
