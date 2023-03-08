@@ -74,6 +74,18 @@ const MAINNET_CODE_TRANSCRIPTION = {
   tron: 'TRC20'
 }
 
+const SPECIAL_MAINNET_CASES: { [pId: string]: { [cc: string]: string } } = {
+  avalanche: {
+    AVAX: 'AVAXC'
+  },
+  binancesmartchain: {
+    BNB: 'BEP20'
+  },
+  optimism: {
+    ETH: 'OPTIMISM'
+  }
+}
+
 export function makeLetsExchangePlugin(
   opts: EdgeCorePluginOptions
 ): EdgeSwapPlugin {
@@ -136,13 +148,20 @@ export function makeLetsExchangePlugin(
       MAINNET_CODE_TRANSCRIPTION
     )
 
+    const { pluginId: fromPluginId } = request.fromWallet.currencyInfo
     const networkFrom =
-      request.fromCurrencyCode === request.fromWallet.currencyInfo.currencyCode
+      SPECIAL_MAINNET_CASES[fromPluginId]?.[request.toCurrencyCode] != null
+        ? SPECIAL_MAINNET_CASES[fromPluginId][request.toCurrencyCode]
+        : request.fromCurrencyCode ===
+          request.fromWallet.currencyInfo.currencyCode
         ? request.fromCurrencyCode
         : fromMainnetCode
 
+    const { pluginId: toPluginId } = request.toWallet.currencyInfo
     const networkTo =
-      request.toCurrencyCode === request.toWallet.currencyInfo.currencyCode
+      SPECIAL_MAINNET_CASES[toPluginId]?.[request.toCurrencyCode] != null
+        ? SPECIAL_MAINNET_CASES[toPluginId][request.toCurrencyCode]
+        : request.toCurrencyCode === request.toWallet.currencyInfo.currencyCode
         ? request.toCurrencyCode
         : toMainnetCode
 
