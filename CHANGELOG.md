@@ -1,5 +1,9 @@
 # edge-exchange-plugins
 
+## 0.17.5 (2023-03-07)
+
+- LetsExchange: Audit and add special case mainnet codes
+
 ## 0.17.4 (2023-02-24)
 
 - added: Add LI.FI DEX exchange.
