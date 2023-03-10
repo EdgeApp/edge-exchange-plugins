@@ -1,5 +1,9 @@
 # edge-exchange-plugins
 
+## 0.17.6 (2023-03-10)
+
+- Lifi: Allow gas price lower than 1 gwei
+
 ## 0.17.5 (2023-03-07)
 
 - LetsExchange: Audit and add special case mainnet codes
