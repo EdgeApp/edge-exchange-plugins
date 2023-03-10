@@ -1,4 +1,3 @@
-import { round } from 'biggystring'
 import { asArray, asNumber, asObject, asOptional, asString } from 'cleaners'
 import {
   EdgeCorePluginOptions,
@@ -295,7 +294,7 @@ export function makeLifiPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
 
     const { data, gasLimit, gasPrice } = quote.transactionRequest
     const gasPriceDecimal = hexToDecimal(gasPrice)
-    const gasPriceGwei = round(div18(gasPriceDecimal, '1000000000'), 0)
+    const gasPriceGwei = div18(gasPriceDecimal, '1000000000')
     const providers = includedSteps.map(s => s.toolDetails.name)
 
     let preTx: EdgeTransaction | undefined
