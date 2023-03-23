@@ -1,5 +1,9 @@
 # edge-exchange-plugins
 
+## 0.17.7 (2023-03-22)
+
+- Lifi: Use built-in gas limit estimator for Ethereum transactions and not Lifi's
+
 ## 0.17.6 (2023-03-10)
 
 - Lifi: Allow gas price lower than 1 gwei
