@@ -337,7 +337,12 @@ export function makeLifiPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
       ],
       networkFeeOption: 'custom',
       customNetworkFee: {
-        gasLimit: hexToDecimal(gasLimit),
+        // XXX Hack. Lifi doesn't properly estimate ethereum gas limits. Use our own
+        // gasLimit estimator
+        gasLimit:
+          fromWallet.currencyInfo.pluginId !== 'ethereum'
+            ? hexToDecimal(gasLimit)
+            : undefined,
         gasPrice: gasPriceGwei
       },
       swapData: {
