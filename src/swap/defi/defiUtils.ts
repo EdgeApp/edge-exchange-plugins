@@ -7,7 +7,7 @@ import erc20Abi from './abi/UNISWAP_V2_ERC20_ABI'
 /**
  * Get the token contract addresses from the wallet's EdgeMetaTokens
  */
-export const getMetaTokenAddress = (
+const getMetaTokenAddress = (
   metaTokens: EdgeMetaToken[],
   tokenCurrencyCode: string
 ): string => {
@@ -19,6 +19,16 @@ export const getMetaTokenAddress = (
   return metaToken.contractAddress ?? ''
 }
 
+export interface InOutTokenAddresses {
+  fromTokenAddress: string
+  toTokenAddress: string
+  isWrappingSwap: boolean
+  isFromNativeCurrency: boolean
+  isToNativeCurrency: boolean
+  isFromWrappedCurrency: boolean
+  isToWrappedCurrency: boolean
+}
+
 /**
  * Determine if the tokens are wrapped and return the appropriate wrapped
  * contract addresses, if different.
@@ -27,11 +37,7 @@ export const getInOutTokenAddresses = (
   currencyInfo: EdgeCurrencyInfo,
   fromCurrencyCode: string,
   toCurrencyCode: string
-): {
-  fromTokenAddress: string
-  toTokenAddress: string
-  isWrappingSwap: boolean
-} => {
+): InOutTokenAddresses => {
   const { currencyCode: nativeCurrencyCode, metaTokens } = currencyInfo
   const wrappedCurrencyCode = `W${nativeCurrencyCode}`
   const isFromNativeCurrency = fromCurrencyCode === nativeCurrencyCode
@@ -51,7 +57,15 @@ export const getInOutTokenAddresses = (
     isToNativeCurrency ? wrappedCurrencyCode : toCurrencyCode
   )
 
-  return { fromTokenAddress, toTokenAddress, isWrappingSwap }
+  return {
+    fromTokenAddress,
+    toTokenAddress,
+    isWrappingSwap,
+    isFromNativeCurrency,
+    isToNativeCurrency,
+    isFromWrappedCurrency,
+    isToWrappedCurrency
+  }
 }
 
 const getEvmCheckSumAddress = (assetAddress: string): string => {

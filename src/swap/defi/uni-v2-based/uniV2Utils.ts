@@ -1,8 +1,7 @@
 import { mul, round, sub } from 'biggystring'
 import { BigNumber, Contract, ethers, PopulatedTransaction } from 'ethers'
 
-import { EdgeSwapRequestPlugin } from '../../types'
-import { getMetaTokenAddress } from '../defiUtils'
+import { InOutTokenAddresses } from '../defiUtils'
 import { makeErc20Contract, makeWrappedFtmContract } from './uniV2Contracts'
 /**
  * Get the output swap amounts based on the requested input amount.
@@ -36,7 +35,7 @@ export const getSwapAmounts = async (
  */
 export const getSwapTransactions = async (
   provider: ethers.providers.Provider,
-  swapRequest: EdgeSwapRequestPlugin,
+  inOutAddresses: InOutTokenAddresses,
   router: Contract,
   amountToSwap: string,
   expectedAmountOut: string,
@@ -45,27 +44,14 @@ export const getSwapTransactions = async (
   deadline: number,
   previousGasPrice?: string
 ): Promise<PopulatedTransaction[]> => {
-  const { fromWallet, fromCurrencyCode, toCurrencyCode } = swapRequest
   const {
-    currencyCode: nativeCurrencyCode,
-    metaTokens
-  } = fromWallet.currencyInfo
-
-  // TODO: Use our new denom implementation to get native amounts
-  const wrappedCurrencyCode = `W${nativeCurrencyCode}`
-  const isFromNativeCurrency = fromCurrencyCode === nativeCurrencyCode
-  const isToNativeCurrency = toCurrencyCode === nativeCurrencyCode
-  const isFromWrappedCurrency = fromCurrencyCode === wrappedCurrencyCode
-  const isToWrappedCurrency = toCurrencyCode === wrappedCurrencyCode
-
-  const fromTokenAddress = getMetaTokenAddress(
-    metaTokens,
-    isFromNativeCurrency ? wrappedCurrencyCode : fromCurrencyCode
-  )
-  const toTokenAddress = getMetaTokenAddress(
-    metaTokens,
-    isToNativeCurrency ? wrappedCurrencyCode : toCurrencyCode
-  )
+    fromTokenAddress,
+    toTokenAddress,
+    isFromNativeCurrency,
+    isToNativeCurrency,
+    isFromWrappedCurrency,
+    isToWrappedCurrency
+  } = inOutAddresses
 
   // Determine router method name and params
   if (isFromNativeCurrency && isToNativeCurrency)
@@ -136,7 +122,7 @@ export const getSwapTransactions = async (
     else if (!isFromNativeCurrency && isToNativeCurrency) {
       txPromises.push(
         // Approve TX
-        addressToApproveTx(path[0], router.address),
+        addressToApproveTx(fromTokenAddress, router.address),
         // Swap Tx
         router.populateTransaction.swapExactTokensForETH(
           amountToSwap,
@@ -152,7 +138,7 @@ export const getSwapTransactions = async (
     else if (!isFromNativeCurrency && !isToNativeCurrency) {
       txPromises.push(
         // Approve TX
-        addressToApproveTx(path[0], router.address),
+        addressToApproveTx(fromTokenAddress, router.address),
         // Swap Tx
         router.populateTransaction.swapExactTokensForTokens(
           amountToSwap,
