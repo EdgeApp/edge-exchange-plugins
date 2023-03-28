@@ -13,11 +13,9 @@ export const getSwapAmounts = async (
   router: Contract,
   quoteFor: string,
   nativeAmount: string,
-  fromTokenAddress: string,
-  toTokenAddress: string,
+  path: string[],
   isWrappingSwap: boolean
 ): Promise<{ amountToSwap: string; expectedAmountOut: string }> => {
-  const path = [fromTokenAddress, toTokenAddress]
   const [amountToSwap, expectedAmountOut] = (isWrappingSwap
     ? [nativeAmount, nativeAmount]
     : quoteFor === 'to'

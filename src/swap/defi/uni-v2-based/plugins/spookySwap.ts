@@ -79,8 +79,7 @@ export function makeSpookySwapPlugin(
       spookySwapRouter,
       quoteFor,
       request.nativeAmount,
-      fromTokenAddress,
-      toTokenAddress,
+      [fromTokenAddress, toTokenAddress],
       isWrappingSwap
     )
 

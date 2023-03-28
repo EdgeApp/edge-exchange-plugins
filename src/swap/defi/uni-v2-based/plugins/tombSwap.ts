@@ -79,8 +79,7 @@ export function makeTombSwapPlugin(
       tombSwapRouter,
       quoteFor,
       request.nativeAmount,
-      fromTokenAddress,
-      toTokenAddress,
+      [fromTokenAddress, toTokenAddress],
       isWrappingSwap
     )
 
