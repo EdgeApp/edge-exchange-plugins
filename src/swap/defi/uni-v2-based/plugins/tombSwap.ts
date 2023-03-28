@@ -85,9 +85,11 @@ export function makeTombSwapPlugin(
     const expirationDate = new Date(Date.now() + EXPIRATION_MS)
     const deadline = Math.round(expirationDate.getTime() / 1000) // unix timestamp
     const customNetworkFee = customFeeCache.getFees(uid)
+    const path = [fromTokenAddress, toTokenAddress]
     const swapTxs = await getSwapTransactions(
       provider,
       inOutAddresses,
+      path,
       tombSwapRouter,
       amountToSwap,
       expectedAmountOut,

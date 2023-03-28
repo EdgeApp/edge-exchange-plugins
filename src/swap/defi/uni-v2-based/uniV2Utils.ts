@@ -36,6 +36,7 @@ export const getSwapAmounts = async (
 export const getSwapTransactions = async (
   provider: ethers.providers.Provider,
   inOutAddresses: InOutTokenAddresses,
+  path: string[],
   router: Contract,
   amountToSwap: string,
   expectedAmountOut: string,
@@ -46,7 +47,6 @@ export const getSwapTransactions = async (
 ): Promise<PopulatedTransaction[]> => {
   const {
     fromTokenAddress,
-    toTokenAddress,
     isFromNativeCurrency,
     isToNativeCurrency,
     isFromWrappedCurrency,
@@ -56,7 +56,6 @@ export const getSwapTransactions = async (
   // Determine router method name and params
   if (isFromNativeCurrency && isToNativeCurrency)
     throw new Error('Invalid swap: Cannot swap to the same native currency')
-  const path = [fromTokenAddress, toTokenAddress]
 
   const gasPrice =
     previousGasPrice != null
