@@ -16,6 +16,7 @@ import { makeThorchainPlugin } from './swap/defi/thorchain'
 import { makeThorchainDaPlugin } from './swap/defi/thorchainDa'
 import { makeSpookySwapPlugin } from './swap/defi/uni-v2-based/plugins/spookySwap'
 import { makeTombSwapPlugin } from './swap/defi/uni-v2-based/plugins/tombSwap'
+import { makeVelodromePlugin } from './swap/defi/uni-v2-based/plugins/velodrome'
 import { makeExolixPlugin } from './swap/exolix'
 import { makeGodexPlugin } from './swap/godex'
 import { makeLetsExchangePlugin } from './swap/letsexchange'
@@ -50,6 +51,7 @@ const edgeCorePlugins = {
   thorchain: makeThorchainPlugin,
   thorchainda: makeThorchainDaPlugin,
   transfer: makeTransferPlugin,
+  velodrome: makeVelodromePlugin,
   letsexchange: makeLetsExchangePlugin
 }
 

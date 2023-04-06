@@ -12,7 +12,7 @@ export const getSwapAmounts = async (
   router: Contract,
   quoteFor: string,
   nativeAmount: string,
-  path: string[],
+  path: unknown,
   isWrappingSwap: boolean
 ): Promise<{ amountToSwap: string; expectedAmountOut: string }> => {
   const [amountToSwap, expectedAmountOut] = (isWrappingSwap
@@ -36,7 +36,7 @@ export const getSwapAmounts = async (
 export const getSwapTransactions = async (
   provider: ethers.providers.Provider,
   inOutAddresses: InOutTokenAddresses,
-  path: string[],
+  path: unknown,
   router: Contract,
   wrappedTokenContract: Contract,
   amountToSwap: string,
