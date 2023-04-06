@@ -19,7 +19,11 @@ import {
 import { convertRequest } from '../../../../util/utils'
 import { EdgeSwapRequestPlugin } from '../../../types'
 import { getInOutTokenAddresses, InOutTokenAddresses } from '../../defiUtils'
-import { getFtmProvider, makeTombSwapRouterContract } from '../uniV2Contracts'
+import {
+  getFtmProvider,
+  makeTombSwapRouterContract,
+  makeWrappedFtmContract
+} from '../uniV2Contracts'
 import { getSwapAmounts, getSwapTransactions } from '../uniV2Utils'
 
 const swapInfo: EdgeSwapInfo = {
@@ -86,11 +90,13 @@ export function makeTombSwapPlugin(
     const deadline = Math.round(expirationDate.getTime() / 1000) // unix timestamp
     const customNetworkFee = customFeeCache.getFees(uid)
     const path = [fromTokenAddress, toTokenAddress]
+    const wrappedFtmContract = makeWrappedFtmContract(provider)
     const swapTxs = await getSwapTransactions(
       provider,
       inOutAddresses,
       path,
       tombSwapRouter,
+      wrappedFtmContract,
       amountToSwap,
       expectedAmountOut,
       toAddress,

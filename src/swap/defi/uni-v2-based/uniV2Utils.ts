@@ -2,7 +2,7 @@ import { mul, round, sub } from 'biggystring'
 import { BigNumber, Contract, ethers, PopulatedTransaction } from 'ethers'
 
 import { InOutTokenAddresses } from '../defiUtils'
-import { makeErc20Contract, makeWrappedFtmContract } from './uniV2Contracts'
+import { makeErc20Contract } from './uniV2Contracts'
 /**
  * Get the output swap amounts based on the requested input amount.
  * Call the router contract to calculate amounts and check if the swap path is
@@ -38,6 +38,7 @@ export const getSwapTransactions = async (
   inOutAddresses: InOutTokenAddresses,
   path: string[],
   router: Contract,
+  wrappedTokenContract: Contract,
   amountToSwap: string,
   expectedAmountOut: string,
   toAddress: string,
@@ -81,7 +82,7 @@ export const getSwapTransactions = async (
   if (isFromNativeCurrency && isToWrappedCurrency) {
     txPromises.push(
       ...[
-        makeWrappedFtmContract(provider).populateTransaction.deposit({
+        wrappedTokenContract.populateTransaction.deposit({
           gasLimit: '60000',
           gasPrice,
           value: amountToSwap
@@ -93,13 +94,10 @@ export const getSwapTransactions = async (
   else if (isFromWrappedCurrency && isToNativeCurrency) {
     txPromises.push(
       // Deposit Tx
-      makeWrappedFtmContract(provider).populateTransaction.withdraw(
-        amountToSwap,
-        {
-          gasLimit: '60000',
-          gasPrice
-        }
-      )
+      wrappedTokenContract.populateTransaction.withdraw(amountToSwap, {
+        gasLimit: '60000',
+        gasPrice
+      })
     )
   }
   // Swap native currency for token
