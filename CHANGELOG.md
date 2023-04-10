@@ -1,5 +1,9 @@
 # edge-exchange-plugins
 
+## 0.18.0 (2023-04-10)
+
+- added: Add Velodrome DEX exchange
+
 ## 0.17.7 (2023-03-22)
 
 - Lifi: Use built-in gas limit estimator for Ethereum transactions and not Lifi's
