@@ -18,8 +18,12 @@ import {
 } from '../../../../swap-helpers'
 import { convertRequest } from '../../../../util/utils'
 import { EdgeSwapRequestPlugin } from '../../../types'
-import { getInOutTokenAddresses } from '../../defiUtils'
-import { getFtmProvider, makeTombSwapRouterContract } from '../uniV2Contracts'
+import { getInOutTokenAddresses, InOutTokenAddresses } from '../../defiUtils'
+import {
+  getFtmProvider,
+  makeTombSwapRouterContract,
+  makeWrappedFtmContract
+} from '../uniV2Contracts'
 import { getSwapAmounts, getSwapTransactions } from '../uniV2Utils'
 
 const swapInfo: EdgeSwapInfo = {
@@ -63,15 +67,12 @@ export function makeTombSwapPlugin(
 
     // Parse input/output token addresses. If either from or to swap sources
     // are for the native currency, convert the address to the wrapped equivalent.
-    const {
-      fromTokenAddress,
-      toTokenAddress,
-      isWrappingSwap
-    } = getInOutTokenAddresses(
+    const inOutAddresses: InOutTokenAddresses = getInOutTokenAddresses(
       fromWallet.currencyInfo,
       fromCurrencyCode,
       toCurrencyCode
     )
+    const { fromTokenAddress, toTokenAddress, isWrappingSwap } = inOutAddresses
 
     // Calculate swap amounts
     const tombSwapRouter = makeTombSwapRouterContract(provider)
@@ -79,8 +80,7 @@ export function makeTombSwapPlugin(
       tombSwapRouter,
       quoteFor,
       request.nativeAmount,
-      fromTokenAddress,
-      toTokenAddress,
+      [fromTokenAddress, toTokenAddress],
       isWrappingSwap
     )
 
@@ -89,10 +89,14 @@ export function makeTombSwapPlugin(
     const expirationDate = new Date(Date.now() + EXPIRATION_MS)
     const deadline = Math.round(expirationDate.getTime() / 1000) // unix timestamp
     const customNetworkFee = customFeeCache.getFees(uid)
+    const path = [fromTokenAddress, toTokenAddress]
+    const wrappedFtmContract = makeWrappedFtmContract(provider)
     const swapTxs = await getSwapTransactions(
       provider,
-      request,
+      inOutAddresses,
+      path,
       tombSwapRouter,
+      wrappedFtmContract,
       amountToSwap,
       expectedAmountOut,
       toAddress,
