@@ -213,7 +213,7 @@ const defaultInvalidCodes: InvalidCurrencyCodes = {
 }
 
 /**
- * Throws if either currency code has been disabled by the plugin
+ * Throws if either asset in request is not enabled by the plugin
  */
 export function checkInvalidCodes(
   invalidCodes: InvalidCurrencyCodes,
@@ -313,7 +313,7 @@ const defaultMainnetTranscriptionMap: MainnetPluginIdTranscriptionMap = {
 }
 
 /**
- * Returns all four codes with transcription
+ * Returns all four codes (AllCodes) transcribed using a transcription map
  */
 export const getCodesWithTranscription = (
   request: EdgeSwapRequestPlugin,
