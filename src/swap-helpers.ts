@@ -233,7 +233,7 @@ export function checkInvalidCodes(
       request.toWallet.currencyInfo.pluginId &&
     request.fromCurrencyCode === request.toCurrencyCode
 
-  function check(
+  function checkIsInvalid(
     codeMap: InvalidCurrencyCodes,
     direction: 'from' | 'to',
     pluginId: string,
@@ -248,22 +248,28 @@ export function checkInvalidCodes(
   }
 
   if (
-    check(
+    checkIsInvalid(
       invalidCodes,
       'from',
       fromPluginId,
       fromMainnetCode,
       fromCurrencyCode
     ) ||
-    check(
+    checkIsInvalid(
       defaultInvalidCodes,
       'from',
       fromPluginId,
       fromMainnetCode,
       fromCurrencyCode
     ) ||
-    check(invalidCodes, 'to', toPluginId, toMainnetCode, toCurrencyCode) ||
-    check(
+    checkIsInvalid(
+      invalidCodes,
+      'to',
+      toPluginId,
+      toMainnetCode,
+      toCurrencyCode
+    ) ||
+    checkIsInvalid(
       defaultInvalidCodes,
       'to',
       toPluginId,
