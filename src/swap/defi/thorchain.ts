@@ -22,6 +22,7 @@ import {
 
 import {
   checkInvalidCodes,
+  getCodesWithTranscription,
   getMaxSwappable,
   InvalidCurrencyCodes,
   isLikeKind,
@@ -259,10 +260,10 @@ export function makeThorchainPlugin(
     // Grab addresses:
     const toAddress = await getAddress(toWallet)
 
-    const fromMainnetCode =
-      MAINNET_CODE_TRANSCRIPTION[fromWallet.currencyInfo.pluginId]
-    const toMainnetCode =
-      MAINNET_CODE_TRANSCRIPTION[toWallet.currencyInfo.pluginId]
+    const { fromMainnetCode, toMainnetCode } = getCodesWithTranscription(
+      request,
+      MAINNET_CODE_TRANSCRIPTION
+    )
 
     if (fromMainnetCode == null || toMainnetCode == null) {
       throw new SwapCurrencyError(swapInfo, fromCurrencyCode, toCurrencyCode)

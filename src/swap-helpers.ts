@@ -181,11 +181,11 @@ export const customFeeCache = {
   }
 }
 
-interface AllCodes {
+interface AllCodes<CurrencyCode extends string = string> {
   fromMainnetCode: string
   toMainnetCode: string
-  fromCurrencyCode: string
-  toCurrencyCode: string
+  fromCurrencyCode: CurrencyCode
+  toCurrencyCode: CurrencyCode
 }
 
 export const getCodes = (request: EdgeSwapRequestPlugin): AllCodes => ({
@@ -294,8 +294,10 @@ export interface CurrencyCodeTranscriptions {
   }
 }
 
-export interface MainnetPluginIdTranscriptionMap {
-  [pluginId: string]: string
+export interface MainnetPluginIdTranscriptionMap<
+  CurrencyCode extends string = string
+> {
+  [pluginId: string]: CurrencyCode
 }
 
 export interface CurrencyCodeTranscriptionMap {
@@ -318,11 +320,11 @@ const defaultMainnetTranscriptionMap: MainnetPluginIdTranscriptionMap = {
 /**
  * Returns all four codes (AllCodes) transcribed using a transcription map
  */
-export const getCodesWithTranscription = (
+export const getCodesWithTranscription = <CurrencyCode extends string>(
   request: EdgeSwapRequestPlugin,
-  mainnetTranscriptionMap: MainnetPluginIdTranscriptionMap,
+  mainnetTranscriptionMap: MainnetPluginIdTranscriptionMap<CurrencyCode>,
   currencyCodeTranscriptionMap: CurrencyCodeTranscriptionMap = {}
-): AllCodes => {
+): AllCodes<CurrencyCode> => {
   const {
     fromCurrencyCode,
     toCurrencyCode,
