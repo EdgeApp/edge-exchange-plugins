@@ -302,7 +302,8 @@ const defaultCurrencyCodeTranscriptionMap: CurrencyCodeTranscriptionMap = {
 }
 
 const defaultMainnetTranscriptionMap: MainnetPluginIdTranscriptionMap = {
-  optimism: 'OP' // mainnet code is ETH
+  optimism: 'OP', // mainnet code is ETH
+  zksync: 'ZKSYNC' // mainnet code is also ETH
 }
 
 /**
