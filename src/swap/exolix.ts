@@ -13,7 +13,7 @@ import {
 
 import {
   checkInvalidCodes,
-  getCodes,
+  getCodesWithTranscription,
   getMaxSwappable,
   InvalidCurrencyCodes,
   makeSwapPluginQuote,
@@ -50,6 +50,9 @@ const INVALID_CURRENCY_CODES: InvalidCurrencyCodes = {
     zcash: ['ZEC']
   }
 }
+
+// See https://exolix.com/currencies for list of supported currencies
+const MAINNET_CODE_TRANSCRIPTION = {}
 
 const orderUri = 'https://exolix.com/transaction/'
 const uri = 'https://exolix.com/api/'
@@ -132,7 +135,7 @@ export function makeExolixPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
       toCurrencyCode,
       fromMainnetCode,
       toMainnetCode
-    } = getCodes(request)
+    } = getCodesWithTranscription(request, MAINNET_CODE_TRANSCRIPTION)
 
     // The Exolix documentation doesn't detail this mainnetCode:currencyCode functionality
     // but it's been verified by testing

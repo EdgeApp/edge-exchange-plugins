@@ -56,6 +56,7 @@ export const INVALID_CURRENCY_CODES: InvalidCurrencyCodes = {
 }
 
 // Network names that don't match parent network currency code
+// See https://docs.li.fi/list-chains-bridges-dexs#chains
 const MAINNET_CODE_TRANSCRIPTION: StringMap = {
   arbitrum: 'ARB',
   aurora: 'AUR',

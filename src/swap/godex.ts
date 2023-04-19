@@ -99,6 +99,7 @@ const INVALID_CURRENCY_CODES: InvalidCurrencyCodes = {
 }
 
 // Network names that don't match parent network currency code
+// See https://godex.io/exchange-rate for list of supported currencies
 const MAINNET_CODE_TRANSCRIPTION = {
   rsk: 'RSK',
   binancesmartchain: 'BSC',

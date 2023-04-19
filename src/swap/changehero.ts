@@ -43,6 +43,7 @@ const asInitOptions = asObject({
   apiKey: asString
 })
 
+// See https://changehero.io/currencies for list of supported currencies
 const INVALID_CURRENCY_CODES: InvalidCurrencyCodes = {
   from: {},
   to: {
