@@ -233,20 +233,6 @@ export function checkInvalidCodes(
       request.toWallet.currencyInfo.pluginId &&
     request.fromCurrencyCode === request.toCurrencyCode
 
-  function checkIsInvalid(
-    codeMap: InvalidCurrencyCodes,
-    direction: 'from' | 'to',
-    pluginId: string,
-    main: string,
-    token: string
-  ): boolean {
-    const codes = codeMap[direction][pluginId]
-    if (codes == null) return false
-    if (codes === 'allCodes') return true
-    if (codes === 'allTokens') return main !== token
-    return codes.some(code => code === token)
-  }
-
   if (
     checkIsInvalid(
       invalidCodes,
@@ -283,6 +269,23 @@ export function checkInvalidCodes(
       request.fromCurrencyCode,
       request.toCurrencyCode
     )
+}
+
+/**
+ * Returns true if asset is invalid given a code map
+ */
+function checkIsInvalid(
+  codeMap: InvalidCurrencyCodes,
+  direction: 'from' | 'to',
+  pluginId: string,
+  main: string,
+  token: string
+): boolean {
+  const codes = codeMap[direction][pluginId]
+  if (codes == null) return false
+  if (codes === 'allCodes') return true
+  if (codes === 'allTokens') return main !== token
+  return codes.some(code => code === token)
 }
 
 export interface CurrencyCodeTranscriptions {
