@@ -64,6 +64,7 @@ const INVALID_CURRENCY_CODES: InvalidCurrencyCodes = {
   }
 }
 
+// See https://letsexchange.io/exchange-pairs for list of supported currencies
 const MAINNET_CODE_TRANSCRIPTION = {
   avalanche: 'AVAXC',
   binance: 'BEP2',

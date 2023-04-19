@@ -51,6 +51,7 @@ const INVALID_CURRENCY_CODES: InvalidCurrencyCodes = {
   }
 }
 
+// See https://exolix.com/currencies for list of supported currencies
 const MAINNET_CODE_TRANSCRIPTION = {}
 
 const orderUri = 'https://exolix.com/transaction/'

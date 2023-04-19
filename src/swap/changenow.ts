@@ -55,6 +55,7 @@ const INVALID_CURRENCY_CODES: InvalidCurrencyCodes = {
 }
 
 // Network names that don't match parent network currency code
+// See https://changenow.io/currencies for list of supported currencies
 const MAINNET_CODE_TRANSCRIPTION = {
   binancesmartchain: 'BSC'
 }
