@@ -1,5 +1,9 @@
 # edge-exchange-plugins
 
+## 0.19.0 (2023-04-19)
+
+- Changed: Transcribe zkSync mainnet code to ZKSYNC
+
 ## 0.18.0 (2023-04-10)
 
 - added: Add Velodrome DEX exchange
