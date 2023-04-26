@@ -1,3 +1,4 @@
+import { mul } from 'biggystring'
 import { asArray, asNumber, asObject, asOptional, asString } from 'cleaners'
 import {
   EdgeCorePluginOptions,
@@ -338,12 +339,11 @@ export function makeLifiPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
       ],
       networkFeeOption: 'custom',
       customNetworkFee: {
-        // XXX Hack. Lifi doesn't properly estimate ethereum gas limits. Use our own
-        // gasLimit estimator
+        // XXX Hack. Lifi doesn't properly estimate ethereum gas limits. Increase by 40%
         gasLimit:
           fromWallet.currencyInfo.pluginId !== 'ethereum'
             ? hexToDecimal(gasLimit)
-            : undefined,
+            : mul(hexToDecimal(gasLimit), '1.4'),
         gasPrice: gasPriceGwei
       },
       swapData: {
