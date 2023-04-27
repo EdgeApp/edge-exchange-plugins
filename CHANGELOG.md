@@ -3,6 +3,7 @@
 ## Unreleased
 
 - Fixed: Fix zkSync mainnet code transcription for LetsExchange.
+- Fixed: Disable zkSync explicitly for Swapuz.
 
 ## 0.19.1 (2023-04-27)
 
