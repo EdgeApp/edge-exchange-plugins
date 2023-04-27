@@ -1,5 +1,9 @@
 # edge-exchange-plugins
 
+## 0.19.1 (2023-04-27)
+
+- Fixed: Lifi gasLimit calculation for ETH
+
 ## 0.19.0 (2023-04-19)
 
 - Changed: Transcribe zkSync mainnet code to ZKSYNC
