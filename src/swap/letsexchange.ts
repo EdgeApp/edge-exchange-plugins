@@ -84,6 +84,9 @@ const SPECIAL_MAINNET_CASES: { [pId: string]: { [cc: string]: string } } = {
   },
   optimism: {
     ETH: 'OPTIMISM'
+  },
+  zksync: {
+    ETH: 'ZKSYNC'
   }
 }
 
