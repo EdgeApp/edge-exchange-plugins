@@ -51,7 +51,8 @@ const uri = 'https://api.swapuz.com/api/home/v1/'
 const INVALID_CURRENCY_CODES: InvalidCurrencyCodes = {
   from: {},
   to: {
-    zcash: ['ZEC']
+    zcash: ['ZEC'],
+    zksync: 'allCodes'
   }
 }
 
