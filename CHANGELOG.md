@@ -1,6 +1,6 @@
 # edge-exchange-plugins
 
-## Unreleased
+## 0.19.2 (2023-05-01)
 
 - Fixed: Fix zkSync mainnet code transcription for LetsExchange.
 - Fixed: Disable zkSync explicitly for Swapuz.
