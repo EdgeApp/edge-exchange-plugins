@@ -1,5 +1,9 @@
 # edge-exchange-plugins
 
+## 0.19.3 (2023-05-02)
+
+- Lifi: Fix passing gasLimit as a float
+
 ## 0.19.2 (2023-05-01)
 
 - Fixed: Fix zkSync mainnet code transcription for LetsExchange.
