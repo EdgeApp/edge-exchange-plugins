@@ -1,4 +1,4 @@
-import { mul } from 'biggystring'
+import { mul, round } from 'biggystring'
 import { asArray, asNumber, asObject, asOptional, asString } from 'cleaners'
 import {
   EdgeCorePluginOptions,
@@ -343,7 +343,7 @@ export function makeLifiPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
         gasLimit:
           fromWallet.currencyInfo.pluginId !== 'ethereum'
             ? hexToDecimal(gasLimit)
-            : mul(hexToDecimal(gasLimit), '1.4'),
+            : round(mul(hexToDecimal(gasLimit), '1.4'), 0),
         gasPrice: gasPriceGwei
       },
       swapData: {
