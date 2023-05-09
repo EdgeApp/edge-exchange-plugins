@@ -1,5 +1,12 @@
 import { lt } from 'biggystring'
-import { asNumber, asObject, asOptional, asString } from 'cleaners'
+import {
+  asEither,
+  asNull,
+  asNumber,
+  asObject,
+  asOptional,
+  asString
+} from 'cleaners'
 import {
   EdgeCorePluginOptions,
   EdgeSpendInfo,
@@ -55,45 +62,72 @@ const INVALID_CURRENCY_CODES: InvalidCurrencyCodes = {
 const MAINNET_CODE_TRANSCRIPTION = {}
 
 const orderUri = 'https://exolix.com/transaction/'
-const uri = 'https://exolix.com/api/'
+const uri = 'https://exolix.com/api/v2/'
 
 const expirationMs = 1000 * 60
 
 const asRateResponse = asObject({
-  min_amount: asString
+  minAmount: asNumber,
+  withdrawMin: asOptional(asNumber, 0),
+  fromAmount: asNumber,
+  toAmount: asNumber,
+  message: asEither(asString, asNull)
 })
 
 const asQuoteInfo = asObject({
   id: asString,
-  amount_from: asNumber,
-  amount_to: asNumber,
-  deposit_address: asString,
-  deposit_extra: asOptional(asString)
+  amount: asNumber,
+  amountTo: asNumber,
+  depositAddress: asString,
+  depositExtraId: asOptional(asString)
 })
 
 export function makeExolixPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
-  const { io } = opts
+  const { io, log } = opts
   const { fetchCors = io.fetch } = io
   const { apiKey } = asInitOptions(opts.initOptions)
 
-  async function call(route: string, params: any): Promise<Object> {
-    const body = JSON.stringify(params)
-
+  async function call(
+    method: 'GET' | 'POST',
+    route: string,
+    params: any
+  ): Promise<Object> {
     const headers: { [header: string]: string } = {
       Accept: 'application/json',
       'Content-Type': 'application/json',
       Authorization: `${apiKey}`
     }
 
-    const response = await fetchCors(uri + route, {
-      method: 'POST',
-      body,
-      headers
-    })
+    let response: Awaited<ReturnType<typeof fetchCors>>
 
-    if (!response.ok) {
+    if (method === 'POST') {
+      const body = JSON.stringify(params)
+      response = await fetchCors(uri + route, {
+        method,
+        headers,
+        body
+      })
+    } else {
+      const url = `${uri}${route}?${new URLSearchParams(params).toString()}`
+      response = await fetchCors(url, {
+        method,
+        headers
+      })
+    }
+
+    if (
+      !response.ok &&
+      !(await response.text()).includes(
+        'Amount to exchange is below the possible min amount to exchange'
+      ) // HACK: Exolix inconsistently returns a !ok response for a 'from' quote
+      // under minimum amount, while the status is OK for a 'to' quote under
+      // minimum amount.
+      // Handle this inconsistency and ensure parse the proper under min error
+      // and we don't exit early with the wrong 'unsupported' error message.
+    ) {
+      log.warn(`Error retrieving Exolix quote: ${await response.text()}`)
       if (response.status === 422) {
-        throw new SwapCurrencyError(swapInfo, params.coin_from, params.coin_to)
+        throw new SwapCurrencyError(swapInfo, params.coinFrom, params.coinTo)
       }
       throw new Error(`Exolix returned error code ${response.status}`)
     }
@@ -110,16 +144,7 @@ export function makeExolixPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
       getAddress(request.toWallet)
     ])
 
-    if (request.quoteFor === 'to') {
-      // Does not yet support reverse quotes
-      throw new SwapCurrencyError(
-        swapInfo,
-        request.fromCurrencyCode,
-        request.toCurrencyCode
-      )
-    }
-
-    const quoteAmount =
+    const exchangeQuoteAmount =
       request.quoteFor === 'from'
         ? await request.fromWallet.nativeToDenomination(
             request.nativeAmount,
@@ -130,6 +155,8 @@ export function makeExolixPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
             request.toCurrencyCode
           )
 
+    const quoteAmount = parseFloat(exchangeQuoteAmount)
+
     const {
       fromCurrencyCode,
       toCurrencyCode,
@@ -137,43 +164,36 @@ export function makeExolixPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
       toMainnetCode
     } = getCodesWithTranscription(request, MAINNET_CODE_TRANSCRIPTION)
 
-    // The Exolix documentation doesn't detail this mainnetCode:currencyCode functionality
-    // but it's been verified by testing
-    const safeFromCurrencyCode = `${fromMainnetCode}:${fromCurrencyCode}`
-    const safeToCurrencyCode = `${toMainnetCode}:${toCurrencyCode}`
+    const quoteParams: Record<string, any> = {
+      coinFrom: fromCurrencyCode,
+      coinFromNetwork: fromMainnetCode,
+      coinTo: toCurrencyCode,
+      coinToNetwork: toMainnetCode,
+      amount: quoteAmount,
+      rateType: 'fixed'
+    }
 
-    // Swap the currencies if we need a reverse quote:
-    const quoteParams =
-      request.quoteFor === 'from'
-        ? {
-            coin_from: safeFromCurrencyCode,
-            coin_to: safeToCurrencyCode,
-            deposit_amount: quoteAmount,
-            rate_type: 'fixed'
-          }
-        : {
-            coin_from: safeToCurrencyCode,
-            coin_to: safeFromCurrencyCode,
-            deposit_amount: quoteAmount,
-            rate_type: 'fixed'
-          }
+    // Set the withdrawal amount if we are quoting for the toCurrencyCode
+    if (request.quoteFor === 'to') {
+      quoteParams.withdrawalAmount = quoteAmount
+    }
 
     // Get Rate
-    const rateResponse = asRateResponse(await call('rate', quoteParams))
+    const rateResponse = asRateResponse(await call('GET', 'rate', quoteParams))
 
     // Check rate minimum:
     if (request.quoteFor === 'from') {
       const nativeMin = await request.fromWallet.denominationToNative(
-        rateResponse.min_amount,
+        rateResponse.minAmount.toString(),
         request.fromCurrencyCode
       )
 
       if (lt(request.nativeAmount, nativeMin)) {
-        throw new SwapBelowLimitError(swapInfo, nativeMin)
+        throw new SwapBelowLimitError(swapInfo, nativeMin, 'from')
       }
     } else {
       const nativeMin = await request.toWallet.denominationToNative(
-        rateResponse.min_amount,
+        rateResponse.withdrawMin.toString(),
         request.toCurrencyCode
       )
 
@@ -183,27 +203,34 @@ export function makeExolixPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
     }
 
     // Make the transaction:
-    const exchangeParams = {
-      coin_from: quoteParams.coin_from,
-      coin_to: quoteParams.coin_to,
-      deposit_amount: quoteAmount,
-      destination_address: toAddress,
-      destination_extra: '',
-      refund_address: fromAddress,
-      refund_extra: '',
-      rate_type: 'fixed'
+    const exchangeParams: Record<string, any> = {
+      coinFrom: quoteParams.coinFrom,
+      networkFrom: quoteParams.coinFromNetwork,
+      coinTo: quoteParams.coinTo,
+      networkTo: quoteParams.coinToNetwork,
+      amount: quoteAmount,
+      withdrawalAddress: toAddress,
+      withdrawalExtraId: '',
+      refundAddress: fromAddress,
+      refundExtraId: '',
+      rateType: 'fixed'
     }
 
-    const callJson = await call('exchange', exchangeParams)
+    // Set the withdrawal amount if we are quoting for the toCurrencyCode
+    if (request.quoteFor === 'to') {
+      exchangeParams.withdrawalAmount = quoteAmount
+    }
+
+    const callJson = await call('POST', 'transactions', exchangeParams)
     const quoteInfo = asQuoteInfo(callJson)
 
     const fromNativeAmount = await request.fromWallet.denominationToNative(
-      quoteInfo.amount_from.toString(),
+      quoteInfo.amount.toString(),
       request.fromCurrencyCode
     )
 
     const toNativeAmount = await request.toWallet.denominationToNative(
-      quoteInfo.amount_to.toString(),
+      quoteInfo.amountTo.toString(),
       request.toCurrencyCode
     )
 
@@ -212,8 +239,8 @@ export function makeExolixPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
       spendTargets: [
         {
           nativeAmount: fromNativeAmount,
-          publicAddress: quoteInfo.deposit_address,
-          uniqueIdentifier: quoteInfo.deposit_extra
+          publicAddress: quoteInfo.depositAddress,
+          uniqueIdentifier: quoteInfo.depositExtraId
         }
       ],
       networkFeeOption:
