@@ -137,7 +137,7 @@ export function makeSwapuzPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
         amount: parseFloat(largeDenomAmount),
         mode,
         addressUserFrom: fromAddress,
-        addressRefound: fromAddress
+        addressRefund: fromAddress
       }
 
       const createOrderResponse = await fetch(uri + 'order', {
@@ -146,8 +146,9 @@ export function makeSwapuzPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
         headers
       })
       if (!createOrderResponse.ok) {
+        const text = await createOrderResponse.text()
         throw new Error(
-          `Swapuz call returned error code ${createOrderResponse.status}`
+          `Swapuz call returned error code ${createOrderResponse.status}\n${text}`
         )
       }
 
