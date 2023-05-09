@@ -1,4 +1,4 @@
-import { add, div, gt, lt, mul, sub, toFixed } from 'biggystring'
+import { add, div, gt, lt, lte, mul, sub, toFixed } from 'biggystring'
 import {
   asArray,
   asBoolean,
@@ -437,6 +437,10 @@ export function makeThorchainPlugin(
       )
     }
     const { fromNativeAmount, toNativeAmount, limit } = calcResponse
+
+    if (lte(limit, '0')) {
+      throw new Error('Swap would produce negative return')
+    }
 
     let memo = buildSwapMemo({
       chain: toMainnetCode,
