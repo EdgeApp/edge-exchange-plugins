@@ -1,5 +1,9 @@
 # edge-exchange-plugins
 
+## 0.19.4 (2023-05-09)
+
+- Changed: Update exolix to v2 api
+
 ## 0.19.3 (2023-05-02)
 
 - Lifi: Fix passing gasLimit as a float
