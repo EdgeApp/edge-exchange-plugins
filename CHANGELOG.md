@@ -1,5 +1,10 @@
 # edge-exchange-plugins
 
+## 0.19.5 (2023-05-10)
+
+- Fixed: Fix swapuz refund address
+- Fixed: Prevent Thorchain swaps that would receive negative amount
+
 ## 0.19.4 (2023-05-09)
 
 - Changed: Update exolix to v2 api
