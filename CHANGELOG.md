@@ -1,5 +1,9 @@
 # edge-exchange-plugins
 
+## 0.19.6 (2023-07-12)
+
+- Fixed: Increased gas limit by 40% for all chains for LI.FI
+
 ## 0.19.5 (2023-05-10)
 
 - Fixed: Fix swapuz refund address
