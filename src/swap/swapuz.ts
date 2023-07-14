@@ -49,8 +49,11 @@ const orderUri = 'https://swapuz.com/order/'
 const uri = 'https://api.swapuz.com/api/home/v1/'
 
 const INVALID_CURRENCY_CODES: InvalidCurrencyCodes = {
-  from: {},
+  from: {
+    ethereum: ['MATH']
+  },
   to: {
+    ethereum: ['MATH'],
     zcash: ['ZEC'],
     zksync: 'allCodes'
   }
