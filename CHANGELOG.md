@@ -1,5 +1,9 @@
 # edge-exchange-plugins
 
+## 0.19.7 (2023-07-18)
+
+- Swapuz/LetsExchange: Disable MATH
+
 ## 0.19.6 (2023-07-12)
 
 - Fixed: Increased gas limit by 40% for all chains for LI.FI
