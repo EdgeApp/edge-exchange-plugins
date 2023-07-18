@@ -58,8 +58,11 @@ const asInfoReply = asObject({
   amount: asNumberString
 })
 const INVALID_CURRENCY_CODES: InvalidCurrencyCodes = {
-  from: {},
+  from: {
+    ethereum: ['MATH']
+  },
   to: {
+    ethereum: ['MATH'],
     zcash: ['ZEC']
   }
 }
