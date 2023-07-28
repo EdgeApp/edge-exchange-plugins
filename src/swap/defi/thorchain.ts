@@ -213,7 +213,7 @@ export function makeThorchainPlugin(
   opts: EdgeCorePluginOptions
 ): EdgeSwapPlugin {
   const { io, log } = opts
-  const { fetch } = io
+  const { fetchCors = io.fetch } = io
   const {
     appId,
     thorname,
@@ -275,7 +275,7 @@ export function makeThorchainPlugin(
     ) {
       try {
         const exchangeInfoResponse = await promiseWithTimeout(
-          fetchInfo(fetch, `v1/exchangeInfo/${appId}`)
+          fetchInfo(fetchCors, `v1/exchangeInfo/${appId}`)
         )
 
         if (exchangeInfoResponse.ok === true) {
@@ -319,10 +319,15 @@ export function makeThorchainPlugin(
 
     // Get current pool
     const [iaResponse, poolResponse] = await Promise.all([
-      fetchWaterfall(fetch, thornodeServers, 'thorchain/inbound_addresses', {
-        headers
-      }),
-      fetchWaterfall(fetch, midgardServers, 'v2/pools', { headers })
+      fetchWaterfall(
+        fetchCors,
+        thornodeServers,
+        'thorchain/inbound_addresses',
+        {
+          headers
+        }
+      ),
+      fetchWaterfall(fetchCors, midgardServers, 'v2/pools', { headers })
     ])
 
     if (!iaResponse.ok) {

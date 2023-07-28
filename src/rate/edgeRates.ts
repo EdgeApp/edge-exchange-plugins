@@ -14,7 +14,7 @@ export function makeEdgeRatesPlugin(
   opts: EdgeCorePluginOptions
 ): EdgeRatePlugin {
   const { io, log } = opts
-  const { fetch } = io
+  const { fetchCors = io.fetch } = io
 
   return {
     rateInfo: {
@@ -32,7 +32,7 @@ export function makeEdgeRatesPlugin(
         const fiatFrom = pair.fromCurrency.split(':')
         const fiatTo = pair.toCurrency.split(':')
         try {
-          const reply = await fetch(
+          const reply = await fetchCors(
             `https://rates1.edge.app/v1/exchangeRate?currency_pair=${fiatFrom[1]}_${fiatTo[1]}`
           )
           const jsonData = await reply.json()

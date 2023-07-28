@@ -11,6 +11,7 @@ export function makeCoinbasePlugin(
   opts: EdgeCorePluginOptions
 ): EdgeRatePlugin {
   const { io, log } = opts
+  const { fetchCors = io.fetch } = io
 
   return {
     rateInfo: {
@@ -21,7 +22,7 @@ export function makeCoinbasePlugin(
     async fetchRates(pairsHint) {
       const pairs = []
       try {
-        const reply = await io.fetch(
+        const reply = await fetchCors(
           'https://api.coinbase.com/v2/exchange-rates'
         )
         const json = await reply.json()
