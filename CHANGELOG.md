@@ -1,5 +1,9 @@
 # edge-exchange-plugins
 
+## 0.19.8 (2023-07-30)
+
+- Use `EdgeIo.fetchCors` for all requests
+
 ## 0.19.7 (2023-07-18)
 
 - Swapuz/LetsExchange: Disable MATH
