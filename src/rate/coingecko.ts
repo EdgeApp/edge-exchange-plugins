@@ -156,6 +156,7 @@ export function makeCoinGeckoPlugin(
   opts: EdgeCorePluginOptions
 ): EdgeRatePlugin {
   const { io, log } = opts
+  const { fetchCors = io.fetch } = io
 
   return {
     rateInfo: {
@@ -172,7 +173,7 @@ export function makeCoinGeckoPlugin(
           query.push(coinGeckoMap[pair.fromCurrency])
       }
       try {
-        const reply = await io.fetch(
+        const reply = await fetchCors(
           `https://api.coingecko.com/api/v3/simple/price?ids=${query.join(
             ','
           )}&vs_currencies=usd`

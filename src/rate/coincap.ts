@@ -32,7 +32,7 @@ const currencyMap: { [symbol: string]: string } = {}
 
 export function makeCoincapPlugin(opts: EdgeCorePluginOptions): EdgeRatePlugin {
   const { io, log } = opts
-  const fetch = io.fetchCors ?? io.fetch
+  const { fetchCors = io.fetch } = io
 
   return {
     rateInfo: {
@@ -44,7 +44,7 @@ export function makeCoincapPlugin(opts: EdgeCorePluginOptions): EdgeRatePlugin {
       const pairs: RatePair[] = []
       // Create unique ID map
       if (Object.keys(currencyMap).length === 0) {
-        const assets = await fetch(`https://api.coincap.io/v2/assets/`)
+        const assets = await fetchCors(`https://api.coincap.io/v2/assets/`)
         const assetsJson = await assets.json()
         const assetIds = asCoincapAssets(assetsJson.data)
         assetIds.forEach(code => (currencyMap[code.symbol] = code.id))

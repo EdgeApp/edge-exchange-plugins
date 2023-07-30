@@ -116,7 +116,7 @@ export function makeThorchainDaPlugin(
   opts: EdgeCorePluginOptions
 ): EdgeSwapPlugin {
   const { io, log } = opts
-  const { fetch } = io
+  const { fetchCors = io.fetch } = io
   const {
     appId,
     affiliateFeeBasis,
@@ -176,7 +176,7 @@ export function makeThorchainDaPlugin(
     ) {
       try {
         const exchangeInfoResponse = await promiseWithTimeout(
-          fetchInfo(fetch, `v1/exchangeInfo/${appId}`)
+          fetchInfo(fetchCors, `v1/exchangeInfo/${appId}`)
         )
 
         if (exchangeInfoResponse.ok === true) {
@@ -241,10 +241,15 @@ export function makeThorchainDaPlugin(
     log.warn(uri)
 
     const [iaResponse, thorSwapResponse] = await Promise.all([
-      fetchWaterfall(fetch, thornodeServers, 'thorchain/inbound_addresses', {
-        headers
-      }),
-      fetchWaterfall(fetch, thorswapServers, uri, { headers })
+      fetchWaterfall(
+        fetchCors,
+        thornodeServers,
+        'thorchain/inbound_addresses',
+        {
+          headers
+        }
+      ),
+      fetchWaterfall(fetchCors, thorswapServers, uri, { headers })
     ])
 
     if (!iaResponse.ok) {

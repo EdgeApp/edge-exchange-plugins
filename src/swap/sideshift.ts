@@ -84,7 +84,7 @@ interface CreateSideshiftApiResponse {
 
 const createSideshiftApi = (
   baseUrl: string,
-  fetch: EdgeFetchFunction
+  fetchCors: EdgeFetchFunction
 ): CreateSideshiftApiResponse => {
   async function request<R>(
     method: 'GET' | 'POST',
@@ -94,8 +94,8 @@ const createSideshiftApi = (
     const url = `${baseUrl}${path}`
 
     const reply = await (method === 'GET'
-      ? fetch(url)
-      : fetch(url, {
+      ? fetchCors(url)
+      : fetchCors(url, {
           method,
           headers: {
             'Content-Type': 'application/json'

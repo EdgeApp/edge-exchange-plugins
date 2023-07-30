@@ -68,7 +68,7 @@ const MAINNET_CODE_TRANSCRIPTION = {
 
 export function makeSwapuzPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
   const { io } = opts
-  const fetch = io.fetchCors ?? io.fetch
+  const { fetchCors = io.fetch } = io
   const { apiKey } = asInitOptions(opts.initOptions)
 
   const headers = {
@@ -104,7 +104,7 @@ export function makeSwapuzPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
         fromCurrencyCode
       )
 
-      const getRateResponse = await fetch(
+      const getRateResponse = await fetchCors(
         uri +
           `rate/?mode=${mode}&amount=${largeDenomAmount}&from=${fromCurrencyCode}&to=${toCurrencyCode}&fromNetwork=${fromMainnetCode}&toNetwork=${toMainnetCode}`,
         { headers }
@@ -143,7 +143,7 @@ export function makeSwapuzPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
         addressRefund: fromAddress
       }
 
-      const createOrderResponse = await fetch(uri + 'order', {
+      const createOrderResponse = await fetchCors(uri + 'order', {
         method: 'POST',
         body: JSON.stringify(orderBody),
         headers

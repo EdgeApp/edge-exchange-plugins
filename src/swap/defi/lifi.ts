@@ -206,7 +206,7 @@ export function makeLifiPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
     }
 
     const { appId, integrator } = asInitOptions(opts.initOptions)
-    const fetch = io.fetch
+    const { fetchCors = io.fetch } = io
 
     // Do not support transfer between same assets
     if (
@@ -240,7 +240,7 @@ export function makeLifiPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
     ) {
       try {
         const exchangeInfoResponse = await promiseWithTimeout(
-          fetchInfo(fetch, `v1/exchangeInfo/${appId}`)
+          fetchInfo(fetchCors, `v1/exchangeInfo/${appId}`)
         )
 
         if (exchangeInfoResponse.ok === true) {
@@ -279,7 +279,7 @@ export function makeLifiPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
     })
     // Get current pool
     const [quoteResponse] = await Promise.all([
-      fetchWaterfall(fetch, lifiServers, `v1/quote?${params}`, {
+      fetchWaterfall(fetchCors, lifiServers, `v1/quote?${params}`, {
         headers
       })
     ])

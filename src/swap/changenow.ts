@@ -64,7 +64,7 @@ export function makeChangeNowPlugin(
   opts: EdgeCorePluginOptions
 ): EdgeSwapPlugin {
   const { io } = opts
-  const { fetch } = io
+  const { fetchCors = io.fetch } = io
   const { apiKey } = asInitOptions(opts.initOptions)
 
   const headers = {
@@ -106,7 +106,7 @@ export function makeChangeNowPlugin(
       )}&${
         isSelling ? 'fromAmount' : 'toAmount'
       }=${largeDenomAmount}&type=${type}&${currencyString}`
-      const exchangeAmountResponse = await fetch(uri + url, { headers })
+      const exchangeAmountResponse = await fetchCors(uri + url, { headers })
       const exchangeAmountResponseJson = await exchangeAmountResponse.json()
 
       if (exchangeAmountResponseJson.error != null)
@@ -130,7 +130,7 @@ export function makeChangeNowPlugin(
         payload: { promoCode }
       }
 
-      const orderResponse = await fetch(uri + 'exchange', {
+      const orderResponse = await fetchCors(uri + 'exchange', {
         method: 'POST',
         body: JSON.stringify(orderBody),
         headers
@@ -155,7 +155,7 @@ export function makeChangeNowPlugin(
       )
 
       // Get min and max
-      const marketRangeResponse = await fetch(
+      const marketRangeResponse = await fetchCors(
         uri + `exchange/range?flow=${flow}&${currencyString}`,
         { headers }
       )
