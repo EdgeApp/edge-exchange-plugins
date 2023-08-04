@@ -8,10 +8,12 @@ import {
   EdgeSwapRequest,
   EdgeSwapResult,
   EdgeTransaction,
+  EdgeTxSwap,
   JsonObject,
   SwapCurrencyError
 } from 'edge-core-js/types'
 
+import { MakeTxParams } from './swap/defi/xrp/xrpDexTypes'
 import { EdgeSwapRequestPlugin } from './swap/types'
 
 const likeKindAssets = [
@@ -32,10 +34,21 @@ export function ensureInFuture(
   return target < date.valueOf() ? date : new Date(target)
 }
 
-export interface SwapOrder {
+interface SwapOrderSpendInfo {
+  spendInfo: EdgeSpendInfo
+}
+
+interface SwapOrderMakeTx {
+  makeTxParams: MakeTxParams
+}
+
+type SwapOrderInner = SwapOrderMakeTx | SwapOrderSpendInfo
+
+export type SwapOrder = SwapOrderInner & {
+  canBePartial?: boolean
+  maxFulfillmentSeconds?: number
   request: EdgeSwapRequest
   swapInfo: EdgeSwapInfo
-  spendInfo: EdgeSpendInfo
   fromNativeAmount: string
   expirationDate?: Date
   preTx?: EdgeTransaction
@@ -46,21 +59,32 @@ export async function makeSwapPluginQuote(
   order: SwapOrder
 ): Promise<EdgeSwapQuote> {
   const {
+    canBePartial,
+    maxFulfillmentSeconds,
     fromNativeAmount,
     request,
     swapInfo,
-    spendInfo,
     expirationDate,
     preTx,
     metadataNotes
   } = order
-
   const { fromWallet } = request
-  const tx = await fromWallet.makeSpend(spendInfo)
-  const toNativeAmount = spendInfo.swapData?.payoutNativeAmount
-  const destinationAddress = spendInfo.swapData?.payoutAddress
-  const isEstimate = spendInfo.swapData?.isEstimate ?? false
-  const quoteId = spendInfo.swapData?.orderId
+
+  let tx: EdgeTransaction
+  let swapData: EdgeTxSwap | undefined
+  if ('spendInfo' in order) {
+    const { spendInfo } = order
+    swapData = spendInfo.swapData
+    tx = await fromWallet.makeSpend(spendInfo)
+  } else {
+    const { makeTxParams } = order
+    swapData = makeTxParams.swapData
+    tx = await fromWallet.otherMethods.makeTx(makeTxParams)
+  }
+  const toNativeAmount = swapData?.payoutNativeAmount
+  const destinationAddress = swapData?.payoutAddress
+  const isEstimate = swapData?.isEstimate ?? false
+  const quoteId = swapData?.orderId
   if (
     fromNativeAmount == null ||
     toNativeAmount == null ||
@@ -81,6 +105,8 @@ export async function makeSwapPluginQuote(
     )
 
   const out: EdgeSwapQuote = {
+    canBePartial,
+    maxFulfillmentSeconds,
     request,
     swapInfo,
     fromNativeAmount,
@@ -138,6 +164,9 @@ export const getMaxSwappable = async <T extends any[]>(
   requestCopy.nativeAmount = balance
   requestCopy.quoteFor = 'from'
   const swapOrder = await fetchSwap(requestCopy, ...args)
+  if (!('spendInfo' in swapOrder)) {
+    return request
+  }
 
   // Then use getMaxSpendable with the partner's address
   delete swapOrder.spendInfo.spendTargets[0].nativeAmount

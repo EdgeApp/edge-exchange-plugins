@@ -262,6 +262,7 @@ export function makeSwapuzPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
         while (--retries !== 0) {
           requestToHack.nativeAmount = fromQuoteNativeAmount
           const swapOrder = await fetchSwapQuoteInner(requestToHack)
+          if (!('spendInfo' in swapOrder)) break
           if (swapOrder.spendInfo.swapData?.payoutNativeAmount == null) break
 
           const toExchangeAmount = await toWallet.nativeToDenomination(
