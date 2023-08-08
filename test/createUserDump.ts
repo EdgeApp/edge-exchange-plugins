@@ -44,7 +44,11 @@ async function main(): Promise<void> {
       thorchainda: true
     }
   })
-  const account = await context.createAccount('bob', 'bob123', '1111')
+  const account = await context.createAccount({
+    username: 'bob',
+    password: 'bob123',
+    pin: '1111'
+  })
   await account.createCurrencyWallet('wallet:bitcoin', {
     fiatCurrencyCode: 'iso:EUR',
     name: 'My Fake Bitcoin'
@@ -65,24 +69,23 @@ async function main(): Promise<void> {
     fiatCurrencyCode: 'iso:USD',
     name: 'My Fake Matic'
   })
-  const ethEnabledTokens = ethWallet.currencyInfo.metaTokens.map(
-    token => token.currencyCode
-  )
-  await ethWallet.enableTokens(ethEnabledTokens)
+  const ethGetBuiltinTokens = allPlugins.ethereum.getBuiltinTokens ?? (() => [])
+  const ethEnabledTokens = await ethGetBuiltinTokens()
+  await ethWallet.changeEnabledTokenIds(Object.keys(ethEnabledTokens))
 
-  const avaxEnabledTokens = avaxWallet.currencyInfo.metaTokens.map(
-    token => token.currencyCode
-  )
-  await avaxWallet.enableTokens(avaxEnabledTokens)
+  const avaxGetBuiltinTokens =
+    allPlugins.avalanche.getBuiltinTokens ?? (() => [])
+  const avaxEnabledTokens = await avaxGetBuiltinTokens()
+  await avaxWallet.changeEnabledTokenIds(Object.keys(avaxEnabledTokens))
 
-  const maticEnabledTokens = maticWallet.currencyInfo.metaTokens.map(
-    token => token.currencyCode
-  )
-  await maticWallet.enableTokens(maticEnabledTokens)
+  const maticGetBuiltinTokens =
+    allPlugins.polygon.getBuiltinTokens ?? (() => [])
+  const maticEnabledTokens = await maticGetBuiltinTokens()
+  await maticWallet.changeEnabledTokenIds(Object.keys(maticEnabledTokens))
 
   const data = await world.dumpFakeUser(account)
   const dump = {
-    loginKey: account.loginKey,
+    loginKey: account.getLoginKey(),
     data
   }
   fs.writeFileSync(DUMP_USER_FILE, JSON.stringify(dump, null, 2), {
