@@ -9,8 +9,7 @@ import {
   SwapBelowLimitError,
   SwapCurrencyError
 } from 'edge-core-js/types'
-import hashjs from 'hash.js'
-import { base16 } from 'rfc4648'
+import { KEYUTIL, KJUR } from 'jsrsasign'
 
 import {
   checkEthTokensOnly,
@@ -194,20 +193,19 @@ async function checkReply(
   }
 }
 
-/** Convert utf-8 string input into Uint8Array */
-function parseUtf8(text: string): Uint8Array {
-  return new Uint8Array(Buffer.from(text, 'utf-8'))
-}
+function getSignature(data: string, key: string): string {
+  const signature = new KJUR.crypto.Signature({ alg: 'SHA256withRSA' })
+  const privateKey = KEYUTIL.getKeyFromPlainPrivatePKCS8Hex(key)
+  signature.init(privateKey)
+  signature.updateString(data)
+  const sign = signature.sign()
 
-function hmacSha512(data: Uint8Array, key: Uint8Array): Uint8Array {
-  const hmac = hashjs.hmac((hashjs.sha512 as unknown) as BlockHash<Sha512>, key)
-  const digest = hmac.update(data).digest()
-  return Uint8Array.from(digest)
+  return Buffer.from(sign, 'hex').toString('base64')
 }
 
 function makeCaller(
   apiKey: string,
-  secret: Uint8Array,
+  secret: string,
   fetchCors: EdgeFetchFunction
 ): Caller<any> {
   return async function <T, R = any>(
@@ -215,9 +213,7 @@ function makeCaller(
     promoCode?: string
   ): Promise<Result<R> | Error> {
     const body = JSON.stringify(json)
-    const sign = base16
-      .stringify(hmacSha512(parseUtf8(body), secret))
-      .toLowerCase()
+    const sign = getSignature(body, secret)
 
     const headers: { [header: string]: string } = {
       'Content-Type': 'application/json',
@@ -343,8 +339,7 @@ export function makeCriptointercambioPlugin(
   if (initOptions.apiKey == null || initOptions.secret == null) {
     throw new Error('No Criptointercambio apiKey or secret provided.')
   }
-  const { apiKey, secret: secretString } = asRequestOptions(initOptions)
-  const secret = parseUtf8(secretString)
+  const { apiKey, secret } = asRequestOptions(initOptions)
 
   const caller = makeCaller(apiKey, secret, fetchCors)
 
