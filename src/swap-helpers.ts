@@ -386,3 +386,31 @@ export const getTokenId = (
 
 export const consify = (val: any): void =>
   console.log(JSON.stringify(val, null, 2))
+
+export const checkEthTokensOnly = (
+  swapInfo: EdgeSwapInfo,
+  request: EdgeSwapRequest
+): void => {
+  const currencyFromWallet = request.fromWallet.currencyInfo.currencyCode
+  const currencyToWallet = request.toWallet.currencyInfo.currencyCode
+
+  if (
+    currencyFromWallet !== request.fromCurrencyCode &&
+    currencyFromWallet !== 'ETH'
+  ) {
+    throw new SwapCurrencyError(
+      swapInfo,
+      request.fromCurrencyCode as string,
+      request.toCurrencyCode
+    )
+  } else if (
+    currencyToWallet !== request.toCurrencyCode &&
+    currencyToWallet !== 'ETH'
+  ) {
+    throw new SwapCurrencyError(
+      swapInfo,
+      request.fromCurrencyCode as string,
+      request.toCurrencyCode
+    )
+  }
+}
