@@ -8,7 +8,6 @@ import {
   asString
 } from 'cleaners'
 import {
-  EdgeCreatePrivateKeyOptions,
   EdgeCurrencyCodeOptions,
   EdgeCurrencyEngine,
   EdgeCurrencyEngineCallbacks,
@@ -312,6 +311,7 @@ class FakeCurrencyEngine {
       blockHeight: 0,
       currencyCode,
       date: defaultTx.date,
+      isSend: true,
       nativeAmount: total,
       networkFee: tokenSpend ? '0' : this.defaultSettings.networkFee,
       parentNetworkFee: tokenSpend
@@ -350,7 +350,7 @@ class FakeCurrencyTools {
 
   async createPrivateKey(
     walletType: string,
-    opts?: EdgeCreatePrivateKeyOptions
+    opts?: JsonObject
   ): Promise<JsonObject> {
     if (walletType !== this.currencyInfo.walletType) {
       throw new Error('Unsupported key type')

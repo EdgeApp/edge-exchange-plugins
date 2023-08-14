@@ -49,7 +49,8 @@
     "ethers": "^5.7.0",
     "hashjs": "^1.2.0",
     "iso4217": "^0.2.0",
-    "utf8": "^3.0.0"
+    "utf8": "^3.0.0",
+    "xrpl": "^2.10.0"
   },
   "devDependencies": {
     "@babel/core": "^7.0.0",
@@ -75,7 +76,7 @@
     "buffer": "^6.0.3",
     "chai": "^4.2.0",
     "chai-as-promised": "^7.1.1",
-    "edge-core-js": "^0.19.43",
+    "edge-core-js": "^1.4.0",
     "eslint": "^7.14.0",
     "eslint-config-standard-kit": "0.15.1",
     "eslint-plugin-flowtype": "^5.2.0",
