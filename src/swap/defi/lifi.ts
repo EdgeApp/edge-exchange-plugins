@@ -291,10 +291,10 @@ export function makeLifiPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
 
     const quoteJson = await quoteResponse.json()
     const quote = asV1Quote(quoteJson)
-    const { estimate, includedSteps } = quote
+    const { estimate, includedSteps, transactionRequest } = quote
     const { approvalAddress, toAmountMin } = estimate
 
-    const { data, gasLimit, gasPrice } = quote.transactionRequest
+    const { data, gasLimit, gasPrice } = transactionRequest
     const gasPriceDecimal = hexToDecimal(gasPrice)
     const gasPriceGwei = div18(gasPriceDecimal, '1000000000')
     const providers = includedSteps.map(s => s.toolDetails.name)
@@ -333,7 +333,7 @@ export function makeLifiPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
       spendTargets: [
         {
           memo: data,
-          nativeAmount: nativeAmount,
+          nativeAmount: mul(transactionRequest.value, '1'),
           publicAddress: approvalAddress
         }
       ],
