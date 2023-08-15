@@ -1,6 +1,10 @@
 # edge-exchange-plugins
 
-## 0.20.0 (2023.08-14)
+## 0.20.1 (2023-08-15)
+
+- Fixed: LI.FI on-chain transactions no longer revert due to missing bridge fees
+
+## 0.20.0 (2023-08-14)
 
 - added: XRP DEX support (Requires minimum of edge-currency-accountbased 1.5.0)
 
