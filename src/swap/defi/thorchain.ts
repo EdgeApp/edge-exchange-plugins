@@ -1,4 +1,4 @@
-import { add, div, gt, lt, lte, mul, sub, toFixed } from 'biggystring'
+import { div, gt, lt, mul, round, sub } from 'biggystring'
 import {
   asArray,
   asBoolean,
@@ -10,6 +10,7 @@ import {
 import {
   EdgeCorePluginOptions,
   EdgeCurrencyWallet,
+  EdgeFetchFunction,
   EdgeSpendInfo,
   EdgeSwapInfo,
   EdgeSwapPlugin,
@@ -33,6 +34,7 @@ import {
   fetchInfo,
   fetchWaterfall,
   getAddress,
+  makeQueryParams,
   promiseWithTimeout
 } from '../../util/utils'
 import { EdgeSwapRequestPlugin } from '../types'
@@ -60,8 +62,9 @@ export const DIVIDE_PRECISION = 16
 export const EXCHANGE_INFO_UPDATE_FREQ_MS = 60000
 export const EVM_SEND_GAS = '80000'
 export const EVM_TOKEN_SEND_GAS = '80000'
-export const MIN_USD_SWAP = '30'
+export const MIN_USD_SWAP = '10'
 export const THOR_LIMIT_UNITS = '100000000'
+export const STREAMING_INTERVAL_DEFAULT = 10
 
 // ----------------------------------------------------------------------------
 // Volatility spread logic
@@ -201,10 +204,61 @@ export const asExchangeInfo = asObject({
 
 const asPools = asArray(asPool)
 
+const asQuoteSwap = asObject({
+  expected_amount_out: asString, // "61409897"
+  expected_amount_out_streaming: asString, // "62487221"
+  expiry: asNumber, // 1692149478
+  // fees: asObject({
+  //   affiliate: asString, // "0"
+  //   asset: asString, // "ETH.WBTC-0X2260FAC5E5542A773AA44FBCFEDF7C193BC2C599",
+  //   outbound: asString // "22117"
+  // }),
+  inbound_address: asString, // "0x88e8def37dc9d2acd67f1c1574ad09ca49827374",
+  // max_streaming_quantity: asNumber, // 18,
+  memo: asString, // "=:ETH.WBTC-0X2260FAC5E5542A773AA44FBCFEDF7C193BC2C599:0x04c5998ded94f89263370444ce64a99b7dbc9f46:0/10/0",
+  // outbound_delay_blocks: asNumber, // 114,
+  // outbound_delay_seconds: asNumber, // 684,
+  // recommended_min_amount_in: asString, // "1440032",
+  router: asOptional(asString) // "0xD37BbE5744D730a1d98d8DC97c42F0Ca46aD7146",
+  // slippage_bps: asNumber, // 92,
+  // streaming_slippage_bps: asNumber, // 5,
+  // streaming_swap_blocks: asNumber, // 170,
+  // total_swap_seconds: asNumber // 1020,
+})
+
 type AssetSpread = ReturnType<typeof asAssetSpread>
 type Pool = ReturnType<typeof asPool>
 type ExchangeInfo = ReturnType<typeof asExchangeInfo>
 type MinAmount = ReturnType<typeof asMinAmount>
+interface CalcSwapParams {
+  log: Function
+  fetch: EdgeFetchFunction
+  thornodes: string[]
+  thornodesFetchOptions: any
+  fromWallet: EdgeCurrencyWallet
+  fromCurrencyCode: string
+  toWallet: EdgeCurrencyWallet
+  toCurrencyCode: string
+  toAddress: string
+  nativeAmount: string
+  minAmount: MinAmount | undefined
+  sourcePool: Pool
+  destPool: Pool
+  thorname: string
+  volatilitySpreadFinal: string
+  affiliateFeeBasis: string
+  dontCheckLimits?: boolean
+}
+
+interface CalcSwapResponse {
+  fromNativeAmount: string
+  fromExchangeAmount: string
+  toNativeAmount: string
+  toExchangeAmount: string
+  thorAddress: string
+  router?: string
+  memo: string
+}
 
 let exchangeInfo: ExchangeInfo | undefined
 let exchangeInfoLastUpdate: number = 0
@@ -214,13 +268,9 @@ export function makeThorchainPlugin(
 ): EdgeSwapPlugin {
   const { io, log } = opts
   const { fetchCors = io.fetch } = io
-  const {
-    appId,
-    thorname,
-    affiliateFeeBasis,
-    ninerealmsClientId
-  } = asInitOptions(opts.initOptions)
-  const affiliateFee = div(affiliateFeeBasis, '10000', DIVIDE_PRECISION)
+  const initOptions = asInitOptions(opts.initOptions)
+  const { appId, thorname, ninerealmsClientId } = initOptions
+  const { affiliateFeeBasis } = initOptions
 
   const headers = {
     'Content-Type': 'application/json',
@@ -318,24 +368,13 @@ export function makeThorchainPlugin(
     log.warn(`getVolatilitySpread: ${volatilitySpreadFinal.toString()}`)
 
     // Get current pool
-    const [iaResponse, poolResponse] = await Promise.all([
-      fetchWaterfall(
-        fetchCors,
-        thornodeServers,
-        'thorchain/inbound_addresses',
-        {
-          headers
-        }
-      ),
-      fetchWaterfall(fetchCors, midgardServers, 'v2/pools', { headers })
-    ])
+    const poolResponse = await fetchWaterfall(
+      fetchCors,
+      midgardServers,
+      'v2/pools',
+      { headers }
+    )
 
-    if (!iaResponse.ok) {
-      const responseText = await iaResponse.text()
-      throw new Error(
-        `Thorchain could not fetch inbound_addresses: ${responseText}`
-      )
-    }
     if (!poolResponse.ok) {
       const responseText = await poolResponse.text()
       throw new Error(`Thorchain could not fetch pools: ${responseText}`)
@@ -345,31 +384,8 @@ export function makeThorchainPlugin(
     // logic so we can easily enable in the future with new API
     const minAmount = undefined
 
-    const iaJson = await iaResponse.json()
-    const inboundAddresses = asInboundAddresses(iaJson)
-
     const poolJson = await poolResponse.json()
     const pools = asPools(poolJson)
-
-    // Check for supported chain and asset
-    const inAddressObject = inboundAddresses.find(
-      addrObj => !addrObj.halted && addrObj.chain === fromMainnetCode
-    )
-    if (inAddressObject == null) {
-      throw new SwapCurrencyError(swapInfo, fromCurrencyCode, toCurrencyCode)
-    }
-    const { address: thorAddress } = inAddressObject
-
-    const outAddressObject = inboundAddresses.find(
-      addrObj => !addrObj.halted && addrObj.chain === toMainnetCode
-    )
-    if (outAddressObject == null) {
-      throw new SwapCurrencyError(swapInfo, fromCurrencyCode, toCurrencyCode)
-    }
-    const { outbound_fee: outAssetOutboundFee } = outAddressObject
-    log(
-      `${toMainnetCode}.${toCurrencyCode} outAssetOutboundFee ${outAssetOutboundFee}`
-    )
 
     const sourcePool = pools.find(pool => {
       const [asset] = pool.asset.split('-')
@@ -396,72 +412,42 @@ export function makeThorchainPlugin(
       throw new SwapCurrencyError(swapInfo, fromCurrencyCode, toCurrencyCode)
     }
 
-    // Add outbound fee
-    const feeInDestCurrency = calcNetworkFee(
-      toMainnetCode,
-      toCurrencyCode,
-      outAssetOutboundFee,
-      pools
-    )
-    log(`feeInDestCurrency: ${feeInDestCurrency}`)
-
-    let calcResponse
+    let calcResponse: CalcSwapResponse
     if (quoteFor === 'from') {
-      calcResponse = await calcSwapFrom(
-        {
-          fromWallet,
-          fromCurrencyCode,
-          toWallet,
-          toCurrencyCode,
-          nativeAmount,
-          minAmount,
-          sourcePool,
-          destPool,
-          volatilitySpreadFinal,
-          affiliateFee,
-          feeInDestCurrency
-        },
-        log
-      )
+      calcResponse = await calcSwapFrom({
+        log,
+        fetch: fetchCors,
+        thornodes: thornodeServers,
+        thornodesFetchOptions: { headers },
+        fromWallet,
+        fromCurrencyCode,
+        toWallet,
+        toCurrencyCode,
+        toAddress,
+        nativeAmount,
+        minAmount,
+        sourcePool,
+        destPool,
+        thorname,
+        volatilitySpreadFinal,
+        affiliateFeeBasis
+      })
     } else {
-      calcResponse = await calcSwapTo(
-        {
-          fromWallet,
-          fromCurrencyCode,
-          toWallet,
-          toCurrencyCode,
-          nativeAmount,
-          minAmount,
-          sourcePool,
-          destPool,
-          volatilitySpreadFinal,
-          affiliateFee,
-          feeInDestCurrency
-        },
-        log
-      )
+      throw new SwapCurrencyError(swapInfo, request)
     }
-    const { fromNativeAmount, toNativeAmount, limit } = calcResponse
-
-    if (lte(limit, '0')) {
-      throw new Error('Swap would produce negative return')
-    }
-
-    let memo = buildSwapMemo({
-      chain: toMainnetCode,
-      asset: toCurrencyCode,
-      address: toAddress,
-      limit,
-      affiliateAddress: thorname,
-      points: affiliateFeeBasis
-    })
+    const {
+      fromNativeAmount,
+      toNativeAmount,
+      router,
+      thorAddress
+    } = calcResponse
+    let { memo } = calcResponse
 
     let ethNativeAmount = fromNativeAmount
     let publicAddress = thorAddress
     let approvalData
     if (EVM_CURRENCY_CODES[fromMainnetCode]) {
       if (fromMainnetCode !== fromCurrencyCode) {
-        const { router, address } = inAddressObject
         if (router == null)
           throw new Error(`Missing router address for ${fromMainnetCode}`)
         if (sourceTokenContractAddress == null)
@@ -473,7 +459,7 @@ export function makeThorchainPlugin(
           assetAddress: sourceTokenContractAddress,
           amountToSwapWei: Number(fromNativeAmount),
           contractAddress: router,
-          vaultAddress: address,
+          vaultAddress: thorAddress,
           memo
         })
 
@@ -577,56 +563,29 @@ export function makeThorchainPlugin(
   return out
 }
 
-interface BuildSwapMemoParams {
-  chain: string
-  asset: string
-  address: string
-  limit: string
-  affiliateAddress: string
-  points: string
-}
-
-const calcSwapFrom = async (
-  params: {
-    fromWallet: EdgeCurrencyWallet
-    fromCurrencyCode: string
-    toWallet: EdgeCurrencyWallet
-    toCurrencyCode: string
-    nativeAmount: string
-    minAmount: MinAmount | undefined
-    sourcePool: Pool
-    destPool: Pool
-    volatilitySpreadFinal: string
-    affiliateFee: string
-    feeInDestCurrency: string
-    dontCheckLimits?: boolean
-  },
-  log: Function
-): Promise<{
-  fromNativeAmount: string
-  fromExchangeAmount: string
-  toNativeAmount: string
-  toExchangeAmount: string
-  limit: string
-}> => {
-  const {
-    fromWallet,
-    fromCurrencyCode,
-    toWallet,
-    toCurrencyCode,
-    nativeAmount,
-    minAmount,
-    sourcePool,
-    destPool,
-    volatilitySpreadFinal,
-    affiliateFee,
-    feeInDestCurrency,
-    dontCheckLimits = false
-  } = params
+const calcSwapFrom = async ({
+  log,
+  fetch,
+  thornodes,
+  thornodesFetchOptions,
+  fromWallet,
+  fromCurrencyCode,
+  toWallet,
+  toCurrencyCode,
+  toAddress,
+  nativeAmount,
+  minAmount,
+  sourcePool,
+  destPool,
+  thorname,
+  volatilitySpreadFinal,
+  affiliateFeeBasis,
+  dontCheckLimits = false
+}: CalcSwapParams): Promise<CalcSwapResponse> => {
   const fromNativeAmount = nativeAmount
 
   // Get exchange rate from source to destination asset
-  let fromExchangeAmount = await fromWallet.nativeToDenomination(
+  const fromExchangeAmount = await fromWallet.nativeToDenomination(
     nativeAmount,
     fromCurrencyCode
   )
@@ -663,235 +622,72 @@ const calcSwapFrom = async (
     }
   }
 
-  // Calc the total % fees including affiliate and volatility
-  const totalFeePercent = add(volatilitySpreadFinal, affiliateFee)
-  log(`totalFeePercent: ${totalFeePercent}`)
-  fromExchangeAmount = mul(sub('1', totalFeePercent), fromExchangeAmount)
-  log(`fromExchangeAmount after % fees: ${fromExchangeAmount}`)
+  const fromThorAmount = mul(fromExchangeAmount, THOR_LIMIT_UNITS)
 
-  const result = calcDoubleSwapOutput(
-    Number(mul(fromExchangeAmount, THOR_LIMIT_UNITS)),
-    sourcePool,
-    destPool
+  const queryParams = makeQueryParams({
+    amount: fromThorAmount,
+    from_asset: sourcePool.asset,
+    to_asset: destPool.asset,
+    destination: toAddress,
+    affiliate: thorname,
+    affiliate_bps: affiliateFeeBasis
+  })
+
+  const response = await fetchWaterfall(
+    fetch,
+    thornodes,
+    `thorchain/quote/swap?${queryParams}`,
+    thornodesFetchOptions
   )
 
-  let toExchangeAmount = div(
-    result.toString(),
+  let json: string
+  try {
+    json = await response.json()
+  } catch (e) {
+    const text = await response.text()
+    log(`Error: ${text}`)
+    throw e
+  }
+  const quote = asQuoteSwap(json)
+  const {
+    expected_amount_out: toThorAmount,
+    inbound_address: thorAddress,
+    memo: preMemo,
+    router
+  } = quote
+
+  log(`volatilitySpreadFinal: ${volatilitySpreadFinal}`)
+  const toThorAmountWithSpread = round(
+    mul(sub('1', volatilitySpreadFinal), toThorAmount),
+    0
+  )
+  log(`toThorAmountWithSpread = limit: ${toThorAmountWithSpread}`)
+
+  const toExchangeAmount = div(
+    toThorAmountWithSpread,
     THOR_LIMIT_UNITS,
     DIVIDE_PRECISION
   )
   log(`toExchangeAmount: ${toExchangeAmount}`)
-
-  toExchangeAmount = sub(toExchangeAmount, feeInDestCurrency)
-  log(
-    `toExchangeAmount w/network fee of ${feeInDestCurrency}: ${toExchangeAmount}`
-  )
 
   const toNativeAmountFloat = await toWallet.denominationToNative(
     toExchangeAmount,
     toCurrencyCode
   )
-  const toNativeAmount = toFixed(toNativeAmountFloat, 0, 0)
+  const toNativeAmount = round(toNativeAmountFloat, 0)
   log(`toNativeAmount: ${toNativeAmount}`)
-  const limit = toFixed(mul(toExchangeAmount, THOR_LIMIT_UNITS), 0, 0)
-  log(`limit: ${limit}`)
+
+  const memo = preMemo.replace('::', `:${toThorAmountWithSpread}:`)
 
   return {
     fromNativeAmount,
     fromExchangeAmount,
     toNativeAmount,
     toExchangeAmount,
-    limit
+    memo,
+    router,
+    thorAddress
   }
-}
-
-const calcSwapTo = async (
-  params: {
-    fromWallet: EdgeCurrencyWallet
-    fromCurrencyCode: string
-    toWallet: EdgeCurrencyWallet
-    toCurrencyCode: string
-    nativeAmount: string
-    minAmount: MinAmount | undefined
-    sourcePool: Pool
-    destPool: Pool
-    volatilitySpreadFinal: string
-    affiliateFee: string
-    feeInDestCurrency: string
-  },
-  log: Function
-): Promise<{
-  fromNativeAmount: string
-  fromExchangeAmount: string
-  toNativeAmount: string
-  toExchangeAmount: string
-  limit: string
-}> => {
-  // Get exchange rate from destination to source asset
-  const {
-    fromWallet,
-    fromCurrencyCode,
-    toWallet,
-    toCurrencyCode,
-    nativeAmount,
-    minAmount,
-    sourcePool,
-    destPool,
-    volatilitySpreadFinal,
-    affiliateFee,
-    feeInDestCurrency
-  } = params
-  const toNativeAmount = nativeAmount
-
-  let toExchangeAmount = await toWallet.nativeToDenomination(
-    nativeAmount,
-    toCurrencyCode
-  )
-  log(`toExchangeAmount: ${toExchangeAmount}`)
-
-  const limit = toFixed(mul(toExchangeAmount, THOR_LIMIT_UNITS), 0, 0)
-
-  toExchangeAmount = add(toExchangeAmount, feeInDestCurrency)
-  log(
-    `toExchangeAmount w/network fee of ${feeInDestCurrency}: ${toExchangeAmount}`
-  )
-
-  const result = calcDoubleSwapInput(
-    Number(mul(toExchangeAmount, THOR_LIMIT_UNITS)),
-    sourcePool,
-    destPool
-  )
-
-  let fromExchangeAmount = div(
-    result.toString(),
-    THOR_LIMIT_UNITS,
-    DIVIDE_PRECISION
-  )
-  log(`fromExchangeAmount: ${fromExchangeAmount}`)
-
-  // Calc the total % fees including affiliate and volatility
-  const totalFeePercent = add(volatilitySpreadFinal, affiliateFee)
-  log(`totalFeePercent: ${totalFeePercent}`)
-  const invPercent = sub('1', totalFeePercent)
-
-  fromExchangeAmount = div(fromExchangeAmount, invPercent, 32)
-  log(`fromExchangeAmount after % fees: ${fromExchangeAmount}`)
-
-  const fromNativeAmountFloat = await fromWallet.denominationToNative(
-    fromExchangeAmount,
-    fromCurrencyCode
-  )
-
-  const fromNativeAmount = toFixed(fromNativeAmountFloat, 0, 0)
-
-  const srcInUsd = mul(sourcePool.assetPriceUSD, fromExchangeAmount)
-  let minExchangeAmount = '0'
-  if (lt(srcInUsd, MIN_USD_SWAP)) {
-    minExchangeAmount = div(
-      MIN_USD_SWAP,
-      sourcePool.assetPriceUSD,
-      DIVIDE_PRECISION
-    )
-  }
-
-  // Check minimums
-  const { minInputAmount } = minAmount ?? { minInputAmount: '0' }
-  if (gt(minInputAmount, minExchangeAmount)) {
-    minExchangeAmount = minInputAmount
-  }
-
-  if (lt(fromExchangeAmount, minExchangeAmount)) {
-    const fromMinNativeAmount = await fromWallet.denominationToNative(
-      minExchangeAmount,
-      fromCurrencyCode
-    )
-
-    // Convert the minimum amount into an output amount
-    const result = await calcSwapFrom(
-      { ...params, nativeAmount: fromMinNativeAmount, dontCheckLimits: true },
-      log
-    )
-    const toNativeAmount = toFixed(result.toNativeAmount, 0, 0)
-
-    // Add one native amount unit due to biggystring rounding down all divisions
-    throw new SwapBelowLimitError(swapInfo, add(toNativeAmount, '1'), 'to')
-  }
-
-  return {
-    fromNativeAmount,
-    fromExchangeAmount,
-    toNativeAmount,
-    toExchangeAmount,
-    limit
-  }
-}
-
-const buildSwapMemo = (params: BuildSwapMemoParams): string => {
-  const { chain, asset, address, limit, affiliateAddress, points } = params
-  // affiliate address could be a thorname, and the minimum received is not set in this example.
-  return `=:${chain}.${asset}:${address}:${limit}:${affiliateAddress}:${points}`
-}
-
-//
-// The below is borrowed from Thorchain docs at
-// https://dev.thorchain.org/thorchain-dev/how-tos/swapping-guide
-// https://gitlab.com/thorchain/asgardex-common/asgardex-util/-/blob/master/src/calc/swap.ts
-//
-
-// Calculate swap output with slippage
-function calcSwapOutput(
-  inputAmount: number,
-  pool: Pool,
-  toRune: boolean
-): number {
-  // formula: (inputAmount * inputBalance * outputBalance) / (inputAmount + inputBalance) ^ 2
-  const inputBalance = toRune ? Number(pool.assetDepth) : Number(pool.runeDepth) // input is asset if toRune
-  const outputBalance = toRune
-    ? Number(pool.runeDepth)
-    : Number(pool.assetDepth) // output is rune if toRune
-  const numerator = inputAmount * inputBalance * outputBalance
-  const denominator = Math.pow(inputAmount + inputBalance, 2)
-  const result = numerator / denominator
-  return result
-}
-
-export function calcSwapInput(
-  outputAmount: number,
-  pool: Pool,
-  toRune: boolean
-): number {
-  // formula: (((X*Y)/y - 2*X) - sqrt(((X*Y)/y - 2*X)^2 - 4*X^2))/2
-  // (part1 - sqrt(part1 - part2))/2
-  const inputBalance = toRune ? Number(pool.assetDepth) : Number(pool.runeDepth) // input is asset if toRune
-  const outputBalance = toRune
-    ? Number(pool.runeDepth)
-    : Number(pool.assetDepth) // output is rune if toRune
-  const part1 = (inputBalance * outputBalance) / outputAmount - 2 * inputBalance
-  const part2 = Math.pow(inputBalance, 2) * 4
-  const result = (part1 - Math.sqrt(Math.pow(part1, 2) - part2)) / 2
-  return result
-}
-
-// Calculate swap slippage for double swap
-export function calcDoubleSwapOutput(
-  inputAmount: number,
-  pool1: Pool,
-  pool2: Pool
-): number {
-  const r = calcSwapOutput(inputAmount, pool1, true)
-  const result = calcSwapOutput(r, pool2, false)
-  return result
-}
-
-// Calculate swap slippage for double swap
-export function calcDoubleSwapInput(
-  outputAmount: number,
-  pool1: Pool,
-  pool2: Pool
-): number {
-  const r = calcSwapInput(outputAmount, pool2, false)
-  const result = calcSwapInput(r, pool1, true)
-  return result
 }
 
 type ChainTypes =
@@ -904,9 +700,6 @@ type ChainTypes =
   | 'BNB'
   | 'THOR'
 
-const SAT_UNITS = '100000000'
-const THOR_UNITS = SAT_UNITS
-
 export const getGasLimit = (
   chain: ChainTypes,
   asset: string
@@ -918,64 +711,6 @@ export const getGasLimit = (
       return EVM_TOKEN_SEND_GAS
     }
   }
-}
-
-// Returns units of exchange amount
-export const calcNetworkFee = (
-  chain: ChainTypes,
-  asset: string,
-  outboundFee: string,
-  pools: Pool[]
-): string => {
-  switch (chain) {
-    case 'BTC':
-    case 'BCH':
-    case 'LTC':
-    case 'DOGE':
-    case 'BNB':
-      return div(outboundFee, THOR_UNITS, DIVIDE_PRECISION)
-    case 'THOR':
-      return div('2000000', THOR_UNITS, DIVIDE_PRECISION)
-    case 'AVAX':
-    case 'ETH':
-      if (asset === chain) {
-        return div(outboundFee, THOR_UNITS, DIVIDE_PRECISION)
-      } else {
-        const ethAmount = div(outboundFee, THOR_UNITS, DIVIDE_PRECISION)
-        return convertChainAmountToAsset(pools, chain, asset, ethAmount)
-      }
-    default:
-      throw new Error(
-        `could not calculate inbound fee for ${String(chain)}.${asset}`
-      )
-  }
-}
-
-const convertChainAmountToAsset = (
-  pools: Pool[],
-  chain: string,
-  asset: string,
-  amount: string
-): string => {
-  // Find pool of main chain
-  const sourcePool = pools.find(pool => {
-    return pool.asset === `${chain}.${chain}`
-  })
-  if (sourcePool == null) {
-    throw new Error(`Cannot convert rate from ${chain} to ${asset}`)
-  }
-
-  const destPool = pools.find(pool => {
-    const [poolAsset] = pool.asset.split('-')
-    return poolAsset === `${chain}.${asset}`
-  })
-  if (destPool == null) {
-    throw new Error(`Cannot convert rate from ${chain} to ${asset}`)
-  }
-  const sourceRate = sourcePool.assetPrice
-  const destRate = destPool.assetPrice
-  const out = div(mul(amount, sourceRate), destRate, DIVIDE_PRECISION)
-  return out
 }
 
 export const getVolatilitySpread = ({
