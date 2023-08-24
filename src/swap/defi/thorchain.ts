@@ -50,13 +50,6 @@ const swapInfo: EdgeSwapInfo = {
   supportEmail: 'support@edge.app'
 }
 
-export const asInitOptions = asObject({
-  appId: asOptional(asString, 'edge'),
-  affiliateFeeBasis: asOptional(asString, '50'),
-  ninerealmsClientId: asOptional(asString, ''),
-  thorname: asOptional(asString, 'ej')
-})
-
 export const MIDGARD_SERVERS_DEFAULT = ['https://midgard.thorchain.info']
 export const THORNODE_SERVERS_DEFAULT = ['https://thornode.ninerealms.com']
 export const EXPIRATION_MS = 1000 * 60
@@ -66,6 +59,7 @@ export const EVM_SEND_GAS = '80000'
 export const EVM_TOKEN_SEND_GAS = '80000'
 export const MIN_USD_SWAP = '10'
 export const THOR_LIMIT_UNITS = '100000000'
+const AFFILIATE_FEE_BASIS_DEFAULT = '50'
 const STREAMING_INTERVAL_DEFAULT = 10
 const STREAMING_QUANTITY_DEFAULT = 10
 const STREAMING_INTERVAL_NOSTREAM = 1
@@ -156,6 +150,13 @@ export const MAINNET_CODE_TRANSCRIPTION: { [cc: string]: ChainTypes } = {
   thorchain: 'THOR'
 }
 
+export const asInitOptions = asObject({
+  appId: asOptional(asString, 'edge'),
+  affiliateFeeBasis: asOptional(asString, AFFILIATE_FEE_BASIS_DEFAULT),
+  ninerealmsClientId: asOptional(asString, ''),
+  thorname: asOptional(asString, 'ej')
+})
+
 const asMinAmount = asObject({
   minInputAmount: asString
 })
@@ -199,7 +200,10 @@ export const asExchangeInfo = asObject({
         likeKindVolatilitySpread: asNumber,
         daVolatilitySpread: asNumber,
         midgardServers: asArray(asString),
+        affiliateFeeBasis: asOptional(asString),
         nineRealmsServers: asOptional(asArray(asString)),
+        streamingInterval: asOptional(asNumber),
+        streamingQuantity: asOptional(asNumber),
         thornodeServers: asOptional(asArray(asString)),
         thorSwapServers: asOptional(asArray(asString))
       })
@@ -253,6 +257,8 @@ interface CalcSwapParams {
   thorname: string
   volatilitySpreadFinal: string
   affiliateFeeBasis: string
+  streamingInterval: number
+  streamingQuantity: number
   dontCheckLimits?: boolean
 }
 
@@ -278,7 +284,7 @@ export function makeThorchainPlugin(
   const { fetchCors = io.fetch } = io
   const initOptions = asInitOptions(opts.initOptions)
   const { appId, thorname, ninerealmsClientId } = initOptions
-  const { affiliateFeeBasis } = initOptions
+  let { affiliateFeeBasis = AFFILIATE_FEE_BASIS_DEFAULT } = initOptions
 
   const headers = {
     'Content-Type': 'application/json',
@@ -311,6 +317,8 @@ export function makeThorchainPlugin(
     let likeKindVolatilitySpread: number = LIKE_KIND_VOLATILITY_SPREAD_DEFAULT
     let volatilitySpread: number = VOLATILITY_SPREAD_DEFAULT
     let perAssetSpread: AssetSpread[] = PER_ASSET_SPREAD_DEFAULT
+    let streamingInterval: number = STREAMING_INTERVAL_DEFAULT
+    let streamingQuantity: number = STREAMING_QUANTITY_DEFAULT
 
     checkInvalidCodes(INVALID_CURRENCY_CODES, request, swapInfo)
 
@@ -359,6 +367,9 @@ export function makeThorchainPlugin(
       midgardServers = thorchain.midgardServers
       thornodeServers = thorchain.thornodeServers ?? thornodeServers
       perAssetSpread = thorchain.perAssetSpread
+      affiliateFeeBasis = thorchain.affiliateFeeBasis ?? affiliateFeeBasis
+      streamingInterval = thorchain.streamingInterval ?? streamingInterval
+      streamingQuantity = thorchain.streamingQuantity ?? streamingQuantity
     }
 
     const volatilitySpreadFinal = getVolatilitySpread({
@@ -438,7 +449,9 @@ export function makeThorchainPlugin(
         destPool,
         thorname,
         volatilitySpreadFinal,
-        affiliateFeeBasis
+        affiliateFeeBasis,
+        streamingInterval,
+        streamingQuantity
       })
     } else {
       calcResponse = await calcSwapTo({
@@ -457,7 +470,9 @@ export function makeThorchainPlugin(
         destPool,
         thorname,
         volatilitySpreadFinal,
-        affiliateFeeBasis
+        affiliateFeeBasis,
+        streamingInterval,
+        streamingQuantity
       })
     }
     const {
@@ -609,6 +624,8 @@ const calcSwapFrom = async ({
   thorname,
   volatilitySpreadFinal,
   affiliateFeeBasis,
+  streamingInterval,
+  streamingQuantity,
   dontCheckLimits = false
 }: CalcSwapParams): Promise<CalcSwapResponse> => {
   const fromNativeAmount = nativeAmount
@@ -666,8 +683,8 @@ const calcSwapFrom = async ({
 
   const streamParams = {
     ...noStreamParams,
-    streaming_interval: STREAMING_INTERVAL_DEFAULT,
-    streaming_quantity: STREAMING_QUANTITY_DEFAULT
+    streaming_interval: streamingInterval,
+    streaming_quantity: streamingQuantity
   }
   const bestQuote = await getBestQuote(
     [noStreamParams, streamParams],
@@ -740,6 +757,8 @@ const calcSwapTo = async ({
   thorname,
   volatilitySpreadFinal,
   affiliateFeeBasis,
+  streamingInterval,
+  streamingQuantity,
   dontCheckLimits = false
 }: CalcSwapParams): Promise<CalcSwapResponse> => {
   const toNativeAmount = nativeAmount
@@ -780,8 +799,8 @@ const calcSwapTo = async ({
   }
   const streamParams = {
     ...noStreamParams,
-    streaming_interval: STREAMING_INTERVAL_DEFAULT,
-    streaming_quantity: STREAMING_QUANTITY_DEFAULT
+    streaming_interval: streamingInterval,
+    streaming_quantity: streamingQuantity
   }
 
   const bestQuote = await getBestQuote(
