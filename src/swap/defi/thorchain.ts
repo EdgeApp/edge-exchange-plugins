@@ -1,4 +1,4 @@
-import { div, gt, lt, mul, round, sub } from 'biggystring'
+import { add, div, gt, lt, mul, round, sub } from 'biggystring'
 import {
   asArray,
   asBoolean,
@@ -433,7 +433,24 @@ export function makeThorchainPlugin(
         affiliateFeeBasis
       })
     } else {
-      throw new SwapCurrencyError(swapInfo, request)
+      calcResponse = await calcSwapTo({
+        log,
+        fetch: fetchCors,
+        thornodes: thornodeServers,
+        thornodesFetchOptions: { headers },
+        fromWallet,
+        fromCurrencyCode,
+        toWallet,
+        toCurrencyCode,
+        toAddress,
+        nativeAmount,
+        minAmount,
+        sourcePool,
+        destPool,
+        thorname,
+        volatilitySpreadFinal,
+        affiliateFeeBasis
+      })
     }
     const {
       fromNativeAmount,
@@ -678,6 +695,124 @@ const calcSwapFrom = async ({
   log(`toNativeAmount: ${toNativeAmount}`)
 
   const memo = preMemo.replace('::', `:${toThorAmountWithSpread}:`)
+
+  return {
+    fromNativeAmount,
+    fromExchangeAmount,
+    toNativeAmount,
+    toExchangeAmount,
+    memo,
+    router,
+    thorAddress
+  }
+}
+
+const calcSwapTo = async ({
+  log,
+  fetch,
+  thornodes,
+  thornodesFetchOptions,
+  fromWallet,
+  fromCurrencyCode,
+  toWallet,
+  toCurrencyCode,
+  toAddress,
+  nativeAmount,
+  minAmount,
+  sourcePool,
+  destPool,
+  thorname,
+  volatilitySpreadFinal,
+  affiliateFeeBasis,
+  dontCheckLimits = false
+}: CalcSwapParams): Promise<CalcSwapResponse> => {
+  const toNativeAmount = nativeAmount
+
+  // Get exchange rate from source to destination asset
+  const toExchangeAmount = await toWallet.nativeToDenomination(
+    nativeAmount,
+    toCurrencyCode
+  )
+
+  const requestedToThorAmount = mul(toExchangeAmount, THOR_LIMIT_UNITS)
+
+  log(`toExchangeAmount: ${toExchangeAmount}`)
+
+  // Convert to a 'from' amount using pool rates
+  const sourcePrice = sourcePool.assetPrice
+  const destPrice = destPool.assetPrice
+
+  const requestedFromExchangeAmount = mul(
+    toExchangeAmount,
+    div(destPrice, sourcePrice, DIVIDE_PRECISION)
+  )
+
+  const requestedFromThorAmount = round(
+    mul(requestedFromExchangeAmount, THOR_LIMIT_UNITS),
+    0
+  )
+
+  const queryParams = makeQueryParams({
+    amount: requestedFromThorAmount,
+    from_asset: sourcePool.asset,
+    to_asset: destPool.asset,
+    destination: toAddress,
+    affiliate: thorname,
+    affiliate_bps: affiliateFeeBasis
+  })
+
+  const response = await fetchWaterfall(
+    fetch,
+    thornodes,
+    `thorchain/quote/swap?${queryParams}`,
+    thornodesFetchOptions
+  )
+
+  let json: string
+  try {
+    json = await response.json()
+  } catch (e) {
+    const text = await response.text()
+    log(`Error: ${text}`)
+    throw e
+  }
+  const quote = asQuoteSwap(json)
+  const {
+    expected_amount_out: toThorAmount,
+    inbound_address: thorAddress,
+    memo: preMemo,
+    router
+  } = quote
+
+  // Get the percent drop from the 'to' amount the user wanted compared to the
+  // 'to' amount returned by the API. Add that percent to the 'from' amount to
+  // estimate how much more the user has to send.
+  const feeRatio = div(requestedToThorAmount, toThorAmount, DIVIDE_PRECISION)
+  log(`feeRatio: ${feeRatio}`)
+
+  const fromThorAmount = mul(requestedFromThorAmount, feeRatio)
+  log(`volatilitySpreadFinal: ${volatilitySpreadFinal}`)
+  const fromThorAmountWithSpread = round(
+    mul(add('1', volatilitySpreadFinal), fromThorAmount),
+    0
+  )
+  log(`fromThorAmountWithSpread = limit: ${fromThorAmountWithSpread}`)
+
+  const fromExchangeAmount = div(
+    fromThorAmountWithSpread,
+    THOR_LIMIT_UNITS,
+    DIVIDE_PRECISION
+  )
+  log(`fromExchangeAmount: ${fromExchangeAmount}`)
+
+  const fromNativeAmountFloat = await toWallet.denominationToNative(
+    fromExchangeAmount,
+    toCurrencyCode
+  )
+  const fromNativeAmount = round(fromNativeAmountFloat, 0)
+  log(`fromNativeAmount: ${fromNativeAmount}`)
+
+  const memo = preMemo.replace('::', `:${requestedToThorAmount}:`)
 
   return {
     fromNativeAmount,
