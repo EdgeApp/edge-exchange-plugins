@@ -11,6 +11,7 @@ import {
   EdgeCorePluginOptions,
   EdgeCurrencyWallet,
   EdgeFetchFunction,
+  EdgeFetchOptions,
   EdgeSpendInfo,
   EdgeSwapInfo,
   EdgeSwapPlugin,
@@ -35,7 +36,8 @@ import {
   fetchWaterfall,
   getAddress,
   makeQueryParams,
-  promiseWithTimeout
+  promiseWithTimeout,
+  QueryParams
 } from '../../util/utils'
 import { EdgeSwapRequestPlugin } from '../types'
 import { getEvmApprovalData, getEvmTokenData } from './defiUtils'
@@ -64,7 +66,10 @@ export const EVM_SEND_GAS = '80000'
 export const EVM_TOKEN_SEND_GAS = '80000'
 export const MIN_USD_SWAP = '10'
 export const THOR_LIMIT_UNITS = '100000000'
-export const STREAMING_INTERVAL_DEFAULT = 10
+const STREAMING_INTERVAL_DEFAULT = 10
+const STREAMING_QUANTITY_DEFAULT = 10
+const STREAMING_INTERVAL_NOSTREAM = 1
+const STREAMING_QUANTITY_NOSTREAM = 1
 
 // ----------------------------------------------------------------------------
 // Volatility spread logic
@@ -205,7 +210,7 @@ export const asExchangeInfo = asObject({
 const asPools = asArray(asPool)
 
 const asQuoteSwap = asObject({
-  expected_amount_out: asString, // "61409897"
+  // expected_amount_out: asString, // "61409897"
   expected_amount_out_streaming: asString, // "62487221"
   expiry: asNumber, // 1692149478
   // fees: asObject({
@@ -219,13 +224,14 @@ const asQuoteSwap = asObject({
   // outbound_delay_blocks: asNumber, // 114,
   // outbound_delay_seconds: asNumber, // 684,
   // recommended_min_amount_in: asString, // "1440032",
-  router: asOptional(asString) // "0xD37BbE5744D730a1d98d8DC97c42F0Ca46aD7146",
+  router: asOptional(asString), // "0xD37BbE5744D730a1d98d8DC97c42F0Ca46aD7146",
   // slippage_bps: asNumber, // 92,
   // streaming_slippage_bps: asNumber, // 5,
-  // streaming_swap_blocks: asNumber, // 170,
-  // total_swap_seconds: asNumber // 1020,
+  streaming_swap_blocks: asNumber, // 170,
+  total_swap_seconds: asNumber // 1020,
 })
 
+type QuoteSwap = ReturnType<typeof asQuoteSwap>
 type AssetSpread = ReturnType<typeof asAssetSpread>
 type Pool = ReturnType<typeof asPool>
 type ExchangeInfo = ReturnType<typeof asExchangeInfo>
@@ -251,8 +257,10 @@ interface CalcSwapParams {
 }
 
 interface CalcSwapResponse {
+  canBePartial: boolean
   fromNativeAmount: string
   fromExchangeAmount: string
+  maxFulfillmentSeconds: number
   toNativeAmount: string
   toExchangeAmount: string
   thorAddress: string
@@ -453,7 +461,9 @@ export function makeThorchainPlugin(
       })
     }
     const {
+      canBePartial,
       fromNativeAmount,
+      maxFulfillmentSeconds,
       toNativeAmount,
       router,
       thorAddress
@@ -557,6 +567,8 @@ export function makeThorchainPlugin(
     }
 
     return {
+      canBePartial,
+      maxFulfillmentSeconds,
       request,
       spendInfo,
       swapInfo,
@@ -641,37 +653,39 @@ const calcSwapFrom = async ({
 
   const fromThorAmount = mul(fromExchangeAmount, THOR_LIMIT_UNITS)
 
-  const queryParams = makeQueryParams({
+  const noStreamParams = {
     amount: fromThorAmount,
     from_asset: sourcePool.asset,
     to_asset: destPool.asset,
     destination: toAddress,
     affiliate: thorname,
-    affiliate_bps: affiliateFeeBasis
-  })
+    affiliate_bps: affiliateFeeBasis,
+    streaming_interval: STREAMING_INTERVAL_NOSTREAM,
+    streaming_quantity: STREAMING_QUANTITY_NOSTREAM
+  }
 
-  const response = await fetchWaterfall(
+  const streamParams = {
+    ...noStreamParams,
+    streaming_interval: STREAMING_INTERVAL_DEFAULT,
+    streaming_quantity: STREAMING_QUANTITY_DEFAULT
+  }
+  const bestQuote = await getBestQuote(
+    [noStreamParams, streamParams],
     fetch,
     thornodes,
-    `thorchain/quote/swap?${queryParams}`,
     thornodesFetchOptions
   )
 
-  let json: string
-  try {
-    json = await response.json()
-  } catch (e) {
-    const text = await response.text()
-    log(`Error: ${text}`)
-    throw e
-  }
-  const quote = asQuoteSwap(json)
   const {
-    expected_amount_out: toThorAmount,
+    expected_amount_out_streaming: toThorAmount,
     inbound_address: thorAddress,
     memo: preMemo,
-    router
-  } = quote
+    router,
+    streaming_swap_blocks: streamingSwapBlocks,
+    total_swap_seconds: maxFulfillmentSeconds
+  } = bestQuote
+
+  const canBePartial = streamingSwapBlocks > 1
 
   log(`volatilitySpreadFinal: ${volatilitySpreadFinal}`)
   const toThorAmountWithSpread = round(
@@ -694,11 +708,13 @@ const calcSwapFrom = async ({
   const toNativeAmount = round(toNativeAmountFloat, 0)
   log(`toNativeAmount: ${toNativeAmount}`)
 
-  const memo = preMemo.replace('::', `:${toThorAmountWithSpread}:`)
+  const memo = preMemo.replace(':0/', `:${toThorAmountWithSpread}/`)
 
   return {
+    canBePartial,
     fromNativeAmount,
     fromExchangeAmount,
+    maxFulfillmentSeconds,
     toNativeAmount,
     toExchangeAmount,
     memo,
@@ -752,37 +768,39 @@ const calcSwapTo = async ({
     0
   )
 
-  const queryParams = makeQueryParams({
+  const noStreamParams = {
     amount: requestedFromThorAmount,
     from_asset: sourcePool.asset,
     to_asset: destPool.asset,
     destination: toAddress,
     affiliate: thorname,
-    affiliate_bps: affiliateFeeBasis
-  })
+    affiliate_bps: affiliateFeeBasis,
+    streaming_interval: STREAMING_INTERVAL_NOSTREAM,
+    streaming_quantity: STREAMING_QUANTITY_NOSTREAM
+  }
+  const streamParams = {
+    ...noStreamParams,
+    streaming_interval: STREAMING_INTERVAL_DEFAULT,
+    streaming_quantity: STREAMING_QUANTITY_DEFAULT
+  }
 
-  const response = await fetchWaterfall(
+  const bestQuote = await getBestQuote(
+    [noStreamParams, streamParams],
     fetch,
     thornodes,
-    `thorchain/quote/swap?${queryParams}`,
     thornodesFetchOptions
   )
 
-  let json: string
-  try {
-    json = await response.json()
-  } catch (e) {
-    const text = await response.text()
-    log(`Error: ${text}`)
-    throw e
-  }
-  const quote = asQuoteSwap(json)
   const {
-    expected_amount_out: toThorAmount,
+    expected_amount_out_streaming: toThorAmount,
     inbound_address: thorAddress,
     memo: preMemo,
-    router
-  } = quote
+    router,
+    streaming_swap_blocks: streamingSwapBlocks,
+    total_swap_seconds: maxFulfillmentSeconds
+  } = bestQuote
+
+  const canBePartial = streamingSwapBlocks > 1
 
   // Get the percent drop from the 'to' amount the user wanted compared to the
   // 'to' amount returned by the API. Add that percent to the 'from' amount to
@@ -812,13 +830,15 @@ const calcSwapTo = async ({
   const fromNativeAmount = round(fromNativeAmountFloat, 0)
   log(`fromNativeAmount: ${fromNativeAmount}`)
 
-  const memo = preMemo.replace('::', `:${requestedToThorAmount}:`)
+  const memo = preMemo.replace(':0/', `:${requestedToThorAmount}/`)
 
   return {
+    canBePartial,
     fromNativeAmount,
     fromExchangeAmount,
     toNativeAmount,
     toExchangeAmount,
+    maxFulfillmentSeconds,
     memo,
     router,
     thorAddress
@@ -834,6 +854,75 @@ type ChainTypes =
   | 'AVAX'
   | 'BNB'
   | 'THOR'
+
+const getBestQuote = async (
+  params: QueryParams[],
+  fetch: EdgeFetchFunction,
+  thornodes: string[],
+  thornodesFetchOptions: EdgeFetchOptions
+): Promise<QuoteSwap> => {
+  const quotes = await Promise.all(
+    params.map(
+      async p => await getQuote(p, fetch, thornodes, thornodesFetchOptions)
+    )
+  )
+
+  let bestQuote: QuoteSwap | undefined
+  for (const quote of quotes) {
+    if (quote == null) continue
+    if (bestQuote == null) {
+      bestQuote = quote
+      continue
+    }
+    if (
+      gt(
+        quote.expected_amount_out_streaming,
+        bestQuote.expected_amount_out_streaming
+      )
+    ) {
+      bestQuote = quote
+    }
+  }
+
+  if (bestQuote == null) {
+    throw new Error('Could not get quote')
+  }
+  return bestQuote
+}
+
+/**
+ * getQuote must not throw!
+ */
+const getQuote = async (
+  queryParams: QueryParams,
+  fetch: EdgeFetchFunction,
+  thornodes: string[],
+  thornodesFetchOptions: EdgeFetchOptions
+): Promise<QuoteSwap | undefined> => {
+  const params = makeQueryParams(queryParams)
+
+  try {
+    const response = await fetchWaterfall(
+      fetch,
+      thornodes,
+      `thorchain/quote/swap?${params}`,
+      thornodesFetchOptions
+    )
+    let json
+    try {
+      json = await response.json()
+    } catch (e) {
+      const text = await response.text()
+      console.error(text)
+      return
+    }
+    console.log('cleaning')
+    const quote = asQuoteSwap(json)
+    return quote
+  } catch (e) {
+    console.error(`getQuote throw ${String(e)}`)
+  }
+}
 
 export const getGasLimit = (
   chain: ChainTypes,
