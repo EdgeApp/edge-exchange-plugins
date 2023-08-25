@@ -9,6 +9,7 @@ import fs from 'fs'
 import edgeExchangePlugins from '../src'
 import { arrrCurrencyInfo } from './fakeArrrInfo'
 import { avaxCurrencyInfo } from './fakeAvaxInfo'
+import { bchCurrencyInfo } from './fakeBchInfo'
 import { btcCurrencyInfo } from './fakeBtcInfo'
 import { makeFakePlugin } from './fakeCurrencyPlugin'
 import { ethCurrencyInfo } from './fakeEthInfo'
@@ -19,6 +20,7 @@ const DUMP_USER_FILE = './test/fakeUserDump.json'
 async function main(): Promise<void> {
   const allPlugins = {
     bitcoin: makeFakePlugin(btcCurrencyInfo),
+    bitcoincash: makeFakePlugin(bchCurrencyInfo),
     ethereum: makeFakePlugin(ethCurrencyInfo),
     avalanche: makeFakePlugin(avaxCurrencyInfo),
     piratechain: makeFakePlugin(arrrCurrencyInfo),
@@ -37,6 +39,7 @@ async function main(): Promise<void> {
     appId: '',
     plugins: {
       bitcoin: true,
+      bitcoincash: true,
       ethereum: true,
       avalanche: true,
       piratechain: true,
@@ -52,6 +55,10 @@ async function main(): Promise<void> {
   await account.createCurrencyWallet('wallet:bitcoin', {
     fiatCurrencyCode: 'iso:EUR',
     name: 'My Fake Bitcoin'
+  })
+  await account.createCurrencyWallet('wallet:bitcoincash', {
+    fiatCurrencyCode: 'iso:USD',
+    name: 'My Fake Bitcoin Cash'
   })
   await account.createCurrencyWallet('wallet:piratechain', {
     fiatCurrencyCode: 'iso:EUR',
@@ -85,7 +92,7 @@ async function main(): Promise<void> {
 
   const data = await world.dumpFakeUser(account)
   const dump = {
-    loginKey: account.getLoginKey(),
+    loginKey: await account.getLoginKey(),
     data
   }
   fs.writeFileSync(DUMP_USER_FILE, JSON.stringify(dump, null, 2), {
