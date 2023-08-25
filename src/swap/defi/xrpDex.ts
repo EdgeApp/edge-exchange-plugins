@@ -1,4 +1,4 @@
-import { round } from 'biggystring'
+import { round, sub } from 'biggystring'
 import { asArray, asNumber, asObject, asOptional, asString } from 'cleaners'
 import {
   EdgeCorePluginOptions,
@@ -7,6 +7,7 @@ import {
   EdgeSwapQuote,
   EdgeSwapRequest,
   EdgeTxSwap,
+  JsonObject,
   SwapCurrencyError
 } from 'edge-core-js/types'
 import { Client } from 'xrpl'
@@ -40,6 +41,7 @@ const DEX_MAX_FULLFILLMENT_TIME_S = 5 * 60 // 5 mins
 const RIPPLE_SERVERS_DEFAULT = ['wss://s2.ripple.com']
 const EXCHANGE_INFO_UPDATE_FREQ_MS = 60000
 const VOLATILITY_SPREAD_DEFAULT = 0.0075
+const DUMMY_XRP_ADDRESS = 'rfuESo7eHUnvebxgaFjfYxfwXhM2uBPAj3'
 
 export const asExchangeInfo = asObject({
   swap: asObject({
@@ -241,10 +243,39 @@ export function makeXrpDexPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
   const out: EdgeSwapPlugin = {
     swapInfo,
 
-    async fetchSwapQuote(req: EdgeSwapRequest): Promise<EdgeSwapQuote> {
+    async fetchSwapQuote(
+      req: EdgeSwapRequest,
+      userSettings: JsonObject | undefined,
+      opts: { promoCode?: string }
+    ): Promise<EdgeSwapQuote> {
       const request = convertRequest(req)
+      const { fromCurrencyCode, fromTokenId, fromWallet, quoteFor } = request
 
-      const swapOrder = await fetchSwapQuoteInner(request)
+      let swapOrder: SwapOrder
+      if (quoteFor === 'max') {
+        request.quoteFor = 'from'
+        request.nativeAmount = fromWallet.balances[fromCurrencyCode]
+        swapOrder = await fetchSwapQuoteInner(request)
+        if (fromTokenId == null) {
+          // We can swap all mainnet coins minus the expected fee
+          const quote = await makeSwapPluginQuote(swapOrder)
+          const swapFee = quote.networkFee.nativeAmount
+
+          // Get the balance of the wallet minus reserve
+          const maxSpendable = await fromWallet.getMaxSpendable({
+            currencyCode: fromCurrencyCode,
+            spendTargets: [
+              {
+                publicAddress: DUMMY_XRP_ADDRESS
+              }
+            ]
+          })
+          request.nativeAmount = sub(maxSpendable, swapFee)
+          return await this.fetchSwapQuote(request, userSettings, opts)
+        }
+      } else {
+        swapOrder = await fetchSwapQuoteInner(request)
+      }
       return await makeSwapPluginQuote(swapOrder)
     }
   }
