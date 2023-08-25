@@ -1,5 +1,9 @@
 # edge-exchange-plugins
 
+## 0.21.0 (2023-08-25)
+
+- Added: Thorchain streaming swaps
+
 ## 0.20.2 (2023-08-24)
 
 - Fixed: XRP DEX max swaps

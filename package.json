@@ -1,6 +1,6 @@
 {
   "name": "edge-exchange-plugins",
-  "version": "0.20.2",
+  "version": "0.21.0",
   "description": "Exchange-rate sources for the Edge core",
   "repository": {
     "type": "git",
