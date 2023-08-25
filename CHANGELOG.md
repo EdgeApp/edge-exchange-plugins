@@ -1,5 +1,9 @@
 # edge-exchange-plugins
 
+## 0.20.2 (2023-08-24)
+
+- Fixed: XRP DEX max swaps
+
 ## 0.20.1 (2023-08-15)
 
 - Fixed: LI.FI on-chain transactions no longer revert due to missing bridge fees
