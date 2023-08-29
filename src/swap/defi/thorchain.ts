@@ -79,6 +79,8 @@ const STREAMING_QUANTITY_NOSTREAM = 1
 // ----------------------------------------------------------------------------
 export const VOLATILITY_SPREAD_DEFAULT = 0.0075
 export const LIKE_KIND_VOLATILITY_SPREAD_DEFAULT = 0.005
+export const VOLATILITY_SPREAD_STREAMING_DEFAULT = 0.001
+export const LIKE_KIND_VOLATILITY_SPREAD_STREAMING_DEFAULT = 0
 export const PER_ASSET_SPREAD_DEFAULT: AssetSpread[] = [
   {
     sourcePluginId: 'bitcoin',
@@ -196,8 +198,11 @@ export const asExchangeInfo = asObject({
     plugins: asObject({
       thorchain: asObject({
         perAssetSpread: asArray(asAssetSpread),
+        perAssetSpreadStreaming: asOptional(asArray(asAssetSpread)),
         volatilitySpread: asNumber,
+        volatilitySpreadStreaming: asOptional(asNumber),
         likeKindVolatilitySpread: asNumber,
+        likeKindVolatilitySpreadStreaming: asOptional(asNumber),
         daVolatilitySpread: asNumber,
         midgardServers: asArray(asString),
         affiliateFeeBasis: asOptional(asString),
@@ -256,6 +261,7 @@ interface CalcSwapParams {
   destPool: Pool
   thorname: string
   volatilitySpreadFinal: string
+  volatilitySpreadStreamingFinal: string
   affiliateFeeBasis: string
   streamingInterval: number
   streamingQuantity: number
@@ -315,8 +321,11 @@ export function makeThorchainPlugin(
     let midgardServers: string[] = MIDGARD_SERVERS_DEFAULT
     let thornodeServers: string[] = THORNODE_SERVERS_DEFAULT
     let likeKindVolatilitySpread: number = LIKE_KIND_VOLATILITY_SPREAD_DEFAULT
+    let likeKindVolatilitySpreadStreaming: number = LIKE_KIND_VOLATILITY_SPREAD_STREAMING_DEFAULT
     let volatilitySpread: number = VOLATILITY_SPREAD_DEFAULT
+    let volatilitySpreadStreaming: number = VOLATILITY_SPREAD_STREAMING_DEFAULT
     let perAssetSpread: AssetSpread[] = PER_ASSET_SPREAD_DEFAULT
+    let perAssetSpreadStreaming: AssetSpread[] = PER_ASSET_SPREAD_DEFAULT
     let streamingInterval: number = STREAMING_INTERVAL_DEFAULT
     let streamingQuantity: number = STREAMING_QUANTITY_DEFAULT
 
@@ -364,9 +373,16 @@ export function makeThorchainPlugin(
       likeKindVolatilitySpread =
         exchangeInfo.swap.plugins.thorchain.likeKindVolatilitySpread
       volatilitySpread = thorchain.volatilitySpread
+      likeKindVolatilitySpreadStreaming =
+        exchangeInfo.swap.plugins.thorchain.likeKindVolatilitySpreadStreaming ??
+        likeKindVolatilitySpreadStreaming
+      volatilitySpreadStreaming =
+        thorchain.volatilitySpreadStreaming ?? volatilitySpreadStreaming
       midgardServers = thorchain.midgardServers
       thornodeServers = thorchain.thornodeServers ?? thornodeServers
       perAssetSpread = thorchain.perAssetSpread
+      perAssetSpreadStreaming =
+        thorchain.perAssetSpreadStreaming ?? perAssetSpreadStreaming
       affiliateFeeBasis = thorchain.affiliateFeeBasis ?? affiliateFeeBasis
       streamingInterval = thorchain.streamingInterval ?? streamingInterval
       streamingQuantity = thorchain.streamingQuantity ?? streamingQuantity
@@ -384,7 +400,22 @@ export function makeThorchainPlugin(
       perAssetSpread
     })
 
-    log.warn(`getVolatilitySpread: ${volatilitySpreadFinal.toString()}`)
+    const volatilitySpreadStreamingFinal = getVolatilitySpread({
+      fromPluginId: fromWallet.currencyInfo.pluginId,
+      fromTokenId,
+      fromCurrencyCode,
+      toPluginId: toWallet.currencyInfo.pluginId,
+      toTokenId,
+      toCurrencyCode,
+      likeKindVolatilitySpread: likeKindVolatilitySpreadStreaming,
+      volatilitySpread: volatilitySpreadStreaming,
+      perAssetSpread: perAssetSpreadStreaming
+    })
+
+    log.warn(`volatilitySpreadFinal: ${volatilitySpreadFinal.toString()}`)
+    log.warn(
+      `volatilitySpreadStreamingFinal: ${volatilitySpreadStreamingFinal.toString()}`
+    )
 
     // Get current pool
     const poolResponse = await fetchWaterfall(
@@ -449,6 +480,7 @@ export function makeThorchainPlugin(
         destPool,
         thorname,
         volatilitySpreadFinal,
+        volatilitySpreadStreamingFinal,
         affiliateFeeBasis,
         streamingInterval,
         streamingQuantity
@@ -470,6 +502,7 @@ export function makeThorchainPlugin(
         destPool,
         thorname,
         volatilitySpreadFinal,
+        volatilitySpreadStreamingFinal,
         affiliateFeeBasis,
         streamingInterval,
         streamingQuantity
@@ -623,6 +656,7 @@ const calcSwapFrom = async ({
   destPool,
   thorname,
   volatilitySpreadFinal,
+  volatilitySpreadStreamingFinal,
   affiliateFeeBasis,
   streamingInterval,
   streamingQuantity,
@@ -703,12 +737,21 @@ const calcSwapFrom = async ({
   } = bestQuote
 
   const canBePartial = streamingSwapBlocks > 1
+  let toThorAmountWithSpread: string
+  if (canBePartial) {
+    log(`volatilitySpreadStreamingFinal: ${volatilitySpreadStreamingFinal}`)
+    toThorAmountWithSpread = round(
+      mul(sub('1', volatilitySpreadStreamingFinal), toThorAmount),
+      0
+    )
+  } else {
+    log(`volatilitySpreadFinal: ${volatilitySpreadFinal}`)
+    toThorAmountWithSpread = round(
+      mul(sub('1', volatilitySpreadFinal), toThorAmount),
+      0
+    )
+  }
 
-  log(`volatilitySpreadFinal: ${volatilitySpreadFinal}`)
-  const toThorAmountWithSpread = round(
-    mul(sub('1', volatilitySpreadFinal), toThorAmount),
-    0
-  )
   log(`toThorAmountWithSpread = limit: ${toThorAmountWithSpread}`)
 
   const toExchangeAmount = div(
@@ -756,6 +799,7 @@ const calcSwapTo = async ({
   destPool,
   thorname,
   volatilitySpreadFinal,
+  volatilitySpreadStreamingFinal,
   affiliateFeeBasis,
   streamingInterval,
   streamingQuantity,
@@ -828,11 +872,22 @@ const calcSwapTo = async ({
   log(`feeRatio: ${feeRatio}`)
 
   const fromThorAmount = mul(requestedFromThorAmount, feeRatio)
-  log(`volatilitySpreadFinal: ${volatilitySpreadFinal}`)
-  const fromThorAmountWithSpread = round(
-    mul(add('1', volatilitySpreadFinal), fromThorAmount),
-    0
-  )
+
+  let fromThorAmountWithSpread: string
+  if (canBePartial) {
+    log(`volatilitySpreadStreamingFinal: ${volatilitySpreadStreamingFinal}`)
+    fromThorAmountWithSpread = round(
+      mul(add('1', volatilitySpreadStreamingFinal), fromThorAmount),
+      0
+    )
+  } else {
+    log(`volatilitySpreadFinal: ${volatilitySpreadFinal}`)
+    fromThorAmountWithSpread = round(
+      mul(add('1', volatilitySpreadFinal), fromThorAmount),
+      0
+    )
+  }
+
   log(`fromThorAmountWithSpread = limit: ${fromThorAmountWithSpread}`)
 
   const fromExchangeAmount = div(
