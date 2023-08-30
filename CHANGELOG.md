@@ -1,5 +1,9 @@
 # edge-exchange-plugins
 
+## 0.21.1 (2023-08-30)
+
+- Fixed: Separate Thorchain volatility spreads between streaming and non-streaming
+
 ## 0.21.0 (2023-08-25)
 
 - Added: Thorchain streaming swaps
