@@ -1,5 +1,9 @@
 # edge-exchange-plugins
 
+## 0.21.2 (2023-09-4)
+
+- changed: Use RPC gas estimates for Uniswap plugin
+
 ## 0.21.1 (2023-08-30)
 
 - Fixed: Separate Thorchain volatility spreads between streaming and non-streaming
