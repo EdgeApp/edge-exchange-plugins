@@ -237,7 +237,7 @@ const asQuoteSwap = asObject({
   // slippage_bps: asNumber, // 92,
   // streaming_slippage_bps: asNumber, // 5,
   streaming_swap_blocks: asNumber, // 170,
-  total_swap_seconds: asNumber // 1020,
+  total_swap_seconds: asOptional(asNumber) // 1020,
 })
 
 type QuoteSwap = ReturnType<typeof asQuoteSwap>
@@ -272,7 +272,7 @@ interface CalcSwapResponse {
   canBePartial: boolean
   fromNativeAmount: string
   fromExchangeAmount: string
-  maxFulfillmentSeconds: number
+  maxFulfillmentSeconds?: number
   toNativeAmount: string
   toExchangeAmount: string
   thorAddress: string
