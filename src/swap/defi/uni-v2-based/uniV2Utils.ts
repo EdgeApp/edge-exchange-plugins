@@ -54,6 +54,15 @@ export const getSwapTransactions = async (
     isToWrappedCurrency
   } = inOutAddresses
 
+  const withEstimatedGas = async (
+    ethersTx: ethers.PopulatedTransaction | Promise<ethers.PopulatedTransaction>
+  ): Promise<ethers.PopulatedTransaction> => {
+    const tx = await ethersTx
+    const estimate = await provider.estimateGas(tx)
+    tx.gasLimit = estimate.mul(5).div(4) // Add 25% extra gas limit buffer; 5/4=1.25
+    return tx
+  }
+
   // Determine router method name and params
   if (isFromNativeCurrency && isToNativeCurrency)
     throw new Error('Invalid swap: Cannot swap to the same native currency')
@@ -68,10 +77,12 @@ export const getSwapTransactions = async (
     contractAddress: string
   ): Promise<ethers.PopulatedTransaction> => {
     const tokenContract = makeErc20Contract(provider, tokenAddress)
-    const promise = tokenContract.populateTransaction.approve(
-      contractAddress,
-      BigNumber.from(amountToSwap),
-      { gasLimit: '60000', gasPrice }
+    const promise = withEstimatedGas(
+      tokenContract.populateTransaction.approve(
+        contractAddress,
+        BigNumber.from(amountToSwap),
+        { gasPrice }
+      )
     )
     return await promise
   }
@@ -81,23 +92,23 @@ export const getSwapTransactions = async (
   // Deposit native currency for wrapped token
   if (isFromNativeCurrency && isToWrappedCurrency) {
     txPromises.push(
-      ...[
+      withEstimatedGas(
         wrappedTokenContract.populateTransaction.deposit({
-          gasLimit: '60000',
           gasPrice,
           value: amountToSwap
         })
-      ]
+      )
     )
   }
   // Withdraw wrapped token for native currency
   else if (isFromWrappedCurrency && isToNativeCurrency) {
     txPromises.push(
       // Deposit Tx
-      wrappedTokenContract.populateTransaction.withdraw(amountToSwap, {
-        gasLimit: '60000',
-        gasPrice
-      })
+      withEstimatedGas(
+        wrappedTokenContract.populateTransaction.withdraw(amountToSwap, {
+          gasPrice
+        })
+      )
     )
   }
   // Swap native currency for token
@@ -106,12 +117,15 @@ export const getSwapTransactions = async (
     if (isFromNativeCurrency && !isToNativeCurrency) {
       txPromises.push(
         // Swap Tx
-        router.populateTransaction.swapExactETHForTokens(
-          round(mul(expectedAmountOut, slippageMultiplier), 0),
-          path,
-          toAddress,
-          deadline,
-          { gasLimit: '250000', gasPrice, value: amountToSwap }
+
+        withEstimatedGas(
+          router.populateTransaction.swapExactETHForTokens(
+            round(mul(expectedAmountOut, slippageMultiplier), 0),
+            path,
+            toAddress,
+            deadline,
+            { gasPrice, value: amountToSwap }
+          )
         )
       )
     }
@@ -121,13 +135,15 @@ export const getSwapTransactions = async (
         // Approve TX
         addressToApproveTx(fromTokenAddress, router.address),
         // Swap Tx
-        router.populateTransaction.swapExactTokensForETH(
-          amountToSwap,
-          round(mul(expectedAmountOut, slippageMultiplier), 0),
-          path,
-          toAddress,
-          deadline,
-          { gasLimit: '250000', gasPrice }
+        withEstimatedGas(
+          router.populateTransaction.swapExactTokensForETH(
+            amountToSwap,
+            round(mul(expectedAmountOut, slippageMultiplier), 0),
+            path,
+            toAddress,
+            deadline,
+            { gasPrice }
+          )
         )
       )
     }
@@ -137,13 +153,15 @@ export const getSwapTransactions = async (
         // Approve TX
         addressToApproveTx(fromTokenAddress, router.address),
         // Swap Tx
-        router.populateTransaction.swapExactTokensForTokens(
-          amountToSwap,
-          round(mul(expectedAmountOut, slippageMultiplier), 0),
-          path,
-          toAddress,
-          deadline,
-          { gasLimit: '600000', gasPrice }
+        withEstimatedGas(
+          router.populateTransaction.swapExactTokensForTokens(
+            amountToSwap,
+            round(mul(expectedAmountOut, slippageMultiplier), 0),
+            path,
+            toAddress,
+            deadline,
+            { gasPrice }
+          )
         )
       )
     } else {
