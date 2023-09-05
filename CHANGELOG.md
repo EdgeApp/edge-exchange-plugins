@@ -1,6 +1,10 @@
 # edge-exchange-plugins
 
-## 0.21.2 (2023-09-4)
+## 0.21.3 (2023-09-05)
+
+- fixed: Thorchain failed quotes from ETH>BTC
+
+## 0.21.2 (2023-09-04)
 
 - changed: Use RPC gas estimates for Uniswap plugin
 
