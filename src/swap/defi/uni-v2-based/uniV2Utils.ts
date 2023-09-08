@@ -58,8 +58,13 @@ export const getSwapTransactions = async (
     ethersTx: ethers.PopulatedTransaction | Promise<ethers.PopulatedTransaction>
   ): Promise<ethers.PopulatedTransaction> => {
     const tx = await ethersTx
-    const estimate = await provider.estimateGas(tx)
-    tx.gasLimit = estimate.mul(5).div(4) // Add 25% extra gas limit buffer; 5/4=1.25
+    tx.gasLimit = await provider
+      .estimateGas(tx)
+      .then(
+        estimate => estimate.mul(5).div(4)
+        /* Add 25% extra gas limit buffer; 5/4=1.25 */
+      )
+      .catch(_ => tx.gasLimit)
     return tx
   }
 
@@ -81,7 +86,7 @@ export const getSwapTransactions = async (
       tokenContract.populateTransaction.approve(
         contractAddress,
         BigNumber.from(amountToSwap),
-        { gasPrice }
+        { gasLimit: '60000', gasPrice }
       )
     )
     return await promise
@@ -94,6 +99,7 @@ export const getSwapTransactions = async (
     txPromises.push(
       withEstimatedGas(
         wrappedTokenContract.populateTransaction.deposit({
+          gasLimit: '60000',
           gasPrice,
           value: amountToSwap
         })
@@ -106,6 +112,7 @@ export const getSwapTransactions = async (
       // Deposit Tx
       withEstimatedGas(
         wrappedTokenContract.populateTransaction.withdraw(amountToSwap, {
+          gasLimit: '60000',
           gasPrice
         })
       )
@@ -124,7 +131,7 @@ export const getSwapTransactions = async (
             path,
             toAddress,
             deadline,
-            { gasPrice, value: amountToSwap }
+            { gasLimit: '250000', gasPrice, value: amountToSwap }
           )
         )
       )
@@ -142,7 +149,7 @@ export const getSwapTransactions = async (
             path,
             toAddress,
             deadline,
-            { gasPrice }
+            { gasLimit: '250000', gasPrice }
           )
         )
       )
@@ -160,7 +167,7 @@ export const getSwapTransactions = async (
             path,
             toAddress,
             deadline,
-            { gasPrice }
+            { gasLimit: '600000', gasPrice }
           )
         )
       )
