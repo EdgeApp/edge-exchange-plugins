@@ -1,5 +1,9 @@
 # edge-exchange-plugins
 
+## 0.21.4 (2023-09-08)
+
+- fixed: Uniswap plugin uses backup gasLimit in case estimateGas fails
+
 ## 0.21.3 (2023-09-05)
 
 - fixed: Thorchain failed quotes from ETH>BTC
