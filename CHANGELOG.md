@@ -1,5 +1,9 @@
 # edge-exchange-plugins
 
+## 0.21.5 (2023-09-13)
+
+- fixed: Fix 'to' quotes in Thorchain using incorrect denomination
+
 ## 0.21.4 (2023-09-08)
 
 - fixed: Uniswap plugin uses backup gasLimit in case estimateGas fails
