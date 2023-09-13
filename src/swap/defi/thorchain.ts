@@ -897,9 +897,9 @@ const calcSwapTo = async ({
   )
   log(`fromExchangeAmount: ${fromExchangeAmount}`)
 
-  const fromNativeAmountFloat = await toWallet.denominationToNative(
+  const fromNativeAmountFloat = await fromWallet.denominationToNative(
     fromExchangeAmount,
-    toCurrencyCode
+    fromCurrencyCode
   )
   const fromNativeAmount = round(fromNativeAmountFloat, 0)
   log(`fromNativeAmount: ${fromNativeAmount}`)
