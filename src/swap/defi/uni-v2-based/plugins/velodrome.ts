@@ -128,12 +128,9 @@ export function makeVelodromePlugin(
         currencyCode: request.fromCurrencyCode, // what is being sent out, only if token. Blank if not token
         spendTargets: [
           {
+            memo: swapTx.data,
             nativeAmount: swapTx.value != null ? swapTx.value.toString() : '0', // biggy/number string integer
-            publicAddress: swapTx.to,
-
-            otherParams: {
-              data: swapTx.data
-            }
+            publicAddress: swapTx.to
           }
         ],
         customNetworkFee: {
