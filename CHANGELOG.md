@@ -1,5 +1,10 @@
 # edge-exchange-plugins
 
+## 0.21.6 (2023-09-14)
+
+- changed: Move EVM data from spendTarget `otherParams` to `memo`
+- fixed: `gasLimit`` param typo
+
 ## 0.21.5 (2023-09-13)
 
 - fixed: Fix 'to' quotes in Thorchain using incorrect denomination
