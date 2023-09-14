@@ -126,7 +126,7 @@ export function makeSpookySwapPlugin(
             swapTx.gasPrice != null
               ? ethers.utils.formatUnits(swapTx.gasPrice, 'gwei').toString()
               : '0',
-          gasLimits: swapTx.gasLimit?.toString() ?? '0'
+          gasLimit: swapTx.gasLimit?.toString() ?? '0'
         },
         networkFeeOption: 'custom',
         swapData: {
