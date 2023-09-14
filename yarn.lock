@@ -2684,10 +2684,10 @@ duplexer3@^0.1.4:
   resolved "https://registry.yarnpkg.com/duplexer3/-/duplexer3-0.1.4.tgz#ee01dd1cac0ed3cbc7fdbea37dc0a8f1ce002ce2"
   integrity sha1-7gHdHKwO08vH/b6jfcCo8c4ALOI=
 
-edge-core-js@^1.4.0:
-  version "1.4.0"
-  resolved "https://registry.yarnpkg.com/edge-core-js/-/edge-core-js-1.4.0.tgz#6e11c27cd6917d109ebf3600a0bc10afddb45508"
-  integrity sha512-xemar4vYRSJPwTFuA+MPJZw+gSPBg8Larhcw2/PbUDhQMnwHct6UVoxhn1YsVZK3vj7HnBEDeZC98nttQNdQXw==
+edge-core-js@^1.7.0:
+  version "1.7.0"
+  resolved "https://registry.yarnpkg.com/edge-core-js/-/edge-core-js-1.7.0.tgz#c728cc8b904193bf5fd32b6003672bcd0757cc5f"
+  integrity sha512-t88JaqM0X030/X2KGeJuIAqRlSfxI83Hg5+0V1q4bfaVXHRpmbdaiiWXliUteB7mlMePu3uuslzRVmAgGOpwdQ==
   dependencies:
     aes-js "^3.1.0"
     base-x "^4.0.0"
@@ -2695,7 +2695,7 @@ edge-core-js@^1.4.0:
     cleaners "^0.3.14"
     currency-codes "^1.1.2"
     disklet "^0.5.2"
-    edge-sync-client "^0.2.7"
+    edge-sync-client "^0.2.8"
     elliptic "^6.4.0"
     hash.js "^1.1.7"
     hmac-drbg "^1.0.1"
@@ -2709,10 +2709,10 @@ edge-core-js@^1.4.0:
     yaob "^0.3.11"
     yavent "^0.1.3"
 
-edge-sync-client@^0.2.7:
-  version "0.2.7"
-  resolved "https://registry.yarnpkg.com/edge-sync-client/-/edge-sync-client-0.2.7.tgz#57041f1a17565f24750803a99aaea517361fe9e1"
-  integrity sha512-ySWvsvHisg3e5gV/KBQymt0Fos1Nqupb6fbvxn5YXM5SmsOWz2iGRqocSc/Qxyd85WV7G/DjpJ8zWVqf0eUTrg==
+edge-sync-client@^0.2.8:
+  version "0.2.8"
+  resolved "https://registry.yarnpkg.com/edge-sync-client/-/edge-sync-client-0.2.8.tgz#150c9d97676b5ddd158efd38565de1be29e525bc"
+  integrity sha512-5iaVYvws4fEk9gSkijo98nh46wyT2D0YSAYzwAyM4v/oHu+tVa18WrdGC+aP4HZVcrsg/LzrLu/NX9JyTsW9Cw==
   dependencies:
     base-x "^1.0.4"
     cleaners "^0.3.9"

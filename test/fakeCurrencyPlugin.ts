@@ -312,6 +312,7 @@ class FakeCurrencyEngine {
       currencyCode,
       date: defaultTx.date,
       isSend: true,
+      memos: [],
       nativeAmount: total,
       networkFee: tokenSpend ? '0' : this.defaultSettings.networkFee,
       parentNetworkFee: tokenSpend
