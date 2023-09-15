@@ -25,6 +25,7 @@ import {
   fetchWaterfall,
   getAddress,
   hexToDecimal,
+  makeEdgeMemos,
   makeQueryParams,
   promiseWithTimeout
 } from '../../util/utils'
@@ -311,11 +312,11 @@ export function makeLifiPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
         currencyCode: request.fromCurrencyCode,
         spendTargets: [
           {
-            memo: approvalData,
             nativeAmount: '0',
             publicAddress: fromContractAddress
           }
         ],
+        memos: makeEdgeMemos(request.fromWallet.currencyInfo, approvalData),
         networkFeeOption: 'custom',
         customNetworkFee: {
           gasPrice: gasPriceGwei
@@ -332,11 +333,11 @@ export function makeLifiPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
       currencyCode: request.fromCurrencyCode,
       spendTargets: [
         {
-          memo: data,
           nativeAmount: mul(transactionRequest.value, '1'),
           publicAddress: approvalAddress
         }
       ],
+      memos: makeEdgeMemos(request.fromWallet.currencyInfo, data),
       networkFeeOption: 'custom',
       customNetworkFee: {
         // XXX Hack. Lifi doesn't properly estimate ethereum gas limits. Increase by 40%

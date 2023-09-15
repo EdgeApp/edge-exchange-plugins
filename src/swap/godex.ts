@@ -28,7 +28,7 @@ import {
   makeSwapPluginQuote,
   SwapOrder
 } from '../swap-helpers'
-import { convertRequest, getAddress } from '../util/utils'
+import { convertRequest, getAddress, makeEdgeMemos } from '../util/utils'
 import { asNumberString, EdgeSwapRequestPlugin } from './types'
 
 const pluginId = 'godex'
@@ -267,10 +267,13 @@ export function makeGodexPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
       spendTargets: [
         {
           nativeAmount: fromNativeAmount,
-          publicAddress: quoteInfo.deposit,
-          uniqueIdentifier: quoteInfo.deposit_extra_id ?? undefined
+          publicAddress: quoteInfo.deposit
         }
       ],
+      memos: makeEdgeMemos(
+        request.fromWallet.currencyInfo,
+        quoteInfo.deposit_extra_id
+      ),
       networkFeeOption:
         request.fromCurrencyCode.toUpperCase() === 'BTC' ? 'high' : 'standard',
       swapData: {

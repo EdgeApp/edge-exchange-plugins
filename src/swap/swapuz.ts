@@ -29,7 +29,7 @@ import {
   SwapOrder
 } from '../swap-helpers'
 import { div18 } from '../util/biggystringplus'
-import { convertRequest, getAddress } from '../util/utils'
+import { convertRequest, getAddress, makeEdgeMemos } from '../util/utils'
 import { EdgeSwapRequestPlugin } from './types'
 
 const pluginId = 'swapuz'
@@ -181,10 +181,10 @@ export function makeSwapuzPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
         spendTargets: [
           {
             nativeAmount: request.nativeAmount,
-            publicAddress: addressFrom,
-            uniqueIdentifier: memoFrom
+            publicAddress: addressFrom
           }
         ],
+        memos: makeEdgeMemos(fromWallet.currencyInfo, memoFrom),
         networkFeeOption: fromCurrencyCode === 'BTC' ? 'high' : 'standard',
         swapData: {
           orderId: uid,

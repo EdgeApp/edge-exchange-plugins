@@ -35,6 +35,7 @@ import {
   fetchInfo,
   fetchWaterfall,
   getAddress,
+  makeEdgeMemos,
   makeQueryParams,
   promiseWithTimeout,
   QueryParams
@@ -564,11 +565,11 @@ export function makeThorchainPlugin(
         currencyCode: request.fromCurrencyCode,
         spendTargets: [
           {
-            memo: approvalData,
             nativeAmount: '0',
             publicAddress: sourceTokenContractAddress
           }
         ],
+        memos: makeEdgeMemos(request.fromWallet.currencyInfo, approvalData),
         metadata: {
           name: 'Thorchain',
           category: 'expense:Token Approval'
@@ -581,12 +582,11 @@ export function makeThorchainPlugin(
       currencyCode: request.fromCurrencyCode,
       spendTargets: [
         {
-          memo,
           nativeAmount: ethNativeAmount,
           publicAddress
         }
       ],
-
+      memos: makeEdgeMemos(request.fromWallet.currencyInfo, memo),
       swapData: {
         isEstimate: false,
         payoutAddress: toAddress,

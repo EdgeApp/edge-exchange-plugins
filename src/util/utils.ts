@@ -1,8 +1,10 @@
 import { add } from 'biggystring'
 import {
+  EdgeCurrencyInfo,
   EdgeCurrencyWallet,
   EdgeFetchFunction,
   EdgeFetchResponse,
+  EdgeMemo,
   EdgeSwapRequest
 } from 'edge-core-js'
 
@@ -185,4 +187,31 @@ export const hexToDecimal = (hex: string): string => {
   } else {
     return add(`0x${hex}`, '0')
   }
+}
+
+/**
+ * Helper utility to create the spend info memos array. It assumes the first
+ * memo type is the appropriate choice for unique identifiers and data blobs
+ */
+
+export const makeEdgeMemos = (
+  currencyInfo: EdgeCurrencyInfo,
+  text: string | undefined | null
+): EdgeMemo[] => {
+  if (text == null) return []
+
+  const defaultMemoType = currencyInfo.memoOptions?.[0]
+  if (defaultMemoType == null) {
+    throw new Error('Wallet does not support memos')
+  }
+
+  const { type, hidden, memoName } = defaultMemoType
+  return [
+    {
+      type,
+      value: text,
+      hidden,
+      memoName
+    }
+  ]
 }

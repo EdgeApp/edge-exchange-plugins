@@ -34,6 +34,7 @@ import {
   fetchInfo,
   fetchWaterfall,
   getAddress,
+  makeEdgeMemos,
   makeQueryParams,
   promiseWithTimeout
 } from '../../util/utils'
@@ -409,11 +410,11 @@ export function makeThorchainDaPlugin(
         currencyCode: fromMainnetCode,
         spendTargets: [
           {
-            memo: approvalData,
             nativeAmount: '0',
             publicAddress: sourceTokenContractAddress
           }
         ],
+        memos: makeEdgeMemos(request.fromWallet.currencyInfo, approvalData),
         metadata: {
           name: 'Thorchain DEX Aggregator',
           category: 'expense:Token Approval'
@@ -426,12 +427,11 @@ export function makeThorchainDaPlugin(
       currencyCode: request.fromCurrencyCode,
       spendTargets: [
         {
-          memo,
           nativeAmount: ethNativeAmount,
           publicAddress
         }
       ],
-
+      memos: makeEdgeMemos(request.fromWallet.currencyInfo, memo),
       swapData: {
         isEstimate,
         payoutAddress: toAddress,

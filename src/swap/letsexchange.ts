@@ -20,7 +20,7 @@ import {
   makeSwapPluginQuote,
   SwapOrder
 } from '../swap-helpers'
-import { convertRequest, getAddress } from '../util/utils'
+import { convertRequest, getAddress, makeEdgeMemos } from '../util/utils'
 import { asOptionalBlank } from './changenow'
 import { asNumberString, EdgeSwapRequestPlugin } from './types'
 
@@ -276,10 +276,13 @@ export function makeLetsExchangePlugin(
       spendTargets: [
         {
           nativeAmount: fromNativeAmount,
-          publicAddress: quoteInfo.deposit,
-          uniqueIdentifier: quoteInfo.deposit_extra_id
+          publicAddress: quoteInfo.deposit
         }
       ],
+      memos: makeEdgeMemos(
+        request.fromWallet.currencyInfo,
+        quoteInfo.deposit_extra_id
+      ),
       networkFeeOption:
         request.fromCurrencyCode.toUpperCase() === 'BTC' ? 'high' : 'standard',
       swapData: {

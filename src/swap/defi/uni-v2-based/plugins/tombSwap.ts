@@ -16,7 +16,7 @@ import {
   makeSwapPluginQuote,
   SwapOrder
 } from '../../../../swap-helpers'
-import { convertRequest } from '../../../../util/utils'
+import { convertRequest, makeEdgeMemos } from '../../../../util/utils'
 import { EdgeSwapRequestPlugin } from '../../../types'
 import { getInOutTokenAddresses, InOutTokenAddresses } from '../../defiUtils'
 import {
@@ -113,7 +113,6 @@ export function makeTombSwapPlugin(
         currencyCode: request.fromCurrencyCode, // what is being sent out, only if token. Blank if not token
         spendTargets: [
           {
-            memo: swapTx.data,
             nativeAmount: swapTx.value != null ? swapTx.value.toString() : '0', // biggy/number string integer
             publicAddress: swapTx.to
           }
@@ -125,6 +124,7 @@ export function makeTombSwapPlugin(
               : '0',
           gasLimit: swapTx.gasLimit?.toString() ?? '0'
         },
+        memos: makeEdgeMemos(request.fromWallet.currencyInfo, swapTx.data),
         networkFeeOption: 'custom',
         swapData: {
           isEstimate: false,

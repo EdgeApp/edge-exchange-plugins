@@ -29,7 +29,7 @@ import {
   makeSwapPluginQuote,
   SwapOrder
 } from '../swap-helpers'
-import { convertRequest, getAddress } from '../util/utils'
+import { convertRequest, getAddress, makeEdgeMemos } from '../util/utils'
 import { EdgeSwapRequestPlugin } from './types'
 const pluginId = 'changenow'
 
@@ -200,10 +200,10 @@ export function makeChangeNowPlugin(
         spendTargets: [
           {
             nativeAmount,
-            publicAddress: payinAddress,
-            uniqueIdentifier: payinExtraId
+            publicAddress: payinAddress
           }
         ],
+        memos: makeEdgeMemos(request.fromWallet.currencyInfo, payinExtraId),
         networkFeeOption: fromCurrencyCode === 'BTC' ? 'high' : 'standard',
         swapData: {
           orderId: id,
@@ -255,10 +255,10 @@ export function makeChangeNowPlugin(
         spendTargets: [
           {
             nativeAmount: fromNativeAmount,
-            publicAddress: payinAddress,
-            uniqueIdentifier: payinExtraId
+            publicAddress: payinAddress
           }
         ],
+        memos: makeEdgeMemos(request.fromWallet.currencyInfo, payinExtraId),
         networkFeeOption: fromCurrencyCode === 'BTC' ? 'high' : 'standard',
         swapData: {
           orderId: id,

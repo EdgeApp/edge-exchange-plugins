@@ -27,7 +27,7 @@ import {
   makeSwapPluginQuote,
   SwapOrder
 } from '../swap-helpers'
-import { convertRequest, getAddress } from '../util/utils'
+import { convertRequest, getAddress, makeEdgeMemos } from '../util/utils'
 import { EdgeSwapRequestPlugin } from './types'
 
 const pluginId = 'changehero'
@@ -255,10 +255,13 @@ export function makeChangeHeroPlugin(
       spendTargets: [
         {
           nativeAmount: amountExpectedFromNative,
-          publicAddress: quoteInfo.payinAddress,
-          uniqueIdentifier: quoteInfo.payinExtraId ?? undefined
+          publicAddress: quoteInfo.payinAddress
         }
       ],
+      memos: makeEdgeMemos(
+        request.fromWallet.currencyInfo,
+        quoteInfo.payinExtraId
+      ),
       networkFeeOption:
         request.fromCurrencyCode.toUpperCase() === 'BTC' ? 'high' : 'standard',
       swapData: {

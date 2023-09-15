@@ -21,7 +21,7 @@ import {
   makeSwapPluginQuote,
   SwapOrder
 } from '../swap-helpers'
-import { convertRequest, getAddress } from '../util/utils'
+import { convertRequest, getAddress, makeEdgeMemos } from '../util/utils'
 import { EdgeSwapRequestPlugin } from './types'
 
 // See https://help.sideshift.ai/en/articles/4559664-which-coins-and-tokens-are-listed for list of supported currencies
@@ -218,10 +218,10 @@ const fetchSwapQuoteInner = async (
     spendTargets: [
       {
         nativeAmount: amountExpectedFromNative,
-        publicAddress: order.depositAddress,
-        uniqueIdentifier: order.depositMemo
+        publicAddress: order.depositAddress
       }
     ],
+    memos: makeEdgeMemos(request.fromWallet.currencyInfo, order.depositMemo),
     networkFeeOption:
       request.fromCurrencyCode.toUpperCase() === 'BTC' ? 'high' : 'standard',
     swapData: {

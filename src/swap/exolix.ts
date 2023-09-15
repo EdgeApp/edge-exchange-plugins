@@ -26,7 +26,7 @@ import {
   makeSwapPluginQuote,
   SwapOrder
 } from '../swap-helpers'
-import { convertRequest, getAddress } from '../util/utils'
+import { convertRequest, getAddress, makeEdgeMemos } from '../util/utils'
 import { EdgeSwapRequestPlugin } from './types'
 
 const pluginId = 'exolix'
@@ -239,10 +239,13 @@ export function makeExolixPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
       spendTargets: [
         {
           nativeAmount: fromNativeAmount,
-          publicAddress: quoteInfo.depositAddress,
-          uniqueIdentifier: quoteInfo.depositExtraId
+          publicAddress: quoteInfo.depositAddress
         }
       ],
+      memos: makeEdgeMemos(
+        request.fromWallet.currencyInfo,
+        quoteInfo.depositExtraId
+      ),
       networkFeeOption:
         request.fromCurrencyCode.toUpperCase() === 'BTC' ? 'high' : 'standard',
       swapData: {
