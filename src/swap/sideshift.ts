@@ -15,9 +15,11 @@ import {
 } from 'edge-core-js/types'
 
 import {
+  checkInvalidCodes,
   ensureInFuture,
   getCodesWithTranscription,
   getMaxSwappable,
+  InvalidCurrencyCodes,
   makeSwapPluginQuote,
   SwapOrder
 } from '../swap-helpers'
@@ -29,6 +31,13 @@ const MAINNET_CODE_TRANSCRIPTION = {
   binancesmartchain: 'bsc',
   optimism: 'optimism',
   zcash: 'shielded'
+}
+
+const INVALID_CURRENCY_CODES: InvalidCurrencyCodes = {
+  from: {
+    optimism: ['VELO']
+  },
+  to: {}
 }
 
 const SIDESHIFT_BASE_URL = 'https://sideshift.ai/api/v2'
@@ -249,6 +258,7 @@ const fetchSwapQuoteInner = async (
 const createFetchSwapQuote = (api: SideshiftApi, affiliateId: string) =>
   async function fetchSwapQuote(req: EdgeSwapRequest): Promise<EdgeSwapQuote> {
     const request = convertRequest(req)
+    checkInvalidCodes(INVALID_CURRENCY_CODES, request, swapInfo)
 
     const newRequest = await getMaxSwappable(
       fetchSwapQuoteInner,

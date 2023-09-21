@@ -45,7 +45,9 @@ const asInitOptions = asObject({
 
 // See https://changehero.io/currencies for list of supported currencies
 const INVALID_CURRENCY_CODES: InvalidCurrencyCodes = {
-  from: {},
+  from: {
+    optimism: ['VELO']
+  },
   to: {
     zcash: ['ZEC'] // ChangeHero doesn't support sending to shielded addresses
   }

@@ -121,7 +121,9 @@ export const PER_ASSET_SPREAD_DEFAULT: AssetSpread[] = [
 ]
 
 export const INVALID_CURRENCY_CODES: InvalidCurrencyCodes = {
-  from: {},
+  from: {
+    optimism: ['VELO']
+  },
   to: {
     zcash: ['ZEC']
   }

@@ -86,6 +86,7 @@ const INVALID_CURRENCY_CODES: InvalidCurrencyCodes = {
     digibyte: 'allCodes',
     ethereum: ['MATIC'],
     fantom: 'allTokens',
+    optimism: ['VELO'],
     polygon: 'allCodes'
   },
   to: {

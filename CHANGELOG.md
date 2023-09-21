@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- changed: Block VELO trading from providers that rely on `currencyCode`
 - changed: Add `fantom` pluginId check to spookySwap and tombSwap
 
 ## 0.21.6 (2023-09-14)
