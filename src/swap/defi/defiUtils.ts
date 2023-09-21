@@ -1,23 +1,9 @@
-import { EdgeCurrencyInfo, EdgeMetaToken } from 'edge-core-js/types'
+import { asMaybe, asObject, asString } from 'cleaners'
+import { EdgeCurrencyConfig, EdgeToken } from 'edge-core-js/types'
 import { ethers } from 'ethers'
 
 import abi from './abi/THORCHAIN_SWAP_ABI'
 import erc20Abi from './abi/UNISWAP_V2_ERC20_ABI'
-
-/**
- * Get the token contract addresses from the wallet's EdgeMetaTokens
- */
-const getMetaTokenAddress = (
-  metaTokens: EdgeMetaToken[],
-  tokenCurrencyCode: string
-): string => {
-  const metaToken = metaTokens.find(mt => mt.currencyCode === tokenCurrencyCode)
-
-  if (metaToken == null || metaToken?.contractAddress === undefined)
-    throw new Error('Could not find contract address for ' + tokenCurrencyCode)
-
-  return metaToken.contractAddress ?? ''
-}
 
 export interface InOutTokenAddresses {
   fromTokenAddress: string
@@ -29,33 +15,46 @@ export interface InOutTokenAddresses {
   isToWrappedCurrency: boolean
 }
 
+const asContractLocation = asObject({
+  contractAddress: asString
+})
+
 /**
  * Determine if the tokens are wrapped and return the appropriate wrapped
  * contract addresses, if different.
  */
 export const getInOutTokenAddresses = (
-  currencyInfo: EdgeCurrencyInfo,
-  fromCurrencyCode: string,
-  toCurrencyCode: string
+  currencyConfig: EdgeCurrencyConfig,
+  wrappedMainnetAddress: string,
+  fromTokenId?: string,
+  toTokenId?: string
 ): InOutTokenAddresses => {
-  const { currencyCode: nativeCurrencyCode, metaTokens } = currencyInfo
-  const wrappedCurrencyCode = `W${nativeCurrencyCode}`
-  const isFromNativeCurrency = fromCurrencyCode === nativeCurrencyCode
-  const isToNativeCurrency = toCurrencyCode === nativeCurrencyCode
-  const isFromWrappedCurrency = fromCurrencyCode === wrappedCurrencyCode
-  const isToWrappedCurrency = toCurrencyCode === wrappedCurrencyCode
+  const { allTokens } = currencyConfig
+
+  const isFromNativeCurrency = fromTokenId == null
+  const isToNativeCurrency = toTokenId == null
+
+  const fromToken: EdgeToken | undefined = isFromNativeCurrency
+    ? undefined
+    : allTokens[fromTokenId]
+  const toToken: EdgeToken | undefined = isToNativeCurrency
+    ? undefined
+    : allTokens[toTokenId]
+
+  const fromTokenAddress =
+    asMaybe(asContractLocation)(fromToken?.networkLocation)?.contractAddress ??
+    ''
+  const toTokenAddress =
+    asMaybe(asContractLocation)(toToken?.networkLocation)?.contractAddress ?? ''
+
+  const isFromWrappedCurrency =
+    fromTokenAddress.toLowerCase() === wrappedMainnetAddress.toLowerCase()
+  const isToWrappedCurrency =
+    toTokenAddress.toLowerCase() === wrappedMainnetAddress.toLowerCase()
+
   const isWrappingSwap =
     (isFromNativeCurrency && isToWrappedCurrency) ||
     (isFromWrappedCurrency && isToNativeCurrency)
-
-  const fromTokenAddress = getMetaTokenAddress(
-    metaTokens,
-    isFromNativeCurrency ? wrappedCurrencyCode : fromCurrencyCode
-  )
-  const toTokenAddress = getMetaTokenAddress(
-    metaTokens,
-    isToNativeCurrency ? wrappedCurrencyCode : toCurrencyCode
-  )
 
   return {
     fromTokenAddress,

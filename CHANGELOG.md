@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- changed: Update getInOutTokenAddresses to use EdgeTokens so it can be used for any token
 - changed: Block VELO trading from providers that rely on `currencyCode`
 - changed: Add `fantom` pluginId check to spookySwap and tombSwap
 

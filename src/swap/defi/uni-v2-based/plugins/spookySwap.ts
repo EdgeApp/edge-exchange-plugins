@@ -23,7 +23,8 @@ import { getInOutTokenAddresses, InOutTokenAddresses } from '../../defiUtils'
 import {
   getFtmProvider,
   makeSpookySwapRouterContract,
-  makeWrappedFtmContract
+  makeWrappedFtmContract,
+  WFTM_TOKEN_ADDRESS
 } from '../uniV2Contracts'
 import { getSwapAmounts, getSwapTransactions } from '../uniV2Utils'
 
@@ -51,13 +52,7 @@ export function makeSpookySwapPlugin(
     request: EdgeSwapRequestPlugin,
     uid: string
   ): Promise<SwapOrder> => {
-    const {
-      fromWallet,
-      toWallet,
-      fromCurrencyCode,
-      toCurrencyCode,
-      quoteFor
-    } = request
+    const { fromWallet, toWallet, fromTokenId, toTokenId, quoteFor } = request
 
     // Sanity check: Both wallets should be of the same chain.
     if (
@@ -69,9 +64,10 @@ export function makeSpookySwapPlugin(
     // Parse input/output token addresses. If either from or to swap sources
     // are for the native currency, convert the address to the wrapped equivalent.
     const inOutAddresses: InOutTokenAddresses = getInOutTokenAddresses(
-      fromWallet.currencyInfo,
-      fromCurrencyCode,
-      toCurrencyCode
+      fromWallet.currencyConfig,
+      WFTM_TOKEN_ADDRESS,
+      fromTokenId,
+      toTokenId
     )
     const { fromTokenAddress, toTokenAddress, isWrappingSwap } = inOutAddresses
 

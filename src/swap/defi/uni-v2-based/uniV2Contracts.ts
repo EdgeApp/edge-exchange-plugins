@@ -44,7 +44,7 @@ export const makeTombSwapRouterContract = (
   new ethers.Contract(TOMBSWAP_ROUTER_ADDRESS, UNISWAP_V2_ROUTER_ABI, provider)
 
 // Wrapped Tokens
-const WFTM_TOKEN_ADDRESS = '0x21be370D5312f44cB42ce377BC9b8a0cEF1A4C83'
+export const WFTM_TOKEN_ADDRESS = '0x21be370D5312f44cB42ce377BC9b8a0cEF1A4C83'
 export const makeWrappedFtmContract = (
   provider: ethers.providers.Provider
 ): Contract =>
