@@ -6,7 +6,8 @@ import {
   EdgeSwapPlugin,
   EdgeSwapQuote,
   EdgeSwapRequest,
-  EdgeTransaction
+  EdgeTransaction,
+  SwapCurrencyError
 } from 'edge-core-js/types'
 import { ethers } from 'ethers'
 
@@ -60,10 +61,10 @@ export function makeTombSwapPlugin(
 
     // Sanity check: Both wallets should be of the same chain.
     if (
-      fromWallet.currencyInfo.currencyCode !==
-      toWallet.currencyInfo.currencyCode
+      fromWallet.currencyInfo.currencyCode !== 'fantom' ||
+      toWallet.currencyInfo.currencyCode !== 'fantom'
     )
-      throw new Error(`${swapInfo.displayName}: Mismatched wallet chain`)
+      throw new SwapCurrencyError(swapInfo, request)
 
     // Parse input/output token addresses. If either from or to swap sources
     // are for the native currency, convert the address to the wrapped equivalent.
