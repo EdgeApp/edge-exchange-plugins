@@ -59,7 +59,8 @@ const asInfoReply = asObject({
 })
 const INVALID_CURRENCY_CODES: InvalidCurrencyCodes = {
   from: {
-    ethereum: ['MATH']
+    ethereum: ['MATH'],
+    optimism: ['VELO']
   },
   to: {
     ethereum: ['MATH'],

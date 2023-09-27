@@ -50,7 +50,8 @@ const uri = 'https://api.swapuz.com/api/home/v1/'
 
 const INVALID_CURRENCY_CODES: InvalidCurrencyCodes = {
   from: {
-    ethereum: ['MATH']
+    ethereum: ['MATH'],
+    optimism: ['VELO']
   },
   to: {
     ethereum: ['MATH'],

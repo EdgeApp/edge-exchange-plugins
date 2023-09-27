@@ -43,13 +43,7 @@ export function makeVelodromePlugin(
     request: EdgeSwapRequestPlugin,
     uid: string
   ): Promise<SwapOrder> => {
-    const {
-      fromWallet,
-      toWallet,
-      fromCurrencyCode,
-      toCurrencyCode,
-      quoteFor
-    } = request
+    const { fromWallet, toWallet, fromTokenId, toTokenId, quoteFor } = request
 
     if (
       // Velodrome does not support reverse quotes
@@ -64,9 +58,10 @@ export function makeVelodromePlugin(
     // Parse input/output token addresses. If either from or to swap sources
     // are for the native currency, convert the address to the wrapped equivalent.
     const inOutAddresses = getInOutTokenAddresses(
-      fromWallet.currencyInfo,
-      fromCurrencyCode,
-      toCurrencyCode
+      fromWallet.currencyConfig,
+      WETH_TOKEN_ADDRESS,
+      fromTokenId,
+      toTokenId
     )
     const { fromTokenAddress, toTokenAddress, isWrappingSwap } = inOutAddresses
 

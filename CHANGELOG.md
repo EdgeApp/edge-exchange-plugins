@@ -1,5 +1,11 @@
 # edge-exchange-plugins
 
+## Unreleased
+
+- changed: Update getInOutTokenAddresses to use EdgeTokens so it can be used for any token
+- changed: Block VELO trading from providers that rely on `currencyCode`
+- changed: Add `fantom` pluginId check to spookySwap and tombSwap
+
 ## 0.21.6 (2023-09-14)
 
 - changed: Move EVM data from spendTarget `otherParams` to `memo`
