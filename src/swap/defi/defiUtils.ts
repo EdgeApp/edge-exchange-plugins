@@ -41,11 +41,14 @@ export const getInOutTokenAddresses = (
     ? undefined
     : allTokens[toTokenId]
 
-  const fromTokenAddress =
-    asMaybe(asContractLocation)(fromToken?.networkLocation)?.contractAddress ??
-    ''
-  const toTokenAddress =
-    asMaybe(asContractLocation)(toToken?.networkLocation)?.contractAddress ?? ''
+  const fromTokenAddress = isFromNativeCurrency
+    ? wrappedMainnetAddress
+    : asMaybe(asContractLocation)(fromToken?.networkLocation)
+        ?.contractAddress ?? ''
+  const toTokenAddress = isToNativeCurrency
+    ? wrappedMainnetAddress
+    : asMaybe(asContractLocation)(toToken?.networkLocation)?.contractAddress ??
+      ''
 
   const isFromWrappedCurrency =
     fromTokenAddress.toLowerCase() === wrappedMainnetAddress.toLowerCase()
