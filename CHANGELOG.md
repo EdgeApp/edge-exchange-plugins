@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## 0.21.8 (2023-09-28)
+
+- fixed: Fix incorrect wrapped mainnet address in defi swaps
+
 ## 0.21.7 (2023-09-27)
 
 - changed: Update getInOutTokenAddresses to use EdgeTokens so it can be used for any token
