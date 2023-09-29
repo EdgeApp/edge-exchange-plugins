@@ -1,4 +1,5 @@
 import { mul, round, sub } from 'biggystring'
+import { EdgeSwapInfo, EdgeSwapRequest, SwapCurrencyError } from 'edge-core-js'
 import { BigNumber, Contract, ethers, PopulatedTransaction } from 'ethers'
 
 import { InOutTokenAddresses } from '../defiUtils'
@@ -10,11 +11,12 @@ import { makeErc20Contract } from './uniV2Contracts'
  */
 export const getSwapAmounts = async (
   router: Contract,
-  quoteFor: string,
-  nativeAmount: string,
+  request: EdgeSwapRequest,
+  swapInfo: EdgeSwapInfo,
   path: unknown,
   isWrappingSwap: boolean
 ): Promise<{ amountToSwap: string; expectedAmountOut: string }> => {
+  const { nativeAmount, quoteFor } = request
   const [amountToSwap, expectedAmountOut] = (isWrappingSwap
     ? [nativeAmount, nativeAmount]
     : quoteFor === 'to'
@@ -24,8 +26,14 @@ export const getSwapAmounts = async (
     : []
   ).map(String)
 
-  if (amountToSwap == null || expectedAmountOut == null)
-    throw new Error(`Failed to calculate amounts`)
+  if (
+    amountToSwap == null ||
+    expectedAmountOut == null ||
+    amountToSwap === '0' ||
+    expectedAmountOut === '0'
+  ) {
+    throw new SwapCurrencyError(swapInfo, request)
+  }
 
   return { amountToSwap, expectedAmountOut }
 }

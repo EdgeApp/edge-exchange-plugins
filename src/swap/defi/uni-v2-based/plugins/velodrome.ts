@@ -43,7 +43,7 @@ export function makeVelodromePlugin(
     request: EdgeSwapRequestPlugin,
     uid: string
   ): Promise<SwapOrder> => {
-    const { fromWallet, toWallet, fromTokenId, toTokenId, quoteFor } = request
+    const { fromWallet, toWallet, fromTokenId, toTokenId } = request
 
     if (
       // Velodrome does not support reverse quotes
@@ -86,8 +86,8 @@ export function makeVelodromePlugin(
 
     const { amountToSwap, expectedAmountOut } = await getSwapAmounts(
       velodromeRouter,
-      quoteFor,
-      request.nativeAmount,
+      request,
+      swapInfo,
       path,
       isWrappingSwap
     )
