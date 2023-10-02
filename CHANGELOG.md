@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## 0.21.9 (2023-10-02)
+
+- changed: Throw `SwapCurrencyError` if Uniswap-based defi swap providers return zero for `amountToSwap` or `expectedAmountOut`
+
 ## 0.21.8 (2023-09-28)
 
 - fixed: Fix incorrect wrapped mainnet address in defi swaps
