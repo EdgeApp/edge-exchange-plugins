@@ -52,7 +52,7 @@ export function makeTombSwapPlugin(
     request: EdgeSwapRequestPlugin,
     uid: string
   ): Promise<SwapOrder> => {
-    const { fromWallet, toWallet, fromTokenId, toTokenId, quoteFor } = request
+    const { fromWallet, toWallet, fromTokenId, toTokenId } = request
 
     // Sanity check: Both wallets should be of the same chain.
     if (
@@ -75,8 +75,8 @@ export function makeTombSwapPlugin(
     const tombSwapRouter = makeTombSwapRouterContract(provider)
     const { amountToSwap, expectedAmountOut } = await getSwapAmounts(
       tombSwapRouter,
-      quoteFor,
-      request.nativeAmount,
+      request,
+      swapInfo,
       [fromTokenAddress, toTokenAddress],
       isWrappingSwap
     )

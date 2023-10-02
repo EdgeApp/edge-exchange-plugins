@@ -52,7 +52,7 @@ export function makeSpookySwapPlugin(
     request: EdgeSwapRequestPlugin,
     uid: string
   ): Promise<SwapOrder> => {
-    const { fromWallet, toWallet, fromTokenId, toTokenId, quoteFor } = request
+    const { fromWallet, toWallet, fromTokenId, toTokenId } = request
 
     // Sanity check: Both wallets should be of the same chain.
     if (
@@ -75,8 +75,8 @@ export function makeSpookySwapPlugin(
     const spookySwapRouter = makeSpookySwapRouterContract(provider)
     const { amountToSwap, expectedAmountOut } = await getSwapAmounts(
       spookySwapRouter,
-      quoteFor,
-      request.nativeAmount,
+      request,
+      swapInfo,
       [fromTokenAddress, toTokenAddress],
       isWrappingSwap
     )
