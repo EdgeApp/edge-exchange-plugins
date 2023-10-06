@@ -21,14 +21,14 @@ import {
 
 import {
   checkInvalidCodes,
-  getCodes,
+  getCodesWithTranscription,
   getMaxSwappable,
   InvalidCurrencyCodes,
   makeSwapPluginQuote,
   SwapOrder
 } from '../swap-helpers'
 import { convertRequest, getAddress } from '../util/utils'
-import { EdgeSwapRequestPlugin } from './types'
+import { EdgeSwapRequestPlugin, StringMap } from './types'
 
 const pluginId = 'changehero'
 
@@ -42,6 +42,33 @@ const swapInfo: EdgeSwapInfo = {
 const asInitOptions = asObject({
   apiKey: asString
 })
+
+const MAINNET_CODE_TRANSCRIPTION: StringMap = {
+  ethereum: 'ethereum',
+  binancesmartchain: 'binance_smart_chain',
+  solana: 'solana',
+  algorand: 'algorand',
+  avalanche: 'avalanche_(c-chain)',
+  bitcoincash: 'bitcoin_cash',
+  bitcoinsv: 'bitcoin_sv',
+  bitcoin: 'bitcoin',
+  tron: 'tron',
+  polygon: 'polygon',
+  dash: 'dash',
+  digibyte: 'digibyte',
+  dogecoin: 'doge',
+  polkadot: 'polkadot',
+  ethereumclassic: 'ethereum_classic',
+  optimism: 'optimism',
+  hedera: 'hedera',
+  litecoin: 'litecoin',
+  qtum: 'qtum',
+  stellar: 'stellar',
+  monero: 'monero',
+  ripple: 'ripple',
+  tezos: 'tezos',
+  zcash: 'zcash'
+}
 
 // See https://changehero.io/currencies for list of supported currencies
 const INVALID_CURRENCY_CODES: InvalidCurrencyCodes = {
@@ -95,11 +122,7 @@ function checkReply(
       reply.error.code === -32602 ||
       (reply.error.message?.includes('Invalid currency:') ?? false)
     ) {
-      throw new SwapCurrencyError(
-        swapInfo,
-        request.fromCurrencyCode,
-        request.toCurrencyCode
-      )
+      throw new SwapCurrencyError(swapInfo, request)
     }
     throw new Error('ChangeHero error: ' + JSON.stringify(reply.error))
   }
@@ -134,11 +157,22 @@ export function makeChangeHeroPlugin(
       getAddress(request.fromWallet),
       getAddress(request.toWallet)
     ])
-    const { fromCurrencyCode, toCurrencyCode } = getCodes(request)
 
-    // The chain codes are undocumented but ChangeHero uses Edge pluginIds for these values (confirmed via Slack)
-    const fromMainnetCode = request.fromWallet.currencyInfo.pluginId
-    const toMainnetCode = request.toWallet.currencyInfo.pluginId
+    // Supported chains must be whitelisted
+    if (
+      MAINNET_CODE_TRANSCRIPTION[request.fromWallet.currencyInfo.pluginId] ==
+        null ||
+      MAINNET_CODE_TRANSCRIPTION[request.toWallet.currencyInfo.pluginId] == null
+    ) {
+      throw new SwapCurrencyError(swapInfo, request)
+    }
+
+    const {
+      fromCurrencyCode,
+      toCurrencyCode,
+      fromMainnetCode,
+      toMainnetCode
+    } = getCodesWithTranscription(request, MAINNET_CODE_TRANSCRIPTION)
 
     const quoteAmount =
       request.quoteFor === 'from'
