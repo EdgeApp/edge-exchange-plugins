@@ -55,7 +55,7 @@ async function checkQuoteError(
   request: EdgeSwapRequestPlugin,
   quoteErrorMessage: string
 ): Promise<void> {
-  const { fromCurrencyCode, fromWallet, toCurrencyCode } = request
+  const { fromCurrencyCode, fromWallet } = request
 
   if (quoteErrorMessage === 'Amount too low') {
     const nativeMin = await fromWallet.denominationToNative(
@@ -77,7 +77,7 @@ async function checkQuoteError(
     /method/i.test(quoteErrorMessage) &&
     /disabled/i.test(quoteErrorMessage)
   ) {
-    throw new SwapCurrencyError(swapInfo, fromCurrencyCode, toCurrencyCode)
+    throw new SwapCurrencyError(swapInfo, request)
   }
 
   if (/country-blocked/i.test(quoteErrorMessage)) {
@@ -150,11 +150,7 @@ const fetchSwapQuoteInner = async (
   )
 
   if ('error' in rate) {
-    throw new SwapCurrencyError(
-      swapInfo,
-      request.fromCurrencyCode,
-      request.toCurrencyCode
-    )
+    throw new SwapCurrencyError(swapInfo, request)
   }
 
   const permissions = asPermissions(

@@ -126,11 +126,7 @@ export function makeGodexPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
     const response = await fetchCors(url, { method: 'POST', body, headers })
     if (!response.ok) {
       if (response.status === 422) {
-        throw new SwapCurrencyError(
-          swapInfo,
-          request.fromCurrencyCode,
-          request.toCurrencyCode
-        )
+        throw new SwapCurrencyError(swapInfo, request)
       }
       throw new Error(`godex returned error code ${response.status}`)
     }
@@ -217,11 +213,7 @@ export function makeGodexPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
       reply.networks_to?.find(network => network.network === toMainnetCode) ==
         null
     ) {
-      throw new SwapCurrencyError(
-        swapInfo,
-        request.fromCurrencyCode,
-        request.toCurrencyCode
-      )
+      throw new SwapCurrencyError(swapInfo, request)
     }
 
     const { promoCode } = opts

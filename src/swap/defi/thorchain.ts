@@ -317,7 +317,7 @@ export function makeThorchainPlugin(
       fromWallet.currencyInfo.pluginId === toWallet.currencyInfo.pluginId &&
       request.fromCurrencyCode === request.toCurrencyCode
     ) {
-      throw new SwapCurrencyError(swapInfo, fromCurrencyCode, toCurrencyCode)
+      throw new SwapCurrencyError(swapInfo, request)
     }
 
     let midgardServers: string[] = MIDGARD_SERVERS_DEFAULT
@@ -342,7 +342,7 @@ export function makeThorchainPlugin(
       MAINNET_CODE_TRANSCRIPTION[toWallet.currencyInfo.pluginId]
 
     if (fromMainnetCode == null || toMainnetCode == null) {
-      throw new SwapCurrencyError(swapInfo, fromCurrencyCode, toCurrencyCode)
+      throw new SwapCurrencyError(swapInfo, request)
     }
 
     const now = Date.now()
@@ -444,7 +444,7 @@ export function makeThorchainPlugin(
       return asset === `${fromMainnetCode}.${fromCurrencyCode}`
     })
     if (sourcePool == null) {
-      throw new SwapCurrencyError(swapInfo, fromCurrencyCode, toCurrencyCode)
+      throw new SwapCurrencyError(swapInfo, request)
     }
     const [
       sourceAsset,
@@ -461,7 +461,7 @@ export function makeThorchainPlugin(
       return asset === `${toMainnetCode}.${toCurrencyCode}`
     })
     if (destPool == null) {
-      throw new SwapCurrencyError(swapInfo, fromCurrencyCode, toCurrencyCode)
+      throw new SwapCurrencyError(swapInfo, request)
     }
 
     let calcResponse: CalcSwapResponse
@@ -556,7 +556,7 @@ export function makeThorchainPlugin(
     } else {
       // Cannot yet do tokens on non-EVM chains
       if (fromMainnetCode !== fromCurrencyCode) {
-        throw new SwapCurrencyError(swapInfo, fromCurrencyCode, toCurrencyCode)
+        throw new SwapCurrencyError(swapInfo, request)
       }
     }
 
