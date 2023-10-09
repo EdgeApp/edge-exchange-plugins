@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 0.21.10 (2023-10-09)
+
 - changed: Restrict ChangeHero trading to whitelisted plugins
 - changed: Replace deprecated currency codes in `SwapCurrencyError` with requests
 
