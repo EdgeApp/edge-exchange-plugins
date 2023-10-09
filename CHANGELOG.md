@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- changed: Restrict ChangeHero trading to whitelisted plugins
+- changed: Replace deprecated currency codes in `SwapCurrencyError` with requests
+
 ## 0.21.9 (2023-10-02)
 
 - changed: Throw `SwapCurrencyError` if Uniswap-based defi swap providers return zero for `amountToSwap` or `expectedAmountOut`

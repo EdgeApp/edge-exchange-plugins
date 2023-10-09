@@ -87,58 +87,58 @@ export function makeExolixPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
   const { fetchCors = io.fetch } = io
   const { apiKey } = asInitOptions(opts.initOptions)
 
-  async function call(
-    method: 'GET' | 'POST',
-    route: string,
-    params: any
-  ): Promise<Object> {
-    const headers: { [header: string]: string } = {
-      Accept: 'application/json',
-      'Content-Type': 'application/json',
-      Authorization: `${apiKey}`
-    }
-
-    let response: Awaited<ReturnType<typeof fetchCors>>
-
-    if (method === 'POST') {
-      const body = JSON.stringify(params)
-      response = await fetchCors(uri + route, {
-        method,
-        headers,
-        body
-      })
-    } else {
-      const url = `${uri}${route}?${new URLSearchParams(params).toString()}`
-      response = await fetchCors(url, {
-        method,
-        headers
-      })
-    }
-
-    if (
-      !response.ok &&
-      !(await response.text()).includes(
-        'Amount to exchange is below the possible min amount to exchange'
-      ) // HACK: Exolix inconsistently returns a !ok response for a 'from' quote
-      // under minimum amount, while the status is OK for a 'to' quote under
-      // minimum amount.
-      // Handle this inconsistency and ensure parse the proper under min error
-      // and we don't exit early with the wrong 'unsupported' error message.
-    ) {
-      log.warn(`Error retrieving Exolix quote: ${await response.text()}`)
-      if (response.status === 422) {
-        throw new SwapCurrencyError(swapInfo, params.coinFrom, params.coinTo)
-      }
-      throw new Error(`Exolix returned error code ${response.status}`)
-    }
-
-    return await response.json()
-  }
-
   const getFixedQuote = async (
     request: EdgeSwapRequestPlugin,
     _userSettings: Object | undefined
   ): Promise<SwapOrder> => {
+    async function call(
+      method: 'GET' | 'POST',
+      route: string,
+      params: any
+    ): Promise<Object> {
+      const headers: { [header: string]: string } = {
+        Accept: 'application/json',
+        'Content-Type': 'application/json',
+        Authorization: `${apiKey}`
+      }
+
+      let response: Awaited<ReturnType<typeof fetchCors>>
+
+      if (method === 'POST') {
+        const body = JSON.stringify(params)
+        response = await fetchCors(uri + route, {
+          method,
+          headers,
+          body
+        })
+      } else {
+        const url = `${uri}${route}?${new URLSearchParams(params).toString()}`
+        response = await fetchCors(url, {
+          method,
+          headers
+        })
+      }
+
+      if (
+        !response.ok &&
+        !(await response.text()).includes(
+          'Amount to exchange is below the possible min amount to exchange'
+        ) // HACK: Exolix inconsistently returns a !ok response for a 'from' quote
+        // under minimum amount, while the status is OK for a 'to' quote under
+        // minimum amount.
+        // Handle this inconsistency and ensure parse the proper under min error
+        // and we don't exit early with the wrong 'unsupported' error message.
+      ) {
+        log.warn(`Error retrieving Exolix quote: ${await response.text()}`)
+        if (response.status === 422) {
+          throw new SwapCurrencyError(swapInfo, request)
+        }
+        throw new Error(`Exolix returned error code ${response.status}`)
+      }
+
+      return await response.json()
+    }
+
     const [fromAddress, toAddress] = await Promise.all([
       getAddress(request.fromWallet),
       getAddress(request.toWallet)

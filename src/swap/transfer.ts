@@ -70,11 +70,7 @@ export function makeTransferPlugin(
           request.toWallet.currencyInfo.pluginId ||
         request.fromCurrencyCode !== request.toCurrencyCode
       ) {
-        throw new SwapCurrencyError(
-          swapInfo,
-          request.fromCurrencyCode,
-          request.toCurrencyCode
-        )
+        throw new SwapCurrencyError(swapInfo, request)
       }
 
       const newRequest = await getMaxSwappable(fetchSwapQuoteInner, request)

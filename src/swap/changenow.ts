@@ -112,7 +112,7 @@ export function makeChangeNowPlugin(
       const exchangeAmountResponseJson = await exchangeAmountResponse.json()
 
       if (exchangeAmountResponseJson.error != null)
-        throw new SwapCurrencyError(swapInfo, fromCurrencyCode, toCurrencyCode)
+        throw new SwapCurrencyError(swapInfo, request)
 
       const { rateId, validUntil } = asExchange(exchangeAmountResponseJson)
 
@@ -164,7 +164,7 @@ export function makeChangeNowPlugin(
       const marketRangeResponseJson = await marketRangeResponse.json()
 
       if (marketRangeResponseJson.error != null)
-        throw new SwapCurrencyError(swapInfo, fromCurrencyCode, toCurrencyCode)
+        throw new SwapCurrencyError(swapInfo, request)
 
       const { minAmount, maxAmount } = asMarketRange(marketRangeResponseJson)
 

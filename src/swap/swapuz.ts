@@ -119,7 +119,7 @@ export function makeSwapuzPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
       const getRateJson = asApiResponse(asGetRate)(await getRateResponse.json())
 
       if (getRateJson.result == null)
-        throw new SwapCurrencyError(swapInfo, fromCurrencyCode, toCurrencyCode)
+        throw new SwapCurrencyError(swapInfo, request)
 
       const { minAmount } = getRateJson.result
 
@@ -161,7 +161,7 @@ export function makeSwapuzPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
       )
 
       if (createOrderJson.result == null) {
-        throw new SwapCurrencyError(swapInfo, fromCurrencyCode, toCurrencyCode)
+        throw new SwapCurrencyError(swapInfo, request)
       }
 
       const {
@@ -245,11 +245,7 @@ export function makeSwapuzPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
       } else {
         // Exit early if trade isn't like kind assets
         if (!isLikeKind(fromCurrencyCode, toCurrencyCode)) {
-          throw new SwapCurrencyError(
-            swapInfo,
-            fromCurrencyCode,
-            toCurrencyCode
-          )
+          throw new SwapCurrencyError(swapInfo, requestTop)
         }
         // Must make a copy of the request because this is a shared object
         // reused between requests to other exchange plugins
@@ -281,7 +277,7 @@ export function makeSwapuzPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
             fromQuoteNativeAmount = mul(diffMultiplier, fromQuoteNativeAmount)
           }
         }
-        throw new SwapCurrencyError(swapInfo, fromCurrencyCode, toCurrencyCode)
+        throw new SwapCurrencyError(swapInfo, requestTop)
       }
     }
   }

@@ -301,11 +301,7 @@ export function checkInvalidCodes(
     ) ||
     isSameAsset(request)
   )
-    throw new SwapCurrencyError(
-      swapInfo,
-      request.fromCurrencyCode,
-      request.toCurrencyCode
-    )
+    throw new SwapCurrencyError(swapInfo, request)
 }
 
 export interface CurrencyCodeTranscriptions {

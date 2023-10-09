@@ -180,7 +180,7 @@ export function makeLifiPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
       quoteFor
     } = request
     if (quoteFor !== 'from') {
-      throw new SwapCurrencyError(swapInfo, fromCurrencyCode, toCurrencyCode)
+      throw new SwapCurrencyError(swapInfo, request)
     }
 
     const fromToken = fromWallet.currencyConfig.allTokens[fromTokenId ?? '']
@@ -202,7 +202,7 @@ export function makeLifiPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
     }
 
     if (fromContractAddress == null || toContractAddress == null) {
-      throw new SwapCurrencyError(swapInfo, fromCurrencyCode, toCurrencyCode)
+      throw new SwapCurrencyError(swapInfo, request)
     }
 
     const { appId, integrator } = asInitOptions(opts.initOptions)
@@ -213,7 +213,7 @@ export function makeLifiPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
       fromWallet.currencyInfo.pluginId === toWallet.currencyInfo.pluginId &&
       request.fromCurrencyCode === request.toCurrencyCode
     ) {
-      throw new SwapCurrencyError(swapInfo, fromCurrencyCode, toCurrencyCode)
+      throw new SwapCurrencyError(swapInfo, request)
     }
 
     let lifiServers: string[] = LIFI_SERVERS_DEFAULT
@@ -230,7 +230,7 @@ export function makeLifiPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
       MAINNET_CODE_TRANSCRIPTION[toWallet.currencyInfo.pluginId]
 
     if (fromMainnetCode == null || toMainnetCode == null) {
-      throw new SwapCurrencyError(swapInfo, fromCurrencyCode, toCurrencyCode)
+      throw new SwapCurrencyError(swapInfo, request)
     }
 
     const now = Date.now()

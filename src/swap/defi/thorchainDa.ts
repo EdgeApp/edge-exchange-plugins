@@ -145,7 +145,7 @@ export function makeThorchainDaPlugin(
       fromWallet.currencyInfo.pluginId === toWallet.currencyInfo.pluginId &&
       request.fromCurrencyCode === request.toCurrencyCode
     ) {
-      throw new SwapCurrencyError(swapInfo, fromCurrencyCode, toCurrencyCode)
+      throw new SwapCurrencyError(swapInfo, request)
     }
     const reverseQuote = quoteFor === 'to'
     const isEstimate = false
@@ -166,7 +166,7 @@ export function makeThorchainDaPlugin(
       MAINNET_CODE_TRANSCRIPTION[toWallet.currencyInfo.pluginId]
 
     if (fromMainnetCode == null || toMainnetCode == null) {
-      throw new SwapCurrencyError(swapInfo, fromCurrencyCode, toCurrencyCode)
+      throw new SwapCurrencyError(swapInfo, request)
     }
 
     const now = Date.now()
@@ -207,7 +207,7 @@ export function makeThorchainDaPlugin(
     // Get Quote
     //
     if (reverseQuote) {
-      throw new SwapCurrencyError(swapInfo, fromCurrencyCode, toCurrencyCode)
+      throw new SwapCurrencyError(swapInfo, request)
     }
 
     const sellAmount = await fromWallet.nativeToDenomination(
@@ -284,14 +284,13 @@ export function makeThorchainDaPlugin(
       addrObj => !addrObj.halted && addrObj.chain === fromMainnetCode
     )
     if (inAddressObject == null) {
-      throw new SwapCurrencyError(swapInfo, fromCurrencyCode, toCurrencyCode)
+      throw new SwapCurrencyError(swapInfo, request)
     }
     const { router, address: thorAddress } = inAddressObject
     const { routes } = thorSwapQuote
     const [thorSwap] = routes
 
-    if (thorSwap == null)
-      throw new SwapCurrencyError(swapInfo, fromCurrencyCode, toCurrencyCode)
+    if (thorSwap == null) throw new SwapCurrencyError(swapInfo, request)
 
     const {
       providers,
@@ -303,7 +302,7 @@ export function makeThorchainDaPlugin(
     const calldata = asCalldata(thorSwap.calldata)
 
     if (providers.length <= 1) {
-      throw new SwapCurrencyError(swapInfo, fromCurrencyCode, toCurrencyCode)
+      throw new SwapCurrencyError(swapInfo, request)
     }
 
     const tcDirect = providers[0] === 'THORCHAIN'
@@ -339,7 +338,7 @@ export function makeThorchainDaPlugin(
     // }
 
     // if (customNetworkFee == null || customNetworkFeeKey == null) {
-    //   throw new SwapCurrencyError(swapInfo, fromCurrencyCode, toCurrencyCode)
+    //   throw new SwapCurrencyError(swapInfo, request)
     // }
 
     let memo = calldata.tcMemo ?? calldata.memo ?? ''
@@ -399,7 +398,7 @@ export function makeThorchainDaPlugin(
     } else {
       // Cannot yet do tokens on non-EVM chains
       if (fromMainnetCode !== fromCurrencyCode) {
-        throw new SwapCurrencyError(swapInfo, fromCurrencyCode, toCurrencyCode)
+        throw new SwapCurrencyError(swapInfo, request)
       }
     }
 
