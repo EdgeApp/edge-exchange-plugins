@@ -94,8 +94,7 @@ const INVALID_CURRENCY_CODES: InvalidCurrencyCodes = {
     celo: 'allTokens',
     ethereum: ['MATIC'],
     fantom: 'allTokens',
-    polygon: 'allCodes',
-    zcash: ['ZEC']
+    polygon: 'allCodes'
   }
 }
 
