@@ -1,10 +1,7 @@
-import 'regenerator-runtime/runtime'
+import { NativeModules } from 'react-native'
 
-import edgeCorePlugins from './index'
+const { EdgeExchangePluginsModule } = NativeModules
+const { sourceUri } = EdgeExchangePluginsModule.getConstants()
 
-if (
-  typeof window !== 'undefined' &&
-  typeof window.addEdgeCorePlugins === 'function'
-) {
-  window.addEdgeCorePlugins(edgeCorePlugins)
-}
+export const pluginUri = sourceUri
+export const debugUri = 'http://localhost:8083/edge-exchange-plugins.js'

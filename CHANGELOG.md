@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- changed: Simplify our React Native integration.
+
 ## 0.22.0 (2023-10-24)
 
 - changed: Thorchain quotes to estimate rate

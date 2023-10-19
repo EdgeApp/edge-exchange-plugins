@@ -1,12 +1,19 @@
-# Javascript:
-lib/
+# Build output:
+/.nyc_output/
+/android/.gradle
+/android/*.jar
+/android/src/main/assets/edge-exchange-plugins/
+/coverage/
+/dist/
+/lib/
+
+# Package managers:
 node_modules/
+npm-debug.log
 package-lock.json
+yarn-error.log
 
 # Editors:
+.DS_Store
 .idea/
 .vscode/
-
-# Test results:
-.nyc_output/
-/coverage/

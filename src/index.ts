@@ -1,3 +1,7 @@
+import 'regenerator-runtime/runtime'
+
+import type { EdgeCorePlugins } from 'edge-core-js/types'
+
 import { makeBitMaxPlugin } from './rate/bitmax'
 import { makeCoinbasePlugin } from './rate/coinbase'
 import { makeCoincapPlugin } from './rate/coincap'
@@ -25,7 +29,7 @@ import { makeSideshiftPlugin } from './swap/sideshift'
 import { makeSwapuzPlugin } from './swap/swapuz'
 import { makeTransferPlugin } from './swap/transfer'
 
-const edgeCorePlugins = {
+const plugins = {
   // Rate plugins:
   bitmax: makeBitMaxPlugin,
   coinbase: makeCoinbasePlugin,
@@ -57,11 +61,17 @@ const edgeCorePlugins = {
   letsexchange: makeLetsExchangePlugin
 }
 
+declare global {
+  interface Window {
+    addEdgeCorePlugins?: (plugins: EdgeCorePlugins) => void
+  }
+}
+
 if (
   typeof window !== 'undefined' &&
   typeof window.addEdgeCorePlugins === 'function'
 ) {
-  window.addEdgeCorePlugins(edgeCorePlugins)
+  window.addEdgeCorePlugins(plugins)
 }
 
-export default edgeCorePlugins
+export default plugins

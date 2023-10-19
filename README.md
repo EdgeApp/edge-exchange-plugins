@@ -2,32 +2,63 @@
 
 This library exports a collection of exchange-rate & swap plugins for use with [`edge-core-js`](https://github.com/EdgeApp/edge-core-js).
 
-Use it like this:
+Please see [index.js](./src/index.js) for the list of plugins in this repo. These are compatible with edge-core-js v0.19.31 or later.
 
-```js
-import {
-  addEdgeCorePlugins,
-  lockEdgeCorePlugins,
-  makeEdgeContext
-} from 'edge-core-js'
-import exchangePlugins from 'edge-exchange-plugins'
+## Installing
 
-addEdgeCorePlugins(exchangePlugins)
-lockEdgeCorePlugins()
+Fist, add this library to your project:
 
-makeEdgeContext({
-  apiKey: '',
-  appId: '',
-  plugins: {
-    // Plugin names from edge-exchange-plugins:
-    coinbase: true,
-    shapeshift: true
-  }
-})
-
+```sh
+yarn add edge-exchange-plugins
 ```
 
-Please see [index.js](./src/index.js) for the list of plugins in this repo.
+### Node.js
+
+For Node.js, you should call `addEdgeCorePlugins` to register these plugins with edge-core-js:
+
+```js
+const { addEdgeCorePlugins, lockEdgeCorePlugins } = require('edge-core-js')
+const plugins = require('edge-exchange-plugins')
+
+addEdgeCorePlugins(plugins)
+
+// Once you are done adding plugins, call this:
+lockEdgeCorePlugins()
+```
+
+You can also add plugins individually if you want to be more picky:
+
+```js
+addEdgeCorePlugins({
+  thorchain: plugins.thorchain
+})
+```
+
+### Browser
+
+The bundle located in `dist/edge-exchange-plugins.js` will automatically register itself with edge-core-js. Just serve the entire `dist` directory along with your app, and then load the script:
+
+```html
+<script src='https://example.com/app/dist/edge-exchange-plugins.js'>
+```
+
+If you want to debug this project, run `yarn start` to start a Webpack server,
+and then adjust your script URL to http://localhost:8083/edge-exchange-plugins.js.
+
+### React Native
+
+This package will automatically install itself using React Native autolinking. To integrate the plugins with edge-core-js, add its URI to the context component:
+
+```jsx
+import { pluginUri } from 'edge-exchange-plugins'
+
+<MakeEdgeContext
+  pluginUris={[pluginUri]}
+  // Plus other props as required...
+/>
+```
+
+To debug this project, run `yarn start` to start a Webpack server, and then use `debugUri` instead of `pluginUri`.
 
 ## edge-react-gui
 
@@ -39,16 +70,17 @@ To test your exchange plugin, build the full application at [`edge-react-gui`](h
 
 Clone this repo as a peer in the same directory as `edge-react-gui`. Then run
 
-```
+```sh
 yarn
 yarn prepare
 ```
 
 From within the `edge-react-gui`
 
-```
+```sh
 yarn updot edge-exchange-plugins
 yarn prepare
+yarn prepare.ios # For iPhone development
 ```
 
 Make appropriate changes to `edge-react-gui` to include your plugin. Search `edge-react-gui` for the string `changelly` and make similar changes for your plugin.
