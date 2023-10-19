@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 0.21.11 (2023-10-19)
+
 - added: Enable Zcash receiving on Godex
 
 ## 0.21.10 (2023-10-09)
