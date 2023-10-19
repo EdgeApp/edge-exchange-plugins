@@ -9,6 +9,7 @@ import {
 } from 'cleaners'
 import {
   EdgeCorePluginOptions,
+  EdgeFetchResponse,
   EdgeSpendInfo,
   EdgeSwapInfo,
   EdgeSwapPlugin,
@@ -102,7 +103,7 @@ export function makeExolixPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
         Authorization: `${apiKey}`
       }
 
-      let response: Awaited<ReturnType<typeof fetchCors>>
+      let response: EdgeFetchResponse
 
       if (method === 'POST') {
         const body = JSON.stringify(params)

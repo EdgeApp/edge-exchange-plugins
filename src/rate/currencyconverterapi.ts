@@ -58,7 +58,7 @@ export function makeCurrencyconverterapiPlugin(
         const { status, error, ...rest } = asCurrencyConverterResponse(
           await response.json()
         )
-        const rates: { [cc: string]: number } = rest
+        const rates: { [cc: string]: number } = rest as {}
         if (
           (status != null && status !== 200) ||
           (error != null && error !== '') ||
