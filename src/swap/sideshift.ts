@@ -22,7 +22,7 @@ import {
   InvalidCurrencyCodes,
   makeSwapPluginQuote,
   SwapOrder
-} from '../swap-helpers'
+} from '../util/swapHelpers'
 import { convertRequest, getAddress } from '../util/utils'
 import { EdgeSwapRequestPlugin } from './types'
 

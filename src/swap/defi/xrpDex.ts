@@ -12,7 +12,7 @@ import {
 } from 'edge-core-js/types'
 import { Client } from 'xrpl'
 
-import { makeSwapPluginQuote, SwapOrder } from '../../swap-helpers'
+import { makeSwapPluginQuote, SwapOrder } from '../../util/swapHelpers'
 import {
   convertRequest,
   fetchInfo,
