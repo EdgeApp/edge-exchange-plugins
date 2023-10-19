@@ -257,6 +257,7 @@ interface CalcSwapParams {
   toWallet: EdgeCurrencyWallet
   toCurrencyCode: string
   toAddress: string
+  isEstimate: boolean
   nativeAmount: string
   minAmount: MinAmount | undefined
   sourcePool: Pool
@@ -300,7 +301,8 @@ export function makeThorchainPlugin(
   }
 
   const fetchSwapQuoteInner = async (
-    request: EdgeSwapRequestPlugin
+    request: EdgeSwapRequestPlugin,
+    isEstimate: boolean
   ): Promise<SwapOrder> => {
     const {
       fromCurrencyCode,
@@ -390,29 +392,33 @@ export function makeThorchainPlugin(
       streamingQuantity = thorchain.streamingQuantity ?? streamingQuantity
     }
 
-    const volatilitySpreadFinal = getVolatilitySpread({
-      fromPluginId: fromWallet.currencyInfo.pluginId,
-      fromTokenId,
-      fromCurrencyCode,
-      toPluginId: toWallet.currencyInfo.pluginId,
-      toTokenId,
-      toCurrencyCode,
-      likeKindVolatilitySpread,
-      volatilitySpread,
-      perAssetSpread
-    })
+    const volatilitySpreadFinal = isEstimate
+      ? '0'
+      : getVolatilitySpread({
+          fromPluginId: fromWallet.currencyInfo.pluginId,
+          fromTokenId,
+          fromCurrencyCode,
+          toPluginId: toWallet.currencyInfo.pluginId,
+          toTokenId,
+          toCurrencyCode,
+          likeKindVolatilitySpread,
+          volatilitySpread,
+          perAssetSpread
+        })
 
-    const volatilitySpreadStreamingFinal = getVolatilitySpread({
-      fromPluginId: fromWallet.currencyInfo.pluginId,
-      fromTokenId,
-      fromCurrencyCode,
-      toPluginId: toWallet.currencyInfo.pluginId,
-      toTokenId,
-      toCurrencyCode,
-      likeKindVolatilitySpread: likeKindVolatilitySpreadStreaming,
-      volatilitySpread: volatilitySpreadStreaming,
-      perAssetSpread: perAssetSpreadStreaming
-    })
+    const volatilitySpreadStreamingFinal = isEstimate
+      ? '0'
+      : getVolatilitySpread({
+          fromPluginId: fromWallet.currencyInfo.pluginId,
+          fromTokenId,
+          fromCurrencyCode,
+          toPluginId: toWallet.currencyInfo.pluginId,
+          toTokenId,
+          toCurrencyCode,
+          likeKindVolatilitySpread: likeKindVolatilitySpreadStreaming,
+          volatilitySpread: volatilitySpreadStreaming,
+          perAssetSpread: perAssetSpreadStreaming
+        })
 
     log.warn(`volatilitySpreadFinal: ${volatilitySpreadFinal.toString()}`)
     log.warn(
@@ -476,6 +482,7 @@ export function makeThorchainPlugin(
         toWallet,
         toCurrencyCode,
         toAddress,
+        isEstimate,
         nativeAmount,
         minAmount,
         sourcePool,
@@ -498,6 +505,7 @@ export function makeThorchainPlugin(
         toWallet,
         toCurrencyCode,
         toAddress,
+        isEstimate,
         nativeAmount,
         minAmount,
         sourcePool,
@@ -634,8 +642,12 @@ export function makeThorchainPlugin(
     async fetchSwapQuote(req: EdgeSwapRequest): Promise<EdgeSwapQuote> {
       const request = convertRequest(req)
 
-      const newRequest = await getMaxSwappable(fetchSwapQuoteInner, request)
-      const swapOrder = await fetchSwapQuoteInner(newRequest)
+      const newRequest = await getMaxSwappable(
+        fetchSwapQuoteInner,
+        request,
+        true
+      )
+      const swapOrder = await fetchSwapQuoteInner(newRequest, true)
       return await makeSwapPluginQuote(swapOrder)
     }
   }
@@ -652,6 +664,7 @@ const calcSwapFrom = async ({
   toWallet,
   toCurrencyCode,
   toAddress,
+  isEstimate,
   nativeAmount,
   minAmount,
   sourcePool,
@@ -770,7 +783,9 @@ const calcSwapFrom = async ({
   const toNativeAmount = round(toNativeAmountFloat, 0)
   log(`toNativeAmount: ${toNativeAmount}`)
 
-  const memo = preMemo.replace(':0/', `:${toThorAmountWithSpread}/`)
+  const memo = isEstimate
+    ? preMemo
+    : preMemo.replace(':0/', `:${toThorAmountWithSpread}/`)
 
   return {
     canBePartial,
@@ -796,7 +811,7 @@ const calcSwapTo = async ({
   toCurrencyCode,
   toAddress,
   nativeAmount,
-  minAmount,
+  isEstimate,
   sourcePool,
   destPool,
   thorname,
@@ -906,7 +921,9 @@ const calcSwapTo = async ({
   const fromNativeAmount = round(fromNativeAmountFloat, 0)
   log(`fromNativeAmount: ${fromNativeAmount}`)
 
-  const memo = preMemo.replace(':0/', `:${requestedToThorAmount}/`)
+  const memo = isEstimate
+    ? preMemo
+    : preMemo.replace(':0/', `:${requestedToThorAmount}/`)
 
   return {
     canBePartial,
