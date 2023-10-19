@@ -2,17 +2,6 @@ import 'regenerator-runtime/runtime'
 
 import type { EdgeCorePlugins } from 'edge-core-js/types'
 
-import { makeBitMaxPlugin } from './rate/bitmax'
-import { makeCoinbasePlugin } from './rate/coinbase'
-import { makeCoincapPlugin } from './rate/coincap'
-import { makeCoinGeckoPlugin } from './rate/coingecko'
-import { makeCoinmonitorPlugin } from './rate/coinmonitor'
-import { makeCompoundPlugin } from './rate/compound'
-import { makeConstantRatePlugin } from './rate/constantRate'
-import { makeCurrencyconverterapiPlugin } from './rate/currencyconverterapi'
-import { makeEdgeRatesPlugin } from './rate/edgeRates'
-import { makeNomicsPlugin } from './rate/nomics'
-import { makeWazirxPlugin } from './rate/wazirx'
 import { makeChangeHeroPlugin } from './swap/changehero'
 import { makeChangeNowPlugin } from './swap/changenow'
 import { makeLifiPlugin } from './swap/defi/lifi'
@@ -30,19 +19,6 @@ import { makeSwapuzPlugin } from './swap/swapuz'
 import { makeTransferPlugin } from './swap/transfer'
 
 const plugins = {
-  // Rate plugins:
-  bitmax: makeBitMaxPlugin,
-  coinbase: makeCoinbasePlugin,
-  coincap: makeCoincapPlugin,
-  coingecko: makeCoinGeckoPlugin,
-  coinmonitor: makeCoinmonitorPlugin,
-  compound: makeCompoundPlugin,
-  constantRate: makeConstantRatePlugin,
-  currencyconverterapi: makeCurrencyconverterapiPlugin,
-  edgeRates: makeEdgeRatesPlugin,
-  nomics: makeNomicsPlugin,
-  wazirx: makeWazirxPlugin,
-
   // Swap plugins:
   changehero: makeChangeHeroPlugin,
   changenow: makeChangeNowPlugin,
