@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## 0.22.0 (2023-10-24)
+
+- changed: Thorchain quotes to estimate rate
+
 ## 0.21.11 (2023-10-19)
 
 - added: Enable Zcash receiving on Godex
