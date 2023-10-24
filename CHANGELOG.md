@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 1.0.0 (2023-10-24)
+
 - changed: Simplify our React Native integration.
 - removed: Delete all rate plugins.
 

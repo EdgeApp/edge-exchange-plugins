@@ -2,7 +2,7 @@
 
 This library exports a collection of exchange-rate & swap plugins for use with [`edge-core-js`](https://github.com/EdgeApp/edge-core-js).
 
-Please see [index.js](./src/index.js) for the list of plugins in this repo. These are compatible with edge-core-js v0.19.31 or later.
+Please see [index.js](./src/index.js) for the list of plugins in this repo. These are compatible with edge-core-js v0.19.37 or later.
 
 ## Installing
 
