@@ -28,7 +28,7 @@ import {
   getTokenId,
   makeSwapPluginQuote,
   SwapOrder
-} from '../../swap-helpers'
+} from '../../util/swapHelpers'
 import {
   convertRequest,
   fetchInfo,

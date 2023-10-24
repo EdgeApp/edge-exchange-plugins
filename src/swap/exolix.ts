@@ -9,6 +9,7 @@ import {
 } from 'cleaners'
 import {
   EdgeCorePluginOptions,
+  EdgeFetchResponse,
   EdgeSpendInfo,
   EdgeSwapInfo,
   EdgeSwapPlugin,
@@ -25,7 +26,7 @@ import {
   InvalidCurrencyCodes,
   makeSwapPluginQuote,
   SwapOrder
-} from '../swap-helpers'
+} from '../util/swapHelpers'
 import { convertRequest, getAddress } from '../util/utils'
 import { EdgeSwapRequestPlugin } from './types'
 
@@ -102,7 +103,7 @@ export function makeExolixPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
         Authorization: `${apiKey}`
       }
 
-      let response: Awaited<ReturnType<typeof fetchCors>>
+      let response: EdgeFetchResponse
 
       if (method === 'POST') {
         const body = JSON.stringify(params)

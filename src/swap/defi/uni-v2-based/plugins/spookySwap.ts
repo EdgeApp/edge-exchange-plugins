@@ -16,7 +16,7 @@ import {
   getMaxSwappable,
   makeSwapPluginQuote,
   SwapOrder
-} from '../../../../swap-helpers'
+} from '../../../../util/swapHelpers'
 import { convertRequest } from '../../../../util/utils'
 import { EdgeSwapRequestPlugin } from '../../../types'
 import { getInOutTokenAddresses, InOutTokenAddresses } from '../../defiUtils'

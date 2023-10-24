@@ -11,14 +11,14 @@ import {
   SwapCurrencyError
 } from 'edge-core-js/types'
 
+import { div18 } from '../../util/biggystringplus'
 import {
   checkInvalidCodes,
   getMaxSwappable,
   InvalidCurrencyCodes,
   makeSwapPluginQuote,
   SwapOrder
-} from '../../swap-helpers'
-import { div18 } from '../../util/biggystringplus'
+} from '../../util/swapHelpers'
 import {
   convertRequest,
   fetchInfo,

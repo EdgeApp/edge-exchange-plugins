@@ -1,4 +1,4 @@
-/lib/
-/node_modules/
-/.nyc_output/
+/android/src/main/assets/edge-exchange-plugins/
 /coverage/
+/dist/
+/lib/
