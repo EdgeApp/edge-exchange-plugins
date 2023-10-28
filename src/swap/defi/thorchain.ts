@@ -598,7 +598,7 @@ export function makeThorchainPlugin(
       ],
 
       swapData: {
-        isEstimate: false,
+        isEstimate,
         payoutAddress: toAddress,
         payoutCurrencyCode: toCurrencyCode,
         payoutNativeAmount: toNativeAmount,

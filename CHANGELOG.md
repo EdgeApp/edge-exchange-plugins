@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- fixed: Properly report Thorchain quotes as isEstimate
+
 ## 1.0.0 (2023-10-24)
 
 - changed: Simplify our React Native integration.
