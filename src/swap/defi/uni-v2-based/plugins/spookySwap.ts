@@ -56,8 +56,8 @@ export function makeSpookySwapPlugin(
 
     // Sanity check: Both wallets should be of the same chain.
     if (
-      fromWallet.currencyInfo.currencyCode !== 'fantom' ||
-      toWallet.currencyInfo.currencyCode !== 'fantom'
+      fromWallet.currencyInfo.pluginId !== 'fantom' ||
+      toWallet.currencyInfo.pluginId !== 'fantom'
     )
       throw new SwapCurrencyError(swapInfo, request)
 
