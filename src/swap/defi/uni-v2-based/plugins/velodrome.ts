@@ -117,14 +117,17 @@ export function makeVelodromePlugin(
     )
     const fromAddress = (await fromWallet.getReceiveAddress()).publicAddress
     // toEdgeUnsignedTxs
-    const edgeSpendInfos = swapTxs.map(swapTx => {
+    const edgeSpendInfos = swapTxs.map((swapTx, i) => {
       // Convert to our spendInfo
       const edgeSpendInfo: EdgeSpendInfo = {
         currencyCode: request.fromCurrencyCode, // what is being sent out, only if token. Blank if not token
         spendTargets: [
           {
             memo: swapTx.data,
-            nativeAmount: swapTx.value != null ? swapTx.value.toString() : '0', // biggy/number string integer
+            nativeAmount:
+              swapTxs.length === 2 && i === 0
+                ? '0' // approval transactions don't have a value
+                : amountToSwap,
             publicAddress: swapTx.to
           }
         ],
