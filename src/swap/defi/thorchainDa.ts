@@ -98,9 +98,7 @@ const asThorSwapQuoteResponse = asObject({
 })
 
 const DA_VOLATILITY_SPREAD_DEFAULT = 0.03
-const THORSWAP_DEFAULT_SERVERS = [
-  'https://aggregator-prod-aulilvmdlq-uc.a.run.app'
-]
+const THORSWAP_DEFAULT_SERVERS = ['https://api.thorswap.net/aggregator']
 
 type ExchangeInfo = ReturnType<typeof asExchangeInfo>
 
