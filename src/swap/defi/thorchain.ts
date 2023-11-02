@@ -180,11 +180,11 @@ export const asInboundAddresses = asArray(
 
 export const asPool = asObject({
   asset: asString,
-  status: asString,
+  // status: asString,
   assetPrice: asString,
-  assetPriceUSD: asString,
-  assetDepth: asString,
-  runeDepth: asString
+  assetPriceUSD: asString
+  // assetDepth: asString,
+  // runeDepth: asString
 })
 
 export const asAssetSpread = asObject({
@@ -447,13 +447,12 @@ export function makeThorchainPlugin(
     const poolJson = await poolResponse.json()
     const pools = asPools(poolJson)
 
-    const sourcePool = pools.find(pool => {
-      const [asset] = pool.asset.split('-')
-      return asset === `${fromMainnetCode}.${fromCurrencyCode}`
-    })
-    if (sourcePool == null) {
-      throw new SwapCurrencyError(swapInfo, request)
-    }
+    const sourcePool = getPool(
+      request,
+      fromMainnetCode,
+      fromCurrencyCode,
+      pools
+    )
     const [
       sourceAsset,
       sourceTokenContractAddressAllCaps
@@ -464,13 +463,7 @@ export function makeThorchainPlugin(
         : undefined
     log(`sourceAsset: ${sourceAsset}`)
 
-    const destPool = pools.find(pool => {
-      const [asset] = pool.asset.split('-')
-      return asset === `${toMainnetCode}.${toCurrencyCode}`
-    })
-    if (destPool == null) {
-      throw new SwapCurrencyError(swapInfo, request)
-    }
+    const destPool = getPool(request, toMainnetCode, toCurrencyCode, pools)
 
     let calcResponse: CalcSwapResponse
     if (quoteFor === 'from') {
@@ -670,6 +663,22 @@ export function makeThorchainPlugin(
     }
   }
   return out
+}
+
+const getPool = (
+  request: EdgeSwapRequestPlugin,
+  mainnetCode: string,
+  tokenCode: string,
+  pools: Pool[]
+): Pool => {
+  const pool = pools.find(pool => {
+    const [asset] = pool.asset.split('-')
+    return asset === `${mainnetCode}.${tokenCode}`
+  })
+  if (pool == null) {
+    throw new SwapCurrencyError(swapInfo, request)
+  }
+  return pool
 }
 
 const calcSwapFrom = async ({
