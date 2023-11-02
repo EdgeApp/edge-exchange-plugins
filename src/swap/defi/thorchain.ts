@@ -668,6 +668,22 @@ const getPool = (
   tokenCode: string,
   pools: Pool[]
 ): Pool => {
+  if (mainnetCode === 'THOR' && tokenCode === 'RUNE') {
+    // Create a fake pool for rune. Use BTC pool to find rune USD price
+    const btcPool = pools.find(pool => pool.asset === 'BTC.BTC')
+
+    if (btcPool == null) {
+      throw new SwapCurrencyError(swapInfo, request)
+    }
+    const { assetPrice, assetPriceUSD } = btcPool
+    const pool: Pool = {
+      asset: 'THOR.RUNE',
+      assetPrice: '1',
+      assetPriceUSD: div(assetPriceUSD, assetPrice, 16)
+    }
+    return pool
+  }
+
   const pool = pools.find(pool => {
     const [asset] = pool.asset.split('-')
     return asset === `${mainnetCode}.${tokenCode}`
