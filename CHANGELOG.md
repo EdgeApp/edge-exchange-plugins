@@ -1,5 +1,9 @@
 # edge-exchange-plugins
 
+## Unreleased
+
+- fixed: Thorswap to use new server and apikey
+
 ## 1.0.1 (2023-10-30)
 
 - fixed: Properly report Thorchain quotes as isEstimate

@@ -158,7 +158,8 @@ export const asInitOptions = asObject({
   appId: asOptional(asString, 'edge'),
   affiliateFeeBasis: asOptional(asString, AFFILIATE_FEE_BASIS_DEFAULT),
   ninerealmsClientId: asOptional(asString, ''),
-  thorname: asOptional(asString, 'ej')
+  thorname: asOptional(asString, 'ej'),
+  thorswapApiKey: asOptional(asString)
 })
 
 const asMinAmount = asObject({
