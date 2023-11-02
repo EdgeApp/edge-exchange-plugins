@@ -119,12 +119,18 @@ export function makeThorchainDaPlugin(
     appId,
     affiliateFeeBasis,
     ninerealmsClientId,
-    thorname
+    thorname,
+    thorswapApiKey
   } = asInitOptions(opts.initOptions)
 
   const headers = {
     'Content-Type': 'application/json',
     'x-client-id': ninerealmsClientId
+  }
+
+  const thorswapHeaders = {
+    'Content-Type': 'application/json',
+    referer: thorswapApiKey
   }
 
   const fetchSwapQuoteInner = async (
@@ -247,7 +253,9 @@ export function makeThorchainDaPlugin(
           headers
         }
       ),
-      fetchWaterfall(fetchCors, thorswapServers, uri, { headers })
+      fetchWaterfall(fetchCors, thorswapServers, uri, {
+        headers: thorswapHeaders
+      })
     ])
 
     if (!iaResponse.ok) {
