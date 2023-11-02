@@ -12,6 +12,7 @@ import {
   EdgeCurrencyWallet,
   EdgeFetchFunction,
   EdgeFetchOptions,
+  EdgeMemo,
   EdgeSpendInfo,
   EdgeSwapInfo,
   EdgeSwapPlugin,
@@ -151,7 +152,7 @@ export const MAINNET_CODE_TRANSCRIPTION: { [cc: string]: ChainTypes } = {
   dogecoin: 'DOGE',
   ethereum: 'ETH',
   litecoin: 'LTC',
-  thorchain: 'THOR'
+  thorchainrune: 'THOR'
 }
 
 export const asInitOptions = asObject({
@@ -532,7 +533,9 @@ export function makeThorchainPlugin(
     let ethNativeAmount = fromNativeAmount
     let publicAddress = thorAddress
     let approvalData
+    let memoType: EdgeMemo['type']
     if (EVM_CURRENCY_CODES[fromMainnetCode]) {
+      memoType = 'hex'
       if (fromMainnetCode !== fromCurrencyCode) {
         if (router == null)
           throw new Error(`Missing router address for ${fromMainnetCode}`)
@@ -560,9 +563,10 @@ export function makeThorchainPlugin(
           nativeAmount: fromNativeAmount
         })
       } else {
-        memo = '0x' + Buffer.from(memo).toString('hex')
+        memo = Buffer.from(memo).toString('hex')
       }
     } else {
+      memoType = 'text'
       // Cannot yet do tokens on non-EVM chains
       if (fromMainnetCode !== fromCurrencyCode) {
         throw new SwapCurrencyError(swapInfo, request)
@@ -573,9 +577,14 @@ export function makeThorchainPlugin(
     if (approvalData != null) {
       const spendInfo: EdgeSpendInfo = {
         currencyCode: request.fromCurrencyCode,
+        memos: [
+          {
+            type: memoType,
+            value: approvalData
+          }
+        ],
         spendTargets: [
           {
-            memo: approvalData,
             nativeAmount: '0',
             publicAddress: sourceTokenContractAddress
           }
@@ -590,9 +599,14 @@ export function makeThorchainPlugin(
 
     const spendInfo: EdgeSpendInfo = {
       currencyCode: request.fromCurrencyCode,
+      memos: [
+        {
+          type: memoType,
+          value: memo
+        }
+      ],
       spendTargets: [
         {
-          memo,
           nativeAmount: ethNativeAmount,
           publicAddress
         }
