@@ -1,3 +1,4 @@
+import { makeConfig } from 'cleaner-config'
 import {
   asDate,
   asMap,
@@ -14,18 +15,17 @@ import {
   lockEdgeCorePlugins,
   makeFakeEdgeWorld
 } from 'edge-core-js'
+import accountBasedPlugins from 'edge-currency-accountbased'
+import currencyPlugins from 'edge-currency-plugins'
 import fs from 'fs'
 
 import edgeExchangePlugins from '../src'
 import { arrrCurrencyInfo } from './fakeArrrInfo'
-import { avaxCurrencyInfo } from './fakeAvaxInfo'
-import { bchCurrencyInfo } from './fakeBchInfo'
-import { btcCurrencyInfo } from './fakeBtcInfo'
 import { makeFakePlugin } from './fakeCurrencyPlugin'
-import { ethCurrencyInfo } from './fakeEthInfo'
-import { polygonCurrencyInfo } from './fakePolygonInfo'
+import { asTestConfig } from './testconfig'
 
 const DUMP_USER_FILE = './test/fakeUserDump.json'
+const config = makeConfig(asTestConfig, './testconfig.json')
 
 const asFakeUser = asObject({
   username: asString,
@@ -52,14 +52,15 @@ interface FetchQuoteParams {
 }
 
 async function main(): Promise<void> {
+  const { avalanche, ethereum, polygon } = accountBasedPlugins
+
   const allPlugins = {
-    bitcoin: makeFakePlugin(btcCurrencyInfo),
-    bitcoincash: makeFakePlugin(bchCurrencyInfo),
-    ethereum: makeFakePlugin(ethCurrencyInfo),
-    polygon: makeFakePlugin(polygonCurrencyInfo),
-    avalanche: makeFakePlugin(avaxCurrencyInfo),
-    piratechain: makeFakePlugin(arrrCurrencyInfo),
-    ...edgeExchangePlugins
+    avalanche,
+    ethereum,
+    polygon,
+    ...currencyPlugins,
+    ...edgeExchangePlugins,
+    piratechain: makeFakePlugin(arrrCurrencyInfo)
   }
 
   addEdgeCorePlugins(allPlugins)
@@ -79,18 +80,18 @@ async function main(): Promise<void> {
     plugins: {
       bitcoin: true,
       bitcoincash: true,
-      ethereum: true,
-      avalanche: true,
-      // lifi: true,
-      polygon: true,
+      ethereum: config.ETHEREUM_INIT,
+      avalanche: config.AVALANCHE_INIT,
+      lifi: config.LIFI_INIT,
+      polygon: config.POLYGON_INIT,
       piratechain: true,
-      thorchain: true
-      // thorchainda: true,
-      // letsexchange: {
-      //   apiKey: '',
-      //   affiliateId: ''
-      // }
+      thorchain: config.THORCHAIN_INIT
     }
+  })
+
+  await context.changeLogSettings({
+    defaultLogLevel: 'info',
+    sources: {}
   })
 
   const account = await context.loginWithKey('bob', loginKey)
@@ -155,6 +156,15 @@ async function main(): Promise<void> {
     console.log(`-----------------------------`)
     return quote
   }
+
+  await fetchQuote({
+    fromWallet: btcWallet,
+    fromCurrencyCode: 'BTC',
+    toWallet: ethWallet,
+    toCurrencyCode: 'ETH',
+    exchangeAmount: '0.002',
+    quoteFor: 'from'
+  })
 
   await fetchQuote({
     fromWallet: ethWallet,

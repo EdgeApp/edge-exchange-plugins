@@ -4,28 +4,26 @@ import {
   lockEdgeCorePlugins,
   makeFakeEdgeWorld
 } from 'edge-core-js'
+import accountBasedPlugins from 'edge-currency-accountbased'
+import currencyPlugins from 'edge-currency-plugins'
 import fs from 'fs'
 
 import edgeExchangePlugins from '../src'
 import { arrrCurrencyInfo } from './fakeArrrInfo'
-import { avaxCurrencyInfo } from './fakeAvaxInfo'
-import { bchCurrencyInfo } from './fakeBchInfo'
-import { btcCurrencyInfo } from './fakeBtcInfo'
 import { makeFakePlugin } from './fakeCurrencyPlugin'
-import { ethCurrencyInfo } from './fakeEthInfo'
-import { polygonCurrencyInfo } from './fakePolygonInfo'
 
 const DUMP_USER_FILE = './test/fakeUserDump.json'
 
 async function main(): Promise<void> {
+  const { avalanche, ethereum, polygon } = accountBasedPlugins
+
   const allPlugins = {
-    bitcoin: makeFakePlugin(btcCurrencyInfo),
-    bitcoincash: makeFakePlugin(bchCurrencyInfo),
-    ethereum: makeFakePlugin(ethCurrencyInfo),
-    avalanche: makeFakePlugin(avaxCurrencyInfo),
-    piratechain: makeFakePlugin(arrrCurrencyInfo),
-    polygon: makeFakePlugin(polygonCurrencyInfo),
-    ...edgeExchangePlugins
+    avalanche,
+    ethereum,
+    polygon,
+    ...currencyPlugins,
+    ...edgeExchangePlugins,
+    piratechain: makeFakePlugin(arrrCurrencyInfo)
   }
 
   addEdgeCorePlugins(allPlugins)
@@ -54,11 +52,11 @@ async function main(): Promise<void> {
   })
   await account.createCurrencyWallet('wallet:bitcoin', {
     fiatCurrencyCode: 'iso:EUR',
-    name: 'My Fake Bitcoin'
+    name: 'My Real Bitcoin'
   })
   await account.createCurrencyWallet('wallet:bitcoincash', {
     fiatCurrencyCode: 'iso:USD',
-    name: 'My Fake Bitcoin Cash'
+    name: 'My Real Bitcoin Cash'
   })
   await account.createCurrencyWallet('wallet:piratechain', {
     fiatCurrencyCode: 'iso:EUR',
@@ -66,29 +64,25 @@ async function main(): Promise<void> {
   })
   const ethWallet = await account.createCurrencyWallet('wallet:ethereum', {
     fiatCurrencyCode: 'iso:EUR',
-    name: 'My Fake Bitcoin'
+    name: 'My Real Ethereum'
   })
   const avaxWallet = await account.createCurrencyWallet('wallet:avalanche', {
     fiatCurrencyCode: 'iso:EUR',
-    name: 'My Fake Avalanche'
+    name: 'My Real Avalanche'
   })
   const maticWallet = await account.createCurrencyWallet('wallet:polygon', {
     fiatCurrencyCode: 'iso:USD',
-    name: 'My Fake Matic'
+    name: 'My Real Matic'
   })
-  const ethGetBuiltinTokens = allPlugins.ethereum.getBuiltinTokens ?? (() => [])
-  const ethEnabledTokens = await ethGetBuiltinTokens()
-  await ethWallet.changeEnabledTokenIds(Object.keys(ethEnabledTokens))
+  let builtInTokens = {}
+  builtInTokens = account.currencyConfig.ethereum.builtinTokens
+  await ethWallet.changeEnabledTokenIds(Object.keys(builtInTokens))
 
-  const avaxGetBuiltinTokens =
-    allPlugins.avalanche.getBuiltinTokens ?? (() => [])
-  const avaxEnabledTokens = await avaxGetBuiltinTokens()
-  await avaxWallet.changeEnabledTokenIds(Object.keys(avaxEnabledTokens))
+  builtInTokens = account.currencyConfig.avalanche.builtinTokens
+  await avaxWallet.changeEnabledTokenIds(Object.keys(builtInTokens))
 
-  const maticGetBuiltinTokens =
-    allPlugins.polygon.getBuiltinTokens ?? (() => [])
-  const maticEnabledTokens = await maticGetBuiltinTokens()
-  await maticWallet.changeEnabledTokenIds(Object.keys(maticEnabledTokens))
+  builtInTokens = account.currencyConfig.polygon.builtinTokens
+  await maticWallet.changeEnabledTokenIds(Object.keys(builtInTokens))
 
   const data = await world.dumpFakeUser(account)
   const dump = {
@@ -98,6 +92,7 @@ async function main(): Promise<void> {
   fs.writeFileSync(DUMP_USER_FILE, JSON.stringify(dump, null, 2), {
     encoding: 'utf8'
   })
+  console.log('Success creating user dump')
   process.exit(0)
 }
 
