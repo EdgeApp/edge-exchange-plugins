@@ -98,9 +98,7 @@ const asThorSwapQuoteResponse = asObject({
 })
 
 const DA_VOLATILITY_SPREAD_DEFAULT = 0.03
-const THORSWAP_DEFAULT_SERVERS = [
-  'https://aggregator-prod-aulilvmdlq-uc.a.run.app'
-]
+const THORSWAP_DEFAULT_SERVERS = ['https://api.thorswap.net/aggregator']
 
 type ExchangeInfo = ReturnType<typeof asExchangeInfo>
 
@@ -121,12 +119,18 @@ export function makeThorchainDaPlugin(
     appId,
     affiliateFeeBasis,
     ninerealmsClientId,
-    thorname
+    thorname,
+    thorswapApiKey
   } = asInitOptions(opts.initOptions)
 
   const headers = {
     'Content-Type': 'application/json',
     'x-client-id': ninerealmsClientId
+  }
+
+  const thorswapHeaders = {
+    'Content-Type': 'application/json',
+    referer: thorswapApiKey
   }
 
   const fetchSwapQuoteInner = async (
@@ -249,7 +253,9 @@ export function makeThorchainDaPlugin(
           headers
         }
       ),
-      fetchWaterfall(fetchCors, thorswapServers, uri, { headers })
+      fetchWaterfall(fetchCors, thorswapServers, uri, {
+        headers: thorswapHeaders
+      })
     ])
 
     if (!iaResponse.ok) {

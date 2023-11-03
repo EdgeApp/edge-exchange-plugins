@@ -1,3 +1,4 @@
+import { makeConfig } from 'cleaner-config'
 import {
   asDate,
   asMap,
@@ -8,23 +9,23 @@ import {
 } from 'cleaners'
 import {
   addEdgeCorePlugins,
+  EdgeCurrencyWallet,
   EdgeSwapQuote,
   EdgeSwapRequest,
   lockEdgeCorePlugins,
   makeFakeEdgeWorld
 } from 'edge-core-js'
+import accountBasedPlugins from 'edge-currency-accountbased'
+import currencyPlugins from 'edge-currency-plugins'
 import fs from 'fs'
 
 import edgeExchangePlugins from '../src'
 import { arrrCurrencyInfo } from './fakeArrrInfo'
-import { avaxCurrencyInfo } from './fakeAvaxInfo'
-import { bchCurrencyInfo } from './fakeBchInfo'
-import { btcCurrencyInfo } from './fakeBtcInfo'
 import { makeFakePlugin } from './fakeCurrencyPlugin'
-import { ethCurrencyInfo } from './fakeEthInfo'
-import { polygonCurrencyInfo } from './fakePolygonInfo'
+import { asTestConfig } from './testconfig'
 
 const DUMP_USER_FILE = './test/fakeUserDump.json'
+const config = makeConfig(asTestConfig, '../testconfig.json')
 
 const asFakeUser = asObject({
   username: asString,
@@ -40,15 +41,26 @@ const asUserDump = asObject({
   data: asFakeUser
 })
 
+interface FetchQuoteParams {
+  fromWallet: EdgeCurrencyWallet
+  toWallet: EdgeCurrencyWallet
+  fromCurrencyCode: string
+  toCurrencyCode: string
+  quoteFor: 'from' | 'to'
+  exchangeAmount?: string
+  nativeAmount?: string
+}
+
 async function main(): Promise<void> {
+  const { avalanche, ethereum, polygon } = accountBasedPlugins
+
   const allPlugins = {
-    bitcoin: makeFakePlugin(btcCurrencyInfo),
-    bitcoincash: makeFakePlugin(bchCurrencyInfo),
-    ethereum: makeFakePlugin(ethCurrencyInfo),
-    polygon: makeFakePlugin(polygonCurrencyInfo),
-    avalanche: makeFakePlugin(avaxCurrencyInfo),
-    piratechain: makeFakePlugin(arrrCurrencyInfo),
-    ...edgeExchangePlugins
+    avalanche,
+    ethereum,
+    polygon,
+    ...currencyPlugins,
+    ...edgeExchangePlugins,
+    piratechain: makeFakePlugin(arrrCurrencyInfo)
   }
 
   addEdgeCorePlugins(allPlugins)
@@ -68,18 +80,18 @@ async function main(): Promise<void> {
     plugins: {
       bitcoin: true,
       bitcoincash: true,
-      ethereum: true,
-      avalanche: true,
-      lifi: true,
-      polygon: true,
+      ethereum: config.ETHEREUM_INIT,
+      avalanche: config.AVALANCHE_INIT,
+      lifi: config.LIFI_INIT,
+      polygon: config.POLYGON_INIT,
       piratechain: true,
-      thorchain: true
-      // thorchainda: true,
-      // letsexchange: {
-      //   apiKey: '',
-      //   affiliateId: ''
-      // }
+      thorchain: config.THORCHAIN_INIT
     }
+  })
+
+  await context.changeLogSettings({
+    defaultLogLevel: 'info',
+    sources: {}
   })
 
   const account = await context.loginWithKey('bob', loginKey)
@@ -97,205 +109,147 @@ async function main(): Promise<void> {
   const arrrWallet = await account.waitForCurrencyWallet(arrrInfo?.id ?? '')
   const maticWallet = await account.waitForCurrencyWallet(maticInfo?.id ?? '')
 
-  // Test a FROM quote
-  const fromRequest: EdgeSwapRequest = {
+  const fetchQuote = async ({
+    fromWallet,
+    toWallet,
+    fromCurrencyCode,
+    toCurrencyCode,
+    quoteFor,
+    exchangeAmount,
+    nativeAmount
+  }: FetchQuoteParams): Promise<EdgeSwapQuote | null> => {
+    console.log(`Request: ${fromCurrencyCode} to ${toCurrencyCode}`)
+    if (exchangeAmount != null) {
+      console.log(`Amount: ${quoteFor} ${exchangeAmount}`)
+      if (quoteFor === 'from') {
+        nativeAmount = await fromWallet.denominationToNative(
+          exchangeAmount,
+          fromCurrencyCode
+        )
+      } else {
+        nativeAmount = await toWallet.denominationToNative(
+          exchangeAmount,
+          toCurrencyCode
+        )
+      }
+    } else if (nativeAmount != null) {
+      console.log(`Request: ${fromCurrencyCode} to ${toCurrencyCode}`)
+      console.log(`Amount: ${quoteFor} nativeAmount: ${nativeAmount}`)
+    } else {
+      throw new Error('No nativeAmount or exchangeAmount')
+    }
+
+    const request: EdgeSwapRequest = {
+      fromWallet,
+      toWallet,
+      fromCurrencyCode,
+      toCurrencyCode,
+      nativeAmount,
+      quoteFor
+    }
+    const quote = await account.fetchSwapQuote(request).catch(e => {
+      console.log(e)
+      console.log(e.message)
+      return null
+    })
+    logQuote(quote)
+    console.log(`-----------------------------`)
+    return quote
+  }
+
+  await fetchQuote({
+    fromWallet: btcWallet,
+    fromCurrencyCode: 'BTC',
+    toWallet: ethWallet,
+    toCurrencyCode: 'ETH',
+    exchangeAmount: '0.002',
+    quoteFor: 'from'
+  })
+
+  await fetchQuote({
     fromWallet: ethWallet,
     fromCurrencyCode: 'UNI',
     toWallet: avaxWallet,
     toCurrencyCode: 'JOE',
-    nativeAmount: await ethWallet.denominationToNative('100', 'UNI'),
+    exchangeAmount: '100',
     quoteFor: 'from'
-  }
-  console.log(`fromRequest:`)
-  console.log(
-    JSON.stringify(
-      { ...fromRequest, fromWallet: undefined, toWallet: undefined },
-      null,
-      2
-    )
-  )
-  console.log(`------------`)
+  })
 
-  // Test a FROM ARRR to BTC quote
-  const fromRequest2: EdgeSwapRequest = {
+  await fetchQuote({
     fromWallet: arrrWallet,
     fromCurrencyCode: 'ARRR',
     toWallet: btcWallet,
     toCurrencyCode: 'BTC',
-    nativeAmount: await arrrWallet.denominationToNative('109', 'ARRR'),
+    exchangeAmount: '109',
     quoteFor: 'from'
-  }
-  console.log(`fromRequest2:`)
-  console.log(
-    JSON.stringify(
-      { ...fromRequest2, fromWallet: undefined, toWallet: undefined },
-      null,
-      2
-    )
-  )
-  console.log(`------------`)
+  })
 
-  // Test a FROM BTC to ARRR quote
-  const fromRequest3: EdgeSwapRequest = {
+  await fetchQuote({
     fromWallet: btcWallet,
     fromCurrencyCode: 'BTC',
     toWallet: arrrWallet,
     toCurrencyCode: 'ARRR',
-    nativeAmount: await btcWallet.denominationToNative('0.01', 'BTC'),
+    exchangeAmount: '0.01',
     quoteFor: 'from'
-  }
-  console.log(`fromRequest3:`)
-  console.log(
-    JSON.stringify(
-      { ...fromRequest3, fromWallet: undefined, toWallet: undefined },
-      null,
-      2
-    )
-  )
-  console.log(`------------`)
+  })
 
   // Test a TO quote
-  const toRequest: EdgeSwapRequest = {
+  await fetchQuote({
     fromWallet: ethWallet,
     fromCurrencyCode: 'ETH',
     toWallet: btcWallet,
     toCurrencyCode: 'BTC',
-    nativeAmount: await btcWallet.denominationToNative('0.004', 'BTC'),
+    exchangeAmount: '0.004',
     quoteFor: 'to'
-  }
-  console.log(`toRequest:`)
-  console.log(
-    JSON.stringify(
-      { ...toRequest, fromWallet: undefined, toWallet: undefined },
-      null,
-      2
-    )
-  )
+  })
 
-  // Test a FROM quote polygon:USDC to ethereum:WBTC
-  const fromRequest4: EdgeSwapRequest = {
+  await fetchQuote({
     fromWallet: maticWallet,
     fromCurrencyCode: 'USDC',
     toWallet: ethWallet,
     toCurrencyCode: 'WBTC',
-    nativeAmount: await maticWallet.denominationToNative('4000', 'USDC'),
+    exchangeAmount: '4000',
     quoteFor: 'from'
-  }
-  console.log(`fromRequest4:`)
-  console.log(
-    JSON.stringify(
-      { ...fromRequest4, fromWallet: undefined, toWallet: undefined },
-      null,
-      2
-    )
-  )
-  console.log(`------------`)
+  })
 
-  // Test a FROM quote bitcoincash to ethereum:WBTC
-  const fromRequest5: EdgeSwapRequest = {
+  const quote = await fetchQuote({
     fromWallet: bchWallet,
     fromCurrencyCode: 'BCH',
     toWallet: ethWallet,
     toCurrencyCode: 'WBTC',
-    nativeAmount: await bchWallet.denominationToNative('10', 'BCH'),
+    exchangeAmount: '10',
     quoteFor: 'from'
-  }
-  console.log(`fromRequest5:`)
-  console.log(
-    JSON.stringify(
-      { ...fromRequest5, fromWallet: undefined, toWallet: undefined },
-      null,
-      2
-    )
-  )
-
-  const quote5 = await account.fetchSwapQuote(fromRequest5).catch(e => {
-    console.log(e)
-    console.log(e.message)
-    return null
   })
-  logQuote(quote5)
-  console.log(`------------`)
 
   // Test a TO quote bitcoincash to ethereum:WBTC using 'to' amount from
   // previous request
-  const toRequest6: EdgeSwapRequest = {
+  await fetchQuote({
     fromWallet: bchWallet,
     fromCurrencyCode: 'BCH',
     toWallet: ethWallet,
     toCurrencyCode: 'WBTC',
-    nativeAmount: quote5?.toNativeAmount ?? '0',
+    nativeAmount: quote?.toNativeAmount ?? '0',
     // nativeAmount: await ethWallet.denominationToNative('0.15185834', 'WBTC'),
     quoteFor: 'to'
-  }
-  console.log(`toRequest6:`)
-  console.log(
-    JSON.stringify(
-      { ...toRequest6, fromWallet: undefined, toWallet: undefined },
-      null,
-      2
-    )
-  )
-
-  const quote6 = await account.fetchSwapQuote(toRequest6).catch(e => {
-    console.log(e)
-    console.log(e.message)
-    return null
   })
-  logQuote(quote6)
-  console.log('-------------------------')
 
-  // Test a FROM quote bitcoin to bitcoincash
-  const fromRequest7: EdgeSwapRequest = {
+  await fetchQuote({
     fromWallet: btcWallet,
     fromCurrencyCode: 'BTC',
     toWallet: bchWallet,
     toCurrencyCode: 'BCH',
-    nativeAmount: await btcWallet.denominationToNative('0.2', 'BTC'),
+    exchangeAmount: '0.2',
     quoteFor: 'from'
-  }
-  console.log(`fromRequest7:`)
-  console.log(
-    JSON.stringify(
-      { ...fromRequest7, fromWallet: undefined, toWallet: undefined },
-      null,
-      2
-    )
-  )
-
-  const quote7 = await account.fetchSwapQuote(fromRequest7).catch(e => {
-    console.log(e)
-    console.log(e.message)
-    return null
   })
-  logQuote(quote7)
-  console.log(`------------`)
 
-  // Test a FROM quote bitcoincash to bitcoin
-  const fromRequest8: EdgeSwapRequest = {
+  await fetchQuote({
     fromWallet: bchWallet,
     fromCurrencyCode: 'BCH',
     toWallet: btcWallet,
     toCurrencyCode: 'BTC',
-    nativeAmount: await bchWallet.denominationToNative('0.2', 'BCH'),
+    exchangeAmount: '0.2',
     quoteFor: 'from'
-  }
-  console.log(`fromRequest8:`)
-  console.log(
-    JSON.stringify(
-      { ...fromRequest8, fromWallet: undefined, toWallet: undefined },
-      null,
-      2
-    )
-  )
-
-  const quote8 = await account.fetchSwapQuote(fromRequest8).catch(e => {
-    console.log(e)
-    console.log(e.message)
-    return null
   })
-  logQuote(quote8)
-  console.log(`------------`)
 
   process.exit(0)
 }
