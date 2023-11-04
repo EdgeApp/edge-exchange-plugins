@@ -1,4 +1,4 @@
-import { round, sub } from 'biggystring'
+import { gt, round, sub } from 'biggystring'
 import { asArray, asNumber, asObject, asOptional, asString } from 'cleaners'
 import {
   EdgeCorePluginOptions,
@@ -7,6 +7,7 @@ import {
   EdgeSwapQuote,
   EdgeSwapRequest,
   EdgeTxSwap,
+  InsufficientFundsError,
   JsonObject,
   SwapCurrencyError
 } from 'edge-core-js/types'
@@ -251,6 +252,16 @@ export function makeXrpDexPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
       const request = convertRequest(req)
       const { fromCurrencyCode, fromTokenId, fromWallet, quoteFor } = request
 
+      // Get the balance of the wallet minus reserve
+      const maxSpendable = await fromWallet.getMaxSpendable({
+        currencyCode: fromCurrencyCode,
+        spendTargets: [
+          {
+            publicAddress: DUMMY_XRP_ADDRESS
+          }
+        ]
+      })
+
       let swapOrder: SwapOrder
       if (quoteFor === 'max') {
         request.quoteFor = 'from'
@@ -261,20 +272,14 @@ export function makeXrpDexPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
           const quote = await makeSwapPluginQuote(swapOrder)
           const swapFee = quote.networkFee.nativeAmount
 
-          // Get the balance of the wallet minus reserve
-          const maxSpendable = await fromWallet.getMaxSpendable({
-            currencyCode: fromCurrencyCode,
-            spendTargets: [
-              {
-                publicAddress: DUMMY_XRP_ADDRESS
-              }
-            ]
-          })
           request.nativeAmount = sub(maxSpendable, swapFee)
           return await this.fetchSwapQuote(request, userSettings, opts)
         }
       } else {
         swapOrder = await fetchSwapQuoteInner(request)
+        if (gt(swapOrder.fromNativeAmount, maxSpendable)) {
+          throw new InsufficientFundsError()
+        }
       }
       return await makeSwapPluginQuote(swapOrder)
     }
