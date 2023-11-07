@@ -1,6 +1,6 @@
 # edge-exchange-plugins
 
-## Unreleased
+## 1.0.2 (2023-11-06)
 
 - fixed: Check max spendable amount of source wallet in xrpdex quote
 - fixed: Thorswap to use new server and apikey
