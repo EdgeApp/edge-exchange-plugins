@@ -3,6 +3,7 @@
 ## Unreleased
 
 - fixed: Check max spendable amount of source wallet in xrpdex quote
+- fixed: Thorswap to use new server and apikey
 
 ## 1.0.1 (2023-10-30)
 
