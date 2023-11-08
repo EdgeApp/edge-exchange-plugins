@@ -3,6 +3,7 @@
 ## Unreleased
 
 - fixed: Use appropriate send amount in spend targets for Uniswap-based providers
+- fixed: XRP DEX swap error due to excessive decimals
 
 ## 1.0.2 (2023-11-06)
 
