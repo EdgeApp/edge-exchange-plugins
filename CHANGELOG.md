@@ -1,5 +1,9 @@
 # edge-exchange-plugins
 
+## Unreleased
+
+- fixed: Use appropriate send amount in spend targets for Uniswap-based providers
+
 ## 1.0.2 (2023-11-06)
 
 - fixed: Check max spendable amount of source wallet in xrpdex quote
