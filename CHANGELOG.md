@@ -1,6 +1,6 @@
 # edge-exchange-plugins
 
-## Unreleased
+## 1.0.3 (2023-11-07)
 
 - fixed: Use appropriate send amount in spend targets for Uniswap-based providers
 - fixed: XRP DEX swap error due to excessive decimals
