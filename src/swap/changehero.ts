@@ -21,6 +21,7 @@ import {
 
 import {
   checkInvalidCodes,
+  CurrencyCodeTranscriptionMap,
   getCodesWithTranscription,
   getMaxSwappable,
   InvalidCurrencyCodes,
@@ -68,6 +69,10 @@ const MAINNET_CODE_TRANSCRIPTION: StringMap = {
   ripple: 'ripple',
   tezos: 'tezos',
   zcash: 'zcash'
+}
+
+const CURRENCY_CODE_TRANSCRIPTION: CurrencyCodeTranscriptionMap = {
+  polygon: { 'USDC.e': 'USDCE' }
 }
 
 // See https://changehero.io/currencies for list of supported currencies
@@ -172,7 +177,11 @@ export function makeChangeHeroPlugin(
       toCurrencyCode,
       fromMainnetCode,
       toMainnetCode
-    } = getCodesWithTranscription(request, MAINNET_CODE_TRANSCRIPTION)
+    } = getCodesWithTranscription(
+      request,
+      MAINNET_CODE_TRANSCRIPTION,
+      CURRENCY_CODE_TRANSCRIPTION
+    )
 
     const quoteAmount =
       request.quoteFor === 'from'
