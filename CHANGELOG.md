@@ -1,5 +1,10 @@
 # edge-exchange-plugins
 
+## 1.0.4 (2023-11-09)
+
+- changed: Block Polygon USDC/USDC.e trading and fix codes, where necessary
+- changed: (Godex) Block Zcash trading since they can't handle Unified Addresses
+
 ## 1.0.3 (2023-11-07)
 
 - fixed: Use appropriate send amount in spend targets for Uniswap-based providers
