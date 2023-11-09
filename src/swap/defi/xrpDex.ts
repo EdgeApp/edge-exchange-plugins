@@ -44,6 +44,12 @@ const EXCHANGE_INFO_UPDATE_FREQ_MS = 60000
 const VOLATILITY_SPREAD_DEFAULT = 0.0075
 const DUMMY_XRP_ADDRESS = 'rfuESo7eHUnvebxgaFjfYxfwXhM2uBPAj3'
 
+// This is a multiplier to enforce the maximum decimals used by the DEX.
+// This does not necessarily correspond to the XRP denomination as tokens can have an
+// arbitrary number of decimals since they are floats. But since the DEX errors with
+// too many decimals (not sure how much), we for now cap swap amounts to 6 decimals
+const MAX_DECIMALS_MULTIPLIER = 1000000
+
 export const asExchangeInfo = asObject({
   swap: asObject({
     plugins: asObject({
@@ -170,6 +176,8 @@ export function makeXrpDexPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
         { client, showLogs: false }
       )
       quote = quote * (1 - volatilitySpread)
+      quote =
+        Math.round(quote * MAX_DECIMALS_MULTIPLIER) / MAX_DECIMALS_MULTIPLIER
       toNativeAmount = await toWallet.denominationToNative(
         String(quote),
         toCurrencyCode
@@ -198,6 +206,9 @@ export function makeXrpDexPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
         { client, showLogs: false }
       )
       quote = quote * (1 + volatilitySpread)
+      quote =
+        Math.round(quote * MAX_DECIMALS_MULTIPLIER) / MAX_DECIMALS_MULTIPLIER
+
       fromNativeAmount = await fromWallet.denominationToNative(
         String(quote),
         fromCurrencyCode
