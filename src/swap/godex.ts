@@ -94,7 +94,8 @@ const INVALID_CURRENCY_CODES: InvalidCurrencyCodes = {
     celo: 'allTokens',
     ethereum: ['MATIC'],
     fantom: 'allTokens',
-    polygon: 'allCodes'
+    polygon: 'allCodes',
+    zcash: ['ZEC'] // ChangeHero doesn't support sending to unified addresses
   }
 }
 
