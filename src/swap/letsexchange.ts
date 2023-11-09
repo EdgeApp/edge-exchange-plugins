@@ -60,10 +60,12 @@ const asInfoReply = asObject({
 const INVALID_CURRENCY_CODES: InvalidCurrencyCodes = {
   from: {
     ethereum: ['MATH'],
-    optimism: ['VELO']
+    optimism: ['VELO'],
+    polygon: ['USDC.e']
   },
   to: {
     ethereum: ['MATH'],
+    polygon: ['USDC.e'],
     zcash: ['ZEC']
   }
 }

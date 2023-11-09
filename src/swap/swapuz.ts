@@ -51,10 +51,12 @@ const uri = 'https://api.swapuz.com/api/home/v1/'
 const INVALID_CURRENCY_CODES: InvalidCurrencyCodes = {
   from: {
     ethereum: ['MATH'],
-    optimism: ['VELO']
+    optimism: ['VELO'],
+    polygon: ['USDC', 'USDC.e']
   },
   to: {
     ethereum: ['MATH'],
+    polygon: ['USDC', 'USDC.e'],
     zcash: ['ZEC'],
     zksync: 'allCodes'
   }

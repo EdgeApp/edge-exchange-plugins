@@ -49,9 +49,11 @@ const uri = 'https://api.changenow.io/v2/'
 
 const INVALID_CURRENCY_CODES: InvalidCurrencyCodes = {
   from: {
-    optimism: ['VELO']
+    optimism: ['VELO'],
+    polygon: ['USDC', 'USDC.e']
   },
   to: {
+    polygon: ['USDC', 'USDC.e'],
     zcash: ['ZEC']
   }
 }

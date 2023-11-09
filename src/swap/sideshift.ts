@@ -35,9 +35,12 @@ const MAINNET_CODE_TRANSCRIPTION = {
 
 const INVALID_CURRENCY_CODES: InvalidCurrencyCodes = {
   from: {
-    optimism: ['VELO']
+    optimism: ['VELO'],
+    polygon: ['USDC', 'USDC.e']
   },
-  to: {}
+  to: {
+    polygon: ['USDC', 'USDC.e']
+  }
 }
 
 const SIDESHIFT_BASE_URL = 'https://sideshift.ai/api/v2'
