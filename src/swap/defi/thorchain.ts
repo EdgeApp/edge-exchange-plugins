@@ -231,7 +231,7 @@ const asQuoteSwap = asObject({
   //   asset: asString, // "ETH.WBTC-0X2260FAC5E5542A773AA44FBCFEDF7C193BC2C599",
   //   outbound: asString // "22117"
   // }),
-  inbound_address: asString, // "0x88e8def37dc9d2acd67f1c1574ad09ca49827374",
+  inbound_address: asOptional(asString), // "0x88e8def37dc9d2acd67f1c1574ad09ca49827374",
   // max_streaming_quantity: asNumber, // 18,
   memo: asString, // "=:ETH.WBTC-0X2260FAC5E5542A773AA44FBCFEDF7C193BC2C599:0x04c5998ded94f89263370444ce64a99b7dbc9f46:0/10/0",
   // outbound_delay_blocks: asNumber, // 114,
@@ -280,7 +280,7 @@ interface CalcSwapResponse {
   maxFulfillmentSeconds?: number
   toNativeAmount: string
   toExchangeAmount: string
-  thorAddress: string
+  thorAddress?: string
   router?: string
   memo: string
 }
@@ -537,6 +537,9 @@ export function makeThorchainPlugin(
             `Missing sourceTokenContractAddress for ${fromMainnetCode}`
           )
         // Need to use ethers.js to craft a proper tx that calls Thorchain contract, then extract the data payload
+        if (thorAddress == null) {
+          throw new Error('Invalid vault address')
+        }
         memo = await getEvmTokenData({
           assetAddress: sourceTokenContractAddress,
           amountToSwapWei: Number(fromNativeAmount),
@@ -591,6 +594,10 @@ export function makeThorchainPlugin(
         }
       }
       preTx = await request.fromWallet.makeSpend(spendInfo)
+    }
+
+    if (publicAddress == null) {
+      throw new Error('Invalid publicAddress')
     }
 
     const spendInfo: EdgeSpendInfo = {
