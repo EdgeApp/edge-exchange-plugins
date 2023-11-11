@@ -19,6 +19,7 @@ import {
   EdgeSwapQuote,
   EdgeSwapRequest,
   EdgeTransaction,
+  EdgeTxSwap,
   SwapBelowLimitError,
   SwapCurrencyError
 } from 'edge-core-js/types'
@@ -40,7 +41,7 @@ import {
   promiseWithTimeout,
   QueryParams
 } from '../../util/utils'
-import { EdgeSwapRequestPlugin } from '../types'
+import { EdgeSwapRequestPlugin, MakeTxParams } from '../types'
 import { getEvmApprovalData, getEvmTokenData } from './defiUtils'
 
 const pluginId = 'thorchain'
@@ -527,6 +528,16 @@ export function makeThorchainPlugin(
     let publicAddress = thorAddress
     let approvalData
     let memoType: EdgeMemo['type']
+
+    const swapData: EdgeTxSwap = {
+      isEstimate,
+      payoutAddress: toAddress,
+      payoutCurrencyCode: toCurrencyCode,
+      payoutNativeAmount: toNativeAmount,
+      payoutWalletId: toWallet.id,
+      plugin: { ...swapInfo }
+    }
+
     if (EVM_CURRENCY_CODES[fromMainnetCode]) {
       memoType = 'hex'
       if (fromMainnetCode !== fromCurrencyCode) {
@@ -561,6 +572,30 @@ export function makeThorchainPlugin(
         })
       } else {
         memo = Buffer.from(memo).toString('hex')
+      }
+    } else if (fromWallet.currencyInfo.pluginId === 'thorchainrune') {
+      const makeTxParams: MakeTxParams = {
+        type: 'MakeTxDeposit',
+        assets: [
+          {
+            amount: fromNativeAmount,
+            asset: 'THOR.RUNE',
+            decimals: THOR_LIMIT_UNITS
+          }
+        ],
+        memo,
+        metadata: {},
+        swapData
+      }
+
+      return {
+        canBePartial,
+        maxFulfillmentSeconds,
+        request,
+        makeTxParams,
+        swapInfo,
+        fromNativeAmount,
+        expirationDate: new Date(Date.now() + EXPIRATION_MS)
       }
     } else {
       memoType = 'text'
@@ -615,14 +650,7 @@ export function makeThorchainPlugin(
         }
       ],
 
-      swapData: {
-        isEstimate,
-        payoutAddress: toAddress,
-        payoutCurrencyCode: toCurrencyCode,
-        payoutNativeAmount: toNativeAmount,
-        payoutWalletId: toWallet.id,
-        plugin: { ...swapInfo }
-      },
+      swapData,
       otherParams: {
         outputSort: 'targets'
       }
@@ -678,6 +706,22 @@ const getPool = (
   tokenCode: string,
   pools: Pool[]
 ): Pool => {
+  if (mainnetCode === 'THOR' && tokenCode === 'RUNE') {
+    // Create a fake pool for rune. Use BTC pool to find rune USD price
+    const btcPool = pools.find(pool => pool.asset === 'BTC.BTC')
+
+    if (btcPool == null) {
+      throw new SwapCurrencyError(swapInfo, request)
+    }
+    const { assetPrice, assetPriceUSD } = btcPool
+    const pool: Pool = {
+      asset: 'THOR.RUNE',
+      assetPrice: '1',
+      assetPriceUSD: div(assetPriceUSD, assetPrice, 16)
+    }
+    return pool
+  }
+
   const pool = pools.find(pool => {
     const [asset] = pool.asset.split('-')
     return asset === `${mainnetCode}.${tokenCode}`
