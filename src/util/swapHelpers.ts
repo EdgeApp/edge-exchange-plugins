@@ -79,6 +79,7 @@ export async function makeSwapPluginQuote(
     const { makeTxParams } = order
     swapData = makeTxParams.swapData
     tx = await fromWallet.otherMethods.makeTx(makeTxParams)
+    tx.swapData = swapData
   }
   const toNativeAmount = swapData?.payoutNativeAmount
   const destinationAddress = swapData?.payoutAddress
