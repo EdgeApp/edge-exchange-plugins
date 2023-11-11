@@ -1,5 +1,5 @@
 import { asEither, asNumber, asString } from 'cleaners'
-import { EdgeCurrencyWallet } from 'edge-core-js'
+import { EdgeCurrencyWallet, EdgeMetadata, EdgeTxSwap } from 'edge-core-js'
 
 export interface EdgeSwapRequestPlugin {
   fromWallet: EdgeCurrencyWallet
@@ -20,3 +20,23 @@ export const asNumberString = (raw: any): string => {
 export interface StringMap {
   [key: string]: string
 }
+
+/**
+ * Duplicated from edge-currency-accountbased until this
+ * is elevatd to a type in edge-core-js
+ */
+export type MakeTxParams =
+  | {
+      type: 'MakeTxDexSwap'
+      metadata?: EdgeMetadata
+      swapData?: EdgeTxSwap
+      fromTokenId?: string
+      fromNativeAmount: string
+      toTokenId?: string
+      toNativeAmount: string
+
+      /**
+       * UNIX time (seconds) to expire the DEX swap if it hasn't executed
+       */
+      expiration?: number
+    }

@@ -13,8 +13,7 @@ import {
   SwapCurrencyError
 } from 'edge-core-js/types'
 
-import { MakeTxParams } from '../swap/defi/xrp/xrpDexTypes'
-import { EdgeSwapRequestPlugin } from '../swap/types'
+import { EdgeSwapRequestPlugin, MakeTxParams } from '../swap/types'
 
 const likeKindAssets = [
   ['BTC', 'WBTC', 'SBTC', 'RBTC'],
