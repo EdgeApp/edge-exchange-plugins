@@ -44,6 +44,7 @@ interface SwapOrderMakeTx {
 type SwapOrderInner = SwapOrderMakeTx | SwapOrderSpendInfo
 
 export type SwapOrder = SwapOrderInner & {
+  addTxidToOrderUri?: boolean
   canBePartial?: boolean
   maxFulfillmentSeconds?: number
   request: EdgeSwapRequest
@@ -58,6 +59,7 @@ export async function makeSwapPluginQuote(
   order: SwapOrder
 ): Promise<EdgeSwapQuote> {
   const {
+    addTxidToOrderUri = false,
     canBePartial,
     maxFulfillmentSeconds,
     fromNativeAmount,
@@ -135,6 +137,10 @@ export async function makeSwapPluginQuote(
       const broadcastedTransaction = await fromWallet.broadcastTx(
         signedTransaction
       )
+      if (addTxidToOrderUri && signedTransaction.swapData?.orderUri != null) {
+        signedTransaction.swapData.orderUri += tx.txid
+      }
+
       await fromWallet.saveTx(signedTransaction)
 
       return {

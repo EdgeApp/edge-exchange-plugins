@@ -530,6 +530,7 @@ export function makeThorchainPlugin(
     let memoType: EdgeMemo['type']
 
     const swapData: EdgeTxSwap = {
+      orderUri: 'https://track.ninerealms.com/',
       isEstimate,
       payoutAddress: toAddress,
       payoutCurrencyCode: toCurrencyCode,
@@ -589,6 +590,7 @@ export function makeThorchainPlugin(
       }
 
       return {
+        addTxidToOrderUri: true,
         canBePartial,
         maxFulfillmentSeconds,
         request,
@@ -671,6 +673,7 @@ export function makeThorchainPlugin(
     }
 
     return {
+      addTxidToOrderUri: true,
       canBePartial,
       maxFulfillmentSeconds,
       request,
