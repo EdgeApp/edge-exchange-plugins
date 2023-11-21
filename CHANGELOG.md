@@ -1,5 +1,9 @@
 # edge-exchange-plugins
 
+## Unreleased
+
+- added: RUNE support for Thorchain swaps
+
 ## 1.0.4 (2023-11-09)
 
 - changed: Block Polygon USDC/USDC.e trading and fix codes, where necessary

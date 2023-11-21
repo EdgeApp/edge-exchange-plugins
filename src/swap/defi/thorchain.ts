@@ -12,12 +12,14 @@ import {
   EdgeCurrencyWallet,
   EdgeFetchFunction,
   EdgeFetchOptions,
+  EdgeMemo,
   EdgeSpendInfo,
   EdgeSwapInfo,
   EdgeSwapPlugin,
   EdgeSwapQuote,
   EdgeSwapRequest,
   EdgeTransaction,
+  EdgeTxSwap,
   SwapBelowLimitError,
   SwapCurrencyError
 } from 'edge-core-js/types'
@@ -39,7 +41,7 @@ import {
   promiseWithTimeout,
   QueryParams
 } from '../../util/utils'
-import { EdgeSwapRequestPlugin } from '../types'
+import { EdgeSwapRequestPlugin, MakeTxParams } from '../types'
 import { getEvmApprovalData, getEvmTokenData } from './defiUtils'
 
 const pluginId = 'thorchain'
@@ -151,7 +153,7 @@ export const MAINNET_CODE_TRANSCRIPTION: { [cc: string]: ChainTypes } = {
   dogecoin: 'DOGE',
   ethereum: 'ETH',
   litecoin: 'LTC',
-  thorchain: 'THOR'
+  thorchainrune: 'THOR'
 }
 
 export const asInitOptions = asObject({
@@ -179,11 +181,11 @@ export const asInboundAddresses = asArray(
 
 export const asPool = asObject({
   asset: asString,
-  status: asString,
+  // status: asString,
   assetPrice: asString,
-  assetPriceUSD: asString,
-  assetDepth: asString,
-  runeDepth: asString
+  assetPriceUSD: asString
+  // assetDepth: asString,
+  // runeDepth: asString
 })
 
 export const asAssetSpread = asObject({
@@ -230,7 +232,7 @@ const asQuoteSwap = asObject({
   //   asset: asString, // "ETH.WBTC-0X2260FAC5E5542A773AA44FBCFEDF7C193BC2C599",
   //   outbound: asString // "22117"
   // }),
-  inbound_address: asString, // "0x88e8def37dc9d2acd67f1c1574ad09ca49827374",
+  inbound_address: asOptional(asString), // "0x88e8def37dc9d2acd67f1c1574ad09ca49827374",
   // max_streaming_quantity: asNumber, // 18,
   memo: asString, // "=:ETH.WBTC-0X2260FAC5E5542A773AA44FBCFEDF7C193BC2C599:0x04c5998ded94f89263370444ce64a99b7dbc9f46:0/10/0",
   // outbound_delay_blocks: asNumber, // 114,
@@ -279,7 +281,7 @@ interface CalcSwapResponse {
   maxFulfillmentSeconds?: number
   toNativeAmount: string
   toExchangeAmount: string
-  thorAddress: string
+  thorAddress?: string
   router?: string
   memo: string
 }
@@ -446,13 +448,12 @@ export function makeThorchainPlugin(
     const poolJson = await poolResponse.json()
     const pools = asPools(poolJson)
 
-    const sourcePool = pools.find(pool => {
-      const [asset] = pool.asset.split('-')
-      return asset === `${fromMainnetCode}.${fromCurrencyCode}`
-    })
-    if (sourcePool == null) {
-      throw new SwapCurrencyError(swapInfo, request)
-    }
+    const sourcePool = getPool(
+      request,
+      fromMainnetCode,
+      fromCurrencyCode,
+      pools
+    )
     const [
       sourceAsset,
       sourceTokenContractAddressAllCaps
@@ -463,13 +464,7 @@ export function makeThorchainPlugin(
         : undefined
     log(`sourceAsset: ${sourceAsset}`)
 
-    const destPool = pools.find(pool => {
-      const [asset] = pool.asset.split('-')
-      return asset === `${toMainnetCode}.${toCurrencyCode}`
-    })
-    if (destPool == null) {
-      throw new SwapCurrencyError(swapInfo, request)
-    }
+    const destPool = getPool(request, toMainnetCode, toCurrencyCode, pools)
 
     let calcResponse: CalcSwapResponse
     if (quoteFor === 'from') {
@@ -532,7 +527,20 @@ export function makeThorchainPlugin(
     let ethNativeAmount = fromNativeAmount
     let publicAddress = thorAddress
     let approvalData
+    let memoType: EdgeMemo['type']
+
+    const swapData: EdgeTxSwap = {
+      orderUri: 'https://track.ninerealms.com/',
+      isEstimate,
+      payoutAddress: toAddress,
+      payoutCurrencyCode: toCurrencyCode,
+      payoutNativeAmount: toNativeAmount,
+      payoutWalletId: toWallet.id,
+      plugin: { ...swapInfo }
+    }
+
     if (EVM_CURRENCY_CODES[fromMainnetCode]) {
+      memoType = 'hex'
       if (fromMainnetCode !== fromCurrencyCode) {
         if (router == null)
           throw new Error(`Missing router address for ${fromMainnetCode}`)
@@ -541,6 +549,9 @@ export function makeThorchainPlugin(
             `Missing sourceTokenContractAddress for ${fromMainnetCode}`
           )
         // Need to use ethers.js to craft a proper tx that calls Thorchain contract, then extract the data payload
+        if (thorAddress == null) {
+          throw new Error('Invalid vault address')
+        }
         memo = await getEvmTokenData({
           assetAddress: sourceTokenContractAddress,
           amountToSwapWei: Number(fromNativeAmount),
@@ -548,6 +559,7 @@ export function makeThorchainPlugin(
           vaultAddress: thorAddress,
           memo
         })
+        memo = memo.replace('0x', '')
 
         // Token transactions send no ETH (or other EVM mainnet coin)
         ethNativeAmount = '0'
@@ -560,9 +572,35 @@ export function makeThorchainPlugin(
           nativeAmount: fromNativeAmount
         })
       } else {
-        memo = '0x' + Buffer.from(memo).toString('hex')
+        memo = Buffer.from(memo).toString('hex')
+      }
+    } else if (fromWallet.currencyInfo.pluginId === 'thorchainrune') {
+      const makeTxParams: MakeTxParams = {
+        type: 'MakeTxDeposit',
+        assets: [
+          {
+            amount: fromNativeAmount,
+            asset: 'THOR.RUNE',
+            decimals: THOR_LIMIT_UNITS
+          }
+        ],
+        memo,
+        metadata: {},
+        swapData
+      }
+
+      return {
+        addTxidToOrderUri: true,
+        canBePartial,
+        maxFulfillmentSeconds,
+        request,
+        makeTxParams,
+        swapInfo,
+        fromNativeAmount,
+        expirationDate: new Date(Date.now() + EXPIRATION_MS)
       }
     } else {
+      memoType = 'text'
       // Cannot yet do tokens on non-EVM chains
       if (fromMainnetCode !== fromCurrencyCode) {
         throw new SwapCurrencyError(swapInfo, request)
@@ -571,11 +609,18 @@ export function makeThorchainPlugin(
 
     let preTx: EdgeTransaction | undefined
     if (approvalData != null) {
+      approvalData = approvalData.replace('0x', '')
+
       const spendInfo: EdgeSpendInfo = {
         currencyCode: request.fromCurrencyCode,
+        memos: [
+          {
+            type: memoType,
+            value: approvalData
+          }
+        ],
         spendTargets: [
           {
-            memo: approvalData,
             nativeAmount: '0',
             publicAddress: sourceTokenContractAddress
           }
@@ -588,24 +633,26 @@ export function makeThorchainPlugin(
       preTx = await request.fromWallet.makeSpend(spendInfo)
     }
 
+    if (publicAddress == null) {
+      throw new Error('Invalid publicAddress')
+    }
+
     const spendInfo: EdgeSpendInfo = {
       currencyCode: request.fromCurrencyCode,
+      memos: [
+        {
+          type: memoType,
+          value: memo
+        }
+      ],
       spendTargets: [
         {
-          memo,
           nativeAmount: ethNativeAmount,
           publicAddress
         }
       ],
 
-      swapData: {
-        isEstimate,
-        payoutAddress: toAddress,
-        payoutCurrencyCode: toCurrencyCode,
-        payoutNativeAmount: toNativeAmount,
-        payoutWalletId: toWallet.id,
-        plugin: { ...swapInfo }
-      },
+      swapData,
       otherParams: {
         outputSort: 'targets'
       }
@@ -626,6 +673,7 @@ export function makeThorchainPlugin(
     }
 
     return {
+      addTxidToOrderUri: true,
       canBePartial,
       maxFulfillmentSeconds,
       request,
@@ -653,6 +701,38 @@ export function makeThorchainPlugin(
     }
   }
   return out
+}
+
+const getPool = (
+  request: EdgeSwapRequestPlugin,
+  mainnetCode: string,
+  tokenCode: string,
+  pools: Pool[]
+): Pool => {
+  if (mainnetCode === 'THOR' && tokenCode === 'RUNE') {
+    // Create a fake pool for rune. Use BTC pool to find rune USD price
+    const btcPool = pools.find(pool => pool.asset === 'BTC.BTC')
+
+    if (btcPool == null) {
+      throw new SwapCurrencyError(swapInfo, request)
+    }
+    const { assetPrice, assetPriceUSD } = btcPool
+    const pool: Pool = {
+      asset: 'THOR.RUNE',
+      assetPrice: '1',
+      assetPriceUSD: div(assetPriceUSD, assetPrice, 16)
+    }
+    return pool
+  }
+
+  const pool = pools.find(pool => {
+    const [asset] = pool.asset.split('-')
+    return asset === `${mainnetCode}.${tokenCode}`
+  })
+  if (pool == null) {
+    throw new SwapCurrencyError(swapInfo, request)
+  }
+  return pool
 }
 
 const calcSwapFrom = async ({

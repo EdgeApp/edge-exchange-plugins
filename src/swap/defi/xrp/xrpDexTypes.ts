@@ -1,24 +1,4 @@
-import { EdgeMetadata, EdgeTxSwap } from 'edge-core-js'
 import { Client, Wallet } from 'xrpl'
-
-/**
- * Duplicated from edge-currency-accountbased until this
- * is elevatd to a type in edge-core-js
- */
-export interface MakeTxParams {
-  type: 'MakeTxDexSwap'
-  metadata?: EdgeMetadata
-  swapData?: EdgeTxSwap
-  fromTokenId?: string
-  fromNativeAmount: string
-  toTokenId?: string
-  toNativeAmount: string
-
-  /**
-   * UNIX time (seconds) to expire the DEX swap if it hasn't executed
-   */
-  expiration?: number
-}
 
 /**
  * Below types copied from https://github.com/florent-uzio/xrpl.js-demo.git

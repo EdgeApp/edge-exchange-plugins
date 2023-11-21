@@ -21,9 +21,8 @@ import {
   promiseWithTimeout,
   shuffleArray
 } from '../../util/utils'
-import { EdgeSwapRequestPlugin } from '../types'
+import { EdgeSwapRequestPlugin, MakeTxParams } from '../types'
 import { getBuyQuote, getSellQuote } from './xrp/xrpDexHelpers'
-import { MakeTxParams } from './xrp/xrpDexTypes'
 
 const pluginId = 'xrpdex'
 const swapInfo: EdgeSwapInfo = {

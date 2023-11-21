@@ -13,8 +13,7 @@ import {
   SwapCurrencyError
 } from 'edge-core-js/types'
 
-import { MakeTxParams } from '../swap/defi/xrp/xrpDexTypes'
-import { EdgeSwapRequestPlugin } from '../swap/types'
+import { EdgeSwapRequestPlugin, MakeTxParams } from '../swap/types'
 
 const likeKindAssets = [
   ['BTC', 'WBTC', 'SBTC', 'RBTC'],
@@ -45,6 +44,7 @@ interface SwapOrderMakeTx {
 type SwapOrderInner = SwapOrderMakeTx | SwapOrderSpendInfo
 
 export type SwapOrder = SwapOrderInner & {
+  addTxidToOrderUri?: boolean
   canBePartial?: boolean
   maxFulfillmentSeconds?: number
   request: EdgeSwapRequest
@@ -59,6 +59,7 @@ export async function makeSwapPluginQuote(
   order: SwapOrder
 ): Promise<EdgeSwapQuote> {
   const {
+    addTxidToOrderUri = false,
     canBePartial,
     maxFulfillmentSeconds,
     fromNativeAmount,
@@ -80,6 +81,7 @@ export async function makeSwapPluginQuote(
     const { makeTxParams } = order
     swapData = makeTxParams.swapData
     tx = await fromWallet.otherMethods.makeTx(makeTxParams)
+    tx.swapData = swapData
   }
   const toNativeAmount = swapData?.payoutNativeAmount
   const destinationAddress = swapData?.payoutAddress
@@ -135,6 +137,10 @@ export async function makeSwapPluginQuote(
       const broadcastedTransaction = await fromWallet.broadcastTx(
         signedTransaction
       )
+      if (addTxidToOrderUri && signedTransaction.swapData?.orderUri != null) {
+        signedTransaction.swapData.orderUri += tx.txid
+      }
+
       await fromWallet.saveTx(signedTransaction)
 
       return {
