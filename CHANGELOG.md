@@ -1,6 +1,6 @@
 # edge-exchange-plugins
 
-## Unreleased
+## 1.1.0 (2023-11-20)
 
 - added: RUNE support for Thorchain swaps
 
