@@ -1,4 +1,4 @@
-import { add, div, gt, lt, mul, round, sub } from 'biggystring'
+import { add, div, gt, mul, round, sub } from 'biggystring'
 import {
   asArray,
   asBoolean,
@@ -276,7 +276,6 @@ interface CalcSwapParams {
   affiliateFeeBasis: string
   streamingInterval: number
   streamingQuantity: number
-  dontCheckLimits?: boolean
 }
 
 interface CalcSwapResponse {
@@ -760,8 +759,7 @@ const calcSwapFrom = async ({
   volatilitySpreadStreamingFinal,
   affiliateFeeBasis,
   streamingInterval,
-  streamingQuantity,
-  dontCheckLimits = false
+  streamingQuantity
 }: CalcSwapParams): Promise<CalcSwapResponse> => {
   const fromNativeAmount = nativeAmount
 
@@ -772,36 +770,6 @@ const calcSwapFrom = async ({
   )
 
   log(`fromExchangeAmount: ${fromExchangeAmount}`)
-
-  // Check minimums if we can
-  if (!dontCheckLimits) {
-    const srcInUsd = mul(sourcePool.assetPriceUSD, fromExchangeAmount)
-    let fromMinNativeAmount
-    if (lt(srcInUsd, MIN_USD_SWAP)) {
-      const minExchangeAmount = div(
-        MIN_USD_SWAP,
-        sourcePool.assetPriceUSD,
-        DIVIDE_PRECISION
-      )
-      fromMinNativeAmount = await fromWallet.denominationToNative(
-        minExchangeAmount,
-        fromCurrencyCode
-      )
-    }
-
-    if (minAmount != null && lt(fromExchangeAmount, minAmount.minInputAmount)) {
-      const tempNativeMin = await fromWallet.denominationToNative(
-        minAmount.minInputAmount,
-        fromCurrencyCode
-      )
-      if (gt(tempNativeMin, fromMinNativeAmount ?? '0')) {
-        fromMinNativeAmount = tempNativeMin
-      }
-    }
-    if (fromMinNativeAmount != null) {
-      throw new SwapBelowLimitError(swapInfo, fromMinNativeAmount, 'from')
-    }
-  }
 
   const fromThorAmount = mul(fromExchangeAmount, THOR_LIMIT_UNITS)
 
@@ -907,8 +875,7 @@ const calcSwapTo = async ({
   volatilitySpreadStreamingFinal,
   affiliateFeeBasis,
   streamingInterval,
-  streamingQuantity,
-  dontCheckLimits = false
+  streamingQuantity
 }: CalcSwapParams): Promise<CalcSwapResponse> => {
   const toNativeAmount = nativeAmount
 
