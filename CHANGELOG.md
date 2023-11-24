@@ -1,5 +1,9 @@
 # edge-exchange-plugins
 
+## Unreleased
+
+- fixed: Return proper min amount error with Thorchain
+
 ## 1.1.0 (2023-11-20)
 
 - added: RUNE support for Thorchain swaps

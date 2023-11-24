@@ -1,4 +1,4 @@
-import { add, div, gt, lt, mul, round, sub } from 'biggystring'
+import { add, div, gt, mul, round, sub } from 'biggystring'
 import {
   asArray,
   asBoolean,
@@ -59,7 +59,6 @@ export const DIVIDE_PRECISION = 16
 export const EXCHANGE_INFO_UPDATE_FREQ_MS = 60000
 export const EVM_SEND_GAS = '80000'
 export const EVM_TOKEN_SEND_GAS = '80000'
-export const MIN_USD_SWAP = '10'
 export const THOR_LIMIT_UNITS = '100000000'
 const AFFILIATE_FEE_BASIS_DEFAULT = '50'
 const STREAMING_INTERVAL_DEFAULT = 10
@@ -237,7 +236,7 @@ const asQuoteSwap = asObject({
   memo: asString, // "=:ETH.WBTC-0X2260FAC5E5542A773AA44FBCFEDF7C193BC2C599:0x04c5998ded94f89263370444ce64a99b7dbc9f46:0/10/0",
   // outbound_delay_blocks: asNumber, // 114,
   // outbound_delay_seconds: asNumber, // 684,
-  // recommended_min_amount_in: asString, // "1440032",
+  recommended_min_amount_in: asString, // "1440032",
   router: asOptional(asString), // "0xD37BbE5744D730a1d98d8DC97c42F0Ca46aD7146",
   // slippage_bps: asNumber, // 92,
   // streaming_slippage_bps: asNumber, // 5,
@@ -246,6 +245,12 @@ const asQuoteSwap = asObject({
 })
 
 type QuoteSwap = ReturnType<typeof asQuoteSwap>
+interface QuoteError {
+  error: 'SwapMinError'
+  minThorAmount: string
+}
+
+type QuoteSwapFull = QuoteSwap | QuoteError
 type AssetSpread = ReturnType<typeof asAssetSpread>
 type Pool = ReturnType<typeof asPool>
 type ExchangeInfo = ReturnType<typeof asExchangeInfo>
@@ -271,7 +276,6 @@ interface CalcSwapParams {
   affiliateFeeBasis: string
   streamingInterval: number
   streamingQuantity: number
-  dontCheckLimits?: boolean
 }
 
 interface CalcSwapResponse {
@@ -755,8 +759,7 @@ const calcSwapFrom = async ({
   volatilitySpreadStreamingFinal,
   affiliateFeeBasis,
   streamingInterval,
-  streamingQuantity,
-  dontCheckLimits = false
+  streamingQuantity
 }: CalcSwapParams): Promise<CalcSwapResponse> => {
   const fromNativeAmount = nativeAmount
 
@@ -767,36 +770,6 @@ const calcSwapFrom = async ({
   )
 
   log(`fromExchangeAmount: ${fromExchangeAmount}`)
-
-  // Check minimums if we can
-  if (!dontCheckLimits) {
-    const srcInUsd = mul(sourcePool.assetPriceUSD, fromExchangeAmount)
-    let fromMinNativeAmount
-    if (lt(srcInUsd, MIN_USD_SWAP)) {
-      const minExchangeAmount = div(
-        MIN_USD_SWAP,
-        sourcePool.assetPriceUSD,
-        DIVIDE_PRECISION
-      )
-      fromMinNativeAmount = await fromWallet.denominationToNative(
-        minExchangeAmount,
-        fromCurrencyCode
-      )
-    }
-
-    if (minAmount != null && lt(fromExchangeAmount, minAmount.minInputAmount)) {
-      const tempNativeMin = await fromWallet.denominationToNative(
-        minAmount.minInputAmount,
-        fromCurrencyCode
-      )
-      if (gt(tempNativeMin, fromMinNativeAmount ?? '0')) {
-        fromMinNativeAmount = tempNativeMin
-      }
-    }
-    if (fromMinNativeAmount != null) {
-      throw new SwapBelowLimitError(swapInfo, fromMinNativeAmount, 'from')
-    }
-  }
 
   const fromThorAmount = mul(fromExchangeAmount, THOR_LIMIT_UNITS)
 
@@ -820,7 +793,9 @@ const calcSwapFrom = async ({
     [noStreamParams, streamParams],
     fetch,
     thornodes,
-    thornodesFetchOptions
+    thornodesFetchOptions,
+    fromWallet,
+    fromCurrencyCode
   )
 
   const {
@@ -900,8 +875,7 @@ const calcSwapTo = async ({
   volatilitySpreadStreamingFinal,
   affiliateFeeBasis,
   streamingInterval,
-  streamingQuantity,
-  dontCheckLimits = false
+  streamingQuantity
 }: CalcSwapParams): Promise<CalcSwapResponse> => {
   const toNativeAmount = nativeAmount
 
@@ -949,7 +923,9 @@ const calcSwapTo = async ({
     [noStreamParams, streamParams],
     fetch,
     thornodes,
-    thornodesFetchOptions
+    thornodesFetchOptions,
+    fromWallet,
+    fromCurrencyCode
   )
 
   const {
@@ -1033,7 +1009,9 @@ const getBestQuote = async (
   params: QueryParams[],
   fetch: EdgeFetchFunction,
   thornodes: string[],
-  thornodesFetchOptions: EdgeFetchOptions
+  thornodesFetchOptions: EdgeFetchOptions,
+  fromWallet: EdgeCurrencyWallet,
+  fromCurrencyCode: string
 ): Promise<QuoteSwap> => {
   const quotes = await Promise.all(
     params.map(
@@ -1042,24 +1020,53 @@ const getBestQuote = async (
   )
 
   let bestQuote: QuoteSwap | undefined
+  let bestError: QuoteError | undefined
   for (const quote of quotes) {
     if (quote == null) continue
-    if (bestQuote == null) {
-      bestQuote = quote
+    if ('memo' in quote) {
+      if (bestQuote == null) {
+        bestQuote = quote
+        continue
+      }
+      if (
+        gt(
+          quote.expected_amount_out_streaming,
+          bestQuote.expected_amount_out_streaming
+        )
+      ) {
+        bestQuote = quote
+      }
       continue
     }
-    if (
-      gt(
-        quote.expected_amount_out_streaming,
-        bestQuote.expected_amount_out_streaming
-      )
-    ) {
-      bestQuote = quote
+
+    if ('error' in quote) {
+      if (bestError == null) {
+        bestError = quote
+        continue
+      }
+      if (quote.error === 'SwapMinError') {
+        if (quote.minThorAmount > bestError.minThorAmount) {
+          bestError = quote
+        }
+      }
     }
   }
 
   if (bestQuote == null) {
-    throw new Error('Could not get quote')
+    if (bestError == null) {
+      throw new Error('Could not get quote')
+    } else {
+      const minExchangeAmount = div(
+        bestError.minThorAmount,
+        THOR_LIMIT_UNITS,
+        DIVIDE_PRECISION
+      )
+      const minNativeAmount = await fromWallet.denominationToNative(
+        minExchangeAmount,
+        fromCurrencyCode
+      )
+      throw new SwapBelowLimitError(swapInfo, minNativeAmount, 'from')
+    }
   }
   return bestQuote
 }
@@ -1072,7 +1079,7 @@ const getQuote = async (
   fetch: EdgeFetchFunction,
   thornodes: string[],
   thornodesFetchOptions: EdgeFetchOptions
-): Promise<QuoteSwap | undefined> => {
+): Promise<QuoteSwapFull | undefined> => {
   const params = makeQueryParams(queryParams)
 
   try {
@@ -1084,10 +1091,36 @@ const getQuote = async (
     )
     let json
     try {
-      json = await response.json()
+      if (!response.ok) {
+        const text = await response.text()
+        if (text.includes('swap too small')) {
+          // Get another quote just to retrieve the min amount.
+          const amount: string = mul(String(queryParams.amount), '10')
+          const newQueryParams = {
+            ...queryParams,
+            amount
+          }
+          const quoteSwap = await getQuote(
+            newQueryParams,
+            fetch,
+            thornodes,
+            thornodesFetchOptions
+          )
+          if (quoteSwap == null || 'error' in quoteSwap) return quoteSwap
+
+          const { recommended_min_amount_in: minThorAmount } = quoteSwap
+          return {
+            error: 'SwapMinError',
+            minThorAmount
+          }
+        }
+        console.error(text)
+        return
+      } else {
+        json = await response.json()
+      }
     } catch (e) {
-      const text = await response.text()
-      console.error(text)
+      console.error(String(e))
       return
     }
     console.log('cleaning')
