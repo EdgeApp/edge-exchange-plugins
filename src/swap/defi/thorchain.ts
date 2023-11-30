@@ -134,6 +134,7 @@ export const EVM_CURRENCY_CODES: { [cc: string]: boolean } = {
   AVAX: true,
   BCH: false,
   BNB: false,
+  BSC: true,
   BTC: false,
   DOGE: false,
   ETC: true,
@@ -147,6 +148,7 @@ export const EVM_CURRENCY_CODES: { [cc: string]: boolean } = {
 export const MAINNET_CODE_TRANSCRIPTION: { [cc: string]: ChainTypes } = {
   avalanche: 'AVAX',
   binancechain: 'BNB',
+  binancesmartchain: 'BSC',
   bitcoin: 'BTC',
   bitcoincash: 'BCH',
   dogecoin: 'DOGE',
@@ -999,6 +1001,7 @@ type ChainTypes =
   | 'BTC'
   | 'ETH'
   | 'BCH'
+  | 'BSC'
   | 'DOGE'
   | 'LTC'
   | 'AVAX'

@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- added: Support BSC for Thorchain swaps
+
 ## 1.1.1 (2023-11-24)
 
 - fixed: Return proper min amount error with Thorchain
