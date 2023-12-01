@@ -165,10 +165,6 @@ export const asInitOptions = asObject({
   thorswapApiKey: asOptional(asString)
 })
 
-const asMinAmount = asObject({
-  minInputAmount: asString
-})
-
 export const asInboundAddresses = asArray(
   asObject({
     address: asString,
@@ -256,7 +252,6 @@ type QuoteSwapFull = QuoteSwap | QuoteError
 type AssetSpread = ReturnType<typeof asAssetSpread>
 type Pool = ReturnType<typeof asPool>
 type ExchangeInfo = ReturnType<typeof asExchangeInfo>
-type MinAmount = ReturnType<typeof asMinAmount>
 interface CalcSwapParams {
   log: Function
   fetch: EdgeFetchFunction
@@ -269,7 +264,6 @@ interface CalcSwapParams {
   toAddress: string
   isEstimate: boolean
   nativeAmount: string
-  minAmount: MinAmount | undefined
   sourcePool: Pool
   destPool: Pool
   thorname: string
@@ -447,10 +441,6 @@ export function makeThorchainPlugin(
       throw new Error(`Thorchain could not fetch pools: ${responseText}`)
     }
 
-    // Nine realms servers removed minAmount support so disable for now but keep all code
-    // logic so we can easily enable in the future with new API
-    const minAmount = undefined
-
     const poolJson = await poolResponse.json()
     const pools = asPools(poolJson)
 
@@ -486,7 +476,6 @@ export function makeThorchainPlugin(
         toAddress,
         isEstimate,
         nativeAmount,
-        minAmount,
         sourcePool,
         destPool,
         thorname,
@@ -509,7 +498,6 @@ export function makeThorchainPlugin(
         toAddress,
         isEstimate,
         nativeAmount,
-        minAmount,
         sourcePool,
         destPool,
         thorname,
@@ -754,7 +742,6 @@ const calcSwapFrom = async ({
   toAddress,
   isEstimate,
   nativeAmount,
-  minAmount,
   sourcePool,
   destPool,
   thorname,
