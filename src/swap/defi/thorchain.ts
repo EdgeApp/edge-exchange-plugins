@@ -264,6 +264,7 @@ interface CalcSwapParams {
   toAddress: string
   isEstimate: boolean
   nativeAmount: string
+  quoteFor: EdgeSwapRequestPlugin['quoteFor']
   sourcePool: Pool
   destPool: Pool
   thorname: string
@@ -463,7 +464,7 @@ export function makeThorchainPlugin(
     const destPool = getPool(request, toMainnetCode, toCurrencyCode, pools)
 
     let calcResponse: CalcSwapResponse
-    if (quoteFor === 'from') {
+    if (quoteFor === 'from' || quoteFor === 'max') {
       calcResponse = await calcSwapFrom({
         log,
         fetch: fetchCors,
@@ -476,6 +477,7 @@ export function makeThorchainPlugin(
         toAddress,
         isEstimate,
         nativeAmount,
+        quoteFor,
         sourcePool,
         destPool,
         thorname,
@@ -498,6 +500,7 @@ export function makeThorchainPlugin(
         toAddress,
         isEstimate,
         nativeAmount,
+        quoteFor,
         sourcePool,
         destPool,
         thorname,
@@ -581,6 +584,24 @@ export function makeThorchainPlugin(
         memo,
         metadata: {},
         swapData
+      }
+
+      // If this is a max quote. Call getMaxTx and modify the request
+      if (quoteFor === 'max') {
+        if (fromWallet.currencyInfo.pluginId !== 'thorchainrune') {
+          throw new Error('fetchSwapQuoteInner max quote only for RUNE')
+        }
+        const maxNativeAmount = await fromWallet.otherMethods.getMaxTx(
+          makeTxParams
+        )
+        return await fetchSwapQuoteInner(
+          {
+            ...request,
+            nativeAmount: maxNativeAmount,
+            quoteFor: 'from'
+          },
+          isEstimate
+        )
       }
 
       return {
@@ -685,13 +706,25 @@ export function makeThorchainPlugin(
 
     async fetchSwapQuote(req: EdgeSwapRequest): Promise<EdgeSwapQuote> {
       const request = convertRequest(req)
+      const { quoteFor, fromWallet } = request
 
-      const newRequest = await getMaxSwappable(
-        fetchSwapQuoteInner,
-        request,
-        true
-      )
-      const swapOrder = await fetchSwapQuoteInner(newRequest, true)
+      let swapOrder
+      if (
+        quoteFor === 'max' &&
+        fromWallet.currencyInfo.pluginId === 'thorchainrune'
+      ) {
+        // fetchSwapQuoteInner has unique logic to handle 'max' quotes but
+        // only when sending RUNE
+        swapOrder = await fetchSwapQuoteInner(request, true)
+      } else {
+        const newRequest = await getMaxSwappable(
+          fetchSwapQuoteInner,
+          request,
+          true
+        )
+        swapOrder = await fetchSwapQuoteInner(newRequest, true)
+      }
+
       return await makeSwapPluginQuote(swapOrder)
     }
   }
@@ -742,6 +775,7 @@ const calcSwapFrom = async ({
   toAddress,
   isEstimate,
   nativeAmount,
+  quoteFor,
   sourcePool,
   destPool,
   thorname,
@@ -751,11 +785,12 @@ const calcSwapFrom = async ({
   streamingInterval,
   streamingQuantity
 }: CalcSwapParams): Promise<CalcSwapResponse> => {
-  const fromNativeAmount = nativeAmount
+  // Max quotes start with getting a quote for 10 RUNE
+  const fromNativeAmount = quoteFor === 'max' ? '1000000000' : nativeAmount
 
   // Get exchange rate from source to destination asset
   const fromExchangeAmount = await fromWallet.nativeToDenomination(
-    nativeAmount,
+    fromNativeAmount,
     fromCurrencyCode
   )
 
