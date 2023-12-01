@@ -454,7 +454,7 @@ export function makeThorchainDaPlugin(
       if (fromMainnetCode === fromCurrencyCode) {
         // For mainnet coins of EVM chains, use gasLimit override since makeSpend doesn't
         // know how to estimate an ETH spend with extra data
-        const gasLimit = getGasLimit(fromMainnetCode, fromCurrencyCode)
+        const gasLimit = getGasLimit(fromMainnetCode, fromTokenId)
         if (gasLimit != null) {
           spendInfo.customNetworkFee = {
             ...spendInfo.customNetworkFee,
