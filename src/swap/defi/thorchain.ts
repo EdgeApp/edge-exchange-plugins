@@ -670,6 +670,7 @@ export function makeThorchainPlugin(
         // know how to estimate an ETH spend with extra data
         const gasLimit = getGasLimit(fromMainnetCode, fromTokenId)
         if (gasLimit != null) {
+          spendInfo.networkFeeOption = 'custom'
           spendInfo.customNetworkFee = {
             ...spendInfo.customNetworkFee,
             gasLimit
