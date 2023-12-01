@@ -774,7 +774,8 @@ const calcSwapFrom = async ({
 
   log(`fromExchangeAmount: ${fromExchangeAmount}`)
 
-  const fromThorAmount = mul(fromExchangeAmount, THOR_LIMIT_UNITS)
+  const fromThorAmountDecimal = mul(fromExchangeAmount, THOR_LIMIT_UNITS)
+  const fromThorAmount = round(fromThorAmountDecimal, 0)
 
   const noStreamParams = {
     amount: fromThorAmount,
