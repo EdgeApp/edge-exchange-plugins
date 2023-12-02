@@ -134,6 +134,7 @@ export const EVM_CURRENCY_CODES: { [cc: string]: boolean } = {
   AVAX: true,
   BCH: false,
   BNB: false,
+  BSC: true,
   BTC: false,
   DOGE: false,
   ETC: true,
@@ -147,6 +148,7 @@ export const EVM_CURRENCY_CODES: { [cc: string]: boolean } = {
 export const MAINNET_CODE_TRANSCRIPTION: { [cc: string]: ChainTypes } = {
   avalanche: 'AVAX',
   binancechain: 'BNB',
+  binancesmartchain: 'BSC',
   bitcoin: 'BTC',
   bitcoincash: 'BCH',
   dogecoin: 'DOGE',
@@ -545,7 +547,7 @@ export function makeThorchainPlugin(
 
     if (EVM_CURRENCY_CODES[fromMainnetCode]) {
       memoType = 'hex'
-      if (fromMainnetCode !== fromCurrencyCode) {
+      if (fromTokenId != null) {
         if (router == null)
           throw new Error(`Missing router address for ${fromMainnetCode}`)
         if (sourceTokenContractAddress == null)
@@ -606,7 +608,7 @@ export function makeThorchainPlugin(
     } else {
       memoType = 'text'
       // Cannot yet do tokens on non-EVM chains
-      if (fromMainnetCode !== fromCurrencyCode) {
+      if (fromTokenId != null) {
         throw new SwapCurrencyError(swapInfo, request)
       }
     }
@@ -663,11 +665,12 @@ export function makeThorchainPlugin(
     }
 
     if (EVM_CURRENCY_CODES[fromMainnetCode]) {
-      if (fromMainnetCode === fromCurrencyCode) {
+      if (fromTokenId == null) {
         // For mainnet coins of EVM chains, use gasLimit override since makeSpend doesn't
         // know how to estimate an ETH spend with extra data
-        const gasLimit = getGasLimit(fromMainnetCode, fromCurrencyCode)
+        const gasLimit = getGasLimit(fromMainnetCode, fromTokenId)
         if (gasLimit != null) {
+          spendInfo.networkFeeOption = 'custom'
           spendInfo.customNetworkFee = {
             ...spendInfo.customNetworkFee,
             gasLimit
@@ -999,6 +1002,7 @@ type ChainTypes =
   | 'BTC'
   | 'ETH'
   | 'BCH'
+  | 'BSC'
   | 'DOGE'
   | 'LTC'
   | 'AVAX'
@@ -1133,10 +1137,10 @@ const getQuote = async (
 
 export const getGasLimit = (
   chain: ChainTypes,
-  asset: string
+  tokenId: string | undefined
 ): string | undefined => {
   if (EVM_CURRENCY_CODES[chain]) {
-    if (chain === asset) {
+    if (tokenId == null) {
       return EVM_SEND_GAS
     } else {
       return EVM_TOKEN_SEND_GAS
