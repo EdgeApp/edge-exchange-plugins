@@ -310,6 +310,7 @@ class FakeCurrencyEngine {
       walletId: '1234',
       blockHeight: 0,
       currencyCode,
+      tokenId: null,
       date: defaultTx.date,
       memos: [],
       isSend: true,

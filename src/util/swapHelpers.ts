@@ -8,7 +8,6 @@ import {
   EdgeSwapRequest,
   EdgeSwapResult,
   EdgeTransaction,
-  EdgeTxSwap,
   JsonObject,
   SwapCurrencyError
 } from 'edge-core-js/types'
@@ -72,21 +71,25 @@ export async function makeSwapPluginQuote(
   const { fromWallet } = request
 
   let tx: EdgeTransaction
-  let swapData: EdgeTxSwap | undefined
   if ('spendInfo' in order) {
     const { spendInfo } = order
-    swapData = spendInfo.swapData
     tx = await fromWallet.makeSpend(spendInfo)
   } else {
     const { makeTxParams } = order
-    swapData = makeTxParams.swapData
+    const savedAction = makeTxParams.savedAction
     tx = await fromWallet.otherMethods.makeTx(makeTxParams)
-    tx.swapData = swapData
+    if (tx.action == null) {
+      tx.savedAction = savedAction
+    }
   }
-  const toNativeAmount = swapData?.payoutNativeAmount
-  const destinationAddress = swapData?.payoutAddress
-  const isEstimate = swapData?.isEstimate ?? false
-  const quoteId = swapData?.orderId
+  const action = tx.action ?? tx.savedAction
+
+  if (action?.type !== 'swap') throw new Error(`Invalid swap action type`)
+
+  const toNativeAmount = action?.destAsset.nativeAmount
+  const destinationAddress = action?.payoutAddress
+  const isEstimate = action?.isEstimate ?? false
+  const quoteId = action?.orderId
   if (
     fromNativeAmount == null ||
     toNativeAmount == null ||
@@ -137,8 +140,14 @@ export async function makeSwapPluginQuote(
       const broadcastedTransaction = await fromWallet.broadcastTx(
         signedTransaction
       )
-      if (addTxidToOrderUri && signedTransaction.swapData?.orderUri != null) {
-        signedTransaction.swapData.orderUri += tx.txid
+      const savedAction = signedTransaction.savedAction
+      if (
+        addTxidToOrderUri &&
+        savedAction != null &&
+        'orderUri' in savedAction
+      ) {
+        if (savedAction.orderUri != null)
+          savedAction.orderUri = `${savedAction.orderUri}${tx.txid}`
       }
 
       await fromWallet.saveTx(signedTransaction)

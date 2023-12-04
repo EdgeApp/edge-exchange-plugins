@@ -1,5 +1,6 @@
 import {
   EdgeCorePluginOptions,
+  EdgeSpendInfo,
   EdgeSwapInfo,
   EdgeSwapPlugin,
   EdgeSwapQuote,
@@ -34,7 +35,7 @@ export function makeTransferPlugin(
       publicAddress: toAddress
     } = await request.toWallet.getReceiveAddress()
 
-    const spendInfo = {
+    const spendInfo: EdgeSpendInfo = {
       currencyCode: request.fromCurrencyCode,
       spendTargets: [
         {
@@ -42,12 +43,21 @@ export function makeTransferPlugin(
           publicAddress: toAddress
         }
       ],
-      swapData: {
+      savedAction: {
+        type: 'transfer',
+        swapInfo,
         isEstimate: false,
+        destAsset: {
+          pluginId: request.toWallet.currencyInfo.pluginId,
+          tokenId: request.toTokenId,
+          nativeAmount: request.nativeAmount
+        },
+        sourceAsset: {
+          pluginId: request.fromWallet.currencyInfo.pluginId,
+          tokenId: request.fromTokenId,
+          nativeAmount: request.nativeAmount
+        },
         payoutAddress: toAddress,
-        plugin: { ...swapInfo },
-        payoutCurrencyCode: request.toCurrencyCode,
-        payoutNativeAmount: request.nativeAmount,
         payoutWalletId: request.toWallet.id
       }
     }

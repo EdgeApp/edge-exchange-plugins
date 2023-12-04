@@ -19,7 +19,7 @@ import {
   EdgeSwapQuote,
   EdgeSwapRequest,
   EdgeTransaction,
-  EdgeTxSwap,
+  EdgeTxActionSwap,
   SwapBelowLimitError,
   SwapCurrencyError
 } from 'edge-core-js/types'
@@ -526,14 +526,23 @@ export function makeThorchainPlugin(
     let approvalData
     let memoType: EdgeMemo['type']
 
-    const swapData: EdgeTxSwap = {
+    const savedAction: EdgeTxActionSwap = {
+      type: 'swap',
+      swapInfo,
       orderUri: 'https://track.ninerealms.com/',
       isEstimate,
+      destAsset: {
+        pluginId: toWallet.currencyInfo.pluginId,
+        tokenId: toTokenId,
+        nativeAmount: toNativeAmount
+      },
+      sourceAsset: {
+        pluginId: fromWallet.currencyInfo.pluginId,
+        tokenId: fromTokenId,
+        nativeAmount: fromNativeAmount
+      },
       payoutAddress: toAddress,
-      payoutCurrencyCode: toCurrencyCode,
-      payoutNativeAmount: toNativeAmount,
-      payoutWalletId: toWallet.id,
-      plugin: { ...swapInfo }
+      payoutWalletId: toWallet.id
     }
 
     if (EVM_CURRENCY_CODES[fromMainnetCode]) {
@@ -582,8 +591,7 @@ export function makeThorchainPlugin(
           }
         ],
         memo,
-        metadata: {},
-        swapData
+        savedAction
       }
 
       // If this is a max quote. Call getMaxTx and modify the request
@@ -667,7 +675,7 @@ export function makeThorchainPlugin(
         }
       ],
 
-      swapData,
+      savedAction,
       otherParams: {
         outputSort: 'targets'
       }

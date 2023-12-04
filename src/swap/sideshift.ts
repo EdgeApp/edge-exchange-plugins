@@ -232,15 +232,24 @@ const fetchSwapQuoteInner = async (
     ],
     networkFeeOption:
       request.fromCurrencyCode.toUpperCase() === 'BTC' ? 'high' : 'standard',
-    swapData: {
+    savedAction: {
+      type: 'swap',
+      swapInfo,
       orderId: order.id,
       orderUri: ORDER_STATUS_URL + order.id,
       isEstimate,
+      destAsset: {
+        pluginId: request.toWallet.currencyInfo.pluginId,
+        tokenId: request.toTokenId,
+        nativeAmount: amountExpectedToNative
+      },
+      sourceAsset: {
+        pluginId: request.fromWallet.currencyInfo.pluginId,
+        tokenId: request.fromTokenId,
+        nativeAmount: amountExpectedFromNative
+      },
       payoutAddress: settleAddress,
-      payoutCurrencyCode: request.toCurrencyCode,
-      payoutNativeAmount: amountExpectedToNative,
       payoutWalletId: request.toWallet.id,
-      plugin: { ...swapInfo },
       refundAddress
     }
   }

@@ -6,7 +6,7 @@ import {
   EdgeSwapPlugin,
   EdgeSwapQuote,
   EdgeSwapRequest,
-  EdgeTxSwap,
+  EdgeTxActionSwap,
   InsufficientFundsError,
   JsonObject,
   SwapCurrencyError
@@ -218,19 +218,27 @@ export function makeXrpDexPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
     const timestampNow = Date.now()
     const expiration = timestampNow / 1000 + DEX_MAX_FULLFILLMENT_TIME_S
 
-    const swapData: EdgeTxSwap = {
+    const savedAction: EdgeTxActionSwap = {
+      type: 'swap',
+      swapInfo,
       isEstimate: false,
+      destAsset: {
+        pluginId: toWallet.currencyInfo.pluginId,
+        tokenId: toTokenId,
+        nativeAmount: toNativeAmount
+      },
+      sourceAsset: {
+        pluginId: fromWallet.currencyInfo.pluginId,
+        tokenId: fromTokenId,
+        nativeAmount: fromNativeAmount
+      },
       payoutAddress: toAddress,
-      payoutCurrencyCode: toCurrencyCode,
-      payoutNativeAmount: toNativeAmount,
-      payoutWalletId: toWallet.id,
-      plugin: { ...swapInfo }
+      payoutWalletId: toWallet.id
     }
 
     const makeTxParams: MakeTxParams = {
       type: 'MakeTxDexSwap',
-      metadata: {},
-      swapData,
+      savedAction,
       fromTokenId,
       fromNativeAmount,
       toTokenId,

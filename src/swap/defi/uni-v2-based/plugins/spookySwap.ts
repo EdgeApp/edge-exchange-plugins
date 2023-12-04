@@ -126,13 +126,22 @@ export function makeSpookySwapPlugin(
           gasLimit: swapTx.gasLimit?.toString() ?? '0'
         },
         networkFeeOption: 'custom',
-        swapData: {
+        savedAction: {
+          type: 'swap',
+          swapInfo,
           isEstimate: false,
+          destAsset: {
+            pluginId: request.toWallet.currencyInfo.pluginId,
+            tokenId: request.toTokenId,
+            nativeAmount: expectedAmountOut.toString()
+          },
+          sourceAsset: {
+            pluginId: request.fromWallet.currencyInfo.pluginId,
+            tokenId: request.fromTokenId,
+            nativeAmount: amountToSwap
+          },
           payoutAddress: toAddress,
-          payoutCurrencyCode: request.toCurrencyCode,
-          payoutNativeAmount: expectedAmountOut.toString(),
           payoutWalletId: request.toWallet.id,
-          plugin: { ...swapInfo },
           refundAddress: fromAddress
         }
       }

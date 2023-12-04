@@ -328,12 +328,13 @@ export function makeLifiPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
       preTx = await request.fromWallet.makeSpend(spendInfo)
     }
 
+    const fromNativeAmount = mul(transactionRequest.value, '1')
     const spendInfo: EdgeSpendInfo = {
       currencyCode: request.fromCurrencyCode,
       spendTargets: [
         {
           memo: data,
-          nativeAmount: mul(transactionRequest.value, '1'),
+          nativeAmount: fromNativeAmount,
           publicAddress: approvalAddress
         }
       ],
@@ -343,13 +344,23 @@ export function makeLifiPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
         gasLimit: round(mul(hexToDecimal(gasLimit), '1.4'), 0),
         gasPrice: gasPriceGwei
       },
-      swapData: {
+      savedAction: {
+        type: 'swap',
+        swapInfo,
         isEstimate: false,
+        destAsset: {
+          pluginId: toWallet.currencyInfo.pluginId,
+          tokenId: toTokenId,
+          nativeAmount: toAmountMin
+        },
+        sourceAsset: {
+          pluginId: fromWallet.currencyInfo.pluginId,
+          tokenId: fromTokenId,
+          nativeAmount: fromNativeAmount
+        },
         payoutAddress: toAddress,
-        payoutCurrencyCode: toCurrencyCode,
-        payoutNativeAmount: toAmountMin,
         payoutWalletId: toWallet.id,
-        plugin: { ...swapInfo }
+        refundAddress: fromAddress
       }
     }
 
