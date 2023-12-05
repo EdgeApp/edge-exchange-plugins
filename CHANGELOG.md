@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 1.2.0 (2023-12-04)
+
 - added: Support BSC for Thorchain swaps
 - fixed: Max swap when sending RUNE on Thorchain
 
