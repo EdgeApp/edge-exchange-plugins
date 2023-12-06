@@ -180,7 +180,7 @@ export function makeSwapuzPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
       )
 
       const spendInfo: EdgeSpendInfo = {
-        currencyCode: fromCurrencyCode,
+        tokenId: request.fromTokenId,
         spendTargets: [
           {
             nativeAmount: request.nativeAmount,

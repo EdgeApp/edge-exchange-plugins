@@ -163,10 +163,10 @@ export const getMaxSwappable = async <T extends any[]>(
   if (request.quoteFor !== 'max') return request
 
   const requestCopy = { ...request }
-  const { fromWallet, fromCurrencyCode } = requestCopy
+  const { fromWallet, fromCurrencyCode, fromTokenId } = requestCopy
 
   // First attempt a swap that uses the entire balance
-  const balance = fromWallet.balances[fromCurrencyCode] ?? '0'
+  const balance = fromWallet.balanceMap.get(fromTokenId) ?? '0'
   requestCopy.nativeAmount = balance
   requestCopy.quoteFor = 'from'
   const swapOrder = await fetchSwap(requestCopy, ...args)
@@ -223,12 +223,28 @@ interface AllCodes {
   toCurrencyCode: string
 }
 
-export const getCodes = (request: EdgeSwapRequestPlugin): AllCodes => ({
-  fromMainnetCode: request.fromWallet.currencyInfo.currencyCode,
-  toMainnetCode: request.toWallet.currencyInfo.currencyCode,
-  fromCurrencyCode: request.fromCurrencyCode,
-  toCurrencyCode: request.toCurrencyCode
-})
+export const getCurrencyCode = (
+  wallet: EdgeCurrencyWallet,
+  tokenId: string | null
+): string => {
+  const { pluginId } = wallet.currencyInfo
+  const { currencyCode } =
+    tokenId == null
+      ? wallet.currencyInfo
+      : wallet.currencyConfig.allTokens[pluginId]
+
+  return currencyCode
+}
+
+export const getCodes = (request: EdgeSwapRequest): AllCodes => {
+  const { fromTokenId, fromWallet, toTokenId, toWallet } = request
+  return {
+    fromMainnetCode: fromWallet.currencyInfo.currencyCode,
+    toMainnetCode: toWallet.currencyInfo.currencyCode,
+    fromCurrencyCode: getCurrencyCode(fromWallet, fromTokenId),
+    toCurrencyCode: getCurrencyCode(toWallet, toTokenId)
+  }
+}
 
 const getPluginIds = (
   request: EdgeSwapRequest
@@ -263,7 +279,7 @@ export function checkInvalidCodes(
     toCurrencyCode
   } = getCodes(request)
 
-  const isSameAsset = (request: EdgeSwapRequest): boolean =>
+  const isSameAsset = (request: EdgeSwapRequestPlugin): boolean =>
     request.fromWallet.currencyInfo.pluginId ===
       request.toWallet.currencyInfo.pluginId &&
     request.fromCurrencyCode === request.toCurrencyCode
@@ -407,11 +423,13 @@ export const isLikeKind = (
 export const getTokenId = (
   coreWallet: EdgeCurrencyWallet,
   currencyCode: string
-): string | undefined => {
-  if (coreWallet.currencyInfo.currencyCode === currencyCode) return
+): string | null => {
+  if (coreWallet.currencyInfo.currencyCode === currencyCode) return null
   const { allTokens } = coreWallet.currencyConfig
-  return Object.keys(allTokens).find(
-    edgeToken => allTokens[edgeToken].currencyCode === currencyCode
+  return (
+    Object.keys(allTokens).find(
+      edgeToken => allTokens[edgeToken].currencyCode === currencyCode
+    ) ?? null
   )
 }
 

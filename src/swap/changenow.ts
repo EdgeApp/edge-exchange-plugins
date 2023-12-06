@@ -201,7 +201,7 @@ export function makeChangeNowPlugin(
       )
 
       const spendInfo: EdgeSpendInfo = {
-        currencyCode: fromCurrencyCode,
+        tokenId: request.fromTokenId,
         spendTargets: [
           {
             nativeAmount,
@@ -256,7 +256,7 @@ export function makeChangeNowPlugin(
       )
 
       const spendInfo: EdgeSpendInfo = {
-        currencyCode: fromCurrencyCode,
+        tokenId: request.fromTokenId,
         spendTargets: [
           {
             nativeAmount: fromNativeAmount,

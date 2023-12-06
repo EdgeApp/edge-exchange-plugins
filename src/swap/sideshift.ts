@@ -222,7 +222,7 @@ const fetchSwapQuoteInner = async (
   const isEstimate = false
 
   const spendInfo: EdgeSpendInfo = {
-    currencyCode: request.fromCurrencyCode,
+    tokenId: request.fromTokenId,
     spendTargets: [
       {
         nativeAmount: amountExpectedFromNative,

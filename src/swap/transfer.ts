@@ -32,10 +32,12 @@ export function makeTransferPlugin(
   ): Promise<SwapOrder> => {
     const {
       publicAddress: toAddress
-    } = await request.toWallet.getReceiveAddress()
+    } = await request.toWallet.getReceiveAddress({
+      tokenId: null
+    })
 
     const spendInfo = {
-      currencyCode: request.fromCurrencyCode,
+      tokenId: request.fromTokenId,
       spendTargets: [
         {
           nativeAmount: request.nativeAmount,

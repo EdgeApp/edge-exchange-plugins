@@ -308,7 +308,8 @@ export function makeLifiPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
       })
 
       const spendInfo: EdgeSpendInfo = {
-        currencyCode: request.fromCurrencyCode,
+        // Token approvals only spend the parent currency
+        tokenId: null,
         spendTargets: [
           {
             memo: approvalData,
@@ -329,7 +330,7 @@ export function makeLifiPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
     }
 
     const spendInfo: EdgeSpendInfo = {
-      currencyCode: request.fromCurrencyCode,
+      tokenId: request.fromTokenId,
       spendTargets: [
         {
           memo: data,

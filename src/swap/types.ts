@@ -4,8 +4,8 @@ import { EdgeCurrencyWallet, EdgeMetadata, EdgeTxSwap } from 'edge-core-js'
 export interface EdgeSwapRequestPlugin {
   fromWallet: EdgeCurrencyWallet
   toWallet: EdgeCurrencyWallet
-  fromTokenId?: string
-  toTokenId?: string
+  fromTokenId: string | null
+  toTokenId: string | null
   nativeAmount: string
   quoteFor: 'from' | 'max' | 'to'
   fromCurrencyCode: string
@@ -30,9 +30,9 @@ export type MakeTxParams =
       type: 'MakeTxDexSwap'
       metadata?: EdgeMetadata
       swapData?: EdgeTxSwap
-      fromTokenId?: string
+      fromTokenId: string | null
       fromNativeAmount: string
-      toTokenId?: string
+      toTokenId: string | null
       toNativeAmount: string
 
       /**

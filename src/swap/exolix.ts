@@ -236,7 +236,7 @@ export function makeExolixPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
     )
 
     const spendInfo: EdgeSpendInfo = {
-      currencyCode: request.fromCurrencyCode,
+      tokenId: request.fromTokenId,
       spendTargets: [
         {
           nativeAmount: fromNativeAmount,

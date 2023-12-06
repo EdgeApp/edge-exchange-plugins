@@ -25,7 +25,6 @@ import { ethers } from 'ethers'
 import {
   checkInvalidCodes,
   getMaxSwappable,
-  getTokenId,
   makeSwapPluginQuote,
   SwapOrder
 } from '../../util/swapHelpers'
@@ -140,7 +139,9 @@ export function makeThorchainDaPlugin(
       fromCurrencyCode,
       toCurrencyCode,
       nativeAmount,
+      fromTokenId,
       fromWallet,
+      toTokenId,
       toWallet,
       quoteFor
     } = request
@@ -219,17 +220,13 @@ export function makeThorchainDaPlugin(
       fromCurrencyCode
     )
 
-    const fromIsToken = fromMainnetCode !== fromCurrencyCode
-    const fromTokenId = fromIsToken
-      ? `-0x${getTokenId(fromWallet, fromCurrencyCode) ?? ''}`
-      : undefined
-    const toIsToken = toMainnetCode !== toCurrencyCode
-    const toTokenId = toIsToken
-      ? `-0x${getTokenId(toWallet, toCurrencyCode) ?? ''}`
-      : undefined
     const quoteParams: ThorSwapQuoteParams = {
-      sellAsset: `${fromMainnetCode}.${fromCurrencyCode}` + (fromTokenId ?? ''),
-      buyAsset: `${toMainnetCode}.${toCurrencyCode}` + (toTokenId ?? ''),
+      sellAsset:
+        `${fromMainnetCode}.${fromCurrencyCode}` +
+        (fromTokenId != null ? `-0x${fromTokenId}` : ''),
+      buyAsset:
+        `${toMainnetCode}.${toCurrencyCode}` +
+        (toTokenId != null ? `-0x${toTokenId}` : ''),
       sellAmount,
       slippage: (volatilitySpreadFinal * 100).toString(),
       recipientAddress: toAddress,
@@ -237,8 +234,8 @@ export function makeThorchainDaPlugin(
       affiliateAddress: thorname,
       affiliateBasisPoints: affiliateFeeBasis
     }
-    const sourceTokenContractAddress = fromTokenId?.replace('-0x', '0x')
-
+    const sourceTokenContractAddress =
+      fromTokenId != null ? `0x${fromTokenId}` : undefined
     const queryParams = makeQueryParams(quoteParams)
     const uri = `tokens/quote?${queryParams}`
 
@@ -411,7 +408,8 @@ export function makeThorchainDaPlugin(
     let preTx: EdgeTransaction | undefined
     if (approvalData != null) {
       const spendInfo: EdgeSpendInfo = {
-        currencyCode: fromMainnetCode,
+        // Token approvals only spend the parent currency
+        tokenId: null,
         spendTargets: [
           {
             memo: approvalData,
@@ -428,7 +426,7 @@ export function makeThorchainDaPlugin(
     }
 
     const spendInfo: EdgeSpendInfo = {
-      currencyCode: request.fromCurrencyCode,
+      tokenId: request.fromTokenId,
       spendTargets: [
         {
           memo,

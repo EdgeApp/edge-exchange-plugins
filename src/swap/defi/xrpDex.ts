@@ -260,11 +260,11 @@ export function makeXrpDexPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
       opts: { promoCode?: string }
     ): Promise<EdgeSwapQuote> {
       const request = convertRequest(req)
-      const { fromCurrencyCode, fromTokenId, fromWallet, quoteFor } = request
+      const { fromTokenId, fromWallet, quoteFor } = request
 
       // Get the balance of the wallet minus reserve
       const maxSpendable = await fromWallet.getMaxSpendable({
-        currencyCode: fromCurrencyCode,
+        tokenId: request.fromTokenId,
         spendTargets: [
           {
             publicAddress: DUMMY_XRP_ADDRESS
@@ -275,7 +275,7 @@ export function makeXrpDexPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
       let swapOrder: SwapOrder
       if (quoteFor === 'max') {
         request.quoteFor = 'from'
-        request.nativeAmount = fromWallet.balances[fromCurrencyCode]
+        request.nativeAmount = fromWallet.balanceMap.get(fromTokenId) ?? '0'
         swapOrder = await fetchSwapQuoteInner(request)
         if (fromTokenId == null) {
           // We can swap all mainnet coins minus the expected fee
@@ -288,7 +288,9 @@ export function makeXrpDexPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
       } else {
         swapOrder = await fetchSwapQuoteInner(request)
         if (gt(swapOrder.fromNativeAmount, maxSpendable)) {
-          throw new InsufficientFundsError()
+          throw new InsufficientFundsError({
+            tokenId: swapOrder.request.fromTokenId
+          })
         }
       }
       return await makeSwapPluginQuote(swapOrder)

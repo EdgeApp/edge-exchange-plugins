@@ -82,7 +82,8 @@ export function makeSpookySwapPlugin(
     )
 
     // Generate swap transactions
-    const toAddress = (await toWallet.getReceiveAddress()).publicAddress
+    const toAddress = (await toWallet.getReceiveAddress({ tokenId: null }))
+      .publicAddress
     const expirationDate = new Date(Date.now() + EXPIRATION_MS)
     const deadline = Math.round(expirationDate.getTime() / 1000) // unix timestamp
     const customNetworkFee = customFeeCache.getFees(uid)
@@ -102,12 +103,13 @@ export function makeSpookySwapPlugin(
       customNetworkFee?.gasPrice
     )
 
-    const fromAddress = (await fromWallet.getReceiveAddress()).publicAddress
+    const fromAddress = (await fromWallet.getReceiveAddress({ tokenId: null }))
+      .publicAddress
     // toEdgeUnsignedTxs
     const edgeSpendInfos = swapTxs.map((swapTx, i) => {
       // Convert to our spendInfo
       const edgeSpendInfo: EdgeSpendInfo = {
-        currencyCode: request.fromCurrencyCode, // what is being sent out, only if token. Blank if not token
+        tokenId: request.fromTokenId,
         spendTargets: [
           {
             memo: swapTx.data,

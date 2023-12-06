@@ -7,6 +7,7 @@ import {
 } from 'edge-core-js'
 
 import { EdgeSwapRequestPlugin } from '../swap/types'
+import { getCodes } from './swapHelpers'
 const INFO_SERVERS = ['https://info1.edge.app', 'https://info2.edge.app']
 const RATES_SERVERS = ['https://rates1.edge.app', 'https://rates2.edge.app']
 
@@ -167,15 +168,20 @@ export const makeQueryParams = (params: QueryParams): string => {
 export const convertRequest = (
   request: EdgeSwapRequest
 ): EdgeSwapRequestPlugin => {
-  if (request.fromCurrencyCode == null || request.toCurrencyCode == null) {
-    throw new Error('Missing request fields')
+  const { fromCurrencyCode, toCurrencyCode } = getCodes(request)
+
+  const out: EdgeSwapRequestPlugin = {
+    ...request,
+    fromCurrencyCode,
+    toCurrencyCode
   }
-  const out: any = request
   return out
 }
 
 export async function getAddress(wallet: EdgeCurrencyWallet): Promise<string> {
-  const { publicAddress, segwitAddress } = await wallet.getReceiveAddress()
+  const { publicAddress, segwitAddress } = await wallet.getReceiveAddress({
+    tokenId: null
+  })
   return segwitAddress ?? publicAddress
 }
 

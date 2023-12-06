@@ -627,7 +627,8 @@ export function makeThorchainPlugin(
       approvalData = approvalData.replace('0x', '')
 
       const spendInfo: EdgeSpendInfo = {
-        currencyCode: request.fromCurrencyCode,
+        // Token approvals only spend the parent currency
+        tokenId: null,
         memos: [
           {
             type: memoType,
@@ -653,7 +654,7 @@ export function makeThorchainPlugin(
     }
 
     const spendInfo: EdgeSpendInfo = {
-      currencyCode: request.fromCurrencyCode,
+      tokenId: request.fromTokenId,
       memos: [
         {
           type: memoType,
@@ -1160,7 +1161,7 @@ const getQuote = async (
 
 export const getGasLimit = (
   chain: ChainTypes,
-  tokenId: string | undefined
+  tokenId: string | null
 ): string | undefined => {
   if (EVM_CURRENCY_CODES[chain]) {
     if (tokenId == null) {
@@ -1183,10 +1184,10 @@ export const getVolatilitySpread = ({
   perAssetSpread
 }: {
   fromPluginId: string
-  fromTokenId?: string
+  fromTokenId: string | null
   fromCurrencyCode: string
   toPluginId: string
-  toTokenId?: string
+  toTokenId: string | null
   toCurrencyCode: string
   likeKindVolatilitySpread: number
   volatilitySpread: number

@@ -271,7 +271,7 @@ export function makeLetsExchangePlugin(
 
     // Make the transaction:
     const spendInfo: EdgeSpendInfo = {
-      currencyCode: request.fromCurrencyCode,
+      tokenId: request.fromTokenId,
       spendTargets: [
         {
           nativeAmount: fromNativeAmount,

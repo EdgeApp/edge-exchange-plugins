@@ -7,10 +7,10 @@ describe(`getVolatilitySpread`, function () {
   it('bitcoin source', function () {
     const result = getVolatilitySpread({
       fromPluginId: 'bitcoin',
-      fromTokenId: undefined,
+      fromTokenId: null,
       fromCurrencyCode: 'BTC',
       toPluginId: 'ethereum',
-      toTokenId: undefined,
+      toTokenId: null,
       toCurrencyCode: 'ETH',
       likeKindVolatilitySpread: 0.01,
       volatilitySpread: 0.02,
@@ -43,7 +43,7 @@ describe(`getVolatilitySpread`, function () {
   it('eth.usdc dest', function () {
     const result = getVolatilitySpread({
       fromPluginId: 'bitcoin',
-      fromTokenId: undefined,
+      fromTokenId: null,
       fromCurrencyCode: 'BTC',
       toPluginId: 'ethereum',
       toTokenId: 'usdctokenid',
@@ -88,7 +88,7 @@ describe(`getVolatilitySpread`, function () {
   it('like kind', function () {
     const result = getVolatilitySpread({
       fromPluginId: 'bitcoin',
-      fromTokenId: undefined,
+      fromTokenId: null,
       fromCurrencyCode: 'BTC',
       toPluginId: 'ethereum',
       toTokenId: 'wbtctokenid',
@@ -133,10 +133,10 @@ describe(`getVolatilitySpread`, function () {
   it('non like kind', function () {
     const result = getVolatilitySpread({
       fromPluginId: 'bitcoin',
-      fromTokenId: undefined,
+      fromTokenId: null,
       fromCurrencyCode: 'BTC',
       toPluginId: 'litecoin',
-      toTokenId: undefined,
+      toTokenId: null,
       toCurrencyCode: 'LTC',
       likeKindVolatilitySpread: 1,
       volatilitySpread: 2,

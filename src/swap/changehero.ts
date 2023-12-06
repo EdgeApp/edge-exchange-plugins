@@ -296,7 +296,7 @@ export function makeChangeHeroPlugin(
     )
 
     const spendInfo: EdgeSpendInfo = {
-      currencyCode: fromCurrencyCode,
+      tokenId: request.fromTokenId,
       spendTargets: [
         {
           nativeAmount: amountExpectedFromNative,
