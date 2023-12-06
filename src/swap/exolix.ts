@@ -246,8 +246,11 @@ export function makeExolixPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
       ],
       networkFeeOption:
         request.fromCurrencyCode.toUpperCase() === 'BTC' ? 'high' : 'standard',
+      assetAction: {
+        assetActionType: 'swap'
+      },
       savedAction: {
-        type: 'swap',
+        actionType: 'swap',
         swapInfo,
         orderId: quoteInfo.id,
         orderUri: orderUri + quoteInfo.id,

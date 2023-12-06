@@ -43,8 +43,11 @@ export function makeTransferPlugin(
           publicAddress: toAddress
         }
       ],
+      assetAction: {
+        assetActionType: 'transfer'
+      },
       savedAction: {
-        type: 'transfer',
+        actionType: 'swap',
         swapInfo,
         isEstimate: false,
         destAsset: {

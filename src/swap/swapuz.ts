@@ -189,8 +189,11 @@ export function makeSwapuzPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
           }
         ],
         networkFeeOption: fromCurrencyCode === 'BTC' ? 'high' : 'standard',
+        assetAction: {
+          assetActionType: 'swap'
+        },
         savedAction: {
-          type: 'swap',
+          actionType: 'swap',
           swapInfo,
           orderId: uid,
           orderUri: orderUri + uid,

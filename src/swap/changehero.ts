@@ -158,6 +158,7 @@ export function makeChangeHeroPlugin(
   async function getFixedQuote(
     request: EdgeSwapRequestPlugin
   ): Promise<SwapOrder> {
+    const { fromTokenId } = request
     const [fromAddress, toAddress] = await Promise.all([
       getAddress(request.fromWallet),
       getAddress(request.toWallet)
@@ -296,7 +297,7 @@ export function makeChangeHeroPlugin(
     )
 
     const spendInfo: EdgeSpendInfo = {
-      currencyCode: fromCurrencyCode,
+      tokenId: fromTokenId,
       spendTargets: [
         {
           nativeAmount: amountExpectedFromNative,
@@ -305,9 +306,14 @@ export function makeChangeHeroPlugin(
         }
       ],
       networkFeeOption:
-        request.fromCurrencyCode.toUpperCase() === 'BTC' ? 'high' : 'standard',
+        request.fromWallet.currencyInfo.pluginId === 'bitcoin'
+          ? 'high'
+          : 'standard',
+      assetAction: {
+        assetActionType: 'swap'
+      },
       savedAction: {
-        type: 'swap',
+        actionType: 'swap',
         swapInfo,
         orderUri: orderUri + quoteInfo.id,
         orderId: quoteInfo.id,

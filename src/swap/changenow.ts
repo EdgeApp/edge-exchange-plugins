@@ -81,7 +81,7 @@ export function makeChangeNowPlugin(
     opts: { promoCode?: string }
   ): Promise<SwapOrder> => {
     const { promoCode } = opts
-    const { nativeAmount } = request
+    const { nativeAmount, fromTokenId } = request
 
     // Grab addresses:
     const [fromAddress, toAddress] = await Promise.all([
@@ -200,7 +200,7 @@ export function makeChangeNowPlugin(
       )
 
       const spendInfo: EdgeSpendInfo = {
-        currencyCode: fromCurrencyCode,
+        tokenId: fromTokenId,
         spendTargets: [
           {
             nativeAmount,
@@ -209,8 +209,11 @@ export function makeChangeNowPlugin(
           }
         ],
         networkFeeOption: fromCurrencyCode === 'BTC' ? 'high' : 'standard',
+        assetAction: {
+          assetActionType: 'swap'
+        },
         savedAction: {
-          type: 'swap',
+          actionType: 'swap',
           swapInfo,
           orderId: id,
           orderUri: orderUri + id,
@@ -264,7 +267,7 @@ export function makeChangeNowPlugin(
       )
 
       const spendInfo: EdgeSpendInfo = {
-        currencyCode: fromCurrencyCode,
+        tokenId: fromTokenId,
         spendTargets: [
           {
             nativeAmount: fromNativeAmount,
@@ -273,8 +276,11 @@ export function makeChangeNowPlugin(
           }
         ],
         networkFeeOption: fromCurrencyCode === 'BTC' ? 'high' : 'standard',
+        assetAction: {
+          assetActionType: 'swap'
+        },
         savedAction: {
-          type: 'swap',
+          actionType: 'swap',
           swapInfo,
           orderId: id,
           orderUri: orderUri + id,

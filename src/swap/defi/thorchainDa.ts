@@ -24,6 +24,7 @@ import { ethers } from 'ethers'
 
 import {
   checkInvalidCodes,
+  getCodes,
   getMaxSwappable,
   makeSwapPluginQuote,
   SwapOrder
@@ -136,8 +137,6 @@ export function makeThorchainDaPlugin(
     request: EdgeSwapRequestPlugin
   ): Promise<SwapOrder> => {
     const {
-      fromCurrencyCode,
-      toCurrencyCode,
       nativeAmount,
       fromWallet,
       fromTokenId,
@@ -145,10 +144,12 @@ export function makeThorchainDaPlugin(
       toTokenId,
       quoteFor
     } = request
+    const { fromCurrencyCode, toCurrencyCode } = getCodes(request)
+
     // Do not support transfer between same assets
     if (
       fromWallet.currencyInfo.pluginId === toWallet.currencyInfo.pluginId &&
-      request.fromCurrencyCode === request.toCurrencyCode
+      fromTokenId === toTokenId
     ) {
       throw new SwapCurrencyError(swapInfo, request)
     }
@@ -412,6 +413,7 @@ export function makeThorchainDaPlugin(
         throw new Error('Cannot approve token w/o contract address')
       }
       const spendInfo: EdgeSpendInfo = {
+        tokenId: null,
         spendTargets: [
           {
             memo: approvalData,
@@ -419,8 +421,11 @@ export function makeThorchainDaPlugin(
             publicAddress: sourceTokenContractAddress
           }
         ],
+        assetAction: {
+          assetActionType: 'tokenApproval'
+        },
         savedAction: {
-          type: 'tokenApproval',
+          actionType: 'tokenApproval',
           tokenApproved: {
             pluginId: fromWallet.currencyInfo.pluginId,
             tokenId: fromTokenId,
@@ -434,7 +439,7 @@ export function makeThorchainDaPlugin(
     }
 
     const spendInfo: EdgeSpendInfo = {
-      currencyCode: request.fromCurrencyCode,
+      tokenId: fromTokenId,
       spendTargets: [
         {
           memo,
@@ -442,8 +447,11 @@ export function makeThorchainDaPlugin(
           publicAddress
         }
       ],
+      assetAction: {
+        assetActionType: 'swap'
+      },
       savedAction: {
-        type: 'swap',
+        actionType: 'swap',
         swapInfo,
         isEstimate,
         destAsset: {

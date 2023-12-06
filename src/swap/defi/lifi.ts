@@ -14,6 +14,7 @@ import {
 import { div18 } from '../../util/biggystringplus'
 import {
   checkInvalidCodes,
+  getCodes,
   getMaxSwappable,
   InvalidCurrencyCodes,
   makeSwapPluginQuote,
@@ -170,9 +171,7 @@ export function makeLifiPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
     request: EdgeSwapRequestPlugin
   ): Promise<SwapOrder> => {
     const {
-      fromCurrencyCode,
       fromTokenId,
-      toCurrencyCode,
       toTokenId,
       nativeAmount,
       fromWallet,
@@ -182,11 +181,12 @@ export function makeLifiPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
     if (quoteFor !== 'from') {
       throw new SwapCurrencyError(swapInfo, request)
     }
+    const { fromCurrencyCode, toCurrencyCode } = getCodes(request)
 
     const fromToken = fromWallet.currencyConfig.allTokens[fromTokenId ?? '']
     let fromContractAddress
     let sendingToken = false
-    if (fromCurrencyCode === fromWallet.currencyInfo.currencyCode) {
+    if (fromTokenId == null) {
       fromContractAddress = fromCurrencyCode
     } else {
       sendingToken = true
@@ -195,7 +195,7 @@ export function makeLifiPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
 
     const toToken = toWallet.currencyConfig.allTokens[toTokenId ?? '']
     let toContractAddress
-    if (toCurrencyCode === toWallet.currencyInfo.currencyCode) {
+    if (toTokenId == null) {
       toContractAddress = toCurrencyCode
     } else {
       toContractAddress = toToken?.networkLocation?.contractAddress
@@ -211,7 +211,7 @@ export function makeLifiPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
     // Do not support transfer between same assets
     if (
       fromWallet.currencyInfo.pluginId === toWallet.currencyInfo.pluginId &&
-      request.fromCurrencyCode === request.toCurrencyCode
+      request.fromTokenId === request.toTokenId
     ) {
       throw new SwapCurrencyError(swapInfo, request)
     }
@@ -308,7 +308,7 @@ export function makeLifiPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
       })
 
       const spendInfo: EdgeSpendInfo = {
-        currencyCode: request.fromCurrencyCode,
+        tokenId: fromTokenId,
         spendTargets: [
           {
             memo: approvalData,
@@ -330,7 +330,7 @@ export function makeLifiPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
 
     const fromNativeAmount = mul(transactionRequest.value, '1')
     const spendInfo: EdgeSpendInfo = {
-      currencyCode: request.fromCurrencyCode,
+      tokenId: fromTokenId,
       spendTargets: [
         {
           memo: data,
@@ -344,8 +344,11 @@ export function makeLifiPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
         gasLimit: round(mul(hexToDecimal(gasLimit), '1.4'), 0),
         gasPrice: gasPriceGwei
       },
+      assetAction: {
+        assetActionType: 'swap'
+      },
       savedAction: {
-        type: 'swap',
+        actionType: 'swap',
         swapInfo,
         isEstimate: false,
         destAsset: {

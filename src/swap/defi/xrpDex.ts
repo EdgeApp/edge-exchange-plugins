@@ -13,7 +13,11 @@ import {
 } from 'edge-core-js/types'
 import { Client } from 'xrpl'
 
-import { makeSwapPluginQuote, SwapOrder } from '../../util/swapHelpers'
+import {
+  getCodes,
+  makeSwapPluginQuote,
+  SwapOrder
+} from '../../util/swapHelpers'
 import {
   convertRequest,
   fetchInfo,
@@ -74,15 +78,14 @@ export function makeXrpDexPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
     request: EdgeSwapRequestPlugin
   ): Promise<SwapOrder> => {
     const {
-      fromCurrencyCode,
       fromTokenId,
-      toCurrencyCode,
       toTokenId,
       nativeAmount,
       fromWallet,
       toWallet,
       quoteFor
     } = request
+    const { fromCurrencyCode, toCurrencyCode } = getCodes(request)
 
     // Only support ripple wallets
     if (
@@ -219,7 +222,7 @@ export function makeXrpDexPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
     const expiration = timestampNow / 1000 + DEX_MAX_FULLFILLMENT_TIME_S
 
     const savedAction: EdgeTxActionSwap = {
-      type: 'swap',
+      actionType: 'swap',
       swapInfo,
       isEstimate: false,
       destAsset: {
@@ -238,6 +241,9 @@ export function makeXrpDexPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
 
     const makeTxParams: MakeTxParams = {
       type: 'MakeTxDexSwap',
+      assetAction: {
+        assetActionType: 'swap'
+      },
       savedAction,
       fromTokenId,
       fromNativeAmount,
@@ -268,11 +274,12 @@ export function makeXrpDexPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
       opts: { promoCode?: string }
     ): Promise<EdgeSwapQuote> {
       const request = convertRequest(req)
-      const { fromCurrencyCode, fromTokenId, fromWallet, quoteFor } = request
+      const { fromTokenId, fromWallet, quoteFor } = request
+      const { fromCurrencyCode } = getCodes(request)
 
       // Get the balance of the wallet minus reserve
       const maxSpendable = await fromWallet.getMaxSpendable({
-        currencyCode: fromCurrencyCode,
+        tokenId: fromTokenId,
         spendTargets: [
           {
             publicAddress: DUMMY_XRP_ADDRESS

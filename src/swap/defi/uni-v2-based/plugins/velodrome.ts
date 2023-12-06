@@ -139,8 +139,11 @@ export function makeVelodromePlugin(
           gasLimit: swapTx.gasLimit?.toString() ?? '0'
         },
         networkFeeOption: 'custom',
+        assetAction: {
+          assetActionType: 'swap'
+        },
         savedAction: {
-          type: 'swap',
+          actionType: 'swap',
           swapInfo,
           isEstimate: false,
           destAsset: {

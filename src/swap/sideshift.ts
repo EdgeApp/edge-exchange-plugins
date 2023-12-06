@@ -232,8 +232,11 @@ const fetchSwapQuoteInner = async (
     ],
     networkFeeOption:
       request.fromCurrencyCode.toUpperCase() === 'BTC' ? 'high' : 'standard',
+    assetAction: {
+      assetActionType: 'swap'
+    },
     savedAction: {
-      type: 'swap',
+      actionType: 'swap',
       swapInfo,
       orderId: order.id,
       orderUri: ORDER_STATUS_URL + order.id,

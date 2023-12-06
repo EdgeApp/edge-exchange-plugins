@@ -78,13 +78,11 @@ export async function makeSwapPluginQuote(
     const { makeTxParams } = order
     const savedAction = makeTxParams.savedAction
     tx = await fromWallet.otherMethods.makeTx(makeTxParams)
-    if (tx.action == null) {
-      tx.savedAction = savedAction
-    }
+    tx.savedAction = savedAction
   }
-  const action = tx.action ?? tx.savedAction
+  const action = tx.chainAction ?? tx.savedAction
 
-  if (action?.type !== 'swap') throw new Error(`Invalid swap action type`)
+  if (action?.actionType !== 'swap') throw new Error(`Invalid swap action type`)
 
   const toNativeAmount = action?.destAsset.nativeAmount
   const destinationAddress = action?.payoutAddress
@@ -172,7 +170,9 @@ export const getMaxSwappable = async <T extends any[]>(
   if (request.quoteFor !== 'max') return request
 
   const requestCopy = { ...request }
-  const { fromWallet, fromCurrencyCode } = requestCopy
+  const { fromWallet, fromTokenId } = requestCopy
+
+  const fromCurrencyCode = getCurrencyCode(fromWallet, fromTokenId)
 
   // First attempt a swap that uses the entire balance
   const balance = fromWallet.balances[fromCurrencyCode] ?? '0'
@@ -232,12 +232,28 @@ interface AllCodes {
   toCurrencyCode: string
 }
 
-export const getCodes = (request: EdgeSwapRequestPlugin): AllCodes => ({
-  fromMainnetCode: request.fromWallet.currencyInfo.currencyCode,
-  toMainnetCode: request.toWallet.currencyInfo.currencyCode,
-  fromCurrencyCode: request.fromCurrencyCode,
-  toCurrencyCode: request.toCurrencyCode
-})
+export const getCurrencyCode = (
+  wallet: EdgeCurrencyWallet,
+  tokenId: string | null
+): string => {
+  const { pluginId } = wallet.currencyInfo
+  const { currencyCode } =
+    tokenId == null
+      ? wallet.currencyInfo
+      : wallet.currencyConfig.allTokens[pluginId]
+
+  return currencyCode
+}
+
+export const getCodes = (request: EdgeSwapRequestPlugin): AllCodes => {
+  const { fromTokenId, fromWallet, toTokenId, toWallet } = request
+  return {
+    fromMainnetCode: fromWallet.currencyInfo.currencyCode,
+    toMainnetCode: toWallet.currencyInfo.currencyCode,
+    fromCurrencyCode: getCurrencyCode(fromWallet, fromTokenId),
+    toCurrencyCode: getCurrencyCode(toWallet, toTokenId)
+  }
+}
 
 const getPluginIds = (
   request: EdgeSwapRequest
@@ -275,7 +291,7 @@ export function checkInvalidCodes(
   const isSameAsset = (request: EdgeSwapRequest): boolean =>
     request.fromWallet.currencyInfo.pluginId ===
       request.toWallet.currencyInfo.pluginId &&
-    request.fromCurrencyCode === request.toCurrencyCode
+    request.fromTokenId === request.toTokenId
 
   function check(
     codeMap: InvalidCurrencyCodes,

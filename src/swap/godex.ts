@@ -266,8 +266,11 @@ export function makeGodexPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
       ],
       networkFeeOption:
         request.fromCurrencyCode.toUpperCase() === 'BTC' ? 'high' : 'standard',
+      assetAction: {
+        assetActionType: 'swap'
+      },
       savedAction: {
-        type: 'swap',
+        actionType: 'swap',
         swapInfo,
         orderId: quoteInfo.transaction_id,
         orderUri: orderUri + quoteInfo.transaction_id,
