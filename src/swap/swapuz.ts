@@ -189,15 +189,27 @@ export function makeSwapuzPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
           }
         ],
         networkFeeOption: fromCurrencyCode === 'BTC' ? 'high' : 'standard',
-        swapData: {
+        assetAction: {
+          assetActionType: 'swap'
+        },
+        savedAction: {
+          actionType: 'swap',
+          swapInfo,
           orderId: uid,
           orderUri: orderUri + uid,
           isEstimate: mode === 'float',
+          destAsset: {
+            pluginId: request.toWallet.currencyInfo.pluginId,
+            tokenId: request.toTokenId,
+            nativeAmount: toNativeAmount
+          },
+          sourceAsset: {
+            pluginId: request.fromWallet.currencyInfo.pluginId,
+            tokenId: request.fromTokenId,
+            nativeAmount: request.nativeAmount
+          },
           payoutAddress: toAddress,
-          payoutCurrencyCode: toCurrencyCode,
-          payoutNativeAmount: toNativeAmount,
           payoutWalletId: request.toWallet.id,
-          plugin: { ...swapInfo },
           refundAddress: fromAddress
         }
       }
@@ -262,10 +274,19 @@ export function makeSwapuzPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
           requestToHack.nativeAmount = fromQuoteNativeAmount
           const swapOrder = await fetchSwapQuoteInner(requestToHack)
           if (!('spendInfo' in swapOrder)) break
-          if (swapOrder.spendInfo.swapData?.payoutNativeAmount == null) break
+          if (swapOrder.spendInfo.savedAction?.actionType !== 'swap') {
+            throw new Error(
+              `Swapuz: Invalid action type ${String(
+                swapOrder.spendInfo.savedAction?.actionType
+              )}`
+            )
+          }
+          const destNativeAmount =
+            swapOrder.spendInfo.savedAction?.destAsset.nativeAmount
+          if (destNativeAmount == null) break
 
           const toExchangeAmount = await toWallet.nativeToDenomination(
-            swapOrder.spendInfo.swapData?.payoutNativeAmount,
+            destNativeAmount,
             toCurrencyCode
           )
           if (gte(toExchangeAmount, requestToExchangeAmount)) {

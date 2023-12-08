@@ -306,15 +306,27 @@ export function makeChangeHeroPlugin(
       ],
       networkFeeOption:
         request.fromCurrencyCode.toUpperCase() === 'BTC' ? 'high' : 'standard',
-      swapData: {
+      assetAction: {
+        assetActionType: 'swap'
+      },
+      savedAction: {
+        actionType: 'swap',
+        swapInfo,
         orderUri: orderUri + quoteInfo.id,
         orderId: quoteInfo.id,
         isEstimate: false,
+        destAsset: {
+          pluginId: request.toWallet.currencyInfo.pluginId,
+          tokenId: request.toTokenId,
+          nativeAmount: amountExpectedToNative
+        },
+        sourceAsset: {
+          pluginId: request.fromWallet.currencyInfo.pluginId,
+          tokenId: request.fromTokenId,
+          nativeAmount: amountExpectedFromNative
+        },
         payoutAddress: toAddress,
-        payoutCurrencyCode: toCurrencyCode,
-        payoutNativeAmount: amountExpectedToNative,
         payoutWalletId: request.toWallet.id,
-        plugin: { ...swapInfo },
         refundAddress: fromAddress
       }
     }

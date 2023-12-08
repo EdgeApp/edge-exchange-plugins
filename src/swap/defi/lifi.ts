@@ -321,20 +321,30 @@ export function makeLifiPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
         customNetworkFee: {
           gasPrice: gasPriceGwei
         },
-        metadata: {
-          name: 'Li.Fi',
-          category: 'expense:Token Approval'
+        assetAction: {
+          assetActionType: 'tokenApproval'
+        },
+        savedAction: {
+          actionType: 'tokenApproval',
+          tokenApproved: {
+            pluginId: fromWallet.currencyInfo.pluginId,
+            tokenId: fromTokenId,
+            nativeAmount
+          },
+          tokenContractAddress: fromContractAddress,
+          contractAddress: approvalAddress
         }
       }
       preTx = await request.fromWallet.makeSpend(spendInfo)
     }
 
+    const fromNativeAmount = mul(transactionRequest.value, '1')
     const spendInfo: EdgeSpendInfo = {
       tokenId: request.fromTokenId,
       spendTargets: [
         {
           memo: data,
-          nativeAmount: mul(transactionRequest.value, '1'),
+          nativeAmount: fromNativeAmount,
           publicAddress: approvalAddress
         }
       ],
@@ -344,13 +354,26 @@ export function makeLifiPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
         gasLimit: round(mul(hexToDecimal(gasLimit), '1.4'), 0),
         gasPrice: gasPriceGwei
       },
-      swapData: {
+      assetAction: {
+        assetActionType: 'swap'
+      },
+      savedAction: {
+        actionType: 'swap',
+        swapInfo,
         isEstimate: false,
+        destAsset: {
+          pluginId: toWallet.currencyInfo.pluginId,
+          tokenId: toTokenId,
+          nativeAmount: toAmountMin
+        },
+        sourceAsset: {
+          pluginId: fromWallet.currencyInfo.pluginId,
+          tokenId: fromTokenId,
+          nativeAmount: fromNativeAmount
+        },
         payoutAddress: toAddress,
-        payoutCurrencyCode: toCurrencyCode,
-        payoutNativeAmount: toAmountMin,
         payoutWalletId: toWallet.id,
-        plugin: { ...swapInfo }
+        refundAddress: fromAddress
       }
     }
 

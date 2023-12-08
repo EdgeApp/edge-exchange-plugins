@@ -139,10 +139,10 @@ export function makeThorchainDaPlugin(
       fromCurrencyCode,
       toCurrencyCode,
       nativeAmount,
-      fromTokenId,
       fromWallet,
-      toTokenId,
+      fromTokenId,
       toWallet,
+      toTokenId,
       quoteFor
     } = request
     // Do not support transfer between same assets
@@ -393,7 +393,7 @@ export function makeThorchainDaPlugin(
         approvalData = await getEvmApprovalData({
           contractAddress: tokenProxyMap[fromWallet.currencyInfo.pluginId],
           assetAddress: sourceTokenContractAddress,
-          nativeAmount: nativeAmount
+          nativeAmount
         })
       } else {
         memo = '0x' + Buffer.from(memo).toString('hex')
@@ -407,6 +407,9 @@ export function makeThorchainDaPlugin(
 
     let preTx: EdgeTransaction | undefined
     if (approvalData != null) {
+      if (sourceTokenContractAddress == null) {
+        throw new Error('Cannot approve token w/o contract address')
+      }
       const spendInfo: EdgeSpendInfo = {
         // Token approvals only spend the parent currency
         tokenId: null,
@@ -417,9 +420,18 @@ export function makeThorchainDaPlugin(
             publicAddress: sourceTokenContractAddress
           }
         ],
-        metadata: {
-          name: 'Thorchain DEX Aggregator',
-          category: 'expense:Token Approval'
+        assetAction: {
+          assetActionType: 'tokenApproval'
+        },
+        savedAction: {
+          actionType: 'tokenApproval',
+          tokenApproved: {
+            pluginId: fromWallet.currencyInfo.pluginId,
+            tokenId: fromTokenId,
+            nativeAmount
+          },
+          tokenContractAddress: sourceTokenContractAddress,
+          contractAddress: tokenProxyMap[fromWallet.currencyInfo.pluginId]
         }
       }
       preTx = await request.fromWallet.makeSpend(spendInfo)
@@ -434,14 +446,26 @@ export function makeThorchainDaPlugin(
           publicAddress
         }
       ],
-
-      swapData: {
+      assetAction: {
+        assetActionType: 'swap'
+      },
+      savedAction: {
+        actionType: 'swap',
+        swapInfo,
         isEstimate,
+        destAsset: {
+          pluginId: request.toWallet.currencyInfo.pluginId,
+          tokenId: request.toTokenId,
+          nativeAmount: toNativeAmount
+        },
+        sourceAsset: {
+          pluginId: request.fromWallet.currencyInfo.pluginId,
+          tokenId: request.fromTokenId,
+          nativeAmount: ethNativeAmount
+        },
         payoutAddress: toAddress,
-        payoutCurrencyCode: toCurrencyCode,
-        payoutNativeAmount: toNativeAmount,
         payoutWalletId: toWallet.id,
-        plugin: { ...swapInfo }
+        refundAddress: fromAddress
       },
       otherParams: {
         outputSort: 'targets'

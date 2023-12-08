@@ -210,15 +210,27 @@ export function makeChangeNowPlugin(
           }
         ],
         networkFeeOption: fromCurrencyCode === 'BTC' ? 'high' : 'standard',
-        swapData: {
+        assetAction: {
+          assetActionType: 'swap'
+        },
+        savedAction: {
+          actionType: 'swap',
+          swapInfo,
           orderId: id,
           orderUri: orderUri + id,
           isEstimate: flow === 'standard',
+          destAsset: {
+            pluginId: request.toWallet.currencyInfo.pluginId,
+            tokenId: request.toTokenId,
+            nativeAmount: toNativeAmount
+          },
+          sourceAsset: {
+            pluginId: request.fromWallet.currencyInfo.pluginId,
+            tokenId: request.fromTokenId,
+            nativeAmount
+          },
           payoutAddress: toAddress,
-          payoutCurrencyCode: toCurrencyCode,
-          payoutNativeAmount: toNativeAmount,
           payoutWalletId: request.toWallet.id,
-          plugin: { ...swapInfo },
           refundAddress: fromAddress
         }
       }
@@ -265,15 +277,27 @@ export function makeChangeNowPlugin(
           }
         ],
         networkFeeOption: fromCurrencyCode === 'BTC' ? 'high' : 'standard',
-        swapData: {
+        assetAction: {
+          assetActionType: 'swap'
+        },
+        savedAction: {
+          actionType: 'swap',
+          swapInfo,
           orderId: id,
           orderUri: orderUri + id,
           isEstimate: false,
+          destAsset: {
+            pluginId: request.toWallet.currencyInfo.pluginId,
+            tokenId: request.toTokenId,
+            nativeAmount: nativeAmount
+          },
+          sourceAsset: {
+            pluginId: request.fromWallet.currencyInfo.pluginId,
+            tokenId: request.fromTokenId,
+            nativeAmount: fromNativeAmount
+          },
           payoutAddress: toAddress,
-          payoutCurrencyCode: toCurrencyCode,
-          payoutNativeAmount: nativeAmount,
           payoutWalletId: request.toWallet.id,
-          plugin: { ...swapInfo },
           refundAddress: fromAddress
         }
       }
