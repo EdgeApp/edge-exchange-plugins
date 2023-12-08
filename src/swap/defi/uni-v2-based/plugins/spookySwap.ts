@@ -127,28 +127,7 @@ export function makeSpookySwapPlugin(
               : '0',
           gasLimit: swapTx.gasLimit?.toString() ?? '0'
         },
-        networkFeeOption: 'custom',
-        assetAction: {
-          assetActionType: 'swap'
-        },
-        savedAction: {
-          actionType: 'swap',
-          swapInfo,
-          isEstimate: false,
-          destAsset: {
-            pluginId: request.toWallet.currencyInfo.pluginId,
-            tokenId: request.toTokenId,
-            nativeAmount: expectedAmountOut.toString()
-          },
-          sourceAsset: {
-            pluginId: request.fromWallet.currencyInfo.pluginId,
-            tokenId: request.fromTokenId,
-            nativeAmount: amountToSwap
-          },
-          payoutAddress: toAddress,
-          payoutWalletId: request.toWallet.id,
-          refundAddress: fromAddress
-        }
+        networkFeeOption: 'custom'
       }
 
       return edgeSpendInfo
@@ -158,8 +137,49 @@ export function makeSpookySwapPlugin(
     let preTx: EdgeTransaction | undefined
     if (edgeSpendInfos.length > 1) {
       spendInfo = edgeSpendInfos[1]
-      edgeSpendInfos[0].metadata = { category: 'expense:Token Approval' }
-      preTx = await request.fromWallet.makeSpend(edgeSpendInfos[0])
+      const approvalSpendInfo: EdgeSpendInfo = {
+        ...edgeSpendInfos[0],
+        assetAction: {
+          assetActionType: 'tokenApproval'
+        },
+        savedAction: {
+          actionType: 'tokenApproval',
+          tokenApproved: {
+            pluginId: fromWallet.currencyInfo.pluginId,
+            tokenId: fromTokenId,
+            nativeAmount: amountToSwap
+          },
+          tokenContractAddress: inOutAddresses.fromTokenAddress,
+          contractAddress: spookySwapRouter.address
+        }
+      }
+
+      preTx = await request.fromWallet.makeSpend(approvalSpendInfo)
+    }
+
+    spendInfo = {
+      ...spendInfo,
+      assetAction: {
+        assetActionType: 'swap'
+      },
+      savedAction: {
+        actionType: 'swap',
+        swapInfo,
+        isEstimate: false,
+        destAsset: {
+          pluginId: request.toWallet.currencyInfo.pluginId,
+          tokenId: request.toTokenId,
+          nativeAmount: expectedAmountOut.toString()
+        },
+        sourceAsset: {
+          pluginId: request.fromWallet.currencyInfo.pluginId,
+          tokenId: request.fromTokenId,
+          nativeAmount: amountToSwap
+        },
+        payoutAddress: toAddress,
+        payoutWalletId: request.toWallet.id,
+        refundAddress: fromAddress
+      }
     }
 
     customFeeCache.setFees(uid, spendInfo.customNetworkFee)
