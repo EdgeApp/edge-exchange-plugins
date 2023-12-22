@@ -452,14 +452,14 @@ export function makeThorchainPlugin(
       pools
     )
     const [
-      sourceAsset,
+      fromAsset,
       sourceTokenContractAddressAllCaps
     ] = sourcePool.asset.split('-')
     const sourceTokenContractAddress =
       sourceTokenContractAddressAllCaps != null
         ? sourceTokenContractAddressAllCaps.toLowerCase()
         : undefined
-    log(`sourceAsset: ${sourceAsset}`)
+    log(`fromAsset: ${fromAsset}`)
 
     const destPool = getPool(request, toMainnetCode, toCurrencyCode, pools)
 
@@ -531,12 +531,12 @@ export function makeThorchainPlugin(
       swapInfo,
       orderUri: 'https://track.ninerealms.com/',
       isEstimate,
-      destAsset: {
+      toAsset: {
         pluginId: toWallet.currencyInfo.pluginId,
         tokenId: toTokenId,
         nativeAmount: toNativeAmount
       },
-      sourceAsset: {
+      fromAsset: {
         pluginId: fromWallet.currencyInfo.pluginId,
         tokenId: fromTokenId,
         nativeAmount: fromNativeAmount

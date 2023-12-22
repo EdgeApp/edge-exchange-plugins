@@ -89,7 +89,7 @@ export async function makeSwapPluginQuote(
 
   if (action?.actionType !== 'swap') throw new Error(`Invalid swap action type`)
 
-  const toNativeAmount = action?.destAsset.nativeAmount
+  const toNativeAmount = action?.toAsset.nativeAmount
   const destinationAddress = action?.payoutAddress
   const isEstimate = action?.isEstimate ?? false
   const quoteId = action?.orderId

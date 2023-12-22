@@ -275,12 +275,12 @@ export function makeGodexPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
         orderId: quoteInfo.transaction_id,
         orderUri: orderUri + quoteInfo.transaction_id,
         isEstimate: false,
-        destAsset: {
+        toAsset: {
           pluginId: request.toWallet.currencyInfo.pluginId,
           tokenId: request.toTokenId,
           nativeAmount: toNativeAmount
         },
-        sourceAsset: {
+        fromAsset: {
           pluginId: request.fromWallet.currencyInfo.pluginId,
           tokenId: request.fromTokenId,
           nativeAmount: fromNativeAmount

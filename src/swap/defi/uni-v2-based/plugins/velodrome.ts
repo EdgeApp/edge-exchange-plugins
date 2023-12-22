@@ -148,12 +148,12 @@ export function makeVelodromePlugin(
           actionType: 'swap',
           swapInfo,
           isEstimate: false,
-          destAsset: {
+          toAsset: {
             pluginId: request.toWallet.currencyInfo.pluginId,
             tokenId: request.toTokenId,
             nativeAmount: expectedAmountOut.toString()
           },
-          sourceAsset: {
+          fromAsset: {
             pluginId: request.fromWallet.currencyInfo.pluginId,
             tokenId: request.fromTokenId,
             nativeAmount: amountToSwap
@@ -200,12 +200,12 @@ export function makeVelodromePlugin(
         actionType: 'swap',
         swapInfo,
         isEstimate: false,
-        destAsset: {
+        toAsset: {
           pluginId: request.toWallet.currencyInfo.pluginId,
           tokenId: request.toTokenId,
           nativeAmount: expectedAmountOut.toString()
         },
-        sourceAsset: {
+        fromAsset: {
           pluginId: request.fromWallet.currencyInfo.pluginId,
           tokenId: request.fromTokenId,
           nativeAmount: amountToSwap

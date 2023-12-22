@@ -361,12 +361,12 @@ export function makeLifiPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
         actionType: 'swap',
         swapInfo,
         isEstimate: false,
-        destAsset: {
+        toAsset: {
           pluginId: toWallet.currencyInfo.pluginId,
           tokenId: toTokenId,
           nativeAmount: toAmountMin
         },
-        sourceAsset: {
+        fromAsset: {
           pluginId: fromWallet.currencyInfo.pluginId,
           tokenId: fromTokenId,
           nativeAmount: fromNativeAmount

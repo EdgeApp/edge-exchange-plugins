@@ -241,12 +241,12 @@ const fetchSwapQuoteInner = async (
       orderId: order.id,
       orderUri: ORDER_STATUS_URL + order.id,
       isEstimate,
-      destAsset: {
+      toAsset: {
         pluginId: request.toWallet.currencyInfo.pluginId,
         tokenId: request.toTokenId,
         nativeAmount: amountExpectedToNative
       },
-      sourceAsset: {
+      fromAsset: {
         pluginId: request.fromWallet.currencyInfo.pluginId,
         tokenId: request.fromTokenId,
         nativeAmount: amountExpectedFromNative

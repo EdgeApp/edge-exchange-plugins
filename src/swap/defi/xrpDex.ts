@@ -222,12 +222,12 @@ export function makeXrpDexPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
       actionType: 'swap',
       swapInfo,
       isEstimate: false,
-      destAsset: {
+      toAsset: {
         pluginId: toWallet.currencyInfo.pluginId,
         tokenId: toTokenId,
         nativeAmount: toNativeAmount
       },
-      sourceAsset: {
+      fromAsset: {
         pluginId: fromWallet.currencyInfo.pluginId,
         tokenId: fromTokenId,
         nativeAmount: fromNativeAmount

@@ -255,12 +255,12 @@ export function makeExolixPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
         orderId: quoteInfo.id,
         orderUri: orderUri + quoteInfo.id,
         isEstimate: false,
-        destAsset: {
+        toAsset: {
           pluginId: request.toWallet.currencyInfo.pluginId,
           tokenId: request.toTokenId,
           nativeAmount: toNativeAmount
         },
-        sourceAsset: {
+        fromAsset: {
           pluginId: request.fromWallet.currencyInfo.pluginId,
           tokenId: request.fromTokenId,
           nativeAmount: fromNativeAmount

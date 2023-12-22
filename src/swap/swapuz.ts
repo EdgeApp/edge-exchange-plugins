@@ -198,12 +198,12 @@ export function makeSwapuzPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
           orderId: uid,
           orderUri: orderUri + uid,
           isEstimate: mode === 'float',
-          destAsset: {
+          toAsset: {
             pluginId: request.toWallet.currencyInfo.pluginId,
             tokenId: request.toTokenId,
             nativeAmount: toNativeAmount
           },
-          sourceAsset: {
+          fromAsset: {
             pluginId: request.fromWallet.currencyInfo.pluginId,
             tokenId: request.fromTokenId,
             nativeAmount: request.nativeAmount
@@ -282,7 +282,7 @@ export function makeSwapuzPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
             )
           }
           const destNativeAmount =
-            swapOrder.spendInfo.savedAction?.destAsset.nativeAmount
+            swapOrder.spendInfo.savedAction?.toAsset.nativeAmount
           if (destNativeAmount == null) break
 
           const toExchangeAmount = await toWallet.nativeToDenomination(

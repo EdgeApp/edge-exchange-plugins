@@ -52,12 +52,12 @@ export function makeTransferPlugin(
         actionType: 'swap',
         swapInfo,
         isEstimate: false,
-        destAsset: {
+        toAsset: {
           pluginId: request.toWallet.currencyInfo.pluginId,
           tokenId: request.toTokenId,
           nativeAmount: request.nativeAmount
         },
-        sourceAsset: {
+        fromAsset: {
           pluginId: request.fromWallet.currencyInfo.pluginId,
           tokenId: request.fromTokenId,
           nativeAmount: request.nativeAmount

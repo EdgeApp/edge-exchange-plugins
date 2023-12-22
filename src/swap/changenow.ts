@@ -219,12 +219,12 @@ export function makeChangeNowPlugin(
           orderId: id,
           orderUri: orderUri + id,
           isEstimate: flow === 'standard',
-          destAsset: {
+          toAsset: {
             pluginId: request.toWallet.currencyInfo.pluginId,
             tokenId: request.toTokenId,
             nativeAmount: toNativeAmount
           },
-          sourceAsset: {
+          fromAsset: {
             pluginId: request.fromWallet.currencyInfo.pluginId,
             tokenId: request.fromTokenId,
             nativeAmount
@@ -286,12 +286,12 @@ export function makeChangeNowPlugin(
           orderId: id,
           orderUri: orderUri + id,
           isEstimate: false,
-          destAsset: {
+          toAsset: {
             pluginId: request.toWallet.currencyInfo.pluginId,
             tokenId: request.toTokenId,
             nativeAmount: nativeAmount
           },
-          sourceAsset: {
+          fromAsset: {
             pluginId: request.fromWallet.currencyInfo.pluginId,
             tokenId: request.fromTokenId,
             nativeAmount: fromNativeAmount

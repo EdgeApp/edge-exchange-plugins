@@ -315,12 +315,12 @@ export function makeChangeHeroPlugin(
         orderUri: orderUri + quoteInfo.id,
         orderId: quoteInfo.id,
         isEstimate: false,
-        destAsset: {
+        toAsset: {
           pluginId: request.toWallet.currencyInfo.pluginId,
           tokenId: request.toTokenId,
           nativeAmount: amountExpectedToNative
         },
-        sourceAsset: {
+        fromAsset: {
           pluginId: request.fromWallet.currencyInfo.pluginId,
           tokenId: request.fromTokenId,
           nativeAmount: amountExpectedFromNative
