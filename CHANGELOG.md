@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## 2.0.0 (2023-01-04)
+
+- changed: Use core 2.0 types. Requires edge-core-js >2.0.0
+
 ## 1.3.0 (2023-01-04)
 
 - added: Support Pulsechain through ChangeNow
