@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 1.3.0 (2023-01-04)
+
 - added: Support Pulsechain through ChangeNow
 
 ## 1.2.0 (2023-12-04)
