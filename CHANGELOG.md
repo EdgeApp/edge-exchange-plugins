@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- added: Support Pulsechain through ChangeNow
+
 ## 1.2.0 (2023-12-04)
 
 - added: Support BSC for Thorchain swaps
