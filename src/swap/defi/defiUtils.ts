@@ -26,8 +26,8 @@ const asContractLocation = asObject({
 export const getInOutTokenAddresses = (
   currencyConfig: EdgeCurrencyConfig,
   wrappedMainnetAddress: string,
-  fromTokenId?: string,
-  toTokenId?: string
+  fromTokenId: string | null,
+  toTokenId: string | null
 ): InOutTokenAddresses => {
   const { allTokens } = currencyConfig
 

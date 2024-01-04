@@ -236,7 +236,7 @@ export function makeExolixPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
     )
 
     const spendInfo: EdgeSpendInfo = {
-      currencyCode: request.fromCurrencyCode,
+      tokenId: request.fromTokenId,
       spendTargets: [
         {
           nativeAmount: fromNativeAmount,
@@ -246,17 +246,27 @@ export function makeExolixPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
       ],
       networkFeeOption:
         request.fromCurrencyCode.toUpperCase() === 'BTC' ? 'high' : 'standard',
-      swapData: {
+      assetAction: {
+        assetActionType: 'swap'
+      },
+      savedAction: {
+        actionType: 'swap',
+        swapInfo,
         orderId: quoteInfo.id,
         orderUri: orderUri + quoteInfo.id,
         isEstimate: false,
-        payoutAddress: toAddress,
-        payoutCurrencyCode: request.toCurrencyCode,
-        payoutNativeAmount: toNativeAmount,
-        payoutWalletId: request.toWallet.id,
-        plugin: {
-          ...swapInfo
+        toAsset: {
+          pluginId: request.toWallet.currencyInfo.pluginId,
+          tokenId: request.toTokenId,
+          nativeAmount: toNativeAmount
         },
+        fromAsset: {
+          pluginId: request.fromWallet.currencyInfo.pluginId,
+          tokenId: request.fromTokenId,
+          nativeAmount: fromNativeAmount
+        },
+        payoutAddress: toAddress,
+        payoutWalletId: request.toWallet.id,
         refundAddress: fromAddress
       }
     }

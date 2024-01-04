@@ -296,7 +296,7 @@ export function makeChangeHeroPlugin(
     )
 
     const spendInfo: EdgeSpendInfo = {
-      currencyCode: fromCurrencyCode,
+      tokenId: request.fromTokenId,
       spendTargets: [
         {
           nativeAmount: amountExpectedFromNative,
@@ -306,15 +306,27 @@ export function makeChangeHeroPlugin(
       ],
       networkFeeOption:
         request.fromCurrencyCode.toUpperCase() === 'BTC' ? 'high' : 'standard',
-      swapData: {
+      assetAction: {
+        assetActionType: 'swap'
+      },
+      savedAction: {
+        actionType: 'swap',
+        swapInfo,
         orderUri: orderUri + quoteInfo.id,
         orderId: quoteInfo.id,
         isEstimate: false,
+        toAsset: {
+          pluginId: request.toWallet.currencyInfo.pluginId,
+          tokenId: request.toTokenId,
+          nativeAmount: amountExpectedToNative
+        },
+        fromAsset: {
+          pluginId: request.fromWallet.currencyInfo.pluginId,
+          tokenId: request.fromTokenId,
+          nativeAmount: amountExpectedFromNative
+        },
         payoutAddress: toAddress,
-        payoutCurrencyCode: toCurrencyCode,
-        payoutNativeAmount: amountExpectedToNative,
         payoutWalletId: request.toWallet.id,
-        plugin: { ...swapInfo },
         refundAddress: fromAddress
       }
     }

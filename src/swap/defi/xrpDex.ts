@@ -6,7 +6,7 @@ import {
   EdgeSwapPlugin,
   EdgeSwapQuote,
   EdgeSwapRequest,
-  EdgeTxSwap,
+  EdgeTxActionSwap,
   InsufficientFundsError,
   JsonObject,
   SwapCurrencyError
@@ -218,19 +218,28 @@ export function makeXrpDexPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
     const timestampNow = Date.now()
     const expiration = timestampNow / 1000 + DEX_MAX_FULLFILLMENT_TIME_S
 
-    const swapData: EdgeTxSwap = {
+    const savedAction: EdgeTxActionSwap = {
+      actionType: 'swap',
+      swapInfo,
       isEstimate: false,
+      toAsset: {
+        pluginId: toWallet.currencyInfo.pluginId,
+        tokenId: toTokenId,
+        nativeAmount: toNativeAmount
+      },
+      fromAsset: {
+        pluginId: fromWallet.currencyInfo.pluginId,
+        tokenId: fromTokenId,
+        nativeAmount: fromNativeAmount
+      },
       payoutAddress: toAddress,
-      payoutCurrencyCode: toCurrencyCode,
-      payoutNativeAmount: toNativeAmount,
-      payoutWalletId: toWallet.id,
-      plugin: { ...swapInfo }
+      payoutWalletId: toWallet.id
     }
 
     const makeTxParams: MakeTxParams = {
       type: 'MakeTxDexSwap',
-      metadata: {},
-      swapData,
+      assetAction: { assetActionType: 'swap' },
+      savedAction,
       fromTokenId,
       fromNativeAmount,
       toTokenId,
@@ -260,11 +269,11 @@ export function makeXrpDexPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
       opts: { promoCode?: string }
     ): Promise<EdgeSwapQuote> {
       const request = convertRequest(req)
-      const { fromCurrencyCode, fromTokenId, fromWallet, quoteFor } = request
+      const { fromTokenId, fromWallet, quoteFor } = request
 
       // Get the balance of the wallet minus reserve
       const maxSpendable = await fromWallet.getMaxSpendable({
-        currencyCode: fromCurrencyCode,
+        tokenId: request.fromTokenId,
         spendTargets: [
           {
             publicAddress: DUMMY_XRP_ADDRESS
@@ -275,7 +284,7 @@ export function makeXrpDexPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
       let swapOrder: SwapOrder
       if (quoteFor === 'max') {
         request.quoteFor = 'from'
-        request.nativeAmount = fromWallet.balances[fromCurrencyCode]
+        request.nativeAmount = fromWallet.balanceMap.get(fromTokenId) ?? '0'
         swapOrder = await fetchSwapQuoteInner(request)
         if (fromTokenId == null) {
           // We can swap all mainnet coins minus the expected fee
@@ -288,7 +297,9 @@ export function makeXrpDexPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
       } else {
         swapOrder = await fetchSwapQuoteInner(request)
         if (gt(swapOrder.fromNativeAmount, maxSpendable)) {
-          throw new InsufficientFundsError()
+          throw new InsufficientFundsError({
+            tokenId: swapOrder.request.fromTokenId
+          })
         }
       }
       return await makeSwapPluginQuote(swapOrder)

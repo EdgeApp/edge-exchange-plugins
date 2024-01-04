@@ -20,6 +20,7 @@ import currencyPlugins from 'edge-currency-plugins'
 import fs from 'fs'
 
 import edgeExchangePlugins from '../src'
+import { getTokenId } from '../src/util/swapHelpers'
 import { arrrCurrencyInfo } from './fakeArrrInfo'
 import { makeFakePlugin } from './fakeCurrencyPlugin'
 import { asTestConfig } from './testconfig'
@@ -139,11 +140,14 @@ async function main(): Promise<void> {
       throw new Error('No nativeAmount or exchangeAmount')
     }
 
+    const fromTokenId = getTokenId(fromWallet, fromCurrencyCode)
+    const toTokenId = getTokenId(toWallet, toCurrencyCode)
+
     const request: EdgeSwapRequest = {
       fromWallet,
       toWallet,
-      fromCurrencyCode,
-      toCurrencyCode,
+      fromTokenId,
+      toTokenId,
       nativeAmount,
       quoteFor
     }

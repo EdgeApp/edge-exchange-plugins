@@ -19,7 +19,7 @@ import {
   EdgeSwapQuote,
   EdgeSwapRequest,
   EdgeTransaction,
-  EdgeTxSwap,
+  EdgeTxActionSwap,
   SwapBelowLimitError,
   SwapCurrencyError
 } from 'edge-core-js/types'
@@ -452,14 +452,14 @@ export function makeThorchainPlugin(
       pools
     )
     const [
-      sourceAsset,
+      fromAsset,
       sourceTokenContractAddressAllCaps
     ] = sourcePool.asset.split('-')
     const sourceTokenContractAddress =
       sourceTokenContractAddressAllCaps != null
         ? sourceTokenContractAddressAllCaps.toLowerCase()
         : undefined
-    log(`sourceAsset: ${sourceAsset}`)
+    log(`fromAsset: ${fromAsset}`)
 
     const destPool = getPool(request, toMainnetCode, toCurrencyCode, pools)
 
@@ -526,14 +526,23 @@ export function makeThorchainPlugin(
     let approvalData
     let memoType: EdgeMemo['type']
 
-    const swapData: EdgeTxSwap = {
+    const savedAction: EdgeTxActionSwap = {
+      actionType: 'swap',
+      swapInfo,
       orderUri: 'https://track.ninerealms.com/',
       isEstimate,
+      toAsset: {
+        pluginId: toWallet.currencyInfo.pluginId,
+        tokenId: toTokenId,
+        nativeAmount: toNativeAmount
+      },
+      fromAsset: {
+        pluginId: fromWallet.currencyInfo.pluginId,
+        tokenId: fromTokenId,
+        nativeAmount: fromNativeAmount
+      },
       payoutAddress: toAddress,
-      payoutCurrencyCode: toCurrencyCode,
-      payoutNativeAmount: toNativeAmount,
-      payoutWalletId: toWallet.id,
-      plugin: { ...swapInfo }
+      payoutWalletId: toWallet.id
     }
 
     if (EVM_CURRENCY_CODES[fromMainnetCode]) {
@@ -582,8 +591,8 @@ export function makeThorchainPlugin(
           }
         ],
         memo,
-        metadata: {},
-        swapData
+        assetAction: { assetActionType: 'swap' },
+        savedAction
       }
 
       // If this is a max quote. Call getMaxTx and modify the request
@@ -627,7 +636,8 @@ export function makeThorchainPlugin(
       approvalData = approvalData.replace('0x', '')
 
       const spendInfo: EdgeSpendInfo = {
-        currencyCode: request.fromCurrencyCode,
+        // Token approvals only spend the parent currency
+        tokenId: null,
         memos: [
           {
             type: memoType,
@@ -640,9 +650,18 @@ export function makeThorchainPlugin(
             publicAddress: sourceTokenContractAddress
           }
         ],
-        metadata: {
-          name: 'Thorchain',
-          category: 'expense:Token Approval'
+        assetAction: {
+          assetActionType: 'tokenApproval'
+        },
+        savedAction: {
+          actionType: 'tokenApproval',
+          tokenApproved: {
+            pluginId: fromWallet.currencyInfo.pluginId,
+            tokenId: fromTokenId,
+            nativeAmount
+          },
+          tokenContractAddress: sourceTokenContractAddress ?? '',
+          contractAddress: router ?? ''
         }
       }
       preTx = await request.fromWallet.makeSpend(spendInfo)
@@ -653,7 +672,7 @@ export function makeThorchainPlugin(
     }
 
     const spendInfo: EdgeSpendInfo = {
-      currencyCode: request.fromCurrencyCode,
+      tokenId: request.fromTokenId,
       memos: [
         {
           type: memoType,
@@ -666,8 +685,8 @@ export function makeThorchainPlugin(
           publicAddress
         }
       ],
-
-      swapData,
+      assetAction: { assetActionType: 'swap' },
+      savedAction,
       otherParams: {
         outputSort: 'targets'
       }
@@ -1160,7 +1179,7 @@ const getQuote = async (
 
 export const getGasLimit = (
   chain: ChainTypes,
-  tokenId: string | undefined
+  tokenId: string | null
 ): string | undefined => {
   if (EVM_CURRENCY_CODES[chain]) {
     if (tokenId == null) {
@@ -1183,10 +1202,10 @@ export const getVolatilitySpread = ({
   perAssetSpread
 }: {
   fromPluginId: string
-  fromTokenId?: string
+  fromTokenId: string | null
   fromCurrencyCode: string
   toPluginId: string
-  toTokenId?: string
+  toTokenId: string | null
   toCurrencyCode: string
   likeKindVolatilitySpread: number
   volatilitySpread: number

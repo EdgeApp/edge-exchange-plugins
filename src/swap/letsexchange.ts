@@ -271,7 +271,7 @@ export function makeLetsExchangePlugin(
 
     // Make the transaction:
     const spendInfo: EdgeSpendInfo = {
-      currencyCode: request.fromCurrencyCode,
+      tokenId: request.fromTokenId,
       spendTargets: [
         {
           nativeAmount: fromNativeAmount,
@@ -281,15 +281,27 @@ export function makeLetsExchangePlugin(
       ],
       networkFeeOption:
         request.fromCurrencyCode.toUpperCase() === 'BTC' ? 'high' : 'standard',
-      swapData: {
+      assetAction: {
+        assetActionType: 'swap'
+      },
+      savedAction: {
+        actionType: 'swap',
+        swapInfo,
         orderId: quoteInfo.transaction_id,
         orderUri: orderUri + quoteInfo.transaction_id,
         isEstimate: false,
+        toAsset: {
+          pluginId: request.toWallet.currencyInfo.pluginId,
+          tokenId: request.toTokenId,
+          nativeAmount: toNativeAmount
+        },
+        fromAsset: {
+          pluginId: request.fromWallet.currencyInfo.pluginId,
+          tokenId: request.fromTokenId,
+          nativeAmount: fromNativeAmount
+        },
         payoutAddress: toAddress,
-        payoutCurrencyCode: request.toCurrencyCode,
-        payoutNativeAmount: toNativeAmount,
         payoutWalletId: request.toWallet.id,
-        plugin: { ...swapInfo },
         refundAddress: fromAddress
       }
     }

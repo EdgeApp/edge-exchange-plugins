@@ -25,7 +25,6 @@ import { ethers } from 'ethers'
 import {
   checkInvalidCodes,
   getMaxSwappable,
-  getTokenId,
   makeSwapPluginQuote,
   SwapOrder
 } from '../../util/swapHelpers'
@@ -141,7 +140,9 @@ export function makeThorchainDaPlugin(
       toCurrencyCode,
       nativeAmount,
       fromWallet,
+      fromTokenId,
       toWallet,
+      toTokenId,
       quoteFor
     } = request
     // Do not support transfer between same assets
@@ -219,17 +220,13 @@ export function makeThorchainDaPlugin(
       fromCurrencyCode
     )
 
-    const fromIsToken = fromMainnetCode !== fromCurrencyCode
-    const fromTokenId = fromIsToken
-      ? `-0x${getTokenId(fromWallet, fromCurrencyCode) ?? ''}`
-      : undefined
-    const toIsToken = toMainnetCode !== toCurrencyCode
-    const toTokenId = toIsToken
-      ? `-0x${getTokenId(toWallet, toCurrencyCode) ?? ''}`
-      : undefined
     const quoteParams: ThorSwapQuoteParams = {
-      sellAsset: `${fromMainnetCode}.${fromCurrencyCode}` + (fromTokenId ?? ''),
-      buyAsset: `${toMainnetCode}.${toCurrencyCode}` + (toTokenId ?? ''),
+      sellAsset:
+        `${fromMainnetCode}.${fromCurrencyCode}` +
+        (fromTokenId != null ? `-0x${fromTokenId}` : ''),
+      buyAsset:
+        `${toMainnetCode}.${toCurrencyCode}` +
+        (toTokenId != null ? `-0x${toTokenId}` : ''),
       sellAmount,
       slippage: (volatilitySpreadFinal * 100).toString(),
       recipientAddress: toAddress,
@@ -237,8 +234,8 @@ export function makeThorchainDaPlugin(
       affiliateAddress: thorname,
       affiliateBasisPoints: affiliateFeeBasis
     }
-    const sourceTokenContractAddress = fromTokenId?.replace('-0x', '0x')
-
+    const sourceTokenContractAddress =
+      fromTokenId != null ? `0x${fromTokenId}` : undefined
     const queryParams = makeQueryParams(quoteParams)
     const uri = `tokens/quote?${queryParams}`
 
@@ -396,7 +393,7 @@ export function makeThorchainDaPlugin(
         approvalData = await getEvmApprovalData({
           contractAddress: tokenProxyMap[fromWallet.currencyInfo.pluginId],
           assetAddress: sourceTokenContractAddress,
-          nativeAmount: nativeAmount
+          nativeAmount
         })
       } else {
         memo = '0x' + Buffer.from(memo).toString('hex')
@@ -410,8 +407,12 @@ export function makeThorchainDaPlugin(
 
     let preTx: EdgeTransaction | undefined
     if (approvalData != null) {
+      if (sourceTokenContractAddress == null) {
+        throw new Error('Cannot approve token w/o contract address')
+      }
       const spendInfo: EdgeSpendInfo = {
-        currencyCode: fromMainnetCode,
+        // Token approvals only spend the parent currency
+        tokenId: null,
         spendTargets: [
           {
             memo: approvalData,
@@ -419,16 +420,25 @@ export function makeThorchainDaPlugin(
             publicAddress: sourceTokenContractAddress
           }
         ],
-        metadata: {
-          name: 'Thorchain DEX Aggregator',
-          category: 'expense:Token Approval'
+        assetAction: {
+          assetActionType: 'tokenApproval'
+        },
+        savedAction: {
+          actionType: 'tokenApproval',
+          tokenApproved: {
+            pluginId: fromWallet.currencyInfo.pluginId,
+            tokenId: fromTokenId,
+            nativeAmount
+          },
+          tokenContractAddress: sourceTokenContractAddress,
+          contractAddress: tokenProxyMap[fromWallet.currencyInfo.pluginId]
         }
       }
       preTx = await request.fromWallet.makeSpend(spendInfo)
     }
 
     const spendInfo: EdgeSpendInfo = {
-      currencyCode: request.fromCurrencyCode,
+      tokenId: request.fromTokenId,
       spendTargets: [
         {
           memo,
@@ -436,14 +446,26 @@ export function makeThorchainDaPlugin(
           publicAddress
         }
       ],
-
-      swapData: {
+      assetAction: {
+        assetActionType: 'swap'
+      },
+      savedAction: {
+        actionType: 'swap',
+        swapInfo,
         isEstimate,
+        toAsset: {
+          pluginId: request.toWallet.currencyInfo.pluginId,
+          tokenId: request.toTokenId,
+          nativeAmount: toNativeAmount
+        },
+        fromAsset: {
+          pluginId: request.fromWallet.currencyInfo.pluginId,
+          tokenId: request.fromTokenId,
+          nativeAmount: ethNativeAmount
+        },
         payoutAddress: toAddress,
-        payoutCurrencyCode: toCurrencyCode,
-        payoutNativeAmount: toNativeAmount,
         payoutWalletId: toWallet.id,
-        plugin: { ...swapInfo }
+        refundAddress: fromAddress
       },
       otherParams: {
         outputSort: 'targets'

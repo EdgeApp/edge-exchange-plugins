@@ -1,11 +1,15 @@
 import { asEither, asNumber, asString } from 'cleaners'
-import { EdgeCurrencyWallet, EdgeMetadata, EdgeTxSwap } from 'edge-core-js'
+import {
+  EdgeAssetAction,
+  EdgeCurrencyWallet,
+  EdgeTxActionSwap
+} from 'edge-core-js'
 
 export interface EdgeSwapRequestPlugin {
   fromWallet: EdgeCurrencyWallet
   toWallet: EdgeCurrencyWallet
-  fromTokenId?: string
-  toTokenId?: string
+  fromTokenId: string | null
+  toTokenId: string | null
   nativeAmount: string
   quoteFor: 'from' | 'max' | 'to'
   fromCurrencyCode: string
@@ -28,11 +32,11 @@ export interface StringMap {
 export type MakeTxParams =
   | {
       type: 'MakeTxDexSwap'
-      metadata?: EdgeMetadata
-      swapData?: EdgeTxSwap
-      fromTokenId?: string
+      assetAction: EdgeAssetAction
+      savedAction: EdgeTxActionSwap
+      fromTokenId: string | null
       fromNativeAmount: string
-      toTokenId?: string
+      toTokenId: string | null
       toNativeAmount: string
 
       /**
@@ -48,6 +52,6 @@ export type MakeTxParams =
         decimals: string
       }>
       memo: string
-      metadata?: EdgeMetadata
-      swapData?: EdgeTxSwap
+      assetAction: EdgeAssetAction
+      savedAction: EdgeTxActionSwap
     }

@@ -93,7 +93,8 @@ export function makeVelodromePlugin(
     )
 
     // Generate swap transactions
-    const toAddress = (await toWallet.getReceiveAddress()).publicAddress
+    const toAddress = (await toWallet.getReceiveAddress({ tokenId: null }))
+      .publicAddress
     const expirationDate = new Date(Date.now() + EXPIRATION_MS)
     const deadline = Math.round(expirationDate.getTime() / 1000) // unix timestamp
     const customNetworkFee = customFeeCache.getFees(uid)
@@ -115,12 +116,13 @@ export function makeVelodromePlugin(
       deadline,
       customNetworkFee?.gasPrice
     )
-    const fromAddress = (await fromWallet.getReceiveAddress()).publicAddress
+    const fromAddress = (await fromWallet.getReceiveAddress({ tokenId: null }))
+      .publicAddress
     // toEdgeUnsignedTxs
     const edgeSpendInfos = swapTxs.map((swapTx, i) => {
       // Convert to our spendInfo
       const edgeSpendInfo: EdgeSpendInfo = {
-        currencyCode: request.fromCurrencyCode, // what is being sent out, only if token. Blank if not token
+        tokenId: request.fromTokenId,
         spendTargets: [
           {
             memo: swapTx.data,
@@ -139,13 +141,25 @@ export function makeVelodromePlugin(
           gasLimit: swapTx.gasLimit?.toString() ?? '0'
         },
         networkFeeOption: 'custom',
-        swapData: {
+        assetAction: {
+          assetActionType: 'swap'
+        },
+        savedAction: {
+          actionType: 'swap',
+          swapInfo,
           isEstimate: false,
+          toAsset: {
+            pluginId: request.toWallet.currencyInfo.pluginId,
+            tokenId: request.toTokenId,
+            nativeAmount: expectedAmountOut.toString()
+          },
+          fromAsset: {
+            pluginId: request.fromWallet.currencyInfo.pluginId,
+            tokenId: request.fromTokenId,
+            nativeAmount: amountToSwap
+          },
           payoutAddress: toAddress,
-          payoutCurrencyCode: request.toCurrencyCode,
-          payoutNativeAmount: expectedAmountOut.toString(),
           payoutWalletId: request.toWallet.id,
-          plugin: { ...swapInfo },
           refundAddress: fromAddress
         }
       }
@@ -157,10 +171,50 @@ export function makeVelodromePlugin(
     let preTx: EdgeTransaction | undefined
     if (edgeSpendInfos.length > 1) {
       spendInfo = edgeSpendInfos[1]
-      edgeSpendInfos[0].metadata = { category: 'expense:Token Approval' }
-      preTx = await request.fromWallet.makeSpend(edgeSpendInfos[0])
+      const approvalSpendInfo: EdgeSpendInfo = {
+        ...edgeSpendInfos[0],
+        assetAction: {
+          assetActionType: 'tokenApproval'
+        },
+        savedAction: {
+          actionType: 'tokenApproval',
+          tokenApproved: {
+            pluginId: fromWallet.currencyInfo.pluginId,
+            tokenId: fromTokenId,
+            nativeAmount: amountToSwap
+          },
+          tokenContractAddress: inOutAddresses.fromTokenAddress,
+          contractAddress: velodromeRouter.address
+        }
+      }
+
+      preTx = await request.fromWallet.makeSpend(approvalSpendInfo)
     }
 
+    spendInfo = {
+      ...spendInfo,
+      assetAction: {
+        assetActionType: 'swap'
+      },
+      savedAction: {
+        actionType: 'swap',
+        swapInfo,
+        isEstimate: false,
+        toAsset: {
+          pluginId: request.toWallet.currencyInfo.pluginId,
+          tokenId: request.toTokenId,
+          nativeAmount: expectedAmountOut.toString()
+        },
+        fromAsset: {
+          pluginId: request.fromWallet.currencyInfo.pluginId,
+          tokenId: request.fromTokenId,
+          nativeAmount: amountToSwap
+        },
+        payoutAddress: toAddress,
+        payoutWalletId: request.toWallet.id,
+        refundAddress: fromAddress
+      }
+    }
     customFeeCache.setFees(uid, spendInfo.customNetworkFee)
 
     return {

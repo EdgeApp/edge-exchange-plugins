@@ -222,7 +222,7 @@ const fetchSwapQuoteInner = async (
   const isEstimate = false
 
   const spendInfo: EdgeSpendInfo = {
-    currencyCode: request.fromCurrencyCode,
+    tokenId: request.fromTokenId,
     spendTargets: [
       {
         nativeAmount: amountExpectedFromNative,
@@ -232,15 +232,27 @@ const fetchSwapQuoteInner = async (
     ],
     networkFeeOption:
       request.fromCurrencyCode.toUpperCase() === 'BTC' ? 'high' : 'standard',
-    swapData: {
+    assetAction: {
+      assetActionType: 'swap'
+    },
+    savedAction: {
+      actionType: 'swap',
+      swapInfo,
       orderId: order.id,
       orderUri: ORDER_STATUS_URL + order.id,
       isEstimate,
+      toAsset: {
+        pluginId: request.toWallet.currencyInfo.pluginId,
+        tokenId: request.toTokenId,
+        nativeAmount: amountExpectedToNative
+      },
+      fromAsset: {
+        pluginId: request.fromWallet.currencyInfo.pluginId,
+        tokenId: request.fromTokenId,
+        nativeAmount: amountExpectedFromNative
+      },
       payoutAddress: settleAddress,
-      payoutCurrencyCode: request.toCurrencyCode,
-      payoutNativeAmount: amountExpectedToNative,
       payoutWalletId: request.toWallet.id,
-      plugin: { ...swapInfo },
       refundAddress
     }
   }

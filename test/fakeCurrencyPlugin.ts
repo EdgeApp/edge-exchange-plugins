@@ -8,7 +8,6 @@ import {
   asString
 } from 'cleaners'
 import {
-  EdgeCurrencyCodeOptions,
   EdgeCurrencyEngine,
   EdgeCurrencyEngineCallbacks,
   EdgeCurrencyEngineOptions,
@@ -22,6 +21,7 @@ import {
   EdgeSpendInfo,
   EdgeStakingStatus,
   EdgeToken,
+  EdgeTokenIdOptions,
   EdgeTransaction,
   EdgeWalletInfo,
   InsufficientFundsError,
@@ -94,7 +94,7 @@ class FakeCurrencyEngine {
       progress: 0,
       txs: {}
     }
-    this.enabledTokens = currencyInfo.metaTokens.map(
+    this.enabledTokens = (currencyInfo.metaTokens ?? []).map(
       token => token.currencyCode
     )
     this.enabledTokensMap = this.enabledTokens.reduce((prev, token) => {
@@ -106,6 +106,17 @@ class FakeCurrencyEngine {
       ...this.state,
       balances: this.defaultSettings.balances
     })
+  }
+
+  private _getCurrencyCode(tokenId: string | null): string {
+    for (const token of this.currencyInfo.metaTokens ?? []) {
+      const { currencyCode, contractAddress } = token
+      const tId = contractAddress?.toLowerCase().replace('0x', '')
+      if (tId === tokenId) {
+        return currencyCode
+      }
+    }
+    throw new Error('No matching tokenId')
   }
 
   private _updateState(settings: Partial<State>): void {
@@ -137,7 +148,7 @@ class FakeCurrencyEngine {
             return { ...prev, [currencyCode]: nativeBalance }
           }
 
-          const metaToken = this.currencyInfo.metaTokens.find(
+          const metaToken = (this.currencyInfo.metaTokens ?? []).find(
             token => token.currencyCode === currencyCode
           )
           if (metaToken == null)
@@ -229,8 +240,10 @@ class FakeCurrencyEngine {
     return this.state.blockHeight
   }
 
-  getBalance(opts: EdgeCurrencyCodeOptions): string {
-    const { currencyCode = this.currencyInfo.currencyCode } = opts
+  getBalance(opts: EdgeTokenIdOptions): string {
+    const { tokenId } = opts
+    const currencyCode = this._getCurrencyCode(tokenId)
+
     const balance = this.state.balances[currencyCode]
     if (balance == null) {
       throw new Error('Unknown currency')
@@ -239,7 +252,7 @@ class FakeCurrencyEngine {
     }
   }
 
-  getNumTransactions(opts: EdgeCurrencyCodeOptions): number {
+  getNumTransactions(opts: EdgeTokenIdOptions): number {
     return Object.keys(this.state.txs).length
   }
 
@@ -272,25 +285,22 @@ class FakeCurrencyEngine {
   }
 
   // Addresses:
-  async getFreshAddress(
-    opts: EdgeCurrencyCodeOptions
-  ): Promise<EdgeFreshAddress> {
-    return { publicAddress: this.currencyInfo.defaultSettings.publicAddress }
+  async getFreshAddress(opts: EdgeTokenIdOptions): Promise<EdgeFreshAddress> {
+    return {
+      publicAddress: this.currencyInfo.defaultSettings?.publicAddress ?? ''
+    }
   }
 
   async addGapLimitAddresses(addresses: string[]): Promise<void> {}
 
   async isAddressUsed(address: string): Promise<boolean> {
-    return address === this.currencyInfo.defaultSettings.publicAddress
+    return address === this.currencyInfo.defaultSettings?.publicAddress ?? ''
   }
 
   // Spending:
   async makeSpend(spendInfo: EdgeSpendInfo): Promise<EdgeTransaction> {
-    const {
-      currencyCode = this.currencyInfo.currencyCode,
-      spendTargets
-    } = spendInfo
-    const tokenSpend = currencyCode !== this.currencyInfo.currencyCode
+    const { tokenId, spendTargets } = spendInfo
+    const tokenSpend = tokenId != null
 
     // Check the spend targets:
     let total = '0'
@@ -301,9 +311,10 @@ class FakeCurrencyEngine {
     }
 
     // Check the balances:
-    if (lt(this.getBalance({ currencyCode }), total)) {
-      return await Promise.reject(new InsufficientFundsError())
+    if (lt(this.getBalance({ tokenId }), total)) {
+      return await Promise.reject(new InsufficientFundsError({ tokenId }))
     }
+    const currencyCode = this._getCurrencyCode(tokenId)
 
     // TODO: Return a high-fidelity transaction
     return {
@@ -322,6 +333,7 @@ class FakeCurrencyEngine {
       otherParams: {},
       ourReceiveAddresses: [],
       signedTx: '',
+      tokenId,
       txid: 'spend'
     }
   }
@@ -371,7 +383,7 @@ class FakeCurrencyTools {
 
   // URI parsing:
   async parseUri(uri: string): Promise<EdgeParsedUri> {
-    return await Promise.resolve({})
+    return await Promise.resolve({ tokenId: null })
   }
 
   async encodeUri(): Promise<string> {

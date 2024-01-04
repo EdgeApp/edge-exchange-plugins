@@ -201,7 +201,7 @@ export function makeChangeNowPlugin(
       )
 
       const spendInfo: EdgeSpendInfo = {
-        currencyCode: fromCurrencyCode,
+        tokenId: request.fromTokenId,
         spendTargets: [
           {
             nativeAmount,
@@ -210,15 +210,27 @@ export function makeChangeNowPlugin(
           }
         ],
         networkFeeOption: fromCurrencyCode === 'BTC' ? 'high' : 'standard',
-        swapData: {
+        assetAction: {
+          assetActionType: 'swap'
+        },
+        savedAction: {
+          actionType: 'swap',
+          swapInfo,
           orderId: id,
           orderUri: orderUri + id,
           isEstimate: flow === 'standard',
+          toAsset: {
+            pluginId: request.toWallet.currencyInfo.pluginId,
+            tokenId: request.toTokenId,
+            nativeAmount: toNativeAmount
+          },
+          fromAsset: {
+            pluginId: request.fromWallet.currencyInfo.pluginId,
+            tokenId: request.fromTokenId,
+            nativeAmount
+          },
           payoutAddress: toAddress,
-          payoutCurrencyCode: toCurrencyCode,
-          payoutNativeAmount: toNativeAmount,
           payoutWalletId: request.toWallet.id,
-          plugin: { ...swapInfo },
           refundAddress: fromAddress
         }
       }
@@ -256,7 +268,7 @@ export function makeChangeNowPlugin(
       )
 
       const spendInfo: EdgeSpendInfo = {
-        currencyCode: fromCurrencyCode,
+        tokenId: request.fromTokenId,
         spendTargets: [
           {
             nativeAmount: fromNativeAmount,
@@ -265,15 +277,27 @@ export function makeChangeNowPlugin(
           }
         ],
         networkFeeOption: fromCurrencyCode === 'BTC' ? 'high' : 'standard',
-        swapData: {
+        assetAction: {
+          assetActionType: 'swap'
+        },
+        savedAction: {
+          actionType: 'swap',
+          swapInfo,
           orderId: id,
           orderUri: orderUri + id,
           isEstimate: false,
+          toAsset: {
+            pluginId: request.toWallet.currencyInfo.pluginId,
+            tokenId: request.toTokenId,
+            nativeAmount: nativeAmount
+          },
+          fromAsset: {
+            pluginId: request.fromWallet.currencyInfo.pluginId,
+            tokenId: request.fromTokenId,
+            nativeAmount: fromNativeAmount
+          },
           payoutAddress: toAddress,
-          payoutCurrencyCode: toCurrencyCode,
-          payoutNativeAmount: nativeAmount,
           payoutWalletId: request.toWallet.id,
-          plugin: { ...swapInfo },
           refundAddress: fromAddress
         }
       }
