@@ -239,11 +239,10 @@ export const getCurrencyCode = (
   wallet: EdgeCurrencyWallet,
   tokenId: string | null
 ): string => {
-  const { pluginId } = wallet.currencyInfo
   const { currencyCode } =
     tokenId == null
       ? wallet.currencyInfo
-      : wallet.currencyConfig.allTokens[pluginId]
+      : wallet.currencyConfig.allTokens[tokenId]
 
   return currencyCode
 }
