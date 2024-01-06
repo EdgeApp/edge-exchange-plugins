@@ -399,10 +399,19 @@ export function makeLifiPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
     async fetchSwapQuote(req: EdgeSwapRequest): Promise<EdgeSwapQuote> {
       const request = convertRequest(req)
 
-      const newRequest = await getMaxSwappable(
-        async r => await fetchSwapQuoteInner(r),
-        request
-      )
+      let newRequest = request
+      if (request.quoteFor === 'max') {
+        if (request.fromTokenId != null) {
+          const maxAmount =
+            request.fromWallet.balanceMap.get(request.fromTokenId) ?? '0'
+          newRequest = { ...request, nativeAmount: maxAmount, quoteFor: 'from' }
+        } else {
+          newRequest = await getMaxSwappable(
+            async r => await fetchSwapQuoteInner(r),
+            request
+          )
+        }
+      }
       const swapOrder = await fetchSwapQuoteInner(newRequest)
       return await makeSwapPluginQuote(swapOrder)
     }
