@@ -47,7 +47,7 @@ export type SwapOrder = SwapOrderInner & {
   addTxidToOrderUri?: boolean
   canBePartial?: boolean
   maxFulfillmentSeconds?: number
-  request: EdgeSwapRequest
+  request: EdgeSwapRequestPlugin
   swapInfo: EdgeSwapInfo
   fromNativeAmount: string
   expirationDate?: Date
@@ -79,6 +79,12 @@ export async function makeSwapPluginQuote(
     const { makeTxParams } = order
     const { assetAction, savedAction } = makeTxParams
     tx = await fromWallet.otherMethods.makeTx(makeTxParams)
+    if (tx.tokenId == null) {
+      tx.tokenId = request.fromTokenId
+    }
+    if (tx.currencyCode == null) {
+      tx.currencyCode = request.fromCurrencyCode
+    }
     if (tx.savedAction == null) {
       tx.savedAction = savedAction
     }
