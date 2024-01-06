@@ -48,6 +48,8 @@ const asInitOptions = asObject({
 const LIFI_SERVERS_DEFAULT = ['https://li.quest']
 const EXPIRATION_MS = 1000 * 60
 const EXCHANGE_INFO_UPDATE_FREQ_MS = 60000
+const PARENT_TOKEN_CONTRACT_ADDRESS =
+  '0x0000000000000000000000000000000000000000'
 
 export const INVALID_CURRENCY_CODES: InvalidCurrencyCodes = {
   from: {},
@@ -187,7 +189,7 @@ export function makeLifiPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
     let fromContractAddress
     let sendingToken = false
     if (fromCurrencyCode === fromWallet.currencyInfo.currencyCode) {
-      fromContractAddress = fromCurrencyCode
+      fromContractAddress = PARENT_TOKEN_CONTRACT_ADDRESS
     } else {
       sendingToken = true
       fromContractAddress = fromToken?.networkLocation?.contractAddress
@@ -196,7 +198,7 @@ export function makeLifiPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
     const toToken = toWallet.currencyConfig.allTokens[toTokenId ?? '']
     let toContractAddress
     if (toCurrencyCode === toWallet.currencyInfo.currencyCode) {
-      toContractAddress = toCurrencyCode
+      toContractAddress = PARENT_TOKEN_CONTRACT_ADDRESS
     } else {
       toContractAddress = toToken?.networkLocation?.contractAddress
     }
