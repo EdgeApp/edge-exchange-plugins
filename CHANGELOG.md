@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+## 2.0.1 (2023-01-09)
+
+- fixed: Error when swapping from tokens
+- fixed: Fix parent asset Lifi swaps to use 0x000.. contract address
+- fixed: Network fee transaction tagging
+- fixed: Max swap of tokens with Lifi
+- fixed: Properly set tokenId and currencyCode for makeTx transactions
+
 ## 2.0.0 (2023-01-04)
 
 - changed: Use core 2.0 types. Requires edge-core-js >2.0.0
