@@ -1,5 +1,6 @@
 import { add, sub } from 'biggystring'
 import {
+  EdgeAssetActionType,
   EdgeCurrencyWallet,
   EdgeSpendInfo,
   EdgeSwapApproveOptions,
@@ -46,7 +47,7 @@ export type SwapOrder = SwapOrderInner & {
   addTxidToOrderUri?: boolean
   canBePartial?: boolean
   maxFulfillmentSeconds?: number
-  request: EdgeSwapRequest
+  request: EdgeSwapRequestPlugin
   swapInfo: EdgeSwapInfo
   fromNativeAmount: string
   expirationDate?: Date
@@ -68,7 +69,7 @@ export async function makeSwapPluginQuote(
     preTx,
     metadataNotes
   } = order
-  const { fromWallet } = request
+  const { fromWallet, toWallet } = request
 
   let tx: EdgeTransaction
   if ('spendInfo' in order) {
@@ -78,6 +79,12 @@ export async function makeSwapPluginQuote(
     const { makeTxParams } = order
     const { assetAction, savedAction } = makeTxParams
     tx = await fromWallet.otherMethods.makeTx(makeTxParams)
+    if (tx.tokenId == null) {
+      tx.tokenId = request.fromTokenId
+    }
+    if (tx.currencyCode == null) {
+      tx.currencyCode = request.fromCurrencyCode
+    }
     if (tx.savedAction == null) {
       tx.savedAction = savedAction
     }
@@ -154,6 +161,37 @@ export async function makeSwapPluginQuote(
       }
 
       await fromWallet.saveTx(signedTransaction)
+
+      // For token transactions that spend the parent gas currency, add
+      // a fee action
+      if (
+        signedTransaction.tokenId != null &&
+        signedTransaction.parentNetworkFee != null &&
+        signedTransaction.assetAction != null &&
+        savedAction != null
+      ) {
+        // Only tag the network fee if any of the following is true:
+        // 1. Not a DEX transaction
+        // 2. Swapping across wallets
+        // 3. Both assets are tokens
+        if (
+          !(swapInfo.isDex ?? false) ||
+          fromWallet.id !== toWallet.id ||
+          (request.fromTokenId != null && request.toTokenId != null)
+        ) {
+          const assetActionType: EdgeAssetActionType = signedTransaction.assetAction.assetActionType.startsWith(
+            'swap'
+          )
+            ? 'swapNetworkFee'
+            : 'transferNetworkFee'
+          await fromWallet.saveTxAction({
+            txid: signedTransaction.txid,
+            tokenId: null,
+            assetAction: { assetActionType },
+            savedAction
+          })
+        }
+      }
 
       return {
         transaction: broadcastedTransaction,
@@ -239,11 +277,10 @@ export const getCurrencyCode = (
   wallet: EdgeCurrencyWallet,
   tokenId: string | null
 ): string => {
-  const { pluginId } = wallet.currencyInfo
   const { currencyCode } =
     tokenId == null
       ? wallet.currencyInfo
-      : wallet.currencyConfig.allTokens[pluginId]
+      : wallet.currencyConfig.allTokens[tokenId]
 
   return currencyCode
 }
