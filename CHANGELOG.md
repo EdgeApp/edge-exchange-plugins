@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- fixed: Do not crash at load time if `BigInt` is not present.
+
 ## 2.0.1 (2023-01-09)
 
 - fixed: Error when swapping from tokens

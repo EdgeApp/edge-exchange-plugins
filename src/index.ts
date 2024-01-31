@@ -15,8 +15,8 @@ import { makeThorchainDaPlugin } from './swap/defi/thorchainDa'
 import { makeSpookySwapPlugin } from './swap/defi/uni-v2-based/plugins/spookySwap'
 import { makeTombSwapPlugin } from './swap/defi/uni-v2-based/plugins/tombSwap'
 import { makeVelodromePlugin } from './swap/defi/uni-v2-based/plugins/velodrome'
-import { makeXrpDexPlugin } from './swap/defi/xrpDex'
 import { makeTransferPlugin } from './swap/transfer'
+import { xrpdex } from './swap/xrpDexInfo'
 
 const plugins = {
   // Swap plugins:
@@ -34,7 +34,7 @@ const plugins = {
   tombSwap: makeTombSwapPlugin,
   transfer: makeTransferPlugin,
   velodrome: makeVelodromePlugin,
-  xrpdex: makeXrpDexPlugin
+  xrpdex
 }
 
 declare global {
