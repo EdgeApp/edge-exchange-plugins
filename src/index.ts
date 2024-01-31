@@ -24,17 +24,17 @@ const plugins = {
   changenow: makeChangeNowPlugin,
   exolix: makeExolixPlugin,
   godex: makeGodexPlugin,
+  letsexchange: makeLetsExchangePlugin,
   lifi: makeLifiPlugin,
   sideshift: makeSideshiftPlugin,
   spookySwap: makeSpookySwapPlugin,
-  tombSwap: makeTombSwapPlugin,
   swapuz: makeSwapuzPlugin,
   thorchain: makeThorchainPlugin,
   thorchainda: makeThorchainDaPlugin,
+  tombSwap: makeTombSwapPlugin,
   transfer: makeTransferPlugin,
   velodrome: makeVelodromePlugin,
-  xrpdex: makeXrpDexPlugin,
-  letsexchange: makeLetsExchangePlugin
+  xrpdex: makeXrpDexPlugin
 }
 
 declare global {
