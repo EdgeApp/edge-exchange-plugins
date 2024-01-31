@@ -1,13 +1,5 @@
-import { lt } from 'biggystring'
-import {
-  asArray,
-  asEither,
-  asMaybe,
-  asNull,
-  asObject,
-  asOptional,
-  asString
-} from 'cleaners'
+import { gt, lt } from 'biggystring'
+import { asObject, asOptional, asString } from 'cleaners'
 import {
   EdgeCorePluginOptions,
   EdgeSpendInfo,
@@ -15,7 +7,7 @@ import {
   EdgeSwapPlugin,
   EdgeSwapQuote,
   EdgeSwapRequest,
-  JsonObject,
+  SwapAboveLimitError,
   SwapBelowLimitError,
   SwapCurrencyError
 } from 'edge-core-js/types'
@@ -27,87 +19,86 @@ import {
   InvalidCurrencyCodes,
   makeSwapPluginQuote,
   SwapOrder
-} from '../util/swapHelpers'
-import { convertRequest, getAddress } from '../util/utils'
-import { asNumberString, EdgeSwapRequestPlugin } from './types'
+} from '../../util/swapHelpers'
+import { convertRequest, getAddress } from '../../util/utils'
+import { asNumberString, EdgeSwapRequestPlugin } from '../types'
+import { asOptionalBlank } from './changenow'
 
-const pluginId = 'godex'
+const pluginId = 'letsexchange'
 
 const swapInfo: EdgeSwapInfo = {
   pluginId,
   isDex: false,
-  displayName: 'Godex',
-  supportEmail: 'support@godex.io'
+  displayName: 'LetsExchange',
+  supportEmail: 'support@letsexchange.io'
 }
 
 const asInitOptions = asObject({
-  apiKey: asOptional(asString)
+  apiKey: asString,
+  affiliateId: asOptional(asString)
 })
 
-const orderUri = 'https://godex.io/exchange/waiting/'
-const uri = 'https://api.godex.io/api/v1/'
+const orderUri = 'https://letsexchange.io/?exchangeId='
+const uri = 'https://api.letsexchange.io/api/v1/'
 
 const expirationMs = 1000 * 60
 
-const asApiInfo = asObject({
-  min_amount: asNumberString,
-  networks_from: asMaybe(
-    asArray(
-      asObject({
-        network: asString
-      })
-    )
-  ),
-  networks_to: asMaybe(
-    asArray(
-      asObject({
-        network: asString
-      })
-    )
-  )
-})
-
 const asQuoteInfo = asObject({
   transaction_id: asString,
-  deposit: asString,
-  deposit_extra_id: asEither(asString, asNull),
   deposit_amount: asString,
-  withdrawal: asString,
-  withdrawal_extra_id: asEither(asString, asNull),
+  deposit: asString,
+  deposit_extra_id: asOptionalBlank(asString),
   withdrawal_amount: asString,
-  return: asString,
-  return_extra_id: asEither(asString, asNull)
+  withdrawal_extra_id: asOptionalBlank(asString)
 })
 
+const asInfoReply = asObject({
+  min_amount: asNumberString,
+  max_amount: asNumberString,
+  amount: asNumberString
+})
 const INVALID_CURRENCY_CODES: InvalidCurrencyCodes = {
   from: {
-    avalanche: 'allTokens',
-    celo: 'allTokens',
-    digibyte: 'allCodes',
-    ethereum: ['MATIC'],
-    fantom: 'allTokens',
+    ethereum: ['MATH'],
     optimism: ['VELO'],
-    polygon: 'allCodes'
+    polygon: ['USDC.e']
   },
   to: {
-    avalanche: 'allTokens',
-    celo: 'allTokens',
-    ethereum: ['MATIC'],
-    fantom: 'allTokens',
-    polygon: 'allCodes',
-    zcash: ['ZEC'] // ChangeHero doesn't support sending to unified addresses
+    ethereum: ['MATH'],
+    polygon: ['USDC.e'],
+    zcash: ['ZEC']
   }
 }
 
-// Network names that don't match parent network currency code
-// See https://godex.io/exchange-rate for list of supported currencies
+// See https://letsexchange.io/exchange-pairs for list of supported currencies
 const MAINNET_CODE_TRANSCRIPTION = {
+  avalanche: 'AVAXC',
+  binance: 'BEP2',
+  binancesmartchain: 'BEP20',
+  ethereum: 'ERC20',
+  optimism: 'OPTIMISM',
   rsk: 'RSK',
-  binancesmartchain: 'BSC',
-  avalanche: 'AVAXC'
+  tron: 'TRC20'
 }
 
-export function makeGodexPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
+const SPECIAL_MAINNET_CASES: { [pId: string]: { [cc: string]: string } } = {
+  avalanche: {
+    AVAX: 'AVAXC'
+  },
+  binancesmartchain: {
+    BNB: 'BEP20'
+  },
+  optimism: {
+    ETH: 'OPTIMISM'
+  },
+  zksync: {
+    ETH: 'ZKSYNC'
+  }
+}
+
+export function makeLetsExchangePlugin(
+  opts: EdgeCorePluginOptions
+): EdgeSwapPlugin {
   const { io, log } = opts
   const { fetchCors = io.fetch } = io
   const initOptions = asInitOptions(opts.initOptions)
@@ -115,12 +106,13 @@ export function makeGodexPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
   async function call(
     url: string,
     request: EdgeSwapRequestPlugin,
-    data: { params: JsonObject }
-  ): Promise<JsonObject> {
+    data: { params: Object }
+  ): Promise<Object> {
     const body = JSON.stringify(data.params)
 
     const headers = {
       'Content-Type': 'application/json',
+      Authorization: `Bearer ${initOptions.apiKey}`,
       Accept: 'application/json'
     }
     const response = await fetchCors(url, { method: 'POST', body, headers })
@@ -128,7 +120,7 @@ export function makeGodexPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
       if (response.status === 422) {
         throw new SwapCurrencyError(swapInfo, request)
       }
-      throw new Error(`godex returned error code ${response.status}`)
+      throw new Error(`letsexchange returned error code ${response.status}`)
     }
     return await response.json()
   }
@@ -145,11 +137,6 @@ export function makeGodexPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
       getAddress(request.toWallet)
     ])
 
-    const { fromMainnetCode, toMainnetCode } = getCodesWithTranscription(
-      request,
-      MAINNET_CODE_TRANSCRIPTION
-    )
-
     // Convert the native amount to a denomination:
     const quoteAmount =
       request.quoteFor === 'from'
@@ -162,15 +149,40 @@ export function makeGodexPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
             request.toCurrencyCode
           )
 
+    const { fromMainnetCode, toMainnetCode } = getCodesWithTranscription(
+      request,
+      MAINNET_CODE_TRANSCRIPTION
+    )
+
+    const { pluginId: fromPluginId } = request.fromWallet.currencyInfo
+    const networkFrom =
+      SPECIAL_MAINNET_CASES[fromPluginId]?.[request.toCurrencyCode] != null
+        ? SPECIAL_MAINNET_CASES[fromPluginId][request.toCurrencyCode]
+        : request.fromCurrencyCode ===
+          request.fromWallet.currencyInfo.currencyCode
+        ? request.fromCurrencyCode
+        : fromMainnetCode
+
+    const { pluginId: toPluginId } = request.toWallet.currencyInfo
+    const networkTo =
+      SPECIAL_MAINNET_CASES[toPluginId]?.[request.toCurrencyCode] != null
+        ? SPECIAL_MAINNET_CASES[toPluginId][request.toCurrencyCode]
+        : request.toCurrencyCode === request.toWallet.currencyInfo.currencyCode
+        ? request.toCurrencyCode
+        : toMainnetCode
+
     // Swap the currencies if we need a reverse quote:
     const quoteParams = {
       from: request.fromCurrencyCode,
       to: request.toCurrencyCode,
+      network_from: networkFrom,
+      network_to: networkTo,
       amount: quoteAmount
     }
+
     log('quoteParams:', quoteParams)
 
-    // Check if we are below the minimum limit:
+    // Calculate the amounts:
     let fromAmount, toAmount, endpoint
     if (request.quoteFor === 'from') {
       fromAmount = quoteAmount
@@ -182,11 +194,9 @@ export function makeGodexPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
     const response = await call(uri + endpoint, request, {
       params: quoteParams
     })
-    const reply = asApiInfo(response)
+    const reply = asInfoReply(response)
 
-    // The info/info-revert endpoints don't accept the coin_from/coin_to params so the
-    // min_amount returned could be for a different network than the user is requesting.
-    // Check the minimum:
+    // Check the min/max:
     const nativeMin = reverseQuote
       ? await request.toWallet.denominationToNative(
           reply.min_amount,
@@ -205,43 +215,51 @@ export function makeGodexPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
       )
     }
 
-    // Check the networks. Networks aren't present for disabled assets.
-    if (
-      reply.networks_from?.find(
-        network => network.network === fromMainnetCode
-      ) == null ||
-      reply.networks_to?.find(network => network.network === toMainnetCode) ==
-        null
-    ) {
-      throw new SwapCurrencyError(swapInfo, request)
+    const nativeMax = reverseQuote
+      ? await request.toWallet.denominationToNative(
+          reply.max_amount,
+          request.toCurrencyCode
+        )
+      : await request.fromWallet.denominationToNative(
+          reply.max_amount,
+          request.fromCurrencyCode
+        )
+
+    if (gt(nativeMax, '0')) {
+      if (gt(request.nativeAmount, nativeMax)) {
+        throw new SwapAboveLimitError(
+          swapInfo,
+          nativeMin,
+          reverseQuote ? 'to' : 'from'
+        )
+      }
     }
 
     const { promoCode } = opts
-
     endpoint = reverseQuote ? 'transaction-revert' : 'transaction'
-    const sendReply = await call(
-      uri + endpoint + (promoCode != null ? `?promo=${promoCode}` : ''),
-      request,
-      {
-        params: {
-          deposit_amount: reverseQuote ? undefined : fromAmount,
-          withdrawal_amount: reverseQuote ? toAmount : undefined,
-          coin_from: request.fromCurrencyCode,
-          coin_to: request.toCurrencyCode,
-          withdrawal: toAddress,
-          return: fromAddress,
-          return_extra_id: null,
-          withdrawal_extra_id: null,
-          affiliate_id: initOptions.apiKey,
-          type: 'edge',
-          isEstimate: false,
-          coin_from_network: fromMainnetCode,
-          coin_to_network: toMainnetCode
-        }
+    const sendReply = await call(uri + endpoint, request, {
+      params: {
+        deposit_amount: reverseQuote ? undefined : fromAmount,
+        withdrawal_amount: reverseQuote ? toAmount : undefined,
+        coin_from: request.fromCurrencyCode,
+        coin_to: request.toCurrencyCode,
+        network_from: networkFrom,
+        network_to: networkTo,
+        withdrawal: toAddress,
+        return: fromAddress,
+        return_extra_id: null,
+        withdrawal_extra_id: null,
+        affiliate_id: initOptions.affiliateId,
+        promocode: promoCode != null ? promoCode : '',
+        type: 'edge',
+        float: false,
+        isEstimate: false
       }
-    )
-    log('sendReply' + JSON.stringify(sendReply, null, 2))
+    })
+
+    log('sendReply', sendReply)
     const quoteInfo = asQuoteInfo(sendReply)
+
     const fromNativeAmount = await request.fromWallet.denominationToNative(
       quoteInfo.deposit_amount,
       request.fromCurrencyCode
@@ -251,9 +269,6 @@ export function makeGodexPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
       request.toCurrencyCode
     )
 
-    log('fromNativeAmount: ' + fromNativeAmount)
-    log('toNativeAmount: ' + toNativeAmount)
-
     // Make the transaction:
     const spendInfo: EdgeSpendInfo = {
       tokenId: request.fromTokenId,
@@ -261,7 +276,7 @@ export function makeGodexPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
         {
           nativeAmount: fromNativeAmount,
           publicAddress: quoteInfo.deposit,
-          uniqueIdentifier: quoteInfo.deposit_extra_id ?? undefined
+          uniqueIdentifier: quoteInfo.deposit_extra_id
         }
       ],
       networkFeeOption:
@@ -290,6 +305,7 @@ export function makeGodexPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
         refundAddress: fromAddress
       }
     }
+
     log('spendInfo', spendInfo)
 
     return {

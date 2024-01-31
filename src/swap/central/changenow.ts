@@ -28,9 +28,9 @@ import {
   InvalidCurrencyCodes,
   makeSwapPluginQuote,
   SwapOrder
-} from '../util/swapHelpers'
-import { convertRequest, getAddress } from '../util/utils'
-import { EdgeSwapRequestPlugin } from './types'
+} from '../../util/swapHelpers'
+import { convertRequest, getAddress } from '../../util/utils'
+import { EdgeSwapRequestPlugin } from '../types'
 const pluginId = 'changenow'
 
 const swapInfo: EdgeSwapInfo = {

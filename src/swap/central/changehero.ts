@@ -27,9 +27,9 @@ import {
   InvalidCurrencyCodes,
   makeSwapPluginQuote,
   SwapOrder
-} from '../util/swapHelpers'
-import { convertRequest, getAddress } from '../util/utils'
-import { EdgeSwapRequestPlugin, StringMap } from './types'
+} from '../../util/swapHelpers'
+import { convertRequest, getAddress } from '../../util/utils'
+import { EdgeSwapRequestPlugin, StringMap } from '../types'
 
 const pluginId = 'changehero'
 

@@ -18,7 +18,7 @@ import {
   SwapCurrencyError
 } from 'edge-core-js/types'
 
-import { div18 } from '../util/biggystringplus'
+import { div18 } from '../../util/biggystringplus'
 import {
   checkInvalidCodes,
   ensureInFuture,
@@ -28,9 +28,9 @@ import {
   isLikeKind,
   makeSwapPluginQuote,
   SwapOrder
-} from '../util/swapHelpers'
-import { convertRequest, getAddress } from '../util/utils'
-import { EdgeSwapRequestPlugin } from './types'
+} from '../../util/swapHelpers'
+import { convertRequest, getAddress } from '../../util/utils'
+import { EdgeSwapRequestPlugin } from '../types'
 
 const pluginId = 'swapuz'
 
