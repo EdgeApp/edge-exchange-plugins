@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 2.0.2 (2023-02-01)
+
 - fixed: Do not crash at load time if `BigInt` is not present.
 
 ## 2.0.1 (2023-01-09)
