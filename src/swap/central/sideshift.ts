@@ -22,9 +22,9 @@ import {
   InvalidCurrencyCodes,
   makeSwapPluginQuote,
   SwapOrder
-} from '../util/swapHelpers'
-import { convertRequest, getAddress } from '../util/utils'
-import { EdgeSwapRequestPlugin } from './types'
+} from '../../util/swapHelpers'
+import { convertRequest, getAddress } from '../../util/utils'
+import { EdgeSwapRequestPlugin } from '../types'
 
 // See https://help.sideshift.ai/en/articles/4559664-which-coins-and-tokens-are-listed for list of supported currencies
 const MAINNET_CODE_TRANSCRIPTION = {
