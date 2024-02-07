@@ -82,21 +82,10 @@ const asQuoteInfo = asObject({
 
 const INVALID_CURRENCY_CODES: InvalidCurrencyCodes = {
   from: {
-    avalanche: 'allTokens',
-    celo: 'allTokens',
-    digibyte: 'allCodes',
-    ethereum: ['MATIC'],
-    fantom: 'allTokens',
-    optimism: ['VELO'],
-    polygon: 'allCodes'
+    digibyte: 'allCodes'
   },
   to: {
-    avalanche: 'allTokens',
-    celo: 'allTokens',
-    ethereum: ['MATIC'],
-    fantom: 'allTokens',
-    polygon: 'allCodes',
-    zcash: ['ZEC'] // ChangeHero doesn't support sending to unified addresses
+    zcash: ['ZEC'] // Godex doesn't support sending to unified addresses
   }
 }
 
