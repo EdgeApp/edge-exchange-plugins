@@ -13,7 +13,7 @@ import {
   SwapCurrencyError
 } from 'edge-core-js/types'
 
-import { EdgeSwapRequestPlugin, MakeTxParams } from '../swap/types'
+import { EdgeSwapRequestPlugin, MakeTxParams, StringMap } from '../swap/types'
 
 const likeKindAssets = [
   ['BTC', 'WBTC', 'SBTC', 'RBTC'],
@@ -373,6 +373,19 @@ export function checkInvalidCodes(
     isSameAsset(request)
   )
     throw new SwapCurrencyError(swapInfo, request)
+}
+
+export const checkWhitelistedMainnetCodes = (
+  whitelist: StringMap,
+  request: EdgeSwapRequest,
+  swapInfo: EdgeSwapInfo
+): void => {
+  if (
+    whitelist[request.fromWallet.currencyInfo.pluginId] == null ||
+    whitelist[request.toWallet.currencyInfo.pluginId] == null
+  ) {
+    throw new SwapCurrencyError(swapInfo, request)
+  }
 }
 
 export interface CurrencyCodeTranscriptions {

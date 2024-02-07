@@ -21,6 +21,7 @@ import {
 import { div18 } from '../../util/biggystringplus'
 import {
   checkInvalidCodes,
+  checkWhitelistedMainnetCodes,
   ensureInFuture,
   getCodesWithTranscription,
   getMaxSwappable,
@@ -138,6 +139,7 @@ export function makeSwapuzPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
     const { fromWallet, toWallet } = request
 
     checkInvalidCodes(INVALID_CURRENCY_CODES, request, swapInfo)
+    checkWhitelistedMainnetCodes(MAINNET_CODE_TRANSCRIPTION, request, swapInfo)
 
     // Grab addresses:
     const [fromAddress, toAddress] = await Promise.all([

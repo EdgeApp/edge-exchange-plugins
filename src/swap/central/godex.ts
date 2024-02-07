@@ -22,6 +22,7 @@ import {
 
 import {
   checkInvalidCodes,
+  checkWhitelistedMainnetCodes,
   getCodesWithTranscription,
   getMaxSwappable,
   InvalidCurrencyCodes,
@@ -363,6 +364,11 @@ export function makeGodexPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
     ): Promise<EdgeSwapQuote> {
       const request = convertRequest(req)
       checkInvalidCodes(INVALID_CURRENCY_CODES, request, swapInfo)
+      checkWhitelistedMainnetCodes(
+        MAINNET_CODE_TRANSCRIPTION,
+        request,
+        swapInfo
+      )
 
       const newRequest = await getMaxSwappable(
         fetchSwapQuoteInner,

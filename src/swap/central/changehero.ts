@@ -21,6 +21,7 @@ import {
 
 import {
   checkInvalidCodes,
+  checkWhitelistedMainnetCodes,
   CurrencyCodeTranscriptionMap,
   getCodesWithTranscription,
   getMaxSwappable,
@@ -193,15 +194,6 @@ export function makeChangeHeroPlugin(
       getAddress(request.fromWallet),
       getAddress(request.toWallet)
     ])
-
-    // Supported chains must be whitelisted
-    if (
-      MAINNET_CODE_TRANSCRIPTION[request.fromWallet.currencyInfo.pluginId] ==
-        null ||
-      MAINNET_CODE_TRANSCRIPTION[request.toWallet.currencyInfo.pluginId] == null
-    ) {
-      throw new SwapCurrencyError(swapInfo, request)
-    }
 
     const {
       fromCurrencyCode,
@@ -376,6 +368,11 @@ export function makeChangeHeroPlugin(
     async fetchSwapQuote(req: EdgeSwapRequest): Promise<EdgeSwapQuote> {
       const request = convertRequest(req)
       checkInvalidCodes(INVALID_CURRENCY_CODES, request, swapInfo)
+      checkWhitelistedMainnetCodes(
+        MAINNET_CODE_TRANSCRIPTION,
+        request,
+        swapInfo
+      )
 
       const newRequest = await getMaxSwappable(getFixedQuote, request)
       const swapOrder = await getFixedQuote(newRequest)

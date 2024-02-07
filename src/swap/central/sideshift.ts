@@ -16,6 +16,7 @@ import {
 
 import {
   checkInvalidCodes,
+  checkWhitelistedMainnetCodes,
   ensureInFuture,
   getCodesWithTranscription,
   getMaxSwappable,
@@ -322,6 +323,7 @@ const createFetchSwapQuote = (api: SideshiftApi, affiliateId: string) =>
   async function fetchSwapQuote(req: EdgeSwapRequest): Promise<EdgeSwapQuote> {
     const request = convertRequest(req)
     checkInvalidCodes(INVALID_CURRENCY_CODES, request, swapInfo)
+    checkWhitelistedMainnetCodes(MAINNET_CODE_TRANSCRIPTION, request, swapInfo)
 
     const newRequest = await getMaxSwappable(
       fetchSwapQuoteInner,

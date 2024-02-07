@@ -15,6 +15,7 @@ import {
 
 import {
   checkInvalidCodes,
+  checkWhitelistedMainnetCodes,
   CurrencyCodeTranscriptionMap,
   getCodesWithTranscription,
   getMaxSwappable,
@@ -370,6 +371,11 @@ export function makeLetsExchangePlugin(
     ): Promise<EdgeSwapQuote> {
       const request = convertRequest(req)
       checkInvalidCodes(INVALID_CURRENCY_CODES, request, swapInfo)
+      checkWhitelistedMainnetCodes(
+        MAINNET_CODE_TRANSCRIPTION,
+        request,
+        swapInfo
+      )
 
       const newRequest = await getMaxSwappable(
         fetchSwapQuoteInner,
