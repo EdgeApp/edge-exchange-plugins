@@ -15,6 +15,7 @@ import {
 
 import {
   checkInvalidCodes,
+  CurrencyCodeTranscriptionMap,
   getCodesWithTranscription,
   getMaxSwappable,
   InvalidCurrencyCodes,
@@ -61,7 +62,6 @@ const asInfoReply = asObject({
 const INVALID_CURRENCY_CODES: InvalidCurrencyCodes = {
   from: {
     ethereum: ['MATH'],
-    optimism: ['VELO'],
     polygon: ['USDC.e']
   },
   to: {
@@ -135,6 +135,12 @@ const SPECIAL_MAINNET_CASES: {
   tron: new Map([[null, 'TRX']])
 }
 
+const CURRENCY_CODE_TRANSCRIPTION: CurrencyCodeTranscriptionMap = {
+  optimism: {
+    VELO: 'VELODROME'
+  }
+}
+
 export function makeLetsExchangePlugin(
   opts: EdgeCorePluginOptions
 ): EdgeSwapPlugin {
@@ -190,7 +196,8 @@ export function makeLetsExchangePlugin(
 
     const { fromMainnetCode, toMainnetCode } = getCodesWithTranscription(
       request,
-      MAINNET_CODE_TRANSCRIPTION
+      MAINNET_CODE_TRANSCRIPTION,
+      CURRENCY_CODE_TRANSCRIPTION
     )
 
     const { pluginId: fromPluginId } = request.fromWallet.currencyInfo
