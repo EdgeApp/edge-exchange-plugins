@@ -65,8 +65,57 @@ const INVALID_CURRENCY_CODES: InvalidCurrencyCodes = {
 // Network names that don't match parent network currency code
 // See https://swapuz.com/ for list of supported currencies
 const MAINNET_CODE_TRANSCRIPTION = {
+  algorand: 'ALGO',
+  // avalanche:
+  // binance:
   binancesmartchain: 'BSC',
-  optimism: 'OPTIMISM'
+  bitcoin: 'BTC',
+  bitcoincash: 'BCH',
+  // bitcoingold:
+  // bitcoinsv:
+  celo: 'CELO',
+  // coreum:
+  dash: 'DASH',
+  // digibyte:
+  dogecoin: 'DOGE',
+  // eboost:
+  eos: 'EOS',
+  ethereum: 'ETH',
+  ethereumclassic: 'ETC',
+  // ethereumpow:
+  fantom: 'FTM',
+  // feathercoin:
+  filecoin: 'FIL',
+  // filecoinfevm:
+  // fio:
+  // groestlcoin:
+  hedera: 'HBAR',
+  // liberland:
+  litecoin: 'LTC',
+  monero: 'XMR',
+  optimism: 'OPTIMISM',
+  // osmosis:
+  // piratechain:
+  polkadot: 'DOT',
+  polygon: 'MATIC',
+  // pulsechain:
+  qtum: 'QTUM',
+  ravencoin: 'RVN',
+  ripple: 'XRP',
+  // rsk:
+  // smartcash:
+  solana: 'SOL',
+  stellar: 'XLM',
+  // telos:
+  tezos: 'XTZ',
+  // thorchainrune:
+  tron: 'TRX',
+  // ufo:
+  // vertcoin:
+  // wax:
+  zcash: 'ZEC'
+  // zcoin:
+  // zksync:
 }
 
 export function makeSwapuzPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {

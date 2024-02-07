@@ -72,13 +72,57 @@ const INVALID_CURRENCY_CODES: InvalidCurrencyCodes = {
 
 // See https://letsexchange.io/exchange-pairs for list of supported currencies
 const MAINNET_CODE_TRANSCRIPTION = {
+  algorand: 'ALGO',
   avalanche: 'AVAXC',
   binance: 'BEP2',
   binancesmartchain: 'BEP20',
+  bitcoin: 'BTC',
+  bitcoincash: 'BCH',
+  bitcoingold: 'BTG',
+  bitcoinsv: 'BSV',
+  celo: 'CELO',
+  // coreum:
+  dash: 'DASH',
+  digibyte: 'DGB',
+  dogecoin: 'DOGE',
+  // eboost:
+  eos: 'EOS',
   ethereum: 'ERC20',
+  ethereumclassic: 'ETC',
+  ethereumpow: 'ETHW',
+  fantom: 'FTM',
+  // feathercoin:
+  filecoin: 'FIL',
+  // filecoinfevm:
+  fio: 'FIO',
+  groestlcoin: 'GRS',
+  hedera: 'HBAR',
+  // liberland:
+  litecoin: 'LTC',
+  monero: 'XMR',
   optimism: 'OPTIMISM',
+  osmosis: 'OSMO',
+  piratechain: 'ARRR',
+  polkadot: 'DOT',
+  polygon: 'MATIC',
+  pulsechain: 'PLS',
+  qtum: 'QTUM',
+  ravencoin: 'RVN',
+  ripple: 'XRP',
   rsk: 'RSK',
-  tron: 'TRC20'
+  // smartcash:
+  solana: 'SOL',
+  stellar: 'XLM',
+  telos: 'TLOS',
+  tezos: 'XTZ',
+  thorchainrune: 'RUNE',
+  tron: 'TRC20',
+  // ufo:
+  // vertcoin:
+  wax: 'WAX',
+  zcash: 'ZEC',
+  zcoin: 'FIRO',
+  zksync: 'ZKSYNC'
 }
 
 const SPECIAL_MAINNET_CASES: { [pId: string]: { [cc: string]: string } } = {

@@ -47,28 +47,55 @@ const asInitOptions = asObject({
 const MAINNET_CODE_TRANSCRIPTION: StringMap = {
   algorand: 'algorand',
   avalanche: 'avalanche_(c-chain)',
+  binance: 'binance_dex',
   binancesmartchain: 'binance_smart_chain',
   bitcoin: 'bitcoin',
   bitcoincash: 'bitcoin_cash',
+  // bitcoingold:
   bitcoinsv: 'bitcoin_sv',
+  // celo:
+  // coreum:
   dash: 'dash',
   digibyte: 'digibyte',
   dogecoin: 'doge',
+  // eboost:
+  // eos:
   ethereum: 'ethereum',
   ethereumclassic: 'ethereum_classic',
+  // ethereumpow:
+  fantom: 'ftm',
+  // feathercoin:
+  // filecoin:
+  // filecoinfevm:
+  // fio:
+  // groestlcoin:
   hedera: 'hedera',
+  // liberland:
   litecoin: 'litecoin',
   monero: 'monero',
   optimism: 'optimism',
+  // osmosis:
+  // piratechain:
   polkadot: 'polkadot',
   polygon: 'polygon',
+  // pulsechain:
   qtum: 'qtum',
+  // ravencoin:
   ripple: 'ripple',
+  // rsk:
+  // smartcash:
   solana: 'solana',
   stellar: 'stellar',
+  // telos:
   tezos: 'tezos',
+  // thorchainrune:
   tron: 'tron',
+  // ufo:
+  // vertcoin:
+  // wax:
   zcash: 'zcash'
+  // zcoin:
+  // zksync:
 }
 
 const CURRENCY_CODE_TRANSCRIPTION: CurrencyCodeTranscriptionMap = {

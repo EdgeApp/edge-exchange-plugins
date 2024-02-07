@@ -102,9 +102,57 @@ const INVALID_CURRENCY_CODES: InvalidCurrencyCodes = {
 // Network names that don't match parent network currency code
 // See https://godex.io/exchange-rate for list of supported currencies
 const MAINNET_CODE_TRANSCRIPTION = {
+  algorand: 'ALGO',
   avalanche: 'AVAXC',
+  binance: 'BNB',
   binancesmartchain: 'BSC',
-  rsk: 'RSK'
+  bitcoin: 'BTC',
+  bitcoincash: 'BCH',
+  // bitcoingold:
+  // bitcoinsv:
+  celo: 'CELO',
+  // coreum:
+  dash: 'DASH',
+  digibyte: 'DGB',
+  dogecoin: 'DOGE',
+  // eboost:
+  eos: 'EOS',
+  ethereumclassic: 'ETC',
+  ethereum: 'ETH',
+  fantom: 'FTM',
+  // ethereumpow:
+  filecoin: 'FIL',
+  // feathercoin:
+  // fio:
+  // filecoinfevm:
+  hedera: 'HBAR',
+  // groestlcoin:
+  litecoin: 'LTC',
+  // liberland:
+  optimism: 'OPTIMISM',
+  monero: 'XMR',
+  // piratechain:
+  // osmosis:
+  polygon: 'MATIC',
+  polkadot: 'DOT',
+  qtum: 'QTUM',
+  // pulsechain:
+  // ripple:
+  ravencoin: 'RVN',
+  // smartcash:
+  rsk: 'RSK',
+  stellar: 'XLM',
+  solana: 'SOL',
+  tezos: 'XTZ',
+  // telos:
+  tron: 'TRX',
+  // thorchainrune:
+  // vertcoin:
+  // ufo:
+  zcash: 'ZEC',
+  // wax:
+  // zksync:
+  zcoin: 'FIRO'
 }
 
 export function makeGodexPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {

@@ -60,7 +60,59 @@ const INVALID_CURRENCY_CODES: InvalidCurrencyCodes = {
 }
 
 // See https://exolix.com/currencies for list of supported currencies
-const MAINNET_CODE_TRANSCRIPTION = {}
+const MAINNET_CODE_TRANSCRIPTION = {
+  algorand: 'ALGO',
+  avalanche: 'AVAXC',
+  // binance:
+  binancesmartchain: 'BSC',
+  bitcoin: 'BTC',
+  bitcoincash: 'BCH',
+  // bitcoingold:
+  // bitcoinsv:
+  celo: 'CELO',
+  // coreum:
+  dash: 'DASH',
+  digibyte: 'DGB',
+  dogecoin: 'DOGE',
+  // eboost:
+  eos: 'EOS',
+  ethereum: 'ETH',
+  ethereumclassic: 'ETC',
+  // ethereumpow:
+  fantom: 'FTM',
+  // feathercoin:
+  filecoin: 'FIL',
+  // filecoinfevm:
+  // fio:
+  // groestlcoin:
+  hedera: 'HBAR',
+  // liberland:
+  litecoin: 'LTC',
+  monero: 'XMR',
+  optimism: 'OPTIMISM',
+  osmosis: 'OSMO',
+  // piratechain:
+  polkadot: 'DOT',
+  // polygon:
+  // pulsechain:
+  qtum: 'QTUM',
+  ravencoin: 'RVN',
+  ripple: 'XRP',
+  // rsk:
+  // smartcash:
+  solana: 'SOL',
+  stellar: 'XLM',
+  telos: 'TELOS',
+  tezos: 'XTZ',
+  thorchainrune: 'RUNE',
+  tron: 'TRX',
+  // ufo:
+  // vertcoin:
+  // wax:
+  zcash: 'ZEC'
+  // zcoin:
+  // zksync:
+}
 
 const orderUri = 'https://exolix.com/transaction/'
 const uri = 'https://exolix.com/api/v2/'

@@ -61,8 +61,57 @@ const INVALID_CURRENCY_CODES: InvalidCurrencyCodes = {
 // Network names that don't match parent network currency code
 // See https://changenow.io/currencies for list of supported currencies
 const MAINNET_CODE_TRANSCRIPTION = {
-  binancesmartchain: 'BSC',
-  pulsechain: 'PULSE'
+  algorand: 'algo',
+  avalanche: 'avaxc',
+  binance: 'bnb',
+  binancesmartchain: 'bsc',
+  bitcoin: 'btc',
+  bitcoincash: 'bch',
+  bitcoingold: 'btg',
+  bitcoinsv: 'bsv',
+  celo: 'celo',
+  // coreum:
+  dash: 'dash',
+  digibyte: 'dgb',
+  dogecoin: 'doge',
+  // eboost:
+  eos: 'eos',
+  ethereum: 'eth',
+  ethereumclassic: 'etc',
+  ethereumpow: 'ethw',
+  fantom: 'ftm',
+  // feathercoin:
+  filecoin: 'fil',
+  // filecoinfevm:
+  fio: 'fio',
+  // groestlcoin:
+  hedera: 'hbar',
+  // liberland:
+  litecoin: 'ltc',
+  monero: 'xmr',
+  optimism: 'op',
+  osmosis: 'osmo',
+  // piratechain:
+  polkadot: 'dot',
+  polygon: 'matic',
+  pulsechain: 'pulse',
+  qtum: 'qtum',
+  ravencoin: 'rvn',
+  ripple: 'xrp',
+  // rsk:
+  // smartcash:
+  solana: 'sol',
+  stellar: 'xlm',
+  // telos:
+  tezos: 'xtz',
+  // thorchainrune:
+  tron: 'trx',
+  // ufo:
+  // vertcoin:
+  wax: 'waxp',
+  zcash: 'zec',
+  zcoin: 'firo',
+  zksync: 'zksync'
 }
 
 export function makeChangeNowPlugin(
