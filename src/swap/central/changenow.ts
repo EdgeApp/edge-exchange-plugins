@@ -62,7 +62,10 @@ const INVALID_CURRENCY_CODES: InvalidCurrencyCodes = {
 // See https://changenow.io/currencies for list of supported currencies
 const MAINNET_CODE_TRANSCRIPTION = {
   algorand: 'algo',
+  arbitrum: 'arbitrum',
   avalanche: 'avaxc',
+  // axelar:
+  base: 'base',
   binance: 'bnb',
   binancesmartchain: 'bsc',
   bitcoin: 'btc',
@@ -71,6 +74,7 @@ const MAINNET_CODE_TRANSCRIPTION = {
   bitcoinsv: 'bsv',
   celo: 'celo',
   // coreum:
+  cosmoshub: 'atom',
   dash: 'dash',
   digibyte: 'dgb',
   dogecoin: 'doge',

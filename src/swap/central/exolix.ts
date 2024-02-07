@@ -62,7 +62,10 @@ const INVALID_CURRENCY_CODES: InvalidCurrencyCodes = {
 // See https://exolix.com/currencies for list of supported currencies
 const MAINNET_CODE_TRANSCRIPTION = {
   algorand: 'ALGO',
+  arbitrum: 'ARBITRUM',
   avalanche: 'AVAXC',
+  // axelar:
+  // base:
   // binance:
   binancesmartchain: 'BSC',
   bitcoin: 'BTC',
@@ -71,6 +74,7 @@ const MAINNET_CODE_TRANSCRIPTION = {
   // bitcoinsv:
   celo: 'CELO',
   // coreum:
+  cosmoshub: 'ATOM',
   dash: 'DASH',
   digibyte: 'DGB',
   dogecoin: 'DOGE',

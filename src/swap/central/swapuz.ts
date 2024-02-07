@@ -65,8 +65,11 @@ const INVALID_CURRENCY_CODES: InvalidCurrencyCodes = {
 // Network names that don't match parent network currency code
 // See https://swapuz.com/ for list of supported currencies
 const MAINNET_CODE_TRANSCRIPTION = {
+  arbitrum: 'ARBITRUM',
   algorand: 'ALGO',
   // avalanche:
+  // axelar:
+  // base:
   // binance:
   binancesmartchain: 'BSC',
   bitcoin: 'BTC',
@@ -75,6 +78,7 @@ const MAINNET_CODE_TRANSCRIPTION = {
   // bitcoinsv:
   celo: 'CELO',
   // coreum:
+  // cosmoshub:
   dash: 'DASH',
   // digibyte:
   dogecoin: 'DOGE',

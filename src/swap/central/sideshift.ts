@@ -29,7 +29,10 @@ import { EdgeSwapRequestPlugin } from '../types'
 // See https://help.sideshift.ai/en/articles/4559664-which-coins-and-tokens-are-listed for list of supported currencies
 const MAINNET_CODE_TRANSCRIPTION = {
   algorand: 'algorand',
+  arbitrum: 'arbitrum',
   avalanche: 'avax',
+  // axelar:
+  base: 'base',
   // binance:
   binancesmartchain: 'bsc',
   bitcoin: 'bitcoin',
@@ -38,6 +41,7 @@ const MAINNET_CODE_TRANSCRIPTION = {
   bitcoinsv: 'bsv',
   // celo:
   // coreum:
+  cosmoshub: 'cosmos',
   dash: 'dash',
   // digibyte:
   dogecoin: 'doge',

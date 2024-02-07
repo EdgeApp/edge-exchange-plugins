@@ -46,7 +46,10 @@ const asInitOptions = asObject({
 
 const MAINNET_CODE_TRANSCRIPTION: StringMap = {
   algorand: 'algorand',
+  arbitrum: 'arbitrum',
   avalanche: 'avalanche_(c-chain)',
+  // axelar:
+  base: 'base',
   binance: 'binance_dex',
   binancesmartchain: 'binance_smart_chain',
   bitcoin: 'bitcoin',
@@ -55,6 +58,7 @@ const MAINNET_CODE_TRANSCRIPTION: StringMap = {
   bitcoinsv: 'bitcoin_sv',
   // celo:
   // coreum:
+  // cosmoshub:
   dash: 'dash',
   digibyte: 'digibyte',
   dogecoin: 'doge',

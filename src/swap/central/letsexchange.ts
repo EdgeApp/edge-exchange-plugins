@@ -74,7 +74,10 @@ const INVALID_CURRENCY_CODES: InvalidCurrencyCodes = {
 // See https://letsexchange.io/exchange-pairs for list of supported currencies
 const MAINNET_CODE_TRANSCRIPTION = {
   algorand: 'ALGO',
+  arbitrum: 'ARBITRUM',
   avalanche: 'AVAXC',
+  // axelar: // Shows up as WAXL from the API but is currently disabled
+  // base:
   binance: 'BEP2',
   binancesmartchain: 'BEP20',
   bitcoin: 'BTC',
@@ -83,6 +86,7 @@ const MAINNET_CODE_TRANSCRIPTION = {
   bitcoinsv: 'BSV',
   celo: 'CELO',
   // coreum:
+  cosmoshub: 'ATOM',
   dash: 'DASH',
   digibyte: 'DGB',
   dogecoin: 'DOGE',
@@ -129,6 +133,7 @@ const MAINNET_CODE_TRANSCRIPTION = {
 const SPECIAL_MAINNET_CASES: {
   [pId: string]: Map<EdgeTokenId, string>
 } = {
+  // axelar: new Map([[null, 'WAXL']]), // currentlyly disabled
   binancesmartchain: new Map([[null, 'BNB']]),
   ethereum: new Map([[null, 'ETH']]),
   rsk: new Map([[null, 'RBTC']]),

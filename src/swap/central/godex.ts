@@ -103,7 +103,10 @@ const INVALID_CURRENCY_CODES: InvalidCurrencyCodes = {
 // See https://godex.io/exchange-rate for list of supported currencies
 const MAINNET_CODE_TRANSCRIPTION = {
   algorand: 'ALGO',
+  arbitrum: 'ARBITRUM',
   avalanche: 'AVAXC',
+  // axelar:
+  // base:
   binance: 'BNB',
   binancesmartchain: 'BSC',
   bitcoin: 'BTC',
@@ -112,6 +115,7 @@ const MAINNET_CODE_TRANSCRIPTION = {
   // bitcoinsv:
   celo: 'CELO',
   // coreum:
+  cosmoshub: 'ATOM',
   dash: 'DASH',
   digibyte: 'DGB',
   dogecoin: 'DOGE',
