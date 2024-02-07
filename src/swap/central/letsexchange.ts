@@ -7,6 +7,7 @@ import {
   EdgeSwapPlugin,
   EdgeSwapQuote,
   EdgeSwapRequest,
+  EdgeTokenId,
   SwapAboveLimitError,
   SwapBelowLimitError,
   SwapCurrencyError
@@ -125,19 +126,13 @@ const MAINNET_CODE_TRANSCRIPTION = {
   zksync: 'ZKSYNC'
 }
 
-const SPECIAL_MAINNET_CASES: { [pId: string]: { [cc: string]: string } } = {
-  avalanche: {
-    AVAX: 'AVAXC'
-  },
-  binancesmartchain: {
-    BNB: 'BEP20'
-  },
-  optimism: {
-    ETH: 'OPTIMISM'
-  },
-  zksync: {
-    ETH: 'ZKSYNC'
-  }
+const SPECIAL_MAINNET_CASES: {
+  [pId: string]: Map<EdgeTokenId, string>
+} = {
+  binancesmartchain: new Map([[null, 'BNB']]),
+  ethereum: new Map([[null, 'ETH']]),
+  rsk: new Map([[null, 'RBTC']]),
+  tron: new Map([[null, 'TRX']])
 }
 
 export function makeLetsExchangePlugin(
@@ -200,20 +195,12 @@ export function makeLetsExchangePlugin(
 
     const { pluginId: fromPluginId } = request.fromWallet.currencyInfo
     const networkFrom =
-      SPECIAL_MAINNET_CASES[fromPluginId]?.[request.toCurrencyCode] != null
-        ? SPECIAL_MAINNET_CASES[fromPluginId][request.toCurrencyCode]
-        : request.fromCurrencyCode ===
-          request.fromWallet.currencyInfo.currencyCode
-        ? request.fromCurrencyCode
-        : fromMainnetCode
+      SPECIAL_MAINNET_CASES[fromPluginId]?.get(request.fromTokenId) ??
+      fromMainnetCode
 
     const { pluginId: toPluginId } = request.toWallet.currencyInfo
     const networkTo =
-      SPECIAL_MAINNET_CASES[toPluginId]?.[request.toCurrencyCode] != null
-        ? SPECIAL_MAINNET_CASES[toPluginId][request.toCurrencyCode]
-        : request.toCurrencyCode === request.toWallet.currencyInfo.currencyCode
-        ? request.toCurrencyCode
-        : toMainnetCode
+      SPECIAL_MAINNET_CASES[toPluginId]?.get(request.toTokenId) ?? toMainnetCode
 
     // Swap the currencies if we need a reverse quote:
     const quoteParams = {
