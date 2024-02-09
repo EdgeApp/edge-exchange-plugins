@@ -22,6 +22,7 @@ import {
 
 import {
   checkInvalidCodes,
+  checkWhitelistedMainnetCodes,
   getCodesWithTranscription,
   getMaxSwappable,
   InvalidCurrencyCodes,
@@ -81,30 +82,71 @@ const asQuoteInfo = asObject({
 
 const INVALID_CURRENCY_CODES: InvalidCurrencyCodes = {
   from: {
-    avalanche: 'allTokens',
-    celo: 'allTokens',
-    digibyte: 'allCodes',
-    ethereum: ['MATIC'],
-    fantom: 'allTokens',
-    optimism: ['VELO'],
-    polygon: 'allCodes'
+    digibyte: 'allCodes'
   },
   to: {
-    avalanche: 'allTokens',
-    celo: 'allTokens',
-    ethereum: ['MATIC'],
-    fantom: 'allTokens',
-    polygon: 'allCodes',
-    zcash: ['ZEC'] // ChangeHero doesn't support sending to unified addresses
+    zcash: ['ZEC'] // Godex doesn't support sending to unified addresses
   }
 }
 
 // Network names that don't match parent network currency code
 // See https://godex.io/exchange-rate for list of supported currencies
 const MAINNET_CODE_TRANSCRIPTION = {
-  rsk: 'RSK',
+  algorand: 'ALGO',
+  arbitrum: 'ARBITRUM',
+  avalanche: 'AVAXC',
+  // axelar:
+  // base:
+  binance: 'BNB',
   binancesmartchain: 'BSC',
-  avalanche: 'AVAXC'
+  bitcoin: 'BTC',
+  bitcoincash: 'BCH',
+  // bitcoingold:
+  // bitcoinsv:
+  celo: 'CELO',
+  // coreum:
+  cosmoshub: 'ATOM',
+  dash: 'DASH',
+  digibyte: 'DGB',
+  dogecoin: 'DOGE',
+  // eboost:
+  eos: 'EOS',
+  ethereumclassic: 'ETC',
+  ethereum: 'ETH',
+  fantom: 'FTM',
+  // ethereumpow:
+  filecoin: 'FIL',
+  // feathercoin:
+  // fio:
+  // filecoinfevm:
+  hedera: 'HBAR',
+  // groestlcoin:
+  litecoin: 'LTC',
+  // liberland:
+  optimism: 'OPTIMISM',
+  monero: 'XMR',
+  // piratechain:
+  // osmosis:
+  polygon: 'MATIC',
+  polkadot: 'DOT',
+  qtum: 'QTUM',
+  // pulsechain:
+  // ripple:
+  ravencoin: 'RVN',
+  // smartcash:
+  rsk: 'RSK',
+  stellar: 'XLM',
+  solana: 'SOL',
+  tezos: 'XTZ',
+  // telos:
+  tron: 'TRX',
+  // thorchainrune:
+  // vertcoin:
+  // ufo:
+  zcash: 'ZEC',
+  // wax:
+  // zksync:
+  zcoin: 'FIRO'
 }
 
 export function makeGodexPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
@@ -311,6 +353,11 @@ export function makeGodexPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
     ): Promise<EdgeSwapQuote> {
       const request = convertRequest(req)
       checkInvalidCodes(INVALID_CURRENCY_CODES, request, swapInfo)
+      checkWhitelistedMainnetCodes(
+        MAINNET_CODE_TRANSCRIPTION,
+        request,
+        swapInfo
+      )
 
       const newRequest = await getMaxSwappable(
         fetchSwapQuoteInner,

@@ -21,6 +21,7 @@ import {
 
 import {
   checkInvalidCodes,
+  checkWhitelistedMainnetCodes,
   getCodesWithTranscription,
   getMaxSwappable,
   InvalidCurrencyCodes,
@@ -44,23 +45,70 @@ const asInitOptions = asObject({
 })
 
 const INVALID_CURRENCY_CODES: InvalidCurrencyCodes = {
-  from: {
-    binancesmartchain: 'allCodes',
-    ethereum: ['MATIC'],
-    optimism: 'allCodes',
-    polygon: 'allCodes'
-  },
+  from: {},
   to: {
-    binancesmartchain: 'allCodes',
-    ethereum: ['MATIC'],
-    optimism: 'allCodes',
-    polygon: 'allCodes',
     zcash: ['ZEC']
   }
 }
 
 // See https://exolix.com/currencies for list of supported currencies
-const MAINNET_CODE_TRANSCRIPTION = {}
+const MAINNET_CODE_TRANSCRIPTION = {
+  algorand: 'ALGO',
+  arbitrum: 'ARBITRUM',
+  avalanche: 'AVAXC',
+  // axelar:
+  // base:
+  // binance:
+  binancesmartchain: 'BSC',
+  bitcoin: 'BTC',
+  bitcoincash: 'BCH',
+  // bitcoingold:
+  // bitcoinsv:
+  celo: 'CELO',
+  // coreum:
+  cosmoshub: 'ATOM',
+  dash: 'DASH',
+  digibyte: 'DGB',
+  dogecoin: 'DOGE',
+  // eboost:
+  eos: 'EOS',
+  ethereum: 'ETH',
+  ethereumclassic: 'ETC',
+  // ethereumpow:
+  fantom: 'FTM',
+  // feathercoin:
+  filecoin: 'FIL',
+  // filecoinfevm:
+  // fio:
+  // groestlcoin:
+  hedera: 'HBAR',
+  // liberland:
+  litecoin: 'LTC',
+  monero: 'XMR',
+  optimism: 'OPTIMISM',
+  osmosis: 'OSMO',
+  // piratechain:
+  polkadot: 'DOT',
+  // polygon:
+  // pulsechain:
+  qtum: 'QTUM',
+  ravencoin: 'RVN',
+  ripple: 'XRP',
+  // rsk:
+  // smartcash:
+  solana: 'SOL',
+  stellar: 'XLM',
+  telos: 'TELOS',
+  tezos: 'XTZ',
+  thorchainrune: 'RUNE',
+  tron: 'TRX',
+  // ufo:
+  // vertcoin:
+  // wax:
+  zcash: 'ZEC'
+  // zcoin:
+  // zksync:
+}
 
 const orderUri = 'https://exolix.com/transaction/'
 const uri = 'https://exolix.com/api/v2/'
@@ -289,6 +337,11 @@ export function makeExolixPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
       const request = convertRequest(req)
 
       checkInvalidCodes(INVALID_CURRENCY_CODES, request, swapInfo)
+      checkWhitelistedMainnetCodes(
+        MAINNET_CODE_TRANSCRIPTION,
+        request,
+        swapInfo
+      )
 
       const newRequest = await getMaxSwappable(
         getFixedQuote,

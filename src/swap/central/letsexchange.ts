@@ -7,6 +7,7 @@ import {
   EdgeSwapPlugin,
   EdgeSwapQuote,
   EdgeSwapRequest,
+  EdgeTokenId,
   SwapAboveLimitError,
   SwapBelowLimitError,
   SwapCurrencyError
@@ -14,6 +15,8 @@ import {
 
 import {
   checkInvalidCodes,
+  checkWhitelistedMainnetCodes,
+  CurrencyCodeTranscriptionMap,
   getCodesWithTranscription,
   getMaxSwappable,
   InvalidCurrencyCodes,
@@ -60,7 +63,6 @@ const asInfoReply = asObject({
 const INVALID_CURRENCY_CODES: InvalidCurrencyCodes = {
   from: {
     ethereum: ['MATH'],
-    optimism: ['VELO'],
     polygon: ['USDC.e']
   },
   to: {
@@ -72,27 +74,76 @@ const INVALID_CURRENCY_CODES: InvalidCurrencyCodes = {
 
 // See https://letsexchange.io/exchange-pairs for list of supported currencies
 const MAINNET_CODE_TRANSCRIPTION = {
+  algorand: 'ALGO',
+  arbitrum: 'ARBITRUM',
   avalanche: 'AVAXC',
+  // axelar: // Shows up as WAXL from the API but is currently disabled
+  // base:
   binance: 'BEP2',
   binancesmartchain: 'BEP20',
+  bitcoin: 'BTC',
+  bitcoincash: 'BCH',
+  bitcoingold: 'BTG',
+  bitcoinsv: 'BSV',
+  celo: 'CELO',
+  // coreum:
+  cosmoshub: 'ATOM',
+  dash: 'DASH',
+  digibyte: 'DGB',
+  dogecoin: 'DOGE',
+  // eboost:
+  eos: 'EOS',
   ethereum: 'ERC20',
+  ethereumclassic: 'ETC',
+  ethereumpow: 'ETHW',
+  fantom: 'FTM',
+  // feathercoin:
+  filecoin: 'FIL',
+  // filecoinfevm:
+  fio: 'FIO',
+  groestlcoin: 'GRS',
+  hedera: 'HBAR',
+  // liberland:
+  litecoin: 'LTC',
+  monero: 'XMR',
   optimism: 'OPTIMISM',
+  osmosis: 'OSMO',
+  piratechain: 'ARRR',
+  polkadot: 'DOT',
+  polygon: 'MATIC',
+  pulsechain: 'PLS',
+  qtum: 'QTUM',
+  ravencoin: 'RVN',
+  ripple: 'XRP',
   rsk: 'RSK',
-  tron: 'TRC20'
+  // smartcash:
+  solana: 'SOL',
+  stellar: 'XLM',
+  telos: 'TLOS',
+  tezos: 'XTZ',
+  thorchainrune: 'RUNE',
+  tron: 'TRC20',
+  // ufo:
+  // vertcoin:
+  wax: 'WAX',
+  zcash: 'ZEC',
+  zcoin: 'FIRO',
+  zksync: 'ZKSYNC'
 }
 
-const SPECIAL_MAINNET_CASES: { [pId: string]: { [cc: string]: string } } = {
-  avalanche: {
-    AVAX: 'AVAXC'
-  },
-  binancesmartchain: {
-    BNB: 'BEP20'
-  },
+const SPECIAL_MAINNET_CASES: {
+  [pId: string]: Map<EdgeTokenId, string>
+} = {
+  // axelar: new Map([[null, 'WAXL']]), // currentlyly disabled
+  binancesmartchain: new Map([[null, 'BNB']]),
+  ethereum: new Map([[null, 'ETH']]),
+  rsk: new Map([[null, 'RBTC']]),
+  tron: new Map([[null, 'TRX']])
+}
+
+const CURRENCY_CODE_TRANSCRIPTION: CurrencyCodeTranscriptionMap = {
   optimism: {
-    ETH: 'OPTIMISM'
-  },
-  zksync: {
-    ETH: 'ZKSYNC'
+    VELO: 'VELODROME'
   }
 }
 
@@ -151,25 +202,18 @@ export function makeLetsExchangePlugin(
 
     const { fromMainnetCode, toMainnetCode } = getCodesWithTranscription(
       request,
-      MAINNET_CODE_TRANSCRIPTION
+      MAINNET_CODE_TRANSCRIPTION,
+      CURRENCY_CODE_TRANSCRIPTION
     )
 
     const { pluginId: fromPluginId } = request.fromWallet.currencyInfo
     const networkFrom =
-      SPECIAL_MAINNET_CASES[fromPluginId]?.[request.toCurrencyCode] != null
-        ? SPECIAL_MAINNET_CASES[fromPluginId][request.toCurrencyCode]
-        : request.fromCurrencyCode ===
-          request.fromWallet.currencyInfo.currencyCode
-        ? request.fromCurrencyCode
-        : fromMainnetCode
+      SPECIAL_MAINNET_CASES[fromPluginId]?.get(request.fromTokenId) ??
+      fromMainnetCode
 
     const { pluginId: toPluginId } = request.toWallet.currencyInfo
     const networkTo =
-      SPECIAL_MAINNET_CASES[toPluginId]?.[request.toCurrencyCode] != null
-        ? SPECIAL_MAINNET_CASES[toPluginId][request.toCurrencyCode]
-        : request.toCurrencyCode === request.toWallet.currencyInfo.currencyCode
-        ? request.toCurrencyCode
-        : toMainnetCode
+      SPECIAL_MAINNET_CASES[toPluginId]?.get(request.toTokenId) ?? toMainnetCode
 
     // Swap the currencies if we need a reverse quote:
     const quoteParams = {
@@ -327,6 +371,11 @@ export function makeLetsExchangePlugin(
     ): Promise<EdgeSwapQuote> {
       const request = convertRequest(req)
       checkInvalidCodes(INVALID_CURRENCY_CODES, request, swapInfo)
+      checkWhitelistedMainnetCodes(
+        MAINNET_CODE_TRANSCRIPTION,
+        request,
+        swapInfo
+      )
 
       const newRequest = await getMaxSwappable(
         fetchSwapQuoteInner,

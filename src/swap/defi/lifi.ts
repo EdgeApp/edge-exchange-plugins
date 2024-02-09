@@ -64,6 +64,7 @@ const MAINNET_CODE_TRANSCRIPTION: StringMap = {
   arbitrum: 'ARB',
   aurora: 'AUR',
   avalanche: 'AVA',
+  base: 'BAS',
   binancesmartchain: 'BSC',
   celo: 'CEL',
   cronos: 'CRO',
@@ -78,7 +79,8 @@ const MAINNET_CODE_TRANSCRIPTION: StringMap = {
   okexchain: 'OKT',
   optimism: 'OPT',
   polygon: 'POL',
-  velas: 'VEL'
+  velas: 'VEL',
+  zksync: 'ERA'
 }
 
 const asExchangeInfo = asObject({

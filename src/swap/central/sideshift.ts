@@ -16,6 +16,7 @@ import {
 
 import {
   checkInvalidCodes,
+  checkWhitelistedMainnetCodes,
   ensureInFuture,
   getCodesWithTranscription,
   getMaxSwappable,
@@ -28,9 +29,61 @@ import { EdgeSwapRequestPlugin } from '../types'
 
 // See https://help.sideshift.ai/en/articles/4559664-which-coins-and-tokens-are-listed for list of supported currencies
 const MAINNET_CODE_TRANSCRIPTION = {
+  algorand: 'algorand',
+  arbitrum: 'arbitrum',
+  avalanche: 'avax',
+  // axelar:
+  base: 'base',
+  // binance:
   binancesmartchain: 'bsc',
+  bitcoin: 'bitcoin',
+  bitcoincash: 'bitcoincash',
+  // bitcoingold:
+  bitcoinsv: 'bsv',
+  // celo:
+  // coreum:
+  cosmoshub: 'cosmos',
+  dash: 'dash',
+  // digibyte:
+  dogecoin: 'doge',
+  // eboost:
+  // eos:
+  ethereum: 'ethereum',
+  ethereumclassic: 'etc',
+  // ethereumpow:
+  fantom: 'fantom',
+  // feathercoin:
+  // filecoin:
+  // filecoinfevm:
+  // fio:
+  groestlcoin: 'grs',
+  // hedera:
+  // liberland:
+  litecoin: 'litecoin',
+  monero: 'monero',
   optimism: 'optimism',
-  zcash: 'shielded'
+  // osmosis:
+  // piratechain:
+  polkadot: 'polkadot',
+  polygon: 'polygon',
+  // pulsechain:
+  // qtum:
+  // ravencoin:
+  ripple: 'ripple',
+  // rsk:
+  // smartcash:
+  solana: 'solana',
+  stellar: 'stellar',
+  // telos:
+  tezos: 'tezos',
+  // thorchainrune:
+  tron: 'tron',
+  // ufo:
+  // vertcoin:
+  // wax:
+  zcash: 'shielded',
+  // zcoin:
+  zksync: 'zksyncera'
 }
 
 const INVALID_CURRENCY_CODES: InvalidCurrencyCodes = {
@@ -270,6 +323,7 @@ const createFetchSwapQuote = (api: SideshiftApi, affiliateId: string) =>
   async function fetchSwapQuote(req: EdgeSwapRequest): Promise<EdgeSwapQuote> {
     const request = convertRequest(req)
     checkInvalidCodes(INVALID_CURRENCY_CODES, request, swapInfo)
+    checkWhitelistedMainnetCodes(MAINNET_CODE_TRANSCRIPTION, request, swapInfo)
 
     const newRequest = await getMaxSwappable(
       fetchSwapQuoteInner,

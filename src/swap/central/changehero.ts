@@ -21,6 +21,7 @@ import {
 
 import {
   checkInvalidCodes,
+  checkWhitelistedMainnetCodes,
   CurrencyCodeTranscriptionMap,
   getCodesWithTranscription,
   getMaxSwappable,
@@ -45,30 +46,61 @@ const asInitOptions = asObject({
 })
 
 const MAINNET_CODE_TRANSCRIPTION: StringMap = {
-  ethereum: 'ethereum',
-  binancesmartchain: 'binance_smart_chain',
-  solana: 'solana',
   algorand: 'algorand',
+  arbitrum: 'arbitrum',
   avalanche: 'avalanche_(c-chain)',
-  bitcoincash: 'bitcoin_cash',
-  bitcoinsv: 'bitcoin_sv',
+  // axelar:
+  base: 'base',
+  binance: 'binance_dex',
+  binancesmartchain: 'binance_smart_chain',
   bitcoin: 'bitcoin',
-  tron: 'tron',
-  polygon: 'polygon',
+  bitcoincash: 'bitcoin_cash',
+  // bitcoingold:
+  bitcoinsv: 'bitcoin_sv',
+  // celo:
+  // coreum:
+  // cosmoshub:
   dash: 'dash',
   digibyte: 'digibyte',
   dogecoin: 'doge',
-  polkadot: 'polkadot',
+  // eboost:
+  // eos:
+  ethereum: 'ethereum',
   ethereumclassic: 'ethereum_classic',
-  optimism: 'optimism',
+  // ethereumpow:
+  fantom: 'ftm',
+  // feathercoin:
+  // filecoin:
+  // filecoinfevm:
+  // fio:
+  // groestlcoin:
   hedera: 'hedera',
+  // liberland:
   litecoin: 'litecoin',
-  qtum: 'qtum',
-  stellar: 'stellar',
   monero: 'monero',
+  optimism: 'optimism',
+  // osmosis:
+  // piratechain:
+  polkadot: 'polkadot',
+  polygon: 'polygon',
+  // pulsechain:
+  qtum: 'qtum',
+  // ravencoin:
   ripple: 'ripple',
+  // rsk:
+  // smartcash:
+  solana: 'solana',
+  stellar: 'stellar',
+  // telos:
   tezos: 'tezos',
+  // thorchainrune:
+  tron: 'tron',
+  // ufo:
+  // vertcoin:
+  // wax:
   zcash: 'zcash'
+  // zcoin:
+  // zksync:
 }
 
 const CURRENCY_CODE_TRANSCRIPTION: CurrencyCodeTranscriptionMap = {
@@ -162,15 +194,6 @@ export function makeChangeHeroPlugin(
       getAddress(request.fromWallet),
       getAddress(request.toWallet)
     ])
-
-    // Supported chains must be whitelisted
-    if (
-      MAINNET_CODE_TRANSCRIPTION[request.fromWallet.currencyInfo.pluginId] ==
-        null ||
-      MAINNET_CODE_TRANSCRIPTION[request.toWallet.currencyInfo.pluginId] == null
-    ) {
-      throw new SwapCurrencyError(swapInfo, request)
-    }
 
     const {
       fromCurrencyCode,
@@ -345,6 +368,11 @@ export function makeChangeHeroPlugin(
     async fetchSwapQuote(req: EdgeSwapRequest): Promise<EdgeSwapQuote> {
       const request = convertRequest(req)
       checkInvalidCodes(INVALID_CURRENCY_CODES, request, swapInfo)
+      checkWhitelistedMainnetCodes(
+        MAINNET_CODE_TRANSCRIPTION,
+        request,
+        swapInfo
+      )
 
       const newRequest = await getMaxSwappable(getFixedQuote, request)
       const swapOrder = await getFixedQuote(newRequest)
