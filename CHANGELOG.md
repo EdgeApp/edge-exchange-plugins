@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 2.1.0 (2023-02-09)
+
 - added: Mainnet codes for Arbitrum, Axelar, Base, and Cosmos Hub
 - changed: (CEX) Only allow quotes with known mainnet network codes
 
