@@ -1,4 +1,4 @@
-import { lt } from 'biggystring'
+import { floor, lt } from 'biggystring'
 import {
   asArray,
   asEither,
@@ -284,13 +284,19 @@ export function makeGodexPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
     )
     log('sendReply' + JSON.stringify(sendReply, null, 2))
     const quoteInfo = asQuoteInfo(sendReply)
-    const fromNativeAmount = await request.fromWallet.denominationToNative(
-      quoteInfo.deposit_amount,
-      request.fromCurrencyCode
+    const fromNativeAmount = floor(
+      await request.fromWallet.denominationToNative(
+        quoteInfo.deposit_amount,
+        request.fromCurrencyCode
+      ),
+      0
     )
-    const toNativeAmount = await request.toWallet.denominationToNative(
-      quoteInfo.withdrawal_amount,
-      request.toCurrencyCode
+    const toNativeAmount = floor(
+      await request.toWallet.denominationToNative(
+        quoteInfo.withdrawal_amount,
+        request.toCurrencyCode
+      ),
+      0
     )
 
     log('fromNativeAmount: ' + fromNativeAmount)
