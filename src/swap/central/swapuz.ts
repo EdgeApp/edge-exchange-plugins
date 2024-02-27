@@ -244,9 +244,12 @@ export function makeSwapuzPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
         memoFrom
       } = createOrderJson.result
 
-      const toNativeAmount = await toWallet.denominationToNative(
-        amountResult.toString(),
-        toCurrencyCode
+      const toNativeAmount = floor(
+        await toWallet.denominationToNative(
+          amountResult.toString(),
+          toCurrencyCode
+        ),
+        0
       )
 
       const spendInfo: EdgeSpendInfo = {
