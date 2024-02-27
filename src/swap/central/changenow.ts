@@ -15,6 +15,7 @@ import {
   EdgeSwapPlugin,
   EdgeSwapQuote,
   EdgeSwapRequest,
+  EdgeTokenId,
   SwapAboveLimitError,
   SwapBelowLimitError,
   SwapCurrencyError
@@ -119,6 +120,12 @@ const MAINNET_CODE_TRANSCRIPTION = {
   zksync: 'zksync'
 }
 
+const SPECIAL_MAINNET_CASES: {
+  [pId: string]: Map<EdgeTokenId, string>
+} = {
+  avalanche: new Map([[null, 'cchain']])
+}
+
 export function makeChangeNowPlugin(
   opts: EdgeCorePluginOptions
 ): EdgeSwapPlugin {
@@ -147,9 +154,17 @@ export function makeChangeNowPlugin(
     const {
       fromCurrencyCode,
       toCurrencyCode,
-      fromMainnetCode,
-      toMainnetCode
+      fromMainnetCode: defaultFromMainnetCode,
+      toMainnetCode: defaultToMainnetCode
     } = getCodesWithTranscription(request, MAINNET_CODE_TRANSCRIPTION)
+    const fromMainnetCode =
+      SPECIAL_MAINNET_CASES[request.fromWallet.currencyInfo.pluginId]?.get(
+        request.fromTokenId
+      ) ?? defaultFromMainnetCode
+    const toMainnetCode =
+      SPECIAL_MAINNET_CASES[request.toWallet.currencyInfo.pluginId]?.get(
+        request.toTokenId
+      ) ?? defaultToMainnetCode
     const currencyString = `fromCurrency=${fromCurrencyCode}&toCurrency=${toCurrencyCode}&fromNetwork=${fromMainnetCode}&toNetwork=${toMainnetCode}`
 
     async function createOrder(
