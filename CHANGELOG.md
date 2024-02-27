@@ -7,16 +7,16 @@
 - fixed: (Exolix) Correctly handle below limit errors for 'from' quotes
 - fixed: (Godex/Swapuz) Fix conversion to native units
 
-## 2.1.0 (2023-02-09)
+## 2.1.0 (2024-02-09)
 
 - added: Mainnet codes for Arbitrum, Axelar, Base, and Cosmos Hub
 - changed: (CEX) Only allow quotes with known mainnet network codes
 
-## 2.0.2 (2023-02-01)
+## 2.0.2 (2024-02-01)
 
 - fixed: Do not crash at load time if `BigInt` is not present.
 
-## 2.0.1 (2023-01-09)
+## 2.0.1 (2024-01-09)
 
 - fixed: Error when swapping from tokens
 - fixed: Fix parent asset Lifi swaps to use 0x000.. contract address
@@ -24,11 +24,11 @@
 - fixed: Max swap of tokens with Lifi
 - fixed: Properly set tokenId and currencyCode for makeTx transactions
 
-## 2.0.0 (2023-01-04)
+## 2.0.0 (2024-01-04)
 
 - changed: Use core 2.0 types. Requires edge-core-js >2.0.0
 
-## 1.3.0 (2023-01-04)
+## 1.3.0 (2024-01-04)
 
 - added: Support Pulsechain through ChangeNow
 
