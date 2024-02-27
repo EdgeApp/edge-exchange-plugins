@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 2.1.1 (2023-02-27)
+
 - added: (Swapuz) Above limit response handling
 - added: (ChangeNow) AVAX special mainnet case
 - fixed: (Exolix) Correctly handle below limit errors for 'from' quotes
