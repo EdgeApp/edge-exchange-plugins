@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 2.2.0 (2023-02-27)
+
 - added: Cosmos IBC transfer plugin
 
 ## 2.1.1 (2023-02-27)
