@@ -1,6 +1,7 @@
 import { lt } from 'biggystring'
 import {
   asEither,
+  asMaybe,
   asNull,
   asNumber,
   asObject,
@@ -168,18 +169,20 @@ export function makeExolixPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
         })
       }
 
-      if (
-        !response.ok &&
-        !(await response.text()).includes(
-          'Amount to exchange is below the possible min amount to exchange'
-        ) // HACK: Exolix inconsistently returns a !ok response for a 'from' quote
-        // under minimum amount, while the status is OK for a 'to' quote under
-        // minimum amount.
-        // Handle this inconsistency and ensure parse the proper under min error
-        // and we don't exit early with the wrong 'unsupported' error message.
-      ) {
-        log.warn(`Error retrieving Exolix quote: ${await response.text()}`)
+      if (!response.ok) {
         if (response.status === 422) {
+          // Exolix inconsistently returns a !ok response for a 'from' quote
+          // under minimum amount, while the status is OK for a 'to' quote under
+          // minimum amount.
+          // Handle this inconsistency and ensure parse the proper under min error
+          // and we don't exit early with the wrong 'unsupported' error message.
+          const resJson = await response.json()
+          const maybeMinError = asMaybe(asRateResponse)(resJson)
+          if (maybeMinError != null) {
+            return resJson
+          }
+
+          log.warn(`Error retrieving Exolix quote: ${String(resJson)}`)
           throw new SwapCurrencyError(swapInfo, request)
         }
         throw new Error(`Exolix returned error code ${response.status}`)

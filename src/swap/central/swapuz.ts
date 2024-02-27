@@ -1,4 +1,4 @@
-import { add, gt, gte, mul, sub } from 'biggystring'
+import { add, floor, gt, gte, mul, sub } from 'biggystring'
 import {
   asDate,
   asMaybe,
@@ -14,6 +14,7 @@ import {
   EdgeSwapPlugin,
   EdgeSwapQuote,
   EdgeSwapRequest,
+  SwapAboveLimitError,
   SwapBelowLimitError,
   SwapCurrencyError
 } from 'edge-core-js/types'
@@ -208,6 +209,20 @@ export function makeSwapuzPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
       })
       if (!createOrderResponse.ok) {
         const text = await createOrderResponse.text()
+
+        // Check if the text is actually an above limit error ie. 'create order: BTC -> BCH amount > maxAmount  = 0.00916125 > 0.0091614959183703384476468148'
+        const textArray = text.split(' ')
+        if (textArray[7] === 'maxAmount' && !isNaN(parseFloat(textArray[12]))) {
+          const nativeMaxAmount = floor(
+            await fromWallet.denominationToNative(
+              textArray[12],
+              fromCurrencyCode
+            ),
+            0
+          )
+          throw new SwapAboveLimitError(swapInfo, nativeMaxAmount)
+        }
+
         throw new Error(
           `Swapuz call returned error code ${createOrderResponse.status}\n${text}`
         )
@@ -229,9 +244,12 @@ export function makeSwapuzPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
         memoFrom
       } = createOrderJson.result
 
-      const toNativeAmount = await toWallet.denominationToNative(
-        amountResult.toString(),
-        toCurrencyCode
+      const toNativeAmount = floor(
+        await toWallet.denominationToNative(
+          amountResult.toString(),
+          toCurrencyCode
+        ),
+        0
       )
 
       const spendInfo: EdgeSpendInfo = {

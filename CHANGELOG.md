@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- added: (Swapuz) Above limit response handling
+- added: (ChangeNow) AVAX special mainnet case
+- fixed: (Exolix) Correctly handle below limit errors for 'from' quotes
+- fixed: (Godex/Swapuz) Fix conversion to native units
+
 ## 2.1.0 (2023-02-09)
 
 - added: Mainnet codes for Arbitrum, Axelar, Base, and Cosmos Hub
