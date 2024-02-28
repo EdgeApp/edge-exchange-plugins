@@ -1,3 +1,4 @@
+import { fromBech32 } from '@cosmjs/encoding'
 import {
   EdgeCorePluginOptions,
   EdgeSpendInfo,
@@ -30,8 +31,21 @@ export function makeCosmosIbcPlugin(
     request: EdgeSwapRequestPlugin
   ): Promise<SwapOrder> => {
     const {
+      publicAddress: fromAddress
+    } = await request.fromWallet.getReceiveAddress({
+      tokenId: request.fromTokenId
+    })
+    const {
       publicAddress: toAddress
     } = await request.toWallet.getReceiveAddress({ tokenId: request.toTokenId })
+
+    // Make sure both plugins are Cosmos-based
+    try {
+      fromBech32(fromAddress)
+      fromBech32(toAddress)
+    } catch (e) {
+      throw new SwapCurrencyError(swapInfo, request)
+    }
 
     const spendInfo: EdgeSpendInfo = {
       tokenId: request.fromTokenId,
@@ -88,8 +102,7 @@ export function makeCosmosIbcPlugin(
 
       if (
         request.fromWallet.currencyInfo.pluginId ===
-          request.toWallet.currencyInfo.pluginId ||
-        request.fromCurrencyCode !== request.toCurrencyCode
+        request.toWallet.currencyInfo.pluginId
       ) {
         throw new SwapCurrencyError(swapInfo, request)
       }
