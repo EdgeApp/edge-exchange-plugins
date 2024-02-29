@@ -102,7 +102,8 @@ export function makeCosmosIbcPlugin(
 
       if (
         request.fromWallet.currencyInfo.pluginId ===
-        request.toWallet.currencyInfo.pluginId
+          request.toWallet.currencyInfo.pluginId ||
+        request.fromCurrencyCode !== request.toCurrencyCode
       ) {
         throw new SwapCurrencyError(swapInfo, request)
       }
