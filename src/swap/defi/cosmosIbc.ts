@@ -21,6 +21,7 @@ const swapInfo: EdgeSwapInfo = {
   pluginId: 'cosmosibc',
   displayName: 'Cosmos IBC',
   orderUri: undefined,
+  isDex: true,
   supportEmail: 'support@edge.com'
 }
 
@@ -102,7 +103,8 @@ export function makeCosmosIbcPlugin(
 
       if (
         request.fromWallet.currencyInfo.pluginId ===
-        request.toWallet.currencyInfo.pluginId
+          request.toWallet.currencyInfo.pluginId ||
+        request.fromCurrencyCode !== request.toCurrencyCode
       ) {
         throw new SwapCurrencyError(swapInfo, request)
       }
