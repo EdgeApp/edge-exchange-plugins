@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 2.2.2 (2023-03-01)
+
 - changed: (Cosmos IBC) Limit swaps to like-kind assets
 
 ## 2.2.1 (2023-02-28)
