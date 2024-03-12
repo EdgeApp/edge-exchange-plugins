@@ -57,6 +57,7 @@ const MAINNET_CODE_TRANSCRIPTION: StringMap = {
   bitcoincash: 'bitcoin_cash',
   // bitcoingold:
   bitcoinsv: 'bitcoin_sv',
+  cardano: 'cardano',
   // celo:
   // coreum:
   // cosmoshub:
