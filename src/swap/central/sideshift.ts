@@ -40,6 +40,7 @@ const MAINNET_CODE_TRANSCRIPTION = {
   bitcoincash: 'bitcoincash',
   // bitcoingold:
   bitcoinsv: 'bsv',
+  cardano: 'cardano',
   // celo:
   // coreum:
   cosmoshub: 'cosmos',
