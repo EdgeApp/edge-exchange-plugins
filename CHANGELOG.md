@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## 2.3.0 (2023-03-25)
+
+- added: Support Cardano (ADA)
+
 ## 2.2.2 (2023-03-01)
 
 - changed: (Cosmos IBC) Limit swaps to like-kind assets
