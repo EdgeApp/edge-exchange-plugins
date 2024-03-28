@@ -2,6 +2,7 @@ import { asBoolean, asEither, asObject, asOptional, asString } from 'cleaners'
 import {
   EdgeCorePluginOptions,
   EdgeFetchFunction,
+  EdgeMemo,
   EdgeSpendInfo,
   EdgeSwapInfo,
   EdgeSwapPlugin,
@@ -275,15 +276,20 @@ const fetchSwapQuoteInner = async (
 
   const isEstimate = false
 
+  const memos: EdgeMemo[] =
+    order.depositMemo == null
+      ? []
+      : [{ type: 'text', value: order.depositMemo }]
+
   const spendInfo: EdgeSpendInfo = {
     tokenId: request.fromTokenId,
     spendTargets: [
       {
         nativeAmount: amountExpectedFromNative,
-        publicAddress: order.depositAddress,
-        uniqueIdentifier: order.depositMemo
+        publicAddress: order.depositAddress
       }
     ],
+    memos,
     networkFeeOption:
       request.fromCurrencyCode.toUpperCase() === 'BTC' ? 'high' : 'standard',
     assetAction: {

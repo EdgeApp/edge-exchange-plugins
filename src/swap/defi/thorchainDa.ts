@@ -441,7 +441,6 @@ export function makeThorchainDaPlugin(
       tokenId: request.fromTokenId,
       spendTargets: [
         {
-          memo,
           nativeAmount: ethNativeAmount,
           publicAddress
         }
@@ -449,6 +448,7 @@ export function makeThorchainDaPlugin(
       assetAction: {
         assetActionType: 'swap'
       },
+      memos: memo == null ? [] : [{ type: 'text', value: memo }],
       savedAction: {
         actionType: 'swap',
         swapInfo,

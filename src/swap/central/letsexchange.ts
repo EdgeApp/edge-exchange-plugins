@@ -2,6 +2,7 @@ import { gt, lt } from 'biggystring'
 import { asObject, asOptional, asString } from 'cleaners'
 import {
   EdgeCorePluginOptions,
+  EdgeMemo,
   EdgeSpendInfo,
   EdgeSwapInfo,
   EdgeSwapPlugin,
@@ -314,16 +315,21 @@ export function makeLetsExchangePlugin(
       request.toCurrencyCode
     )
 
+    const memos: EdgeMemo[] =
+      quoteInfo.deposit_extra_id == null
+        ? []
+        : [{ type: 'text', value: quoteInfo.deposit_extra_id }]
+
     // Make the transaction:
     const spendInfo: EdgeSpendInfo = {
       tokenId: request.fromTokenId,
       spendTargets: [
         {
           nativeAmount: fromNativeAmount,
-          publicAddress: quoteInfo.deposit,
-          uniqueIdentifier: quoteInfo.deposit_extra_id
+          publicAddress: quoteInfo.deposit
         }
       ],
+      memos,
       networkFeeOption:
         request.fromCurrencyCode.toUpperCase() === 'BTC' ? 'high' : 'standard',
       assetAction: {

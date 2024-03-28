@@ -9,6 +9,7 @@ import {
 } from 'cleaners'
 import {
   EdgeCorePluginOptions,
+  EdgeMemo,
   EdgeSpendInfo,
   EdgeSwapInfo,
   EdgeSwapPlugin,
@@ -253,15 +254,18 @@ export function makeSwapuzPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
         0
       )
 
+      const memos: EdgeMemo[] =
+        memoFrom == null ? [] : [{ type: 'text', value: memoFrom }]
+
       const spendInfo: EdgeSpendInfo = {
         tokenId: request.fromTokenId,
         spendTargets: [
           {
             nativeAmount: request.nativeAmount,
-            publicAddress: addressFrom,
-            uniqueIdentifier: memoFrom
+            publicAddress: addressFrom
           }
         ],
+        memos,
         networkFeeOption: fromCurrencyCode === 'BTC' ? 'high' : 'standard',
         assetAction: {
           assetActionType: 'swap'
