@@ -45,6 +45,8 @@ const asInitOptions = asObject({
   integrator: asOptional(asString, 'edgeapp')
 })
 
+/** Allow up to 20% slippage even for variable rate quotes */
+const MAX_SLIPPAGE = '0.2'
 const LIFI_SERVERS_DEFAULT = ['https://li.quest']
 const EXPIRATION_MS = 1000 * 60
 const EXCHANGE_INFO_UPDATE_FREQ_MS = 60000
@@ -125,7 +127,7 @@ const asExchangeInfo = asObject({
 const asEstimate = asObject({
   fromAmount: asNumberString, // "400000",
   toAmount: asNumberString, // "237318132569913",
-  toAmountMin: asNumberString, // "225452225941418",
+  // toAmountMin: asNumberString, // "225452225941418",
   approvalAddress: asString, // "0x1231DEB6f5749EF6cE6943a275A1D3E7486F4EaE",
   executionDuration: asNumber // 1168,
   // feeCosts: asArray(asFeeCost)
@@ -279,6 +281,7 @@ export function makeLifiPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
       fromAddress,
       toAddress,
       integrator,
+      slippage: MAX_SLIPPAGE,
       fee: affiliateFee
     })
     // Get current pool
@@ -296,7 +299,7 @@ export function makeLifiPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
     const quoteJson = await quoteResponse.json()
     const quote = asV1Quote(quoteJson)
     const { estimate, includedSteps, transactionRequest } = quote
-    const { approvalAddress, toAmountMin } = estimate
+    const { approvalAddress, toAmount } = estimate
 
     const { data, gasLimit, gasPrice } = transactionRequest
     const gasPriceDecimal = hexToDecimal(gasPrice)
@@ -364,11 +367,11 @@ export function makeLifiPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
       savedAction: {
         actionType: 'swap',
         swapInfo,
-        isEstimate: false,
+        isEstimate: true,
         toAsset: {
           pluginId: toWallet.currencyInfo.pluginId,
           tokenId: toTokenId,
-          nativeAmount: toAmountMin
+          nativeAmount: toAmount
         },
         fromAsset: {
           pluginId: fromWallet.currencyInfo.pluginId,

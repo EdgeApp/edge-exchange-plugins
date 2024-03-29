@@ -86,9 +86,9 @@ const asThorSwapRoute = asObject({
   providers: asArray(asString),
   calldata: asUnknown,
   expectedOutput: asString,
-  expectedOutputMaxSlippage: asString,
-  expectedOutputUSD: asString,
-  expectedOutputMaxSlippageUSD: asString,
+  // expectedOutputMaxSlippage: asString,
+  // expectedOutputUSD: asString,
+  // expectedOutputMaxSlippageUSD: asString,
   deadline: asOptional(asString)
 })
 
@@ -96,7 +96,8 @@ const asThorSwapQuoteResponse = asObject({
   routes: asArray(asThorSwapRoute)
 })
 
-const DA_VOLATILITY_SPREAD_DEFAULT = 0.03
+/** Max slippage for 20% for estimated quotes */
+const DA_VOLATILITY_SPREAD_DEFAULT = 0.2
 const THORSWAP_DEFAULT_SERVERS = ['https://api.thorswap.net/aggregator']
 
 type ExchangeInfo = ReturnType<typeof asExchangeInfo>
@@ -155,9 +156,9 @@ export function makeThorchainDaPlugin(
       throw new SwapCurrencyError(swapInfo, request)
     }
     const reverseQuote = quoteFor === 'to'
-    const isEstimate = false
+    const isEstimate = true
 
-    let daVolatilitySpread: number = DA_VOLATILITY_SPREAD_DEFAULT
+    const daVolatilitySpread: number = DA_VOLATILITY_SPREAD_DEFAULT
     let thornodeServers: string[] = THORNODE_SERVERS_DEFAULT
     let thorswapServers: string[] = THORSWAP_DEFAULT_SERVERS
 
@@ -203,7 +204,8 @@ export function makeThorchainDaPlugin(
 
     if (exchangeInfo != null) {
       const { thorchain } = exchangeInfo.swap.plugins
-      daVolatilitySpread = thorchain.daVolatilitySpread
+      // Uncomment line below to re-enable server override of volatility spread
+      // daVolatilitySpread = thorchain.daVolatilitySpread
       thorswapServers = thorchain.thorSwapServers ?? THORSWAP_DEFAULT_SERVERS
       thornodeServers = thorchain.thornodeServers ?? thornodeServers
     }
@@ -297,12 +299,7 @@ export function makeThorchainDaPlugin(
 
     if (thorSwap == null) throw new SwapCurrencyError(swapInfo, request)
 
-    const {
-      providers,
-      path,
-      contractMethod,
-      expectedOutputMaxSlippage
-    } = thorSwap
+    const { providers, path, contractMethod, expectedOutput } = thorSwap
 
     const calldata = asCalldata(thorSwap.calldata)
 
@@ -313,10 +310,7 @@ export function makeThorchainDaPlugin(
     const tcDirect = providers[0] === 'THORCHAIN'
 
     const toNativeAmount = toFixed(
-      await toWallet.denominationToNative(
-        expectedOutputMaxSlippage,
-        toCurrencyCode
-      ),
+      await toWallet.denominationToNative(expectedOutput, toCurrencyCode),
       0,
       0
     )
