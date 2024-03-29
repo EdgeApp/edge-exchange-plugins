@@ -9,6 +9,7 @@ import {
 } from 'cleaners'
 import {
   EdgeCorePluginOptions,
+  EdgeMemo,
   EdgeSpendInfo,
   EdgeSwapInfo,
   EdgeSwapPlugin,
@@ -319,15 +320,20 @@ export function makeChangeHeroPlugin(
       toCurrencyCode
     )
 
+    const memos: EdgeMemo[] =
+      quoteInfo.payinExtraId == null
+        ? []
+        : [{ type: 'text', value: quoteInfo.payinExtraId }]
+
     const spendInfo: EdgeSpendInfo = {
       tokenId: request.fromTokenId,
       spendTargets: [
         {
           nativeAmount: amountExpectedFromNative,
-          publicAddress: quoteInfo.payinAddress,
-          uniqueIdentifier: quoteInfo.payinExtraId ?? undefined
+          publicAddress: quoteInfo.payinAddress
         }
       ],
+      memos,
       networkFeeOption:
         request.fromCurrencyCode.toUpperCase() === 'BTC' ? 'high' : 'standard',
       assetAction: {

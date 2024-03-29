@@ -11,6 +11,7 @@ import {
 import {
   EdgeCorePluginOptions,
   EdgeFetchResponse,
+  EdgeMemo,
   EdgeSpendInfo,
   EdgeSwapInfo,
   EdgeSwapPlugin,
@@ -287,15 +288,20 @@ export function makeExolixPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
       request.toCurrencyCode
     )
 
+    const memos: EdgeMemo[] =
+      quoteInfo.depositExtraId == null
+        ? []
+        : [{ type: 'text', value: quoteInfo.depositExtraId }]
+
     const spendInfo: EdgeSpendInfo = {
       tokenId: request.fromTokenId,
       spendTargets: [
         {
           nativeAmount: fromNativeAmount,
-          publicAddress: quoteInfo.depositAddress,
-          uniqueIdentifier: quoteInfo.depositExtraId
+          publicAddress: quoteInfo.depositAddress
         }
       ],
+      memos,
       networkFeeOption:
         request.fromCurrencyCode.toUpperCase() === 'BTC' ? 'high' : 'standard',
       assetAction: {

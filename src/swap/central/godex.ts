@@ -10,6 +10,7 @@ import {
 } from 'cleaners'
 import {
   EdgeCorePluginOptions,
+  EdgeMemo,
   EdgeSpendInfo,
   EdgeSwapInfo,
   EdgeSwapPlugin,
@@ -303,16 +304,21 @@ export function makeGodexPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
     log('fromNativeAmount: ' + fromNativeAmount)
     log('toNativeAmount: ' + toNativeAmount)
 
+    const memos: EdgeMemo[] =
+      quoteInfo.deposit_extra_id == null
+        ? []
+        : [{ type: 'text', value: quoteInfo.deposit_extra_id }]
+
     // Make the transaction:
     const spendInfo: EdgeSpendInfo = {
       tokenId: request.fromTokenId,
       spendTargets: [
         {
           nativeAmount: fromNativeAmount,
-          publicAddress: quoteInfo.deposit,
-          uniqueIdentifier: quoteInfo.deposit_extra_id ?? undefined
+          publicAddress: quoteInfo.deposit
         }
       ],
+      memos,
       networkFeeOption:
         request.fromCurrencyCode.toUpperCase() === 'BTC' ? 'high' : 'standard',
       assetAction: {
