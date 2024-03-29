@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 2.3.1 (2024-03-29)
+
 - fixed: Use proper `EdgeMemo` API on `EdgeSpendInfo`
 
 ## 2.3.0 (2023-03-25)
