@@ -119,7 +119,8 @@ export function makeThorchainDaPlugin(
     affiliateFeeBasis,
     ninerealmsClientId,
     thorname,
-    thorswapApiKey
+    thorswapApiKey,
+    thorswapXApiKey
   } = asInitOptions(opts.initOptions)
 
   const headers = {
@@ -129,6 +130,7 @@ export function makeThorchainDaPlugin(
 
   const thorswapHeaders = {
     'Content-Type': 'application/json',
+    'x-api-key': thorswapXApiKey,
     referer: thorswapApiKey
   }
 

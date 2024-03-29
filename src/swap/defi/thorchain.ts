@@ -162,7 +162,8 @@ export const asInitOptions = asObject({
   affiliateFeeBasis: asOptional(asString, AFFILIATE_FEE_BASIS_DEFAULT),
   ninerealmsClientId: asOptional(asString, ''),
   thorname: asOptional(asString, 'ej'),
-  thorswapApiKey: asOptional(asString)
+  thorswapApiKey: asOptional(asString),
+  thorswapXApiKey: asOptional(asString)
 })
 
 export const asInboundAddresses = asArray(
