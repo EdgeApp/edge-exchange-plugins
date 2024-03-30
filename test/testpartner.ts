@@ -9,10 +9,13 @@ import {
 } from 'cleaners'
 import {
   addEdgeCorePlugins,
+  EdgeAccount,
+  EdgeContext,
   EdgeCurrencyWallet,
   EdgeSwapQuote,
   EdgeSwapRequest,
   lockEdgeCorePlugins,
+  makeEdgeContext,
   makeFakeEdgeWorld
 } from 'edge-core-js'
 import accountBasedPlugins from 'edge-currency-accountbased'
@@ -73,9 +76,16 @@ async function main(): Promise<void> {
   const loginKey = dump.loginKey
   const fakeUsers = [dump.data]
 
-  const world = await makeFakeEdgeWorld(fakeUsers, {})
-  const context = await world.makeEdgeContext({
-    allowNetworkAccess: true,
+  const {
+    YOLO_DUMP,
+    YOLO_KEY,
+    YOLO_PIN,
+    YOLO_PASSWORD,
+    YOLO_OTPKEY,
+    YOLO_USERNAME
+  } = config
+
+  const contextOpts = {
     apiKey: '',
     appId: '',
     plugins: {
@@ -86,16 +96,54 @@ async function main(): Promise<void> {
       lifi: config.LIFI_INIT,
       polygon: config.POLYGON_INIT,
       piratechain: true,
-      thorchain: config.THORCHAIN_INIT
+      thorchain: config.THORCHAIN_INIT,
+      thorchainda: config.THORCHAIN_INIT
     }
-  })
+  }
 
+  let account: EdgeAccount | undefined
+  let context: EdgeContext
+  if (YOLO_DUMP) {
+    const world = await makeFakeEdgeWorld(fakeUsers, {})
+    context = await world.makeEdgeContext({
+      ...contextOpts,
+      allowNetworkAccess: true
+    })
+    account = await context.loginWithKey('bob', loginKey, {
+      pauseWallets: true
+    })
+  } else {
+    context = await makeEdgeContext(contextOpts)
+    if (YOLO_USERNAME == null) {
+      throw new Error('No username')
+    }
+    if (YOLO_KEY != null) {
+      account = await context.loginWithKey(YOLO_USERNAME, YOLO_KEY, {
+        pauseWallets: true
+      })
+    } else if (YOLO_PIN != null) {
+      account = await context.loginWithPIN(YOLO_USERNAME, YOLO_PIN, {
+        pauseWallets: true
+      })
+    } else if (YOLO_PASSWORD != null) {
+      account = await context.loginWithPassword(YOLO_USERNAME, YOLO_PASSWORD, {
+        otpKey: YOLO_OTPKEY,
+        pauseWallets: true
+      })
+    }
+    if (account == null) {
+      throw new Error('No account')
+    }
+  }
   await context.changeLogSettings({
     defaultLogLevel: 'info',
     sources: {}
   })
 
-  const account = await context.loginWithKey('bob', loginKey)
+  // Uncomment the following lines to get the loginKey for an account. This can be
+  // used in the testconfig.json to quickly login to a real account.
+  // const lk = await account.getLoginKey()
+  // console.log(`Login key: ${lk}`)
   const btcInfo = await account.getFirstWalletInfo('wallet:bitcoin')
   const bchInfo = await account.getFirstWalletInfo('wallet:bitcoincash')
   const ethInfo = await account.getFirstWalletInfo('wallet:ethereum')
@@ -109,6 +157,8 @@ async function main(): Promise<void> {
   const avaxWallet = await account.waitForCurrencyWallet(avaxInfo?.id ?? '')
   const arrrWallet = await account.waitForCurrencyWallet(arrrInfo?.id ?? '')
   const maticWallet = await account.waitForCurrencyWallet(maticInfo?.id ?? '')
+  await ethWallet.changePaused(false)
+  await avaxWallet.changePaused(false)
 
   const fetchQuote = async ({
     fromWallet,
@@ -150,6 +200,9 @@ async function main(): Promise<void> {
       toTokenId,
       nativeAmount,
       quoteFor
+    }
+    if (account == null) {
+      throw new Error('No account')
     }
     const quote = await account.fetchSwapQuote(request).catch(e => {
       console.log(e)
