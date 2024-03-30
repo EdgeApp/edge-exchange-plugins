@@ -319,11 +319,14 @@ export function makeLifiPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
         tokenId: null,
         spendTargets: [
           {
-            memo: approvalData,
             nativeAmount: '0',
             publicAddress: fromContractAddress
           }
         ],
+        memos:
+          approvalData != null
+            ? [{ type: 'hex', value: approvalData }]
+            : undefined,
         networkFeeOption: 'custom',
         customNetworkFee: {
           gasPrice: gasPriceGwei

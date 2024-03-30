@@ -11,6 +11,7 @@ import {
 } from 'cleaners'
 import {
   EdgeCorePluginOptions,
+  EdgeMemo,
   EdgeSpendInfo,
   EdgeSwapInfo,
   EdgeSwapPlugin,
@@ -340,6 +341,7 @@ export function makeThorchainDaPlugin(
     //   throw new SwapCurrencyError(swapInfo, request)
     // }
 
+    const memoType: EdgeMemo['type'] = 'hex'
     let memo = calldata.tcMemo ?? calldata.memo ?? ''
 
     log.warn(memo)
@@ -392,7 +394,7 @@ export function makeThorchainDaPlugin(
           nativeAmount
         })
       } else {
-        memo = '0x' + Buffer.from(memo).toString('hex')
+        memo = Buffer.from(memo).toString('hex')
       }
     } else {
       // Cannot yet do tokens on non-EVM chains
@@ -409,9 +411,9 @@ export function makeThorchainDaPlugin(
       const spendInfo: EdgeSpendInfo = {
         // Token approvals only spend the parent currency
         tokenId: null,
+        memos: [{ type: 'hex', value: approvalData }],
         spendTargets: [
           {
-            memo: approvalData,
             nativeAmount: '0',
             publicAddress: sourceTokenContractAddress
           }
@@ -444,7 +446,8 @@ export function makeThorchainDaPlugin(
       assetAction: {
         assetActionType: 'swap'
       },
-      memos: memo == null ? [] : [{ type: 'text', value: memo }],
+      memos:
+        memo == null ? [] : [{ type: memoType, value: memo.replace('0x', '') }],
       savedAction: {
         actionType: 'swap',
         swapInfo,
