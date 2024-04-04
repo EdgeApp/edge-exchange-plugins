@@ -96,7 +96,7 @@ export const getEvmApprovalData = async (params: {
       gasPrice: '20'
     }
   )
-  return approveTx.data
+  return approveTx.data != null ? approveTx.data.replace('0x', '') : undefined
 }
 
 export const getEvmTokenData = async (params: {

@@ -124,5 +124,11 @@ export const asTestConfig = asObject({
     asObject({
       appId: asOptional(asString, 'edge')
     }).withRest
-  )
+  ),
+  YOLO_PASSWORD: asOptional(asString, null),
+  YOLO_USERNAME: asOptional(asString, null),
+  YOLO_PIN: asOptional(asString, null),
+  YOLO_OTPKEY: asOptional(asString),
+  YOLO_KEY: asOptional(asString, null),
+  YOLO_DUMP: asOptional(asBoolean, true)
 }).withRest

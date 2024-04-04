@@ -6,6 +6,7 @@
 /coverage/
 /dist/
 /lib/
+/edge/
 
 # Package managers:
 node_modules/

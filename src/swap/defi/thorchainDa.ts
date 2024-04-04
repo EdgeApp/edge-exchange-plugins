@@ -11,6 +11,7 @@ import {
 } from 'cleaners'
 import {
   EdgeCorePluginOptions,
+  EdgeMemo,
   EdgeSpendInfo,
   EdgeSwapInfo,
   EdgeSwapPlugin,
@@ -86,9 +87,9 @@ const asThorSwapRoute = asObject({
   providers: asArray(asString),
   calldata: asUnknown,
   expectedOutput: asString,
-  expectedOutputMaxSlippage: asString,
-  expectedOutputUSD: asString,
-  expectedOutputMaxSlippageUSD: asString,
+  // expectedOutputMaxSlippage: asString,
+  // expectedOutputUSD: asString,
+  // expectedOutputMaxSlippageUSD: asString,
   deadline: asOptional(asString)
 })
 
@@ -96,7 +97,8 @@ const asThorSwapQuoteResponse = asObject({
   routes: asArray(asThorSwapRoute)
 })
 
-const DA_VOLATILITY_SPREAD_DEFAULT = 0.03
+/** Max slippage for 20% for estimated quotes */
+const DA_VOLATILITY_SPREAD_DEFAULT = 0.2
 const THORSWAP_DEFAULT_SERVERS = ['https://api.thorswap.net/aggregator']
 
 type ExchangeInfo = ReturnType<typeof asExchangeInfo>
@@ -119,7 +121,8 @@ export function makeThorchainDaPlugin(
     affiliateFeeBasis,
     ninerealmsClientId,
     thorname,
-    thorswapApiKey
+    thorswapApiKey,
+    thorswapXApiKey
   } = asInitOptions(opts.initOptions)
 
   const headers = {
@@ -129,6 +132,7 @@ export function makeThorchainDaPlugin(
 
   const thorswapHeaders = {
     'Content-Type': 'application/json',
+    'x-api-key': thorswapXApiKey,
     referer: thorswapApiKey
   }
 
@@ -153,9 +157,9 @@ export function makeThorchainDaPlugin(
       throw new SwapCurrencyError(swapInfo, request)
     }
     const reverseQuote = quoteFor === 'to'
-    const isEstimate = false
+    const isEstimate = true
 
-    let daVolatilitySpread: number = DA_VOLATILITY_SPREAD_DEFAULT
+    const daVolatilitySpread: number = DA_VOLATILITY_SPREAD_DEFAULT
     let thornodeServers: string[] = THORNODE_SERVERS_DEFAULT
     let thorswapServers: string[] = THORSWAP_DEFAULT_SERVERS
 
@@ -201,7 +205,8 @@ export function makeThorchainDaPlugin(
 
     if (exchangeInfo != null) {
       const { thorchain } = exchangeInfo.swap.plugins
-      daVolatilitySpread = thorchain.daVolatilitySpread
+      // Uncomment line below to re-enable server override of volatility spread
+      // daVolatilitySpread = thorchain.daVolatilitySpread
       thorswapServers = thorchain.thorSwapServers ?? THORSWAP_DEFAULT_SERVERS
       thornodeServers = thorchain.thornodeServers ?? thornodeServers
     }
@@ -295,12 +300,7 @@ export function makeThorchainDaPlugin(
 
     if (thorSwap == null) throw new SwapCurrencyError(swapInfo, request)
 
-    const {
-      providers,
-      path,
-      contractMethod,
-      expectedOutputMaxSlippage
-    } = thorSwap
+    const { providers, path, contractMethod, expectedOutput } = thorSwap
 
     const calldata = asCalldata(thorSwap.calldata)
 
@@ -311,10 +311,7 @@ export function makeThorchainDaPlugin(
     const tcDirect = providers[0] === 'THORCHAIN'
 
     const toNativeAmount = toFixed(
-      await toWallet.denominationToNative(
-        expectedOutputMaxSlippage,
-        toCurrencyCode
-      ),
+      await toWallet.denominationToNative(expectedOutput, toCurrencyCode),
       0,
       0
     )
@@ -344,6 +341,7 @@ export function makeThorchainDaPlugin(
     //   throw new SwapCurrencyError(swapInfo, request)
     // }
 
+    const memoType: EdgeMemo['type'] = 'hex'
     let memo = calldata.tcMemo ?? calldata.memo ?? ''
 
     log.warn(memo)
@@ -396,7 +394,7 @@ export function makeThorchainDaPlugin(
           nativeAmount
         })
       } else {
-        memo = '0x' + Buffer.from(memo).toString('hex')
+        memo = Buffer.from(memo).toString('hex')
       }
     } else {
       // Cannot yet do tokens on non-EVM chains
@@ -413,9 +411,9 @@ export function makeThorchainDaPlugin(
       const spendInfo: EdgeSpendInfo = {
         // Token approvals only spend the parent currency
         tokenId: null,
+        memos: [{ type: 'hex', value: approvalData }],
         spendTargets: [
           {
-            memo: approvalData,
             nativeAmount: '0',
             publicAddress: sourceTokenContractAddress
           }
@@ -448,7 +446,8 @@ export function makeThorchainDaPlugin(
       assetAction: {
         assetActionType: 'swap'
       },
-      memos: memo == null ? [] : [{ type: 'text', value: memo }],
+      memos:
+        memo == null ? [] : [{ type: memoType, value: memo.replace('0x', '') }],
       savedAction: {
         actionType: 'swap',
         swapInfo,

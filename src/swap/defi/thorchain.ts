@@ -162,7 +162,8 @@ export const asInitOptions = asObject({
   affiliateFeeBasis: asOptional(asString, AFFILIATE_FEE_BASIS_DEFAULT),
   ninerealmsClientId: asOptional(asString, ''),
   thorname: asOptional(asString, 'ej'),
-  thorswapApiKey: asOptional(asString)
+  thorswapApiKey: asOptional(asString),
+  thorswapXApiKey: asOptional(asString)
 })
 
 export const asInboundAddresses = asArray(
@@ -633,14 +634,12 @@ export function makeThorchainPlugin(
 
     let preTx: EdgeTransaction | undefined
     if (approvalData != null) {
-      approvalData = approvalData.replace('0x', '')
-
       const spendInfo: EdgeSpendInfo = {
         // Token approvals only spend the parent currency
         tokenId: null,
         memos: [
           {
-            type: memoType,
+            type: 'hex',
             value: approvalData
           }
         ],
