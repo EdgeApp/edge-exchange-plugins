@@ -112,7 +112,6 @@ export function makeSpookySwapPlugin(
         tokenId: request.fromTokenId,
         spendTargets: [
           {
-            memo: swapTx.data,
             nativeAmount:
               swapTxs.length === 2 && i === 0
                 ? '0' // approval transactions don't have a value
@@ -120,6 +119,10 @@ export function makeSpookySwapPlugin(
             publicAddress: swapTx.to
           }
         ],
+        memos:
+          swapTx.data != null
+            ? [{ type: 'hex', value: swapTx.data.replace(/^0x/, '') }]
+            : undefined,
         customNetworkFee: {
           gasPrice:
             swapTx.gasPrice != null

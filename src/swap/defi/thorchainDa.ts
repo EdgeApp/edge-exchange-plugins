@@ -341,7 +341,7 @@ export function makeThorchainDaPlugin(
     //   throw new SwapCurrencyError(swapInfo, request)
     // }
 
-    const memoType: EdgeMemo['type'] = 'hex'
+    let memoType: EdgeMemo['type'] = 'hex'
     let memo = calldata.tcMemo ?? calldata.memo ?? ''
 
     log.warn(memo)
@@ -396,8 +396,10 @@ export function makeThorchainDaPlugin(
       } else {
         memo = Buffer.from(memo).toString('hex')
       }
+      memo = memo.replace(/^0x/, '')
     } else {
       // Cannot yet do tokens on non-EVM chains
+      memoType = 'text'
       if (fromMainnetCode !== fromCurrencyCode) {
         throw new SwapCurrencyError(swapInfo, request)
       }
@@ -446,8 +448,7 @@ export function makeThorchainDaPlugin(
       assetAction: {
         assetActionType: 'swap'
       },
-      memos:
-        memo == null ? [] : [{ type: memoType, value: memo.replace('0x', '') }],
+      memos: memo == null ? undefined : [{ type: memoType, value: memo }],
       savedAction: {
         actionType: 'swap',
         swapInfo,

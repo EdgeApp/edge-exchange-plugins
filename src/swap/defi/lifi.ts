@@ -353,11 +353,11 @@ export function makeLifiPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
       tokenId: request.fromTokenId,
       spendTargets: [
         {
-          memo: data,
           nativeAmount: fromNativeAmount,
           publicAddress: approvalAddress
         }
       ],
+      memos: [{ type: 'hex', value: data.replace(/^0x/, '') }],
       networkFeeOption: 'custom',
       customNetworkFee: {
         // XXX Hack. Lifi doesn't properly estimate ethereum gas limits. Increase by 40%
