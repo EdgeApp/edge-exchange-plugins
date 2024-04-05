@@ -42,7 +42,7 @@ const asInitOptions = asObject({
   affiliateId: asOptional(asString)
 })
 
-const orderUri = 'https://letsexchange.io/?exchangeId='
+const orderUri = 'https://letsexchange.io/?transactionId='
 const uri = 'https://api.letsexchange.io/api/v1/'
 
 const expirationMs = 1000 * 60
