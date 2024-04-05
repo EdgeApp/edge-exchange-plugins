@@ -566,7 +566,6 @@ export function makeThorchainPlugin(
           vaultAddress: thorAddress,
           memo
         })
-        memo = memo.replace('0x', '')
 
         // Token transactions send no ETH (or other EVM mainnet coin)
         ethNativeAmount = '0'
@@ -581,6 +580,7 @@ export function makeThorchainPlugin(
       } else {
         memo = Buffer.from(memo).toString('hex')
       }
+      memo = memo.replace(/^0x/, '')
     } else if (fromWallet.currencyInfo.pluginId === 'thorchainrune') {
       const makeTxParams: MakeTxParams = {
         type: 'MakeTxDeposit',
@@ -625,9 +625,12 @@ export function makeThorchainPlugin(
         expirationDate: new Date(Date.now() + EXPIRATION_MS)
       }
     } else {
+      // For UTXO chains, we send the memo as text which gets
+      // encoded by the plugins
       memoType = 'text'
-      // Cannot yet do tokens on non-EVM chains
+
       if (fromTokenId != null) {
+        // Cannot yet do tokens on utxo chains
         throw new SwapCurrencyError(swapInfo, request)
       }
     }
