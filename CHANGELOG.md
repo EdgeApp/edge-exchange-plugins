@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 2.4.0 (2024-04-05)
+
 - added: Login info to testconfig for testpartners.ts
 - changed: Change Lifi and Thorchain DA to use variable quotes
 - fixed: Memo handling by DEX plugins
