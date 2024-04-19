@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- added: Special case Ripple and Stellar memo types
+
 ## 2.4.0 (2024-04-05)
 
 - added: Login info to testconfig for testpartners.ts

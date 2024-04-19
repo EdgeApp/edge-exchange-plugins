@@ -30,7 +30,7 @@ import {
   makeSwapPluginQuote,
   SwapOrder
 } from '../../util/swapHelpers'
-import { convertRequest, getAddress } from '../../util/utils'
+import { convertRequest, getAddress, memoType } from '../../util/utils'
 import { asNumberString, EdgeSwapRequestPlugin } from '../types'
 
 const pluginId = 'godex'
@@ -307,7 +307,12 @@ export function makeGodexPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
     const memos: EdgeMemo[] =
       quoteInfo.deposit_extra_id == null
         ? []
-        : [{ type: 'text', value: quoteInfo.deposit_extra_id }]
+        : [
+            {
+              type: memoType(request.fromWallet.currencyInfo.pluginId),
+              value: quoteInfo.deposit_extra_id
+            }
+          ]
 
     // Make the transaction:
     const spendInfo: EdgeSpendInfo = {

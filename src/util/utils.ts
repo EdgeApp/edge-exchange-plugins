@@ -3,6 +3,7 @@ import {
   EdgeCurrencyWallet,
   EdgeFetchFunction,
   EdgeFetchResponse,
+  EdgeMemoOption,
   EdgeSwapRequest
 } from 'edge-core-js'
 
@@ -191,4 +192,12 @@ export const hexToDecimal = (hex: string): string => {
   } else {
     return add(`0x${hex}`, '0')
   }
+}
+
+const pluginIdMemoTypes: { [pluginId: string]: EdgeMemoOption['type'] } = {
+  ripple: 'number',
+  stellar: 'number'
+}
+export const memoType = (pluginId: string): EdgeMemoOption['type'] => {
+  return pluginIdMemoTypes[pluginId] ?? 'text'
 }
