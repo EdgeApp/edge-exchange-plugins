@@ -30,7 +30,7 @@ import {
   makeSwapPluginQuote,
   SwapOrder
 } from '../../util/swapHelpers'
-import { convertRequest, getAddress } from '../../util/utils'
+import { convertRequest, getAddress, memoType } from '../../util/utils'
 import { EdgeSwapRequestPlugin } from '../types'
 
 const pluginId = 'exolix'
@@ -291,7 +291,12 @@ export function makeExolixPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
     const memos: EdgeMemo[] =
       quoteInfo.depositExtraId == null
         ? []
-        : [{ type: 'text', value: quoteInfo.depositExtraId }]
+        : [
+            {
+              type: memoType(request.fromWallet.currencyInfo.pluginId),
+              value: quoteInfo.depositExtraId
+            }
+          ]
 
     const spendInfo: EdgeSpendInfo = {
       tokenId: request.fromTokenId,

@@ -25,7 +25,7 @@ import {
   makeSwapPluginQuote,
   SwapOrder
 } from '../../util/swapHelpers'
-import { convertRequest, getAddress } from '../../util/utils'
+import { convertRequest, getAddress, memoType } from '../../util/utils'
 import { EdgeSwapRequestPlugin } from '../types'
 
 // See https://help.sideshift.ai/en/articles/4559664-which-coins-and-tokens-are-listed for list of supported currencies
@@ -279,7 +279,12 @@ const fetchSwapQuoteInner = async (
   const memos: EdgeMemo[] =
     order.depositMemo == null
       ? []
-      : [{ type: 'text', value: order.depositMemo }]
+      : [
+          {
+            type: memoType(request.fromWallet.currencyInfo.pluginId),
+            value: order.depositMemo
+          }
+        ]
 
   const spendInfo: EdgeSpendInfo = {
     tokenId: request.fromTokenId,

@@ -32,7 +32,7 @@ import {
   makeSwapPluginQuote,
   SwapOrder
 } from '../../util/swapHelpers'
-import { convertRequest, getAddress } from '../../util/utils'
+import { convertRequest, getAddress, memoType } from '../../util/utils'
 import { EdgeSwapRequestPlugin } from '../types'
 const pluginId = 'changenow'
 
@@ -272,7 +272,14 @@ export function makeChangeNowPlugin(
       )
 
       const memos: EdgeMemo[] =
-        payinExtraId == null ? [] : [{ type: 'text', value: payinExtraId }]
+        payinExtraId == null
+          ? []
+          : [
+              {
+                type: memoType(request.fromWallet.currencyInfo.pluginId),
+                value: payinExtraId
+              }
+            ]
 
       const spendInfo: EdgeSpendInfo = {
         tokenId: request.fromTokenId,
@@ -342,7 +349,14 @@ export function makeChangeNowPlugin(
       )
 
       const memos: EdgeMemo[] =
-        payinExtraId == null ? [] : [{ type: 'text', value: payinExtraId }]
+        payinExtraId == null
+          ? []
+          : [
+              {
+                type: memoType(request.fromWallet.currencyInfo.pluginId),
+                value: payinExtraId
+              }
+            ]
 
       const spendInfo: EdgeSpendInfo = {
         tokenId: request.fromTokenId,
