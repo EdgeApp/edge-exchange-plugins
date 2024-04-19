@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 2.4.1 (2024-04-18)
+
 - added: Special case Ripple and Stellar memo types
 
 ## 2.4.0 (2024-04-05)
