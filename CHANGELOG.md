@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- added: (Velodrome) Check both v1 and v2 routers for best swap
+
 ## 2.4.1 (2024-04-18)
 
 - added: Special case Ripple and Stellar memo types
