@@ -1,3 +1,4 @@
+import { gt } from 'biggystring'
 import {
   EdgeCorePluginOptions,
   EdgeSpendInfo,
@@ -19,6 +20,7 @@ import {
 import { convertRequest } from '../../../../util/utils'
 import { EdgeSwapRequestPlugin } from '../../../types'
 import VELODROME_V1_ROUTER_ABI from '../../abi/VELODROME_V1_ROUTER_ABI'
+import VELODROME_V2_ROUTER_ABI from '../../abi/VELODROME_V2_ROUTER_ABI'
 import WRAPPED_OPTIMISM_ETH_ABI from '../../abi/WRAPPED_OPTIMISM_ETH_ABI'
 import { getInOutTokenAddresses } from '../../defiUtils'
 import { getSwapAmounts, getSwapTransactions } from '../uniV2Utils'
@@ -34,7 +36,15 @@ const EXPIRATION_MS = 1000 * 60
 const SLIPPAGE = '0.05'
 const OPTIMISM_RPC = 'https://rpc.ankr.com/optimism/'
 const WETH_TOKEN_ADDRESS = '0x4200000000000000000000000000000000000006'
-const VELODROME_ROUTER_ADDRESS = '0x9c12939390052919aF3155f41Bf4160Fd3666A6f'
+const VELODROME_V1_ROUTER_ADDRESS = '0x9c12939390052919aF3155f41Bf4160Fd3666A6f'
+const VELODROME_V2_ROUTER_ADDRESS = '0xa062aE8A9c5e11aaA026fc2670B0D65cCc8B2858'
+const VELODROME_V2_FACTORY_ADDRESS =
+  '0xF1046053aa5682b4F9a81b5481394DA16BE5FF5a'
+
+interface VelodromeConfig {
+  path: any
+  router: ethers.Contract
+}
 
 export function makeVelodromePlugin(
   opts: EdgeCorePluginOptions
@@ -67,30 +77,85 @@ export function makeVelodromePlugin(
 
     const provider = new ethers.providers.JsonRpcProvider(OPTIMISM_RPC)
     // Calculate swap amounts
-    const velodromeRouter = new ethers.Contract(
-      VELODROME_ROUTER_ADDRESS,
+    const velodromeRouterV1 = new ethers.Contract(
+      VELODROME_V1_ROUTER_ADDRESS,
       VELODROME_V1_ROUTER_ABI,
       provider
     )
-
-    // Identify best pool type
-    const stable = isWrappingSwap
-      ? true // No need to check for wrapping txs since it won't even use the dex
-      : await velodromeRouter.getAmountOut(
-          request.nativeAmount,
-          fromTokenAddress,
-          toTokenAddress
-        ).stable
-
-    const path = [[fromTokenAddress, toTokenAddress, stable]]
-
-    const { amountToSwap, expectedAmountOut } = await getSwapAmounts(
-      velodromeRouter,
-      request,
-      swapInfo,
-      path,
-      isWrappingSwap
+    const velodromeRouterV2 = new ethers.Contract(
+      VELODROME_V2_ROUTER_ADDRESS,
+      VELODROME_V2_ROUTER_ABI,
+      provider
     )
+
+    const configs: VelodromeConfig[] = [
+      // V1
+      {
+        path: [[fromTokenAddress, toTokenAddress, true]],
+        router: velodromeRouterV1
+      },
+      {
+        path: [[fromTokenAddress, toTokenAddress, false]],
+        router: velodromeRouterV1
+      },
+      // V2
+      {
+        path: [
+          [fromTokenAddress, toTokenAddress, true, VELODROME_V2_FACTORY_ADDRESS]
+        ],
+        router: velodromeRouterV2
+      },
+      {
+        path: [
+          [
+            fromTokenAddress,
+            toTokenAddress,
+            false,
+            VELODROME_V2_FACTORY_ADDRESS
+          ]
+        ],
+        router: velodromeRouterV2
+      }
+    ]
+
+    // Try stable and volatile pools form both routers and choose the best one.
+    const getAmounts = async (
+      config: VelodromeConfig
+    ): Promise<{
+      path: any
+      router: ethers.Contract
+      amountToSwap: string
+      expectedAmountOut: string
+    }> => {
+      try {
+        const amounts = await getSwapAmounts(
+          config.router,
+          request,
+          swapInfo,
+          config.path,
+          isWrappingSwap
+        )
+        return { ...config, ...amounts }
+      } catch (e) {
+        return {
+          ...config,
+          amountToSwap: '0',
+          expectedAmountOut: '0'
+        }
+      }
+    }
+
+    const amounts = await Promise.all(
+      configs.map(async config => await getAmounts(config))
+    )
+    const best = amounts.sort((a, b) =>
+      gt(a.expectedAmountOut, b.expectedAmountOut) ? -1 : 1
+    )[0]
+
+    const { amountToSwap, expectedAmountOut, router, path } = best
+    if (expectedAmountOut === '0') {
+      throw new SwapCurrencyError(swapInfo, request)
+    }
 
     // Generate swap transactions
     const toAddress = (await toWallet.getReceiveAddress({ tokenId: null }))
@@ -107,7 +172,7 @@ export function makeVelodromePlugin(
       provider,
       inOutAddresses,
       path,
-      velodromeRouter,
+      router,
       wrappedEthContract,
       amountToSwap,
       expectedAmountOut,
@@ -187,7 +252,7 @@ export function makeVelodromePlugin(
             nativeAmount: amountToSwap
           },
           tokenContractAddress: inOutAddresses.fromTokenAddress,
-          contractAddress: velodromeRouter.address
+          contractAddress: router.address
         }
       }
 
