@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- added: (Exolix) Add Piratechain
+
 ## 2.4.2 (2024-04-22)
 
 - added: (Velodrome) Check both v1 and v2 routers for best swap

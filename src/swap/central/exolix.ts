@@ -90,7 +90,7 @@ const MAINNET_CODE_TRANSCRIPTION = {
   monero: 'XMR',
   optimism: 'OPTIMISM',
   osmosis: 'OSMO',
-  // piratechain:
+  piratechain: 'ARRR',
   polkadot: 'DOT',
   // polygon:
   // pulsechain:
