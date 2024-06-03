@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 2.4.3 (2024-06-03)
+
 - added: (Exolix) Add Piratechain
 
 ## 2.4.2 (2024-04-22)
