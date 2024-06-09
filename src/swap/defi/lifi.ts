@@ -45,8 +45,8 @@ const asInitOptions = asObject({
   integrator: asOptional(asString, 'edgeapp')
 })
 
-/** Allow up to 20% slippage even for variable rate quotes */
-const MAX_SLIPPAGE = '0.2'
+/** Allow up to 5% slippage even for variable rate quotes */
+const MAX_SLIPPAGE = '0.05'
 const LIFI_SERVERS_DEFAULT = ['https://li.quest']
 const EXPIRATION_MS = 1000 * 60
 const EXCHANGE_INFO_UPDATE_FREQ_MS = 60000

@@ -97,8 +97,8 @@ const asThorSwapQuoteResponse = asObject({
   routes: asArray(asThorSwapRoute)
 })
 
-/** Max slippage for 20% for estimated quotes */
-const DA_VOLATILITY_SPREAD_DEFAULT = 0.2
+/** Max slippage for 5% for estimated quotes */
+const DA_VOLATILITY_SPREAD_DEFAULT = 0.05
 const THORSWAP_DEFAULT_SERVERS = ['https://api.thorswap.net/aggregator']
 
 type ExchangeInfo = ReturnType<typeof asExchangeInfo>

@@ -215,7 +215,7 @@ export function makeVelodromePlugin(
         savedAction: {
           actionType: 'swap',
           swapInfo,
-          isEstimate: false,
+          isEstimate: true,
           toAsset: {
             pluginId: request.toWallet.currencyInfo.pluginId,
             tokenId: request.toTokenId,
@@ -267,7 +267,7 @@ export function makeVelodromePlugin(
       savedAction: {
         actionType: 'swap',
         swapInfo,
-        isEstimate: false,
+        isEstimate: true,
         toAsset: {
           pluginId: request.toWallet.currencyInfo.pluginId,
           tokenId: request.toTokenId,

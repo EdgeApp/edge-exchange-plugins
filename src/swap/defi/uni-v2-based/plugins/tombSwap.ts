@@ -168,7 +168,7 @@ export function makeTombSwapPlugin(
       savedAction: {
         actionType: 'swap',
         swapInfo,
-        isEstimate: false,
+        isEstimate: true,
         toAsset: {
           pluginId: request.toWallet.currencyInfo.pluginId,
           tokenId: request.toTokenId,
