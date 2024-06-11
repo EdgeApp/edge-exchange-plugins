@@ -88,6 +88,7 @@ const MAINNET_CODE_TRANSCRIPTION: StringMap = {
   okexchain: 'OKT',
   optimism: 'OPT',
   polygon: 'POL',
+  solana: 'SOL',
   velas: 'VEL',
   zksync: 'ERA'
 }
@@ -150,7 +151,12 @@ const asTransactionRequest = asObject({
   gasLimit: asString // '0x08a3df'
 })
 
+const asTransactionRequestSolana = asObject({
+  data: asString
+})
+
 const asIncludedStep = asObject({
+  estimate: asOptional(asEstimate),
   toolDetails: asObject({
     name: asString
   })
@@ -319,6 +325,51 @@ export function makeLifiPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
     let preTx: EdgeTransaction | undefined
     let spendInfo: EdgeSpendInfo
     switch (fromWallet.currencyInfo.pluginId) {
+      case 'solana': {
+        const publicAddress = includedSteps[0].estimate?.approvalAddress
+        if (publicAddress == null) {
+          log.warn('No public address provided in quote')
+          throw new SwapCurrencyError(swapInfo, request)
+        }
+        const { data } = asTransactionRequestSolana(transactionRequestRaw)
+
+        const fromNativeAmount = estimate.fromAmount
+        spendInfo = {
+          tokenId: request.fromTokenId,
+          spendTargets: [
+            {
+              nativeAmount: fromNativeAmount,
+              publicAddress: publicAddress
+            }
+          ],
+          otherParams: { unsignedTx: data },
+          memos: [],
+          networkFeeOption: 'high',
+          assetAction: {
+            assetActionType: 'swap'
+          },
+          savedAction: {
+            actionType: 'swap',
+            swapInfo,
+            isEstimate: true,
+            toAsset: {
+              pluginId: toWallet.currencyInfo.pluginId,
+              tokenId: toTokenId,
+              nativeAmount: toAmount
+            },
+            fromAsset: {
+              pluginId: fromWallet.currencyInfo.pluginId,
+              tokenId: fromTokenId,
+              nativeAmount: fromNativeAmount
+            },
+            payoutAddress: toAddress,
+            payoutWalletId: toWallet.id,
+            refundAddress: fromAddress
+          }
+        }
+
+        break
+      }
       default: {
         const transactionRequest = asTransactionRequest(transactionRequestRaw)
         const { data, gasLimit, gasPrice } = transactionRequest
