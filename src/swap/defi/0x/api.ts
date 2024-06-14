@@ -5,10 +5,12 @@ import { FetchResponse } from 'serverlet'
 import {
   asErrorResponse,
   asGaslessSwapQuoteResponse,
+  asSwapQuoteResponse,
   ChainId,
   GaslessSwapQuoteRequest,
   GaslessSwapQuoteResponse,
-  SwapQuoteRequest
+  SwapQuoteRequest,
+  SwapQuoteResponse
 } from './apiTypes'
 
 /**
@@ -85,6 +87,40 @@ export class ZeroXApi {
           `ZeroXApi: Unsupported endpoint for currency plugin: '${pluginId}'`
         )
     }
+  }
+
+  /**
+   * Request a quote from the 0x Swap API.
+   *
+   * @param endpoint The 0x API endpoint URL (see {@link getEndpointFromPluginId})
+   * @param request Parameters for the quote request
+   * @returns QuoteResponse object from the 0x API
+   */
+  async swapQuote(
+    endpoint: string,
+    request: SwapQuoteRequest
+  ): Promise<SwapQuoteResponse> {
+    const queryParams = requestToParams(request)
+    const queryString = new URLSearchParams(queryParams).toString()
+
+    const response = await this.io.fetch(
+      `${endpoint}/swap/v1/quote?${queryString}`,
+      {
+        headers: {
+          'content-type': 'application/json',
+          '0x-api-key': this.apiKey
+        }
+      }
+    )
+
+    if (!response.ok) {
+      await handledErrorResponse(response)
+    }
+
+    const responseText = await response.text()
+    const responseData = asSwapQuoteResponse(responseText)
+
+    return responseData
   }
 
   /**

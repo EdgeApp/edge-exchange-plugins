@@ -10,6 +10,7 @@ import { makeLetsExchangePlugin } from './swap/central/letsexchange'
 import { makeSideshiftPlugin } from './swap/central/sideshift'
 import { makeSwapuzPlugin } from './swap/central/swapuz'
 import { make0xGaslessPlugin } from './swap/defi/0x/0xGasless'
+import { make0xSwapPlugin } from './swap/defi/0x/0xSwap'
 import { makeCosmosIbcPlugin } from './swap/defi/cosmosIbc'
 import { makeLifiPlugin } from './swap/defi/lifi'
 import { makeThorchainPlugin } from './swap/defi/thorchain'
@@ -38,6 +39,7 @@ const plugins = {
   transfer: makeTransferPlugin,
   velodrome: makeVelodromePlugin,
   xrpdex,
+  '0xswap': make0xSwapPlugin,
   '0xgasless': make0xGaslessPlugin
 }
 
