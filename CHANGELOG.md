@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 2.5.0
+
 - changed: Standardize DEX quotes to 5% slippage and estimate quote
 
 ## 2.4.3 (2024-06-03)
