@@ -854,7 +854,8 @@ const calcSwapFrom = async ({
     total_swap_seconds: maxFulfillmentSeconds
   } = bestQuote
 
-  const canBePartial = streamingSwapBlocks > 1
+  const canBePartial = !isEstimate || streamingSwapBlocks > 1
+
   let toThorAmountWithSpread: string
   if (canBePartial) {
     log(`volatilitySpreadStreamingFinal: ${volatilitySpreadStreamingFinal}`)
@@ -984,7 +985,9 @@ const calcSwapTo = async ({
     total_swap_seconds: maxFulfillmentSeconds
   } = bestQuote
 
-  const canBePartial = streamingSwapBlocks > 1
+  // If we get a streaming quote, this should be considered a fully executing
+  // transaction since we don't put a slippage limit
+  const canBePartial = !isEstimate || streamingSwapBlocks > 1
 
   // Get the percent drop from the 'to' amount the user wanted compared to the
   // 'to' amount returned by the API. Add that percent to the 'from' amount to
