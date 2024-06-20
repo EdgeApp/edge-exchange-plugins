@@ -1,3 +1,4 @@
+import { gte, lte } from 'biggystring'
 import {
   asArray,
   asEither,
@@ -16,6 +17,8 @@ import {
   EdgeSwapQuote,
   EdgeSwapRequest,
   EdgeTransaction,
+  SwapAboveLimitError,
+  SwapBelowLimitError,
   SwapCurrencyError
 } from 'edge-core-js/types'
 
@@ -142,9 +145,16 @@ const asSwapFee = asObject({
   amount: asString
 })
 
+const asAmountRestriction = asObject({
+  min: asString,
+  max: asString,
+  type: asString // "EXCLUSIVE"
+})
+
 const asSwapSimulationResult = asObject({
   from: asToken,
   to: asToken,
+  amountRestriction: asOptional(asAmountRestriction),
   outputAmount: asString,
   outputAmountMin: asString,
   outputAmountUsd: asEither(asNumber, asNull),
@@ -407,6 +417,19 @@ export function makeRangoPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
     const { route, tx } = swap
 
     if (swap.resultType !== 'OK') {
+      if (swap.resultType === 'INPUT_LIMIT_ISSUE') {
+        const amountRestriction = swap.route?.amountRestriction
+        if (amountRestriction == null) {
+          throw new Error('Rango limit error without values')
+        }
+        const { min, max } = amountRestriction
+
+        if (gte(nativeAmount, max)) {
+          throw new SwapAboveLimitError(swapInfo, max)
+        } else if (lte(nativeAmount, min)) {
+          throw new SwapBelowLimitError(swapInfo, min)
+        }
+      }
       throw new Error(
         `Rango could not proceed with the exchange. : ${swap.resultType}`
       )
