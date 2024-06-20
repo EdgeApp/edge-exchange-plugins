@@ -1,12 +1,14 @@
 import { add } from 'biggystring'
 import {
+  EdgeAssetAction,
   EdgeCorePluginFactory,
   EdgeNetworkFee,
   EdgeSwapApproveOptions,
   EdgeSwapInfo,
   EdgeSwapQuote,
   EdgeSwapResult,
-  EdgeTransaction
+  EdgeTransaction,
+  EdgeTxAction
 } from 'edge-core-js/types'
 
 import { snooze } from '../../../util/utils'
@@ -35,13 +37,11 @@ export const make0xGaslessPlugin: EdgeCorePluginFactory = opts => {
   return {
     swapInfo,
     fetchSwapQuote: async (swapRequest): Promise<EdgeSwapQuote> => {
-      // The fromWallet and toWallet must be of the same currency plugin
-      // type and therefore of the same network.
-      if (
-        swapRequest.fromWallet.currencyInfo.pluginId !==
-        swapRequest.toWallet.currencyInfo.pluginId
-      ) {
-        throw new Error('Swap between different networks is not supported')
+      // The fromWallet and toWallet must be of the same because the swap
+      // service only supports swaps of the same network and for the same
+      // account/address.
+      if (swapRequest.toWallet.id !== swapRequest.fromWallet.id) {
+        throw new Error('Swap between different wallets is not supported')
       }
 
       const fromTokenAddress = getTokenAddress(
@@ -178,10 +178,40 @@ export const make0xGaslessPlugin: EdgeCorePluginFactory = opts => {
             throw new Error(`Swap failed: ${apiSwapStatus.reason ?? 'unknown'}`)
           }
 
+          const assetAction: EdgeAssetAction = {
+            assetActionType: 'swap'
+          }
+          const orderId = apiSwapSubmition.tradeHash
+
+          const savedAction: EdgeTxAction = {
+            actionType: 'swap',
+            canBePartial: false,
+            isEstimate: false,
+            fromAsset: {
+              pluginId: swapRequest.fromWallet.currencyInfo.pluginId,
+              tokenId: swapRequest.fromTokenId,
+              nativeAmount: swapRequest.nativeAmount
+            },
+            orderId,
+            // The payout address is the same as the fromWalletAddress because
+            // the swap service only supports swaps of the same network and
+            // account/address.
+            payoutAddress: fromWalletAddress,
+            payoutWalletId: swapRequest.toWallet.id,
+            refundAddress: fromWalletAddress,
+            swapInfo,
+            toAsset: {
+              pluginId: swapRequest.toWallet.currencyInfo.pluginId,
+              tokenId: swapRequest.toTokenId,
+              nativeAmount: apiSwapQuote.buyAmount
+            }
+          }
+
           // Create the minimal transaction object for the swap.
           // Some values may be updated later when the transaction is
           // updated from queries to the network.
           const transaction: EdgeTransaction = {
+            assetAction,
             blockHeight: 0,
             currencyCode: fromCurrencyCode,
             date: Date.now(),
@@ -190,7 +220,8 @@ export const make0xGaslessPlugin: EdgeCorePluginFactory = opts => {
             nativeAmount: swapRequest.nativeAmount,
             networkFee: networkFee.nativeAmount,
             ourReceiveAddresses: [],
-            signedTx: '',
+            savedAction,
+            signedTx: '', // Signing is done by the tx-relay server
             tokenId: swapRequest.fromTokenId,
             txid: apiSwapStatus.transactions[0].hash,
             walletId: swapRequest.fromWallet.id
@@ -200,7 +231,7 @@ export const make0xGaslessPlugin: EdgeCorePluginFactory = opts => {
           await swapRequest.fromWallet.saveTx(transaction)
 
           return {
-            orderId: apiSwapSubmition.tradeHash,
+            orderId,
             transaction
           }
         },
