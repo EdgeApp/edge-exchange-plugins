@@ -5,9 +5,14 @@ import { FetchResponse } from 'serverlet'
 import {
   asErrorResponse,
   asGaslessSwapQuoteResponse,
+  asGaslessSwapStatusResponse,
+  asGaslessSwapSubmitResponse,
   ChainId,
   GaslessSwapQuoteRequest,
   GaslessSwapQuoteResponse,
+  GaslessSwapStatusResponse,
+  GaslessSwapSubmitRequest,
+  GaslessSwapSubmitResponse,
   SwapQuoteRequest
 } from './apiTypes'
 
@@ -100,7 +105,7 @@ export class ZeroXApi {
     chainId: ChainId,
     request: GaslessSwapQuoteRequest
   ): Promise<GaslessSwapQuoteResponse> {
-    // Gasless API is only available on Ethereum network
+    // Gasless API uses the Ethereum network
     const endpoint = this.getEndpointFromPluginId('ethereum')
 
     const queryParams = requestToParams(request)
@@ -123,6 +128,72 @@ export class ZeroXApi {
 
     const responseText = await response.text()
     const responseData = asGaslessSwapQuoteResponse(responseText)
+
+    return responseData
+  }
+
+  /**
+   * Submits a gasless swap request to the 0x API.
+   *
+   * @param chainId - The chain ID of the network.
+   * @param request - The gasless swap submit request.
+   * @returns A promise that resolves to the gasless swap response.
+   */
+  async gaslessSwapSubmit(
+    chainId: ChainId,
+    request: GaslessSwapSubmitRequest
+  ): Promise<GaslessSwapSubmitResponse> {
+    // Gasless API uses the Ethereum network
+    const endpoint = this.getEndpointFromPluginId('ethereum')
+
+    const response = await this.io.fetch(
+      `${endpoint}/tx-relay/v1/swap/submit`,
+      {
+        method: 'POST',
+        body: JSON.stringify(request),
+        headers: {
+          'content-type': 'application/json',
+          '0x-api-key': this.apiKey,
+          '0x-chain-id': chainId.toString()
+        }
+      }
+    )
+
+    if (!response.ok) {
+      await handledErrorResponse(response)
+    }
+
+    const responseText = await response.text()
+    const responseData = asGaslessSwapSubmitResponse(responseText)
+
+    return responseData
+  }
+
+  async gaslessSwapStatus(
+    chainId: ChainId,
+    tradeHash: string
+  ): Promise<GaslessSwapStatusResponse> {
+    // Gasless API uses the Ethereum network
+    const endpoint = this.getEndpointFromPluginId('ethereum')
+
+    const response = await this.io.fetch(
+      `${endpoint}/tx-relay/v1/swap/status/${tradeHash}`,
+      {
+        method: 'GET',
+        headers: {
+          'content-type': 'application/json',
+          '0x-api-key': this.apiKey,
+          '0x-chain-id': chainId.toString()
+        }
+      }
+    )
+
+    if (!response.ok) {
+      await handledErrorResponse(response)
+    }
+
+    const responseText = await response.text()
+    const responseData = asGaslessSwapStatusResponse(responseText)
 
     return responseData
   }

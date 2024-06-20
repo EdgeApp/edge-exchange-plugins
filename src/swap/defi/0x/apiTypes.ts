@@ -1,6 +1,5 @@
 import {
   asArray,
-  asBoolean,
   asEither,
   asJSON,
   asNull,
@@ -39,6 +38,10 @@ export const asErrorResponse = asJSON(
 // -----------------------------------------------------------------------------
 // Gasless API
 // -----------------------------------------------------------------------------
+
+//
+// Gasless Swap Quote
+//
 
 export interface GaslessSwapQuoteRequest {
   /**
@@ -349,7 +352,7 @@ interface GaslessSwapQuoteResponseLiquidity {
    * `trade.eip712.message` as they will change based on the `type` field and
    * we would add more types in the future.
    */
-  trade?: {
+  trade: {
     type: string
     hash: string
     eip712: any
@@ -378,13 +381,16 @@ interface GaslessSwapQuoteResponseLiquidity {
    * See [here](https://docs.0x.org/0x-swap-api/advanced-topics/gasless-approval)
    * for more information about gasless approvals.
    */
-  approval?: {
-    isRequired: boolean
-    isGaslessAvailable: boolean
-    type: string
-    hash: string
-    eip712: any
-  }
+  approval?:
+    | { isRequired: false }
+    | { isRequired: true; isGaslessAvailable: false }
+    | {
+        isRequired: true
+        isGaslessAvailable: true
+        type: string
+        hash: string
+        eip712: any
+      }
 }
 
 export const asGaslessSwapQuoteResponse = asJSON<GaslessSwapQuoteResponse>(
@@ -430,18 +436,111 @@ export const asGaslessSwapQuoteResponse = asJSON<GaslessSwapQuoteResponse>(
         })
       }),
 
-      trade: asOptional(
-        asObject({ type: asString, hash: asString, eip712: asUnknown })
-      ),
+      trade: asObject({ type: asString, hash: asString, eip712: asUnknown }),
       approval: asOptional(
+        asEither(
+          asObject({
+            isRequired: asValue(false)
+          }),
+          asObject({
+            isRequired: asValue(true),
+            isGaslessAvailable: asValue(false)
+          }),
+          asObject({
+            isRequired: asValue(true),
+            isGaslessAvailable: asValue(true),
+            type: asString,
+            hash: asString,
+            eip712: asUnknown
+          })
+        )
+      )
+    })
+  )
+)
+
+//
+// Gasless Swap Submit
+//
+
+export enum SignatureType {
+  Illegal = 0,
+  Invalid = 1,
+  EIP712 = 2,
+  EthSign = 3
+}
+
+export interface SignatureStruct {
+  v: number
+  r: string
+  s: string
+  signatureType: SignatureType
+}
+
+export interface GaslessSwapSubmitRequest {
+  approval?: {
+    /** This is `approval.`type from the `/quote` endpoint */
+    type: string
+    /** This is `approval.eip712` from the `/quote` endpoint */
+    eip712: any
+    signature: SignatureStruct
+  }
+  trade: {
+    /** This is `trade.`type from the `/quote` endpoint */
+    type: string
+    /** This is `trade.eip712` from the `/quote` endpoint */
+    eip712: any
+    signature: SignatureStruct
+  }
+}
+
+export interface GaslessSwapSubmitResponse {
+  type: 'metatransaction_v2'
+  tradeHash: string
+}
+
+export const asGaslessSwapSubmitResponse = asJSON<GaslessSwapSubmitResponse>(
+  asObject({
+    type: asValue('metatransaction_v2'),
+    tradeHash: asString
+  })
+)
+
+//
+// Gasless Swap Status
+//
+
+export type GaslessSwapStatusResponse = {
+  transactions: Array<{ hash: string; timestamp: number /* unix ms */ }>
+  // For pending, expect no transactions.
+  // For successful transactions (i.e. "succeeded"/"confirmed), expect just the mined transaction.
+  // For failed transactions, there may be 0 (failed before submission) to multiple transactions (transaction reverted).
+  // For submitted transactions, there may be multiple transactions, but only one will ultimately get mined
+} & (
+  | { status: 'pending' | 'submitted' | 'succeeded' | 'confirmed' }
+  | { status: 'failed'; reason: string }
+)
+
+export const asGaslessSwapStatusResponse = asJSON<GaslessSwapStatusResponse>(
+  asEither(
+    asObject({
+      status: asValue('pending', 'submitted', 'succeeded', 'confirmed'),
+      transactions: asArray(
         asObject({
-          isRequired: asBoolean,
-          isGaslessAvailable: asBoolean,
-          type: asString,
           hash: asString,
-          eip712: asUnknown
+          timestamp: asNumber
         })
       )
+    }),
+    asObject({
+      status: asValue('failed'),
+      transactions: asArray(
+        asObject({
+          hash: asString,
+          timestamp: asNumber
+        })
+      ),
+      reason: asString
     })
   )
 )

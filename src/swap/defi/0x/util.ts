@@ -1,4 +1,8 @@
+import { secp256k1 } from '@noble/curves/secp256k1'
 import { EdgeCurrencyWallet, EdgeTokenId } from 'edge-core-js/types'
+
+import { hexToDecimal } from '../../../util/utils'
+import { SignatureStruct, SignatureType } from './apiTypes'
 
 /**
  * Retrieves the currency code for a given token ID on a given currency wallet.
@@ -42,4 +46,22 @@ export const getTokenAddress = (
   if (address == null)
     throw new Error('Missing contractAddress in EdgeToken networkLocation')
   return address
+}
+
+/**
+ * Creates a signature struct from a signature hash. This signature struct
+ * data type is used in the 0x Gasless Swap API when submitting the swap
+ * transaction over the API tx-relay.
+ *
+ * @param signatureHash The signature hash.
+ * @returns The signature struct.
+ */
+export function makeSignatureStruct(signatureHash: string): SignatureStruct {
+  const signature = secp256k1.Signature.fromCompact(signatureHash.slice(2, 130))
+  return {
+    v: parseInt(hexToDecimal(`0x${signatureHash.slice(130)}`)),
+    r: `0x${signature.r.toString(16)}`,
+    s: `0x${signature.s.toString(16)}`,
+    signatureType: SignatureType.EIP712
+  }
 }
