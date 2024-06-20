@@ -51,15 +51,29 @@ const EXCHANGE_INFO_UPDATE_FREQ_MS = 60000
 
 const MAINNET_CODE_TRANSCRIPTION: StringMap = {
   arbitrum: 'ARBITRUM',
+  // axelar: 'AXELAR',
   avalanche: 'AVAX_CCHAIN',
+  base: 'BASE',
   binancesmartchain: 'BSC',
+  // bitcoin: 'BTC',
+  // celo: 'CELO',
+  // cosmoshub: 'COSMOS',
+  // dash: 'DASH',
+  // dogecoin: 'DOGE',
   ethereum: 'ETH',
   fantom: 'FANTOM',
-  moonbeam: 'MOONBEAM',
-  moonriver: 'MOONRIVER',
-  okexchain: 'OKC',
+  // injective: 'INJECTIVE',
+  // litecoin: 'LTC',
+  // maya: 'MAYA',
+  // moonbeam: 'MOONBEAM',
+  // moonriver: 'MOONRIVER',
+  // okexchain: 'OKC',
   optimism: 'OPTIMISM',
+  // osmosis: 'OSMOSIS',
   polygon: 'POLYGON',
+  // thorchainrune: 'THOR',
+  // solana: 'SOLANA',
+  // tron: 'TRON',
   zksync: 'ZKSYNC'
 }
 
