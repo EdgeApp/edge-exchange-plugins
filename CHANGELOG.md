@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- added: 0x Gasless Swap plugin
+
 ## 2.4.3 (2024-06-03)
 
 - added: (Exolix) Add Piratechain
