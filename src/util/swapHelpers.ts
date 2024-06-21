@@ -99,7 +99,7 @@ export async function makeSwapPluginQuote(
   const toNativeAmount = action?.toAsset.nativeAmount
   const destinationAddress = action?.payoutAddress
   const isEstimate = action?.isEstimate ?? false
-  const quoteId = action?.orderId
+  let quoteId = action?.orderId
   if (
     fromNativeAmount == null ||
     toNativeAmount == null ||
@@ -158,6 +158,10 @@ export async function makeSwapPluginQuote(
       ) {
         if (savedAction.orderUri != null)
           savedAction.orderUri = `${savedAction.orderUri}${tx.txid}`
+      }
+
+      if (quoteId == null && swapInfo.isDex === true) {
+        quoteId = tx.txid
       }
 
       await fromWallet.saveTx(signedTransaction)

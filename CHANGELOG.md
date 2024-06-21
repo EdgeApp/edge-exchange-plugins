@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- changed: Return txid as orderId for DEX swaps when calling `approve()`
+
 ## 2.5.0
 
 - changed: Standardize DEX quotes to 5% slippage and estimate quote
