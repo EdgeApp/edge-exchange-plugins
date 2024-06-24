@@ -87,6 +87,14 @@ export const asTestConfig = asObject({
   PULSECHAIN_INIT: asCorePluginInit(asEvmApiKeys),
 
   POLYGON_INIT: asCorePluginInit(asEvmApiKeys),
+  RANGO_INIT: asCorePluginInit(
+    asObject({
+      appId: asOptional(asString, 'edge'),
+      rangoApiKey: asOptional(asString, ''),
+      referrerAddress: asOptional(asString, ''),
+      referrerFee: asOptional(asString, '0.75')
+    }).withRest
+  ),
   SIDESHIFT_INIT: asCorePluginInit(
     asObject({
       affiliateId: asOptional(asString, '')
