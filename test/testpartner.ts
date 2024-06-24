@@ -96,6 +96,7 @@ async function main(): Promise<void> {
       lifi: config.LIFI_INIT,
       polygon: config.POLYGON_INIT,
       piratechain: true,
+      rango: config.RANGO_INIT,
       thorchain: config.THORCHAIN_INIT,
       thorchainda: config.THORCHAIN_INIT
     }
