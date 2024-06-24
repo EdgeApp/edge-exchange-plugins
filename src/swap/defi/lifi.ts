@@ -1,5 +1,12 @@
 import { mul, round } from 'biggystring'
-import { asArray, asNumber, asObject, asOptional, asString } from 'cleaners'
+import {
+  asArray,
+  asNumber,
+  asObject,
+  asOptional,
+  asString,
+  asUnknown
+} from 'cleaners'
 import {
   EdgeCorePluginOptions,
   EdgeSpendInfo,
@@ -81,6 +88,7 @@ const MAINNET_CODE_TRANSCRIPTION: StringMap = {
   okexchain: 'OKT',
   optimism: 'OPT',
   polygon: 'POL',
+  solana: 'SOL',
   velas: 'VEL',
   zksync: 'ERA'
 }
@@ -143,7 +151,12 @@ const asTransactionRequest = asObject({
   gasLimit: asString // '0x08a3df'
 })
 
+const asTransactionRequestSolana = asObject({
+  data: asString
+})
+
 const asIncludedStep = asObject({
+  estimate: asOptional(asEstimate),
   toolDetails: asObject({
     name: asString
   })
@@ -155,7 +168,7 @@ const asV1Quote = asObject({
   estimate: asEstimate,
   includedSteps: asArray(asIncludedStep),
   // action: asAction,
-  transactionRequest: asTransactionRequest
+  transactionRequest: asUnknown
 })
 
 type ExchangeInfo = ReturnType<typeof asExchangeInfo>
@@ -297,98 +310,153 @@ export function makeLifiPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
     }
 
     const quoteJson = await quoteResponse.json()
+
     const quote = asV1Quote(quoteJson)
-    const { estimate, includedSteps, transactionRequest } = quote
-    const { approvalAddress, toAmount } = estimate
-
-    const { data, gasLimit, gasPrice } = transactionRequest
-    const gasPriceDecimal = hexToDecimal(gasPrice)
-    const gasPriceGwei = div18(gasPriceDecimal, '1000000000')
+    const {
+      estimate,
+      includedSteps,
+      transactionRequest: transactionRequestRaw
+    } = quote
     const providers = includedSteps.map(s => s.toolDetails.name)
-
-    let preTx: EdgeTransaction | undefined
-    if (sendingToken) {
-      const approvalData = await getEvmApprovalData({
-        contractAddress: approvalAddress,
-        assetAddress: fromContractAddress,
-        nativeAmount
-      })
-
-      const spendInfo: EdgeSpendInfo = {
-        // Token approvals only spend the parent currency
-        tokenId: null,
-        spendTargets: [
-          {
-            nativeAmount: '0',
-            publicAddress: fromContractAddress
-          }
-        ],
-        memos:
-          approvalData != null
-            ? [{ type: 'hex', value: approvalData }]
-            : undefined,
-        networkFeeOption: 'custom',
-        customNetworkFee: {
-          gasPrice: gasPriceGwei
-        },
-        assetAction: {
-          assetActionType: 'tokenApproval'
-        },
-        savedAction: {
-          actionType: 'tokenApproval',
-          tokenApproved: {
-            pluginId: fromWallet.currencyInfo.pluginId,
-            tokenId: fromTokenId,
-            nativeAmount
-          },
-          tokenContractAddress: fromContractAddress,
-          contractAddress: approvalAddress
-        }
-      }
-      preTx = await request.fromWallet.makeSpend(spendInfo)
-    }
-
-    const fromNativeAmount = mul(transactionRequest.value, '1')
-    const spendInfo: EdgeSpendInfo = {
-      tokenId: request.fromTokenId,
-      spendTargets: [
-        {
-          nativeAmount: fromNativeAmount,
-          publicAddress: approvalAddress
-        }
-      ],
-      memos: [{ type: 'hex', value: data.replace(/^0x/, '') }],
-      networkFeeOption: 'custom',
-      customNetworkFee: {
-        // XXX Hack. Lifi doesn't properly estimate ethereum gas limits. Increase by 40%
-        gasLimit: round(mul(hexToDecimal(gasLimit), '1.4'), 0),
-        gasPrice: gasPriceGwei
-      },
-      assetAction: {
-        assetActionType: 'swap'
-      },
-      savedAction: {
-        actionType: 'swap',
-        swapInfo,
-        isEstimate: true,
-        toAsset: {
-          pluginId: toWallet.currencyInfo.pluginId,
-          tokenId: toTokenId,
-          nativeAmount: toAmount
-        },
-        fromAsset: {
-          pluginId: fromWallet.currencyInfo.pluginId,
-          tokenId: fromTokenId,
-          nativeAmount: fromNativeAmount
-        },
-        payoutAddress: toAddress,
-        payoutWalletId: toWallet.id,
-        refundAddress: fromAddress
-      }
-    }
-
     const providersStr = providers.join(' -> ')
     const metadataNotes = `DEX Providers: ${providersStr}`
+    const { approvalAddress, toAmount } = estimate
+
+    let preTx: EdgeTransaction | undefined
+    let spendInfo: EdgeSpendInfo
+    switch (fromWallet.currencyInfo.pluginId) {
+      case 'solana': {
+        const publicAddress = includedSteps[0].estimate?.approvalAddress
+        if (publicAddress == null) {
+          log.warn('No public address provided in quote')
+          throw new SwapCurrencyError(swapInfo, request)
+        }
+        const { data } = asTransactionRequestSolana(transactionRequestRaw)
+
+        const fromNativeAmount = estimate.fromAmount
+        spendInfo = {
+          tokenId: request.fromTokenId,
+          spendTargets: [
+            {
+              nativeAmount: fromNativeAmount,
+              publicAddress: publicAddress
+            }
+          ],
+          otherParams: { unsignedTx: data },
+          memos: [],
+          networkFeeOption: 'high',
+          assetAction: {
+            assetActionType: 'swap'
+          },
+          savedAction: {
+            actionType: 'swap',
+            swapInfo,
+            isEstimate: true,
+            toAsset: {
+              pluginId: toWallet.currencyInfo.pluginId,
+              tokenId: toTokenId,
+              nativeAmount: toAmount
+            },
+            fromAsset: {
+              pluginId: fromWallet.currencyInfo.pluginId,
+              tokenId: fromTokenId,
+              nativeAmount: fromNativeAmount
+            },
+            payoutAddress: toAddress,
+            payoutWalletId: toWallet.id,
+            refundAddress: fromAddress
+          }
+        }
+
+        break
+      }
+      default: {
+        const transactionRequest = asTransactionRequest(transactionRequestRaw)
+        const { data, gasLimit, gasPrice } = transactionRequest
+        const gasPriceDecimal = hexToDecimal(gasPrice)
+        const gasPriceGwei = div18(gasPriceDecimal, '1000000000')
+
+        if (sendingToken) {
+          const approvalData = await getEvmApprovalData({
+            contractAddress: approvalAddress,
+            assetAddress: fromContractAddress,
+            nativeAmount
+          })
+
+          const spendInfo: EdgeSpendInfo = {
+            // Token approvals only spend the parent currency
+            tokenId: null,
+            spendTargets: [
+              {
+                nativeAmount: '0',
+                publicAddress: fromContractAddress
+              }
+            ],
+            memos:
+              approvalData != null
+                ? [{ type: 'hex', value: approvalData }]
+                : undefined,
+            networkFeeOption: 'custom',
+            customNetworkFee: {
+              gasPrice: gasPriceGwei
+            },
+            assetAction: {
+              assetActionType: 'tokenApproval'
+            },
+            savedAction: {
+              actionType: 'tokenApproval',
+              tokenApproved: {
+                pluginId: fromWallet.currencyInfo.pluginId,
+                tokenId: fromTokenId,
+                nativeAmount
+              },
+              tokenContractAddress: fromContractAddress,
+              contractAddress: approvalAddress
+            }
+          }
+          preTx = await request.fromWallet.makeSpend(spendInfo)
+        }
+
+        const fromNativeAmount = mul(transactionRequest.value, '1')
+        spendInfo = {
+          tokenId: request.fromTokenId,
+          spendTargets: [
+            {
+              nativeAmount: fromNativeAmount,
+              publicAddress: approvalAddress
+            }
+          ],
+          memos: [{ type: 'hex', value: data.replace(/^0x/, '') }],
+          networkFeeOption: 'custom',
+          customNetworkFee: {
+            // XXX Hack. Lifi doesn't properly estimate ethereum gas limits. Increase by 40%
+            gasLimit: round(mul(hexToDecimal(gasLimit), '1.4'), 0),
+            gasPrice: gasPriceGwei
+          },
+          assetAction: {
+            assetActionType: 'swap'
+          },
+          savedAction: {
+            actionType: 'swap',
+            swapInfo,
+            isEstimate: true,
+            toAsset: {
+              pluginId: toWallet.currencyInfo.pluginId,
+              tokenId: toTokenId,
+              nativeAmount: toAmount
+            },
+            fromAsset: {
+              pluginId: fromWallet.currencyInfo.pluginId,
+              tokenId: fromTokenId,
+              nativeAmount: fromNativeAmount
+            },
+            payoutAddress: toAddress,
+            payoutWalletId: toWallet.id,
+            refundAddress: fromAddress
+          }
+        }
+      }
+    }
 
     return {
       request,

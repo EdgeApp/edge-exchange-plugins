@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- added: (Lifi) Add Solana
 - changed: Return txid as orderId for DEX swaps when calling `approve()`
 
 ## 2.5.0
