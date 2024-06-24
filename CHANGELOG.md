@@ -2,7 +2,10 @@
 
 ## Unreleased
 
+## 2.6.0 (2024-06-24)
+
 - added: (Lifi) Add Solana
+- added: Rango Exchange DEX aggregator
 - changed: Return txid as orderId for DEX swaps when calling `approve()`
 
 ## 2.5.0
