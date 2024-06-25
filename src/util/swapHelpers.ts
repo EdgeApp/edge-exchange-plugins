@@ -92,14 +92,14 @@ export async function makeSwapPluginQuote(
       tx.assetAction = assetAction
     }
   }
-  const action = tx.savedAction
 
-  if (action?.actionType !== 'swap') throw new Error(`Invalid swap action type`)
+  if (tx.savedAction?.actionType !== 'swap')
+    throw new Error(`Invalid swap action type`)
 
-  const toNativeAmount = action?.toAsset.nativeAmount
-  const destinationAddress = action?.payoutAddress
-  const isEstimate = action?.isEstimate ?? false
-  const quoteId = action?.orderId
+  const toNativeAmount = tx.savedAction?.toAsset.nativeAmount
+  const destinationAddress = tx.savedAction?.payoutAddress
+  const isEstimate = tx.savedAction?.isEstimate ?? false
+  const quoteId = tx.savedAction?.orderId
   if (
     fromNativeAmount == null ||
     toNativeAmount == null ||
@@ -146,29 +146,26 @@ export async function makeSwapPluginQuote(
         tx.metadata.notes = `${metadataNotes}\n\n` + (tx.metadata.notes ?? '')
       }
 
-      const signedTransaction = await fromWallet.signTx(tx)
-      const broadcastedTransaction = await fromWallet.broadcastTx(
-        signedTransaction
-      )
-      const savedAction = signedTransaction.savedAction
+      const signedTx = await fromWallet.signTx(tx)
+      const broadcastedTransaction = await fromWallet.broadcastTx(signedTx)
       if (
         addTxidToOrderUri &&
-        savedAction != null &&
-        'orderUri' in savedAction
+        signedTx.savedAction != null &&
+        'orderUri' in signedTx.savedAction
       ) {
-        if (savedAction.orderUri != null)
-          savedAction.orderUri = `${savedAction.orderUri}${tx.txid}`
+        if (signedTx.savedAction.orderUri != null)
+          signedTx.savedAction.orderUri = `${signedTx.savedAction.orderUri}${tx.txid}`
       }
 
-      await fromWallet.saveTx(signedTransaction)
+      await fromWallet.saveTx(signedTx)
 
       // For token transactions that spend the parent gas currency, add
       // a fee action
       if (
-        signedTransaction.tokenId != null &&
-        signedTransaction.parentNetworkFee != null &&
-        signedTransaction.assetAction != null &&
-        savedAction != null
+        signedTx.tokenId != null &&
+        signedTx.parentNetworkFee != null &&
+        signedTx.assetAction != null &&
+        signedTx.savedAction != null
       ) {
         // Only tag the network fee if any of the following is true:
         // 1. Not a DEX transaction
@@ -179,16 +176,16 @@ export async function makeSwapPluginQuote(
           fromWallet.id !== toWallet.id ||
           (request.fromTokenId != null && request.toTokenId != null)
         ) {
-          const assetActionType: EdgeAssetActionType = signedTransaction.assetAction.assetActionType.startsWith(
+          const assetActionType: EdgeAssetActionType = signedTx.assetAction.assetActionType.startsWith(
             'swap'
           )
             ? 'swapNetworkFee'
             : 'transferNetworkFee'
           await fromWallet.saveTxAction({
-            txid: signedTransaction.txid,
+            txid: signedTx.txid,
             tokenId: null,
             assetAction: { assetActionType },
-            savedAction
+            savedAction: signedTx.savedAction
           })
         }
       }
