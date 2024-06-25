@@ -9,6 +9,7 @@ import { makeGodexPlugin } from './swap/central/godex'
 import { makeLetsExchangePlugin } from './swap/central/letsexchange'
 import { makeSideshiftPlugin } from './swap/central/sideshift'
 import { makeSwapuzPlugin } from './swap/central/swapuz'
+import { make0xGaslessPlugin } from './swap/defi/0x/0xGasless'
 import { makeCosmosIbcPlugin } from './swap/defi/cosmosIbc'
 import { makeLifiPlugin } from './swap/defi/lifi'
 import { makeRangoPlugin } from './swap/defi/rango'
@@ -38,7 +39,8 @@ const plugins = {
   tombSwap: makeTombSwapPlugin,
   transfer: makeTransferPlugin,
   velodrome: makeVelodromePlugin,
-  xrpdex
+  xrpdex,
+  '0xgasless': make0xGaslessPlugin
 }
 
 declare global {
