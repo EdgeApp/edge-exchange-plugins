@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- added: 0x Gasless Swap plugin
+
 ## 2.6.0 (2024-06-24)
 
 - added: (Lifi) Add Solana
