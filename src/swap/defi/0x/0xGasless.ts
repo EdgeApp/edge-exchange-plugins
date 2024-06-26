@@ -1,8 +1,6 @@
-import { add } from 'biggystring'
 import {
   EdgeAssetAction,
   EdgeCorePluginFactory,
-  EdgeNetworkFee,
   EdgeSwapApproveOptions,
   EdgeSwapInfo,
   EdgeSwapQuote,
@@ -92,28 +90,6 @@ export const make0xGaslessPlugin: EdgeCorePluginFactory = opts => {
         !apiSwapQuote.approval.isGaslessAvailable
       ) {
         throw new Error('Approval is required but gasless is not available')
-      }
-
-      const { gasFee, zeroExFee } = apiSwapQuote.fees
-
-      if (
-        gasFee.feeToken.toLocaleLowerCase() !==
-          fromTokenAddress?.toLocaleLowerCase() ||
-        zeroExFee.feeToken.toLocaleLowerCase() !==
-          fromTokenAddress?.toLocaleLowerCase()
-      ) {
-        throw new Error(
-          'Quoted fees must be in the same token as the from token in the swap request'
-        )
-      }
-
-      const fromCurrencyCode = getCurrencyCode(
-        swapRequest.fromWallet,
-        swapRequest.fromTokenId
-      )
-      const networkFee: EdgeNetworkFee = {
-        currencyCode: fromCurrencyCode,
-        nativeAmount: add(gasFee.feeAmount, zeroExFee.feeAmount)
       }
 
       return {
@@ -210,6 +186,10 @@ export const make0xGaslessPlugin: EdgeCorePluginFactory = opts => {
           // Create the minimal transaction object for the swap.
           // Some values may be updated later when the transaction is
           // updated from queries to the network.
+          const fromCurrencyCode = getCurrencyCode(
+            swapRequest.fromWallet,
+            swapRequest.fromTokenId
+          )
           const transaction: EdgeTransaction = {
             assetAction,
             blockHeight: 0,
@@ -218,7 +198,8 @@ export const make0xGaslessPlugin: EdgeCorePluginFactory = opts => {
             isSend: true,
             memos: [],
             nativeAmount: swapRequest.nativeAmount,
-            networkFee: networkFee.nativeAmount,
+            // There is no fee for a gasless swap
+            networkFee: '0',
             ourReceiveAddresses: [],
             savedAction,
             signedTx: '', // Signing is done by the tx-relay server
@@ -239,7 +220,10 @@ export const make0xGaslessPlugin: EdgeCorePluginFactory = opts => {
         expirationDate: new Date(Date.now() + EXPIRATION_MS),
         fromNativeAmount: apiSwapQuote.sellAmount,
         isEstimate: false,
-        networkFee,
+        networkFee: {
+          currencyCode: swapRequest.fromWallet.currencyInfo.currencyCode,
+          nativeAmount: '0' // There is no fee for a gasless swap
+        },
         pluginId: swapInfo.pluginId,
         request: swapRequest,
         swapInfo: swapInfo,
