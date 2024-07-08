@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 2.7.0 (2024-07-08)
+
 - added: 0x Gasless Swap plugin
 
 ## 2.6.0 (2024-06-24)
