@@ -150,7 +150,7 @@ export const fetchRates = async (
   path: string,
   options?: Object,
   timeout?: number
-): Promise<any> => {
+): Promise<EdgeFetchResponse> => {
   return await multiFetch(fetch, RATES_SERVERS, path, options, timeout)
 }
 

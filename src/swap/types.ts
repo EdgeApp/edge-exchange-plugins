@@ -1,4 +1,11 @@
-import { asEither, asNumber, asString } from 'cleaners'
+import {
+  asArray,
+  asEither,
+  asNull,
+  asNumber,
+  asObject,
+  asString
+} from 'cleaners'
 import {
   EdgeAssetAction,
   EdgeCurrencyWallet,
@@ -55,3 +62,15 @@ export type MakeTxParams =
       assetAction: EdgeAssetAction
       savedAction: EdgeTxActionSwap
     }
+
+export const asRatesResponse = asObject({
+  data: asArray(
+    asObject({
+      currency_pair: asString,
+      date: asString,
+      exchangeRate: asEither(asString, asNull)
+    })
+  )
+})
+
+export type RatesRespose = ReturnType<typeof asRatesResponse>
