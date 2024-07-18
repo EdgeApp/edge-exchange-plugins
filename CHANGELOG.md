@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## 2.6.1 (2024-07-18)
+
+- fixed: Rango failed transactions
+
 ## 2.6.0 (2024-06-24)
 
 - added: (Lifi) Add Solana
