@@ -263,6 +263,8 @@ export function makeRangoPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
       throw new SwapCurrencyError(swapInfo, request)
     }
 
+    let ethNativeAmount = nativeAmount
+
     if (Object.keys(rangoTokens).length === 0) {
       await metaRequest
         .then(async metaResponse => {
@@ -301,6 +303,7 @@ export function makeRangoPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
       fromContractAddress = PARENT_TOKEN_CONTRACT_ADDRESS
     } else {
       fromContractAddress = fromToken?.networkLocation?.contractAddress
+      ethNativeAmount = '0'
     }
 
     const toToken =
@@ -511,7 +514,7 @@ export function makeRangoPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
       spendTargets: [
         {
           memo: tx.txData,
-          nativeAmount: nativeAmount,
+          nativeAmount: ethNativeAmount,
           publicAddress: tx.txTo
         }
       ],
