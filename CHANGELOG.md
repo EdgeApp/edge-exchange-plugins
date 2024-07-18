@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## 2.7.1 (2024-07-18)
+
+- fixed: Rango failed transactions
+
 ## 2.7.0 (2024-07-08)
 
 - added: 0x Gasless Swap plugin
