@@ -410,6 +410,7 @@ export function makeRangoPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
       toAddress: toAddress,
       amount: nativeAmount,
       disableEstimate: true,
+      avoidNativeFee: true,
       slippage: DEFAULT_SLIPPAGE,
       ...(referrer != null ? referrer : undefined)
     }
