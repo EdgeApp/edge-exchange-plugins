@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- fixed: Set avoidNativeFee on Rango to fix bridge failures
+
 ## 2.7.1 (2024-07-18)
 
 - fixed: Rango failed transactions
