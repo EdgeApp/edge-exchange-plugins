@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 2.7.3 (2024-07-23)
+
 - changed: Cap Exolix to 70k USD swaps
 
 ## 2.7.2 (2024-07-21)
