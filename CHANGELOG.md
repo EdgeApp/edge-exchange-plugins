@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- changed: Cap Exolix to 70k USD swaps
+
 ## 2.7.2 (2024-07-21)
 
 - fixed: Set avoidNativeFee on Rango to fix bridge failures

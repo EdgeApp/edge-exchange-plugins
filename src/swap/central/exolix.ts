@@ -1,4 +1,4 @@
-import { lt } from 'biggystring'
+import { div, gt, lt, mul } from 'biggystring'
 import {
   asEither,
   asMaybe,
@@ -17,6 +17,7 @@ import {
   EdgeSwapPlugin,
   EdgeSwapQuote,
   EdgeSwapRequest,
+  SwapAboveLimitError,
   SwapBelowLimitError,
   SwapCurrencyError
 } from 'edge-core-js/types'
@@ -30,8 +31,14 @@ import {
   makeSwapPluginQuote,
   SwapOrder
 } from '../../util/swapHelpers'
-import { convertRequest, getAddress, memoType } from '../../util/utils'
-import { EdgeSwapRequestPlugin } from '../types'
+import {
+  convertRequest,
+  fetchRates,
+  getAddress,
+  memoType
+} from '../../util/utils'
+import { DIVIDE_PRECISION } from '../defi/thorchain'
+import { asRatesResponse, EdgeSwapRequestPlugin, RatesRespose } from '../types'
 
 const pluginId = 'exolix'
 
@@ -46,6 +53,7 @@ const asInitOptions = asObject({
   apiKey: asString
 })
 
+const MAX_USD_VALUE = '70000'
 const INVALID_CURRENCY_CODES: InvalidCurrencyCodes = {
   from: {},
   to: {
@@ -365,6 +373,71 @@ export function makeExolixPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
       )
       const fixedOrder = await getFixedQuote(newRequest, userSettings)
       const fixedResult = await makeSwapPluginQuote(fixedOrder)
+
+      // Limit exolix to $70k USD
+      let currencyCode: string
+      let exchangeAmount: string
+      let denomToNative: string
+      if (newRequest.quoteFor === 'from') {
+        currencyCode = newRequest.fromCurrencyCode
+        exchangeAmount = await newRequest.fromWallet.nativeToDenomination(
+          newRequest.nativeAmount,
+          currencyCode
+        )
+        denomToNative = await newRequest.fromWallet.denominationToNative(
+          '1',
+          currencyCode
+        )
+      } else {
+        currencyCode = newRequest.toCurrencyCode
+        exchangeAmount = await newRequest.toWallet.nativeToDenomination(
+          newRequest.nativeAmount,
+          currencyCode
+        )
+        denomToNative = await newRequest.toWallet.denominationToNative(
+          '1',
+          currencyCode
+        )
+      }
+      const data = [{ currency_pair: `${currencyCode}_iso:USD` }]
+
+      const options = {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ data })
+      }
+      let rates: RatesRespose
+      try {
+        const response = await fetchRates(fetch, 'v2/exchangeRates', options)
+        if (!response.ok) {
+          const text = await response.text()
+          throw new Error(`Error fetching rates: ${text}`)
+        }
+        const reply = await response.json()
+        rates = asRatesResponse(reply)
+      } catch (e) {
+        log.error('Error fetching rates', String(e))
+        throw new Error('Error fetching rates')
+      }
+
+      const { exchangeRate } = rates.data[0]
+      if (exchangeRate == null) throw new SwapCurrencyError(swapInfo, request)
+
+      const usdValue = mul(exchangeAmount, exchangeRate)
+      const maxExchangeAmount = div(
+        MAX_USD_VALUE,
+        exchangeRate,
+        DIVIDE_PRECISION
+      )
+      const maxNativeAmount = mul(maxExchangeAmount, denomToNative)
+
+      if (gt(usdValue, MAX_USD_VALUE)) {
+        throw new SwapAboveLimitError(
+          swapInfo,
+          maxNativeAmount,
+          newRequest.quoteFor === 'from' ? 'from' : 'to'
+        )
+      }
 
       return fixedResult
     }
