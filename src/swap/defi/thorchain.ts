@@ -222,8 +222,9 @@ export const asExchangeInfo = asObject({
 const asPools = asArray(asPool)
 
 const asQuoteSwap = asObject({
-  // expected_amount_out: asString, // "61409897"
-  expected_amount_out_streaming: asString, // "62487221"
+  expected_amount_out: asOptional(asString), // "61409897"
+  /** @deprecated */
+  expected_amount_out_streaming: asOptional(asString),
   expiry: asNumber, // 1692149478
   // fees: asObject({
   //   affiliate: asString, // "0"
@@ -846,13 +847,13 @@ const calcSwapFrom = async ({
   )
 
   const {
-    expected_amount_out_streaming: toThorAmount,
     inbound_address: thorAddress,
     memo: preMemo,
     router,
     streaming_swap_blocks: streamingSwapBlocks,
     total_swap_seconds: maxFulfillmentSeconds
   } = bestQuote
+  const toThorAmount = getExpectedAmount(bestQuote)
 
   const canBePartial = !isEstimate || streamingSwapBlocks > 1
 
@@ -977,13 +978,14 @@ const calcSwapTo = async ({
   )
 
   const {
-    expected_amount_out_streaming: toThorAmount,
     inbound_address: thorAddress,
     memo: preMemo,
     router,
     streaming_swap_blocks: streamingSwapBlocks,
     total_swap_seconds: maxFulfillmentSeconds
   } = bestQuote
+
+  const toThorAmount = getExpectedAmount(bestQuote)
 
   // If we get a streaming quote, this should be considered a fully executing
   // transaction since we don't put a slippage limit
@@ -1079,12 +1081,7 @@ const getBestQuote = async (
         bestQuote = quote
         continue
       }
-      if (
-        gt(
-          quote.expected_amount_out_streaming,
-          bestQuote.expected_amount_out_streaming
-        )
-      ) {
+      if (gt(getExpectedAmount(quote), getExpectedAmount(bestQuote))) {
         bestQuote = quote
       }
       continue
@@ -1249,4 +1246,17 @@ export const getVolatilitySpread = ({
   }
 
   return volatilitySpreadFinal.toString()
+}
+
+/**
+ * This will return the expected amount out from the quote maintaining backwards
+ * compatibility with deprecated `expected_amount_out_streaming` field.
+ */
+function getExpectedAmount(quote: QuoteSwap): string {
+  const amount =
+    quote.expected_amount_out ?? quote.expected_amount_out_streaming
+  if (amount == null) {
+    throw new Error('Missing expected amount out from Thorchain API response')
+  }
+  return amount
 }

@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- fixed: Thorchain swap error caused by failing cleaner
+
 ## 2.7.3 (2024-07-23)
 
 - changed: Cap Exolix to 70k USD swaps
