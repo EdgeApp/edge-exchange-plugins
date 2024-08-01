@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 2.7.4 (2024-08-01)
+
 - fixed: Thorchain swap error caused by failing cleaner
 
 ## 2.7.3 (2024-07-23)
