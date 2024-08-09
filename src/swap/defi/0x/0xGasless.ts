@@ -9,6 +9,7 @@ import {
   EdgeTxAction
 } from 'edge-core-js/types'
 
+import { due } from '../../../util/due'
 import { snooze } from '../../../util/utils'
 import { EXPIRATION_MS, NATIVE_TOKEN_ADDRESS } from './constants'
 import { asInitOptions } from './types'
@@ -51,9 +52,17 @@ export const make0xGaslessPlugin: EdgeCorePluginFactory = opts => {
         swapRequest.toTokenId
       )
 
-      if (swapRequest.quoteFor === 'max') {
-        throw new Error('Max quotes not supported')
-      }
+      const swapNativeAmount: string = due(() => {
+        if (swapRequest.quoteFor === 'max') {
+          const balance = swapRequest.fromWallet.balanceMap.get(
+            swapRequest.fromTokenId
+          )
+          if (balance == null) throw new Error('No balance for the from token')
+          return balance
+        } else {
+          return swapRequest.nativeAmount
+        }
+      })
 
       // From wallet address
       const {
@@ -64,7 +73,7 @@ export const make0xGaslessPlugin: EdgeCorePluginFactory = opts => {
 
       // Amount request parameter/field name to use in the quote request
       const amountField =
-        swapRequest.quoteFor === 'from' ? 'sellAmount' : 'buyAmount'
+        swapRequest.quoteFor === 'to' ? 'buyAmount' : 'sellAmount'
 
       // Get quote from ZeroXApi
       const chainId = api.getChainIdFromPluginId(
@@ -75,7 +84,7 @@ export const make0xGaslessPlugin: EdgeCorePluginFactory = opts => {
         sellToken: fromTokenAddress ?? NATIVE_TOKEN_ADDRESS,
         buyToken: toTokenAddress ?? NATIVE_TOKEN_ADDRESS,
         takerAddress: fromWalletAddress,
-        [amountField]: swapRequest.nativeAmount
+        [amountField]: swapNativeAmount
       })
 
       if (!apiSwapQuote.liquidityAvailable)
@@ -166,7 +175,7 @@ export const make0xGaslessPlugin: EdgeCorePluginFactory = opts => {
             fromAsset: {
               pluginId: swapRequest.fromWallet.currencyInfo.pluginId,
               tokenId: swapRequest.fromTokenId,
-              nativeAmount: swapRequest.nativeAmount
+              nativeAmount: swapNativeAmount
             },
             orderId,
             // The payout address is the same as the fromWalletAddress because
@@ -197,7 +206,7 @@ export const make0xGaslessPlugin: EdgeCorePluginFactory = opts => {
             date: Date.now(),
             isSend: true,
             memos: [],
-            nativeAmount: swapRequest.nativeAmount,
+            nativeAmount: swapNativeAmount,
             // There is no fee for a gasless swap
             networkFee: '0',
             ourReceiveAddresses: [],
