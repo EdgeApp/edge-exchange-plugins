@@ -50,6 +50,7 @@ export type SwapOrder = SwapOrderInner & {
   fromNativeAmount: string
   maxFulfillmentSeconds?: number
   metadataNotes?: string
+  minReceiveAmount?: string
   preTx?: EdgeTransaction
   request: EdgeSwapRequestPlugin
   swapInfo: EdgeSwapInfo
@@ -65,6 +66,7 @@ export async function makeSwapPluginQuote(
     fromNativeAmount,
     maxFulfillmentSeconds,
     metadataNotes,
+    minReceiveAmount,
     preTx,
     request,
     swapInfo
@@ -125,6 +127,7 @@ export async function makeSwapPluginQuote(
     fromNativeAmount,
     isEstimate,
     maxFulfillmentSeconds,
+    minReceiveAmount,
     networkFee: {
       currencyCode: fromWallet.currencyInfo.currencyCode,
       nativeAmount
