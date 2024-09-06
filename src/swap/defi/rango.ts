@@ -550,6 +550,7 @@ export function makeRangoPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
       expirationDate: new Date(Date.now() + EXPIRATION_MS),
       fromNativeAmount: nativeAmount,
       metadataNotes,
+      minReceiveAmount: route.outputAmountMin,
       preTx,
       request,
       spendInfo,

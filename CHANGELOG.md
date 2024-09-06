@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- added: `minReceiveAmount` passed in `EdgeSwapQuotes` for lifi and rango
+
 ## 2.7.5 (2024-08-12)
 
 - fixed: Implemented max quotes for 0xGasless swap plugin
