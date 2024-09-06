@@ -547,13 +547,13 @@ export function makeRangoPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
     const metadataNotes = `DEX Providers: ${providersStr}`
 
     return {
+      expirationDate: new Date(Date.now() + EXPIRATION_MS),
+      fromNativeAmount: nativeAmount,
+      metadataNotes,
+      preTx,
       request,
       spendInfo,
-      swapInfo,
-      fromNativeAmount: nativeAmount,
-      expirationDate: new Date(Date.now() + EXPIRATION_MS),
-      preTx,
-      metadataNotes
+      swapInfo
     }
   }
 

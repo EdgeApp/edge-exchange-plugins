@@ -46,13 +46,13 @@ type SwapOrderInner = SwapOrderMakeTx | SwapOrderSpendInfo
 export type SwapOrder = SwapOrderInner & {
   addTxidToOrderUri?: boolean
   canBePartial?: boolean
+  expirationDate?: Date
+  fromNativeAmount: string
   maxFulfillmentSeconds?: number
+  metadataNotes?: string
+  preTx?: EdgeTransaction
   request: EdgeSwapRequestPlugin
   swapInfo: EdgeSwapInfo
-  fromNativeAmount: string
-  expirationDate?: Date
-  preTx?: EdgeTransaction
-  metadataNotes?: string
 }
 
 export async function makeSwapPluginQuote(
@@ -61,13 +61,13 @@ export async function makeSwapPluginQuote(
   const {
     addTxidToOrderUri = false,
     canBePartial,
-    maxFulfillmentSeconds,
-    fromNativeAmount,
-    request,
-    swapInfo,
     expirationDate,
+    fromNativeAmount,
+    maxFulfillmentSeconds,
+    metadataNotes,
     preTx,
-    metadataNotes
+    request,
+    swapInfo
   } = order
   const { fromWallet, toWallet } = request
 
@@ -121,18 +121,18 @@ export async function makeSwapPluginQuote(
 
   const out: EdgeSwapQuote = {
     canBePartial,
-    maxFulfillmentSeconds,
-    request,
-    swapInfo,
+    expirationDate,
     fromNativeAmount,
-    toNativeAmount,
+    isEstimate,
+    maxFulfillmentSeconds,
     networkFee: {
       currencyCode: fromWallet.currencyInfo.currencyCode,
       nativeAmount
     },
     pluginId: swapInfo.pluginId,
-    expirationDate,
-    isEstimate,
+    request,
+    swapInfo,
+    toNativeAmount,
     async approve(opts?: EdgeSwapApproveOptions): Promise<EdgeSwapResult> {
       if (preTx != null) {
         const signedTransaction = await fromWallet.signTx(preTx)

@@ -459,13 +459,13 @@ export function makeLifiPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
     }
 
     return {
+      expirationDate: new Date(Date.now() + EXPIRATION_MS),
+      fromNativeAmount: nativeAmount,
+      metadataNotes,
+      preTx,
       request,
       spendInfo,
-      swapInfo,
-      fromNativeAmount: nativeAmount,
-      expirationDate: new Date(Date.now() + EXPIRATION_MS),
-      preTx,
-      metadataNotes
+      swapInfo
     }
   }
 
