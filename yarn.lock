@@ -4032,10 +4032,10 @@ ed25519@0.0.4:
     bindings "^1.2.1"
     nan "^2.0.9"
 
-edge-core-js@^2.0.1:
-  version "2.0.1"
-  resolved "https://registry.yarnpkg.com/edge-core-js/-/edge-core-js-2.0.1.tgz#9ec0021420d0fe5f52f3a423bf58c48e23b42279"
-  integrity sha512-s4rHf0bMU/O+Vk53rRHZAFEXczntVVhattiXmVdWeoBP7wyK1vqUofRSNt5wuRnYYCSWbAeBLQ5t6bi5qQqUTQ==
+edge-core-js@^2.17.0:
+  version "2.17.0"
+  resolved "https://registry.yarnpkg.com/edge-core-js/-/edge-core-js-2.17.0.tgz#4bd70427b67f6ba9218dbc8e8f08dd02ff58c9c1"
+  integrity sha512-iad3R2zf79Lg8Qen6SZKghOWBC+qAqyw6SJoBEQ7hBto19o4HmU5hn4TMoILzdqhnz5kvZCP4SOB+zP5pAnhUg==
   dependencies:
     aes-js "^3.1.0"
     base-x "^4.0.0"
