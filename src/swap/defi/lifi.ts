@@ -135,7 +135,7 @@ const asExchangeInfo = asObject({
 const asEstimate = asObject({
   fromAmount: asNumberString, // "400000",
   toAmount: asNumberString, // "237318132569913",
-  // toAmountMin: asNumberString, // "225452225941418",
+  toAmountMin: asNumberString, // "225452225941418",
   approvalAddress: asString, // "0x1231DEB6f5749EF6cE6943a275A1D3E7486F4EaE",
   executionDuration: asNumber // 1168,
   // feeCosts: asArray(asFeeCost)
@@ -320,7 +320,7 @@ export function makeLifiPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
     const providers = includedSteps.map(s => s.toolDetails.name)
     const providersStr = providers.join(' -> ')
     const metadataNotes = `DEX Providers: ${providersStr}`
-    const { approvalAddress, toAmount } = estimate
+    const { approvalAddress, toAmount, toAmountMin } = estimate
 
     let preTx: EdgeTransaction | undefined
     let spendInfo: EdgeSpendInfo
@@ -459,13 +459,14 @@ export function makeLifiPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
     }
 
     return {
+      expirationDate: new Date(Date.now() + EXPIRATION_MS),
+      fromNativeAmount: nativeAmount,
+      metadataNotes,
+      minReceiveAmount: toAmountMin,
+      preTx,
       request,
       spendInfo,
-      swapInfo,
-      fromNativeAmount: nativeAmount,
-      expirationDate: new Date(Date.now() + EXPIRATION_MS),
-      preTx,
-      metadataNotes
+      swapInfo
     }
   }
 
