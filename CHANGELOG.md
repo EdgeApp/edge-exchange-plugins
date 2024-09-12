@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 2.8.0 (2024-09-12)
+
 - added: `minReceiveAmount` passed in `EdgeSwapQuotes` for lifi and rango
 
 ## 2.7.5 (2024-08-12)
