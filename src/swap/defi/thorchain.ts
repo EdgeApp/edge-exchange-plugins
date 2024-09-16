@@ -24,6 +24,7 @@ import {
   SwapCurrencyError
 } from 'edge-core-js/types'
 
+import { div18 } from '../../util/biggystringplus'
 import {
   checkInvalidCodes,
   getMaxSwappable,
@@ -55,7 +56,6 @@ const swapInfo: EdgeSwapInfo = {
 export const MIDGARD_SERVERS_DEFAULT = ['https://midgard.thorchain.info']
 export const THORNODE_SERVERS_DEFAULT = ['https://thornode.ninerealms.com']
 export const EXPIRATION_MS = 1000 * 60
-export const DIVIDE_PRECISION = 16
 export const EXCHANGE_INFO_UPDATE_FREQ_MS = 60000
 export const EVM_SEND_GAS = '80000'
 export const EVM_TOKEN_SEND_GAS = '80000'
@@ -770,7 +770,7 @@ const getPool = (
     const pool: Pool = {
       asset: 'THOR.RUNE',
       assetPrice: '1',
-      assetPriceUSD: div(assetPriceUSD, assetPrice, 16)
+      assetPriceUSD: div18(assetPriceUSD, assetPrice)
     }
     return pool
   }
@@ -874,11 +874,7 @@ const calcSwapFrom = async ({
 
   log(`toThorAmountWithSpread = limit: ${toThorAmountWithSpread}`)
 
-  const toExchangeAmount = div(
-    toThorAmountWithSpread,
-    THOR_LIMIT_UNITS,
-    DIVIDE_PRECISION
-  )
+  const toExchangeAmount = div(toThorAmountWithSpread, THOR_LIMIT_UNITS)
   log(`toExchangeAmount: ${toExchangeAmount}`)
 
   const toNativeAmountFloat = await toWallet.denominationToNative(
@@ -944,7 +940,7 @@ const calcSwapTo = async ({
 
   const requestedFromExchangeAmount = mul(
     toExchangeAmount,
-    div(destPrice, sourcePrice, DIVIDE_PRECISION)
+    div18(destPrice, sourcePrice)
   )
 
   const requestedFromThorAmount = round(
@@ -994,7 +990,7 @@ const calcSwapTo = async ({
   // Get the percent drop from the 'to' amount the user wanted compared to the
   // 'to' amount returned by the API. Add that percent to the 'from' amount to
   // estimate how much more the user has to send.
-  const feeRatio = div(requestedToThorAmount, toThorAmount, DIVIDE_PRECISION)
+  const feeRatio = div18(requestedToThorAmount, toThorAmount)
   log(`feeRatio: ${feeRatio}`)
 
   const fromThorAmount = mul(requestedFromThorAmount, feeRatio)
@@ -1016,11 +1012,7 @@ const calcSwapTo = async ({
 
   log(`fromThorAmountWithSpread = limit: ${fromThorAmountWithSpread}`)
 
-  const fromExchangeAmount = div(
-    fromThorAmountWithSpread,
-    THOR_LIMIT_UNITS,
-    DIVIDE_PRECISION
-  )
+  const fromExchangeAmount = div18(fromThorAmountWithSpread, THOR_LIMIT_UNITS)
   log(`fromExchangeAmount: ${fromExchangeAmount}`)
 
   const fromNativeAmountFloat = await fromWallet.denominationToNative(
@@ -1104,11 +1096,7 @@ const getBestQuote = async (
     if (bestError == null) {
       throw new Error('Could not get quote')
     } else {
-      const minExchangeAmount = div(
-        bestError.minThorAmount,
-        THOR_LIMIT_UNITS,
-        DIVIDE_PRECISION
-      )
+      const minExchangeAmount = div18(bestError.minThorAmount, THOR_LIMIT_UNITS)
       const minNativeAmount = await fromWallet.denominationToNative(
         minExchangeAmount,
         fromCurrencyCode
