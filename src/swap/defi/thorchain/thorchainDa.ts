@@ -28,7 +28,7 @@ import {
   getMaxSwappable,
   makeSwapPluginQuote,
   SwapOrder
-} from '../../util/swapHelpers'
+} from '../../../util/swapHelpers'
 import {
   convertRequest,
   fetchInfo,
@@ -36,10 +36,10 @@ import {
   getAddress,
   makeQueryParams,
   promiseWithTimeout
-} from '../../util/utils'
-import { EdgeSwapRequestPlugin } from '../types'
-import { abiMap } from './abi/abiMap'
-import { getEvmApprovalData, getEvmTokenData } from './defiUtils'
+} from '../../../util/utils'
+import { EdgeSwapRequestPlugin } from '../../types'
+import { abiMap } from '../abi/abiMap'
+import { getEvmApprovalData, getEvmTokenData } from '../defiUtils'
 import {
   asExchangeInfo,
   asInboundAddresses,

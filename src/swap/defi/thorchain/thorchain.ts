@@ -24,7 +24,7 @@ import {
   SwapCurrencyError
 } from 'edge-core-js/types'
 
-import { div18 } from '../../util/biggystringplus'
+import { div18 } from '../../../util/biggystringplus'
 import {
   checkInvalidCodes,
   getMaxSwappable,
@@ -32,7 +32,7 @@ import {
   isLikeKind,
   makeSwapPluginQuote,
   SwapOrder
-} from '../../util/swapHelpers'
+} from '../../../util/swapHelpers'
 import {
   convertRequest,
   fetchInfo,
@@ -41,9 +41,9 @@ import {
   makeQueryParams,
   promiseWithTimeout,
   QueryParams
-} from '../../util/utils'
-import { EdgeSwapRequestPlugin, MakeTxParams } from '../types'
-import { getEvmApprovalData, getEvmTokenData } from './defiUtils'
+} from '../../../util/utils'
+import { EdgeSwapRequestPlugin, MakeTxParams } from '../../types'
+import { getEvmApprovalData, getEvmTokenData } from '../defiUtils'
 
 const pluginId = 'thorchain'
 const swapInfo: EdgeSwapInfo = {
