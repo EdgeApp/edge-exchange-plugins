@@ -2,6 +2,7 @@ import { add, div, gt, mul, round, sub } from 'biggystring'
 import {
   asArray,
   asBoolean,
+  asMaybe,
   asNumber,
   asObject,
   asOptional,
@@ -187,22 +188,22 @@ export const asAssetSpread = asObject({
 })
 
 const asExchangeInfo = asObject({
+  perAssetSpread: asArray(asAssetSpread),
+  perAssetSpreadStreaming: asOptional(asArray(asAssetSpread)),
+  volatilitySpread: asNumber,
+  volatilitySpreadStreaming: asOptional(asNumber),
+  likeKindVolatilitySpread: asNumber,
+  likeKindVolatilitySpreadStreaming: asOptional(asNumber),
+  midgardServers: asArray(asString),
+  affiliateFeeBasis: asOptional(asString),
+  streamingInterval: asOptional(asNumber),
+  streamingQuantity: asOptional(asNumber),
+  thornodeServers: asOptional(asArray(asString))
+})
+
+const asExchangeInfoMap = asObject({
   swap: asObject({
-    plugins: asObject({
-      thorchain: asObject({
-        perAssetSpread: asArray(asAssetSpread),
-        perAssetSpreadStreaming: asOptional(asArray(asAssetSpread)),
-        volatilitySpread: asNumber,
-        volatilitySpreadStreaming: asOptional(asNumber),
-        likeKindVolatilitySpread: asNumber,
-        likeKindVolatilitySpreadStreaming: asOptional(asNumber),
-        midgardServers: asArray(asString),
-        affiliateFeeBasis: asOptional(asString),
-        streamingInterval: asOptional(asNumber),
-        streamingQuantity: asOptional(asNumber),
-        thornodeServers: asOptional(asArray(asString))
-      })
-    })
+    plugins: asObject(asMaybe(asExchangeInfo))
   })
 })
 
@@ -356,7 +357,12 @@ export function makeThorchainBasedPlugin(
         )
 
         if (exchangeInfoResponse.ok === true) {
-          exchangeInfo = asExchangeInfo(await exchangeInfoResponse.json())
+          const exchangeInfoMap = asExchangeInfoMap(
+            await exchangeInfoResponse.json()
+          )
+          exchangeInfo = asExchangeInfo(
+            exchangeInfoMap.swap.plugins[swapInfo.pluginId]
+          )
           exchangeInfoLastUpdate = now
         } else {
           // Error is ok. We just use defaults
@@ -371,23 +377,21 @@ export function makeThorchainBasedPlugin(
     }
 
     if (exchangeInfo != null) {
-      const { thorchain } = exchangeInfo.swap.plugins
-      likeKindVolatilitySpread =
-        exchangeInfo.swap.plugins.thorchain.likeKindVolatilitySpread
-      volatilitySpread = thorchain.volatilitySpread
+      likeKindVolatilitySpread = exchangeInfo.likeKindVolatilitySpread
+      volatilitySpread = exchangeInfo.volatilitySpread
       likeKindVolatilitySpreadStreaming =
-        exchangeInfo.swap.plugins.thorchain.likeKindVolatilitySpreadStreaming ??
+        exchangeInfo.likeKindVolatilitySpreadStreaming ??
         likeKindVolatilitySpreadStreaming
       volatilitySpreadStreaming =
-        thorchain.volatilitySpreadStreaming ?? volatilitySpreadStreaming
-      midgardServers = thorchain.midgardServers
-      thornodeServers = thorchain.thornodeServers ?? thornodeServers
-      perAssetSpread = thorchain.perAssetSpread
+        exchangeInfo.volatilitySpreadStreaming ?? volatilitySpreadStreaming
+      midgardServers = exchangeInfo.midgardServers
+      thornodeServers = exchangeInfo.thornodeServers ?? thornodeServers
+      perAssetSpread = exchangeInfo.perAssetSpread
       perAssetSpreadStreaming =
-        thorchain.perAssetSpreadStreaming ?? perAssetSpreadStreaming
-      affiliateFeeBasis = thorchain.affiliateFeeBasis ?? affiliateFeeBasis
-      streamingInterval = thorchain.streamingInterval ?? streamingInterval
-      streamingQuantity = thorchain.streamingQuantity ?? streamingQuantity
+        exchangeInfo.perAssetSpreadStreaming ?? perAssetSpreadStreaming
+      affiliateFeeBasis = exchangeInfo.affiliateFeeBasis ?? affiliateFeeBasis
+      streamingInterval = exchangeInfo.streamingInterval ?? streamingInterval
+      streamingQuantity = exchangeInfo.streamingQuantity ?? streamingQuantity
     }
 
     const volatilitySpreadFinal = isEstimate
