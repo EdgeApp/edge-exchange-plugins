@@ -60,7 +60,7 @@ export const EXCHANGE_INFO_UPDATE_FREQ_MS = 60000
 export const EVM_SEND_GAS = '80000'
 export const EVM_TOKEN_SEND_GAS = '80000'
 export const THOR_LIMIT_UNITS = '100000000'
-const AFFILIATE_FEE_BASIS_DEFAULT = '50'
+export const AFFILIATE_FEE_BASIS_DEFAULT = '50'
 const STREAMING_INTERVAL_DEFAULT = 10
 const STREAMING_QUANTITY_DEFAULT = 10
 const STREAMING_INTERVAL_NOSTREAM = 1
@@ -157,13 +157,11 @@ export const MAINNET_CODE_TRANSCRIPTION: { [cc: string]: ChainTypes } = {
   thorchainrune: 'THOR'
 }
 
-export const asInitOptions = asObject({
+const asInitOptions = asObject({
   appId: asOptional(asString, 'edge'),
   affiliateFeeBasis: asOptional(asString, AFFILIATE_FEE_BASIS_DEFAULT),
   ninerealmsClientId: asOptional(asString, ''),
-  thorname: asOptional(asString, 'ej'),
-  thorswapApiKey: asOptional(asString),
-  thorswapXApiKey: asOptional(asString)
+  thorname: asOptional(asString, 'ej')
 })
 
 export const asInboundAddresses = asArray(
@@ -196,7 +194,7 @@ export const asAssetSpread = asObject({
   volatilitySpread: asNumber
 })
 
-export const asExchangeInfo = asObject({
+const asExchangeInfo = asObject({
   swap: asObject({
     plugins: asObject({
       thorchain: asObject({
@@ -206,14 +204,11 @@ export const asExchangeInfo = asObject({
         volatilitySpreadStreaming: asOptional(asNumber),
         likeKindVolatilitySpread: asNumber,
         likeKindVolatilitySpreadStreaming: asOptional(asNumber),
-        daVolatilitySpread: asNumber,
         midgardServers: asArray(asString),
         affiliateFeeBasis: asOptional(asString),
-        nineRealmsServers: asOptional(asArray(asString)),
         streamingInterval: asOptional(asNumber),
         streamingQuantity: asOptional(asNumber),
-        thornodeServers: asOptional(asArray(asString)),
-        thorSwapServers: asOptional(asArray(asString))
+        thornodeServers: asOptional(asArray(asString))
       })
     })
   })

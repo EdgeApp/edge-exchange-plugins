@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- changed: Separate thorchain and thorchainda initOptions and exchangeInfo cleaner
+
 ## 2.8.0 (2024-09-12)
 
 - added: `minReceiveAmount` passed in `EdgeSwapQuotes` for lifi and rango
