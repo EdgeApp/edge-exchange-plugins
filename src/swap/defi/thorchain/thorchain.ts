@@ -19,6 +19,19 @@ export const THORNODE_SERVERS_DEFAULT = [
   'https://thornode.ninerealms.com/thorchain'
 ]
 
+// Network names that don't match parent network currency code
+export const MAINNET_CODE_TRANSCRIPTION: { [cc: string]: string } = {
+  avalanche: 'AVAX',
+  binancechain: 'BNB',
+  binancesmartchain: 'BSC',
+  bitcoin: 'BTC',
+  bitcoincash: 'BCH',
+  dogecoin: 'DOGE',
+  ethereum: 'ETH',
+  litecoin: 'LTC',
+  thorchainrune: 'THOR'
+}
+
 export const makeThorchainPlugin = (
   opts: EdgeCorePluginOptions
 ): EdgeSwapPlugin => {
@@ -30,6 +43,7 @@ export const makeThorchainPlugin = (
   }
 
   return makeThorchainBasedPlugin(opts, {
+    MAINNET_CODE_TRANSCRIPTION,
     MIDGARD_SERVERS_DEFAULT,
     THORNODE_SERVERS_DEFAULT,
     orderUri,

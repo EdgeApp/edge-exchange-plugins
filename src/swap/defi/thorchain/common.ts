@@ -135,19 +135,6 @@ export const EVM_CURRENCY_CODES: { [cc: string]: boolean } = {
   THOR: false
 }
 
-// Network names that don't match parent network currency code
-export const MAINNET_CODE_TRANSCRIPTION: { [cc: string]: ChainTypes } = {
-  avalanche: 'AVAX',
-  binancechain: 'BNB',
-  binancesmartchain: 'BSC',
-  bitcoin: 'BTC',
-  bitcoincash: 'BCH',
-  dogecoin: 'DOGE',
-  ethereum: 'ETH',
-  litecoin: 'LTC',
-  thorchainrune: 'THOR'
-}
-
 export const asInitOptions = asObject({
   appId: asOptional(asString, 'edge'),
   affiliateFeeBasis: asOptional(asString, AFFILIATE_FEE_BASIS_DEFAULT),
@@ -280,6 +267,7 @@ let exchangeInfo: ExchangeInfo | undefined
 let exchangeInfoLastUpdate: number = 0
 
 interface ThorchainOpts {
+  MAINNET_CODE_TRANSCRIPTION: { [cc: string]: string }
   MIDGARD_SERVERS_DEFAULT: string[]
   THORNODE_SERVERS_DEFAULT: string[]
   orderUri: string
@@ -298,6 +286,7 @@ export function makeThorchainBasedPlugin(
   let { affiliateFeeBasis = AFFILIATE_FEE_BASIS_DEFAULT } = initOptions
 
   const {
+    MAINNET_CODE_TRANSCRIPTION,
     MIDGARD_SERVERS_DEFAULT,
     THORNODE_SERVERS_DEFAULT,
     orderUri,
@@ -1055,17 +1044,6 @@ const calcSwapTo = async ({
   }
 }
 
-type ChainTypes =
-  | 'BTC'
-  | 'ETH'
-  | 'BCH'
-  | 'BSC'
-  | 'DOGE'
-  | 'LTC'
-  | 'AVAX'
-  | 'BNB'
-  | 'THOR'
-
 const getBestQuote = async (
   swapInfo: EdgeSwapInfo,
   params: QueryParams[],
@@ -1185,7 +1163,7 @@ const getQuote = async (
 }
 
 export const getGasLimit = (
-  chain: ChainTypes,
+  chain: string,
   tokenId: string | null
 ): string | undefined => {
   if (EVM_CURRENCY_CODES[chain]) {

@@ -48,10 +48,12 @@ import {
   EXCHANGE_INFO_UPDATE_FREQ_MS,
   EXPIRATION_MS,
   getGasLimit,
-  INVALID_CURRENCY_CODES,
-  MAINNET_CODE_TRANSCRIPTION
+  INVALID_CURRENCY_CODES
 } from './common'
-import { THORNODE_SERVERS_DEFAULT } from './thorchain'
+import {
+  MAINNET_CODE_TRANSCRIPTION,
+  THORNODE_SERVERS_DEFAULT
+} from './thorchain'
 
 const pluginId = 'thorchainda'
 const swapInfo: EdgeSwapInfo = {
