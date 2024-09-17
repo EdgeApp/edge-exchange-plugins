@@ -51,7 +51,7 @@ import {
   INVALID_CURRENCY_CODES,
   MAINNET_CODE_TRANSCRIPTION,
   THORNODE_SERVERS_DEFAULT
-} from './thorchain'
+} from './common'
 
 const pluginId = 'thorchainda'
 const swapInfo: EdgeSwapInfo = {
