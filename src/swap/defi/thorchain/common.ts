@@ -93,6 +93,15 @@ export const PER_ASSET_SPREAD_DEFAULT: AssetSpread[] = [
     destCurrencyCode: undefined
   },
   {
+    sourcePluginId: 'dash',
+    volatilitySpread: 0.01,
+    sourceTokenId: undefined,
+    sourceCurrencyCode: undefined,
+    destPluginId: undefined,
+    destTokenId: undefined,
+    destCurrencyCode: undefined
+  },
+  {
     sourcePluginId: 'dogecoin',
     volatilitySpread: 0.01,
     sourceTokenId: undefined,
@@ -122,11 +131,13 @@ export const INVALID_CURRENCY_CODES: InvalidCurrencyCodes = {
 }
 
 export const EVM_CURRENCY_CODES: { [cc: string]: boolean } = {
+  ARB: true,
   AVAX: true,
   BCH: false,
   BNB: false,
   BSC: true,
   BTC: false,
+  DASH: false,
   DOGE: false,
   ETC: true,
   ETH: true,
@@ -272,7 +283,7 @@ interface ThorchainOpts {
   THORNODE_SERVERS_DEFAULT: string[]
   orderUri: string
   swapInfo: EdgeSwapInfo
-  thornodesFetchOptions: Record<string, string>
+  thornodesFetchOptions?: Record<string, string>
 }
 
 export function makeThorchainBasedPlugin(
@@ -291,7 +302,7 @@ export function makeThorchainBasedPlugin(
     THORNODE_SERVERS_DEFAULT,
     orderUri,
     swapInfo,
-    thornodesFetchOptions
+    thornodesFetchOptions = {}
   } = thorchainOpts
 
   const fetchSwapQuoteInner = async (
