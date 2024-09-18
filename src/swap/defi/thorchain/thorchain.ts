@@ -4,7 +4,7 @@ import {
   EdgeSwapPlugin
 } from 'edge-core-js/types'
 
-import { makeThorchainBasedPlugin } from './common'
+import { asInitOptions, makeThorchainBasedPlugin } from './common'
 
 const swapInfo: EdgeSwapInfo = {
   pluginId: 'thorchain',
@@ -17,8 +17,16 @@ const orderUri = 'https://track.ninerealms.com/'
 export const makeThorchainPlugin = (
   opts: EdgeCorePluginOptions
 ): EdgeSwapPlugin => {
+  const initOptions = asInitOptions(opts.initOptions)
+
+  const thornodesFetchOptions = {
+    'Content-Type': 'application/json',
+    'x-client-id': initOptions.ninerealmsClientId
+  }
+
   return makeThorchainBasedPlugin(opts, {
     orderUri,
-    swapInfo
+    swapInfo,
+    thornodesFetchOptions
   })
 }

@@ -149,7 +149,7 @@ export const MAINNET_CODE_TRANSCRIPTION: { [cc: string]: ChainTypes } = {
   thorchainrune: 'THOR'
 }
 
-const asInitOptions = asObject({
+export const asInitOptions = asObject({
   appId: asOptional(asString, 'edge'),
   affiliateFeeBasis: asOptional(asString, AFFILIATE_FEE_BASIS_DEFAULT),
   ninerealmsClientId: asOptional(asString, ''),
@@ -246,7 +246,7 @@ interface CalcSwapParams {
   log: Function
   fetch: EdgeFetchFunction
   thornodes: string[]
-  thornodesFetchOptions: any
+  thornodesFetchOptions: Record<string, string>
   fromWallet: EdgeCurrencyWallet
   fromCurrencyCode: string
   toWallet: EdgeCurrencyWallet
@@ -283,6 +283,7 @@ let exchangeInfoLastUpdate: number = 0
 interface ThorchainOpts {
   orderUri: string
   swapInfo: EdgeSwapInfo
+  thornodesFetchOptions: Record<string, string>
 }
 
 export function makeThorchainBasedPlugin(
@@ -292,15 +293,10 @@ export function makeThorchainBasedPlugin(
   const { io, log } = opts
   const { fetchCors = io.fetch } = io
   const initOptions = asInitOptions(opts.initOptions)
-  const { appId, thorname, ninerealmsClientId } = initOptions
+  const { appId, thorname } = initOptions
   let { affiliateFeeBasis = AFFILIATE_FEE_BASIS_DEFAULT } = initOptions
 
-  const { orderUri, swapInfo } = thorchainOpts
-
-  const headers = {
-    'Content-Type': 'application/json',
-    'x-client-id': ninerealmsClientId
-  }
+  const { orderUri, swapInfo, thornodesFetchOptions } = thorchainOpts
 
   const fetchSwapQuoteInner = async (
     request: EdgeSwapRequestPlugin,
@@ -432,7 +428,7 @@ export function makeThorchainBasedPlugin(
       fetchCors,
       midgardServers,
       'v2/pools',
-      { headers }
+      thornodesFetchOptions
     )
 
     if (!poolResponse.ok) {
@@ -475,7 +471,7 @@ export function makeThorchainBasedPlugin(
         log,
         fetch: fetchCors,
         thornodes: thornodeServers,
-        thornodesFetchOptions: { headers },
+        thornodesFetchOptions,
         fromWallet,
         fromCurrencyCode,
         toWallet,
@@ -499,7 +495,7 @@ export function makeThorchainBasedPlugin(
         log,
         fetch: fetchCors,
         thornodes: thornodeServers,
-        thornodesFetchOptions: { headers },
+        thornodesFetchOptions,
         fromWallet,
         fromCurrencyCode,
         toWallet,
