@@ -46,8 +46,6 @@ import {
 import { EdgeSwapRequestPlugin, MakeTxParams } from '../../types'
 import { getEvmApprovalData, getEvmTokenData } from '../defiUtils'
 
-export const MIDGARD_SERVERS_DEFAULT = ['https://midgard.thorchain.info']
-export const THORNODE_SERVERS_DEFAULT = ['https://thornode.ninerealms.com']
 export const EXPIRATION_MS = 1000 * 60
 export const EXCHANGE_INFO_UPDATE_FREQ_MS = 60000
 export const EVM_SEND_GAS = '80000'
@@ -282,6 +280,8 @@ let exchangeInfo: ExchangeInfo | undefined
 let exchangeInfoLastUpdate: number = 0
 
 interface ThorchainOpts {
+  MIDGARD_SERVERS_DEFAULT: string[]
+  THORNODE_SERVERS_DEFAULT: string[]
   orderUri: string
   swapInfo: EdgeSwapInfo
   thornodesFetchOptions: Record<string, string>
@@ -297,7 +297,13 @@ export function makeThorchainBasedPlugin(
   const { appId, thorname } = initOptions
   let { affiliateFeeBasis = AFFILIATE_FEE_BASIS_DEFAULT } = initOptions
 
-  const { orderUri, swapInfo, thornodesFetchOptions } = thorchainOpts
+  const {
+    MIDGARD_SERVERS_DEFAULT,
+    THORNODE_SERVERS_DEFAULT,
+    orderUri,
+    swapInfo,
+    thornodesFetchOptions
+  } = thorchainOpts
 
   const fetchSwapQuoteInner = async (
     request: EdgeSwapRequestPlugin,
@@ -1133,7 +1139,7 @@ const getQuote = async (
     const response = await fetchWaterfall(
       fetch,
       thornodes,
-      `thorchain/quote/swap?${params}`,
+      `quote/swap?${params}`,
       thornodesFetchOptions
     )
     let json

@@ -14,6 +14,11 @@ const swapInfo: EdgeSwapInfo = {
 }
 const orderUri = 'https://track.ninerealms.com/'
 
+const MIDGARD_SERVERS_DEFAULT = ['https://midgard.thorchain.info']
+export const THORNODE_SERVERS_DEFAULT = [
+  'https://thornode.ninerealms.com/thorchain'
+]
+
 export const makeThorchainPlugin = (
   opts: EdgeCorePluginOptions
 ): EdgeSwapPlugin => {
@@ -25,6 +30,8 @@ export const makeThorchainPlugin = (
   }
 
   return makeThorchainBasedPlugin(opts, {
+    MIDGARD_SERVERS_DEFAULT,
+    THORNODE_SERVERS_DEFAULT,
     orderUri,
     swapInfo,
     thornodesFetchOptions

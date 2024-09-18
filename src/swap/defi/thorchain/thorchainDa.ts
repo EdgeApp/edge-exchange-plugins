@@ -49,9 +49,9 @@ import {
   EXPIRATION_MS,
   getGasLimit,
   INVALID_CURRENCY_CODES,
-  MAINNET_CODE_TRANSCRIPTION,
-  THORNODE_SERVERS_DEFAULT
+  MAINNET_CODE_TRANSCRIPTION
 } from './common'
+import { THORNODE_SERVERS_DEFAULT } from './thorchain'
 
 const pluginId = 'thorchainda'
 const swapInfo: EdgeSwapInfo = {
@@ -269,14 +269,9 @@ export function makeThorchainDaPlugin(
     log.warn(uri)
 
     const [iaResponse, thorSwapResponse] = await Promise.all([
-      fetchWaterfall(
-        fetchCors,
-        thornodeServers,
-        'thorchain/inbound_addresses',
-        {
-          headers
-        }
-      ),
+      fetchWaterfall(fetchCors, thornodeServers, 'inbound_addresses', {
+        headers
+      }),
       fetchWaterfall(fetchCors, thorswapServers, uri, {
         headers: thorswapHeaders
       })
