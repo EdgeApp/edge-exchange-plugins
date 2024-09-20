@@ -1,4 +1,4 @@
-import { div, gt, lt, mul } from 'biggystring'
+import { gt, lt, mul } from 'biggystring'
 import {
   asEither,
   asMaybe,
@@ -22,6 +22,7 @@ import {
   SwapCurrencyError
 } from 'edge-core-js/types'
 
+import { div18 } from '../../util/biggystringplus'
 import {
   checkInvalidCodes,
   checkWhitelistedMainnetCodes,
@@ -37,7 +38,6 @@ import {
   getAddress,
   memoType
 } from '../../util/utils'
-import { DIVIDE_PRECISION } from '../defi/thorchain'
 import { asRatesResponse, EdgeSwapRequestPlugin, RatesRespose } from '../types'
 
 const pluginId = 'exolix'
@@ -424,11 +424,7 @@ export function makeExolixPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
       if (exchangeRate == null) throw new SwapCurrencyError(swapInfo, request)
 
       const usdValue = mul(exchangeAmount, exchangeRate)
-      const maxExchangeAmount = div(
-        MAX_USD_VALUE,
-        exchangeRate,
-        DIVIDE_PRECISION
-      )
+      const maxExchangeAmount = div18(MAX_USD_VALUE, exchangeRate)
       const maxNativeAmount = mul(maxExchangeAmount, denomToNative)
 
       if (gt(usdValue, MAX_USD_VALUE)) {

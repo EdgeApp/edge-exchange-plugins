@@ -4,6 +4,7 @@ import {
   asBoolean,
   asEither,
   asNull,
+  asNumber,
   asObject,
   asOptional,
   asString,
@@ -28,7 +29,7 @@ import {
   getMaxSwappable,
   makeSwapPluginQuote,
   SwapOrder
-} from '../../util/swapHelpers'
+} from '../../../util/swapHelpers'
 import {
   convertRequest,
   fetchInfo,
@@ -36,19 +37,20 @@ import {
   getAddress,
   makeQueryParams,
   promiseWithTimeout
-} from '../../util/utils'
-import { EdgeSwapRequestPlugin } from '../types'
-import { abiMap } from './abi/abiMap'
-import { getEvmApprovalData, getEvmTokenData } from './defiUtils'
+} from '../../../util/utils'
+import { EdgeSwapRequestPlugin } from '../../types'
+import { abiMap } from '../abi/abiMap'
+import { getEvmApprovalData, getEvmTokenData } from '../defiUtils'
 import {
-  asExchangeInfo,
+  AFFILIATE_FEE_BASIS_DEFAULT,
   asInboundAddresses,
-  asInitOptions,
   EVM_CURRENCY_CODES,
   EXCHANGE_INFO_UPDATE_FREQ_MS,
   EXPIRATION_MS,
   getGasLimit,
-  INVALID_CURRENCY_CODES,
+  INVALID_CURRENCY_CODES
+} from './common'
+import {
   MAINNET_CODE_TRANSCRIPTION,
   THORNODE_SERVERS_DEFAULT
 } from './thorchain'
@@ -95,6 +97,28 @@ const asThorSwapRoute = asObject({
 
 const asThorSwapQuoteResponse = asObject({
   routes: asArray(asThorSwapRoute)
+})
+
+const asExchangeInfo = asObject({
+  swap: asObject({
+    plugins: asObject({
+      thorchainda: asObject({
+        daVolatilitySpread: asOptional(asNumber),
+        affiliateFeeBasis: asOptional(asString),
+        thornodeServers: asOptional(asArray(asString)),
+        thorSwapServers: asOptional(asArray(asString))
+      })
+    })
+  })
+})
+
+const asInitOptions = asObject({
+  appId: asOptional(asString, 'edge'),
+  affiliateFeeBasis: asOptional(asString, AFFILIATE_FEE_BASIS_DEFAULT),
+  ninerealmsClientId: asOptional(asString, ''),
+  thorname: asOptional(asString, 'ej'),
+  thorswapApiKey: asOptional(asString),
+  thorswapXApiKey: asOptional(asString)
 })
 
 /** Max slippage for 5% for estimated quotes */
@@ -159,7 +183,7 @@ export function makeThorchainDaPlugin(
     const reverseQuote = quoteFor === 'to'
     const isEstimate = true
 
-    const daVolatilitySpread: number = DA_VOLATILITY_SPREAD_DEFAULT
+    let daVolatilitySpread: number = DA_VOLATILITY_SPREAD_DEFAULT
     let thornodeServers: string[] = THORNODE_SERVERS_DEFAULT
     let thorswapServers: string[] = THORSWAP_DEFAULT_SERVERS
 
@@ -204,11 +228,11 @@ export function makeThorchainDaPlugin(
     }
 
     if (exchangeInfo != null) {
-      const { thorchain } = exchangeInfo.swap.plugins
-      // Uncomment line below to re-enable server override of volatility spread
-      // daVolatilitySpread = thorchain.daVolatilitySpread
-      thorswapServers = thorchain.thorSwapServers ?? THORSWAP_DEFAULT_SERVERS
-      thornodeServers = thorchain.thornodeServers ?? thornodeServers
+      const { thorchainda } = exchangeInfo.swap.plugins
+      daVolatilitySpread =
+        thorchainda.daVolatilitySpread ?? DA_VOLATILITY_SPREAD_DEFAULT
+      thorswapServers = thorchainda.thorSwapServers ?? THORSWAP_DEFAULT_SERVERS
+      thornodeServers = thorchainda.thornodeServers ?? thornodeServers
     }
 
     const volatilitySpreadFinal = daVolatilitySpread // Might add a likeKind spread later
@@ -247,14 +271,9 @@ export function makeThorchainDaPlugin(
     log.warn(uri)
 
     const [iaResponse, thorSwapResponse] = await Promise.all([
-      fetchWaterfall(
-        fetchCors,
-        thornodeServers,
-        'thorchain/inbound_addresses',
-        {
-          headers
-        }
-      ),
+      fetchWaterfall(fetchCors, thornodeServers, 'inbound_addresses', {
+        headers
+      }),
       fetchWaterfall(fetchCors, thorswapServers, uri, {
         headers: thorswapHeaders
       })

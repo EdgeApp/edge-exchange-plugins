@@ -2,6 +2,7 @@ import { add, div, gt, mul, round, sub } from 'biggystring'
 import {
   asArray,
   asBoolean,
+  asMaybe,
   asNumber,
   asObject,
   asOptional,
@@ -24,6 +25,7 @@ import {
   SwapCurrencyError
 } from 'edge-core-js/types'
 
+import { div18 } from '../../../util/biggystringplus'
 import {
   checkInvalidCodes,
   getMaxSwappable,
@@ -31,7 +33,7 @@ import {
   isLikeKind,
   makeSwapPluginQuote,
   SwapOrder
-} from '../../util/swapHelpers'
+} from '../../../util/swapHelpers'
 import {
   convertRequest,
   fetchInfo,
@@ -40,27 +42,16 @@ import {
   makeQueryParams,
   promiseWithTimeout,
   QueryParams
-} from '../../util/utils'
-import { EdgeSwapRequestPlugin, MakeTxParams } from '../types'
-import { getEvmApprovalData, getEvmTokenData } from './defiUtils'
+} from '../../../util/utils'
+import { EdgeSwapRequestPlugin, MakeTxParams } from '../../types'
+import { getEvmApprovalData, getEvmTokenData } from '../defiUtils'
 
-const pluginId = 'thorchain'
-const swapInfo: EdgeSwapInfo = {
-  pluginId,
-  isDex: true,
-  displayName: 'Thorchain',
-  supportEmail: 'support@edge.app'
-}
-
-export const MIDGARD_SERVERS_DEFAULT = ['https://midgard.thorchain.info']
-export const THORNODE_SERVERS_DEFAULT = ['https://thornode.ninerealms.com']
 export const EXPIRATION_MS = 1000 * 60
-export const DIVIDE_PRECISION = 16
 export const EXCHANGE_INFO_UPDATE_FREQ_MS = 60000
 export const EVM_SEND_GAS = '80000'
 export const EVM_TOKEN_SEND_GAS = '80000'
 export const THOR_LIMIT_UNITS = '100000000'
-const AFFILIATE_FEE_BASIS_DEFAULT = '50'
+export const AFFILIATE_FEE_BASIS_DEFAULT = '50'
 const STREAMING_INTERVAL_DEFAULT = 10
 const STREAMING_QUANTITY_DEFAULT = 10
 const STREAMING_INTERVAL_NOSTREAM = 1
@@ -102,6 +93,15 @@ export const PER_ASSET_SPREAD_DEFAULT: AssetSpread[] = [
     destCurrencyCode: undefined
   },
   {
+    sourcePluginId: 'dash',
+    volatilitySpread: 0.01,
+    sourceTokenId: undefined,
+    sourceCurrencyCode: undefined,
+    destPluginId: undefined,
+    destTokenId: undefined,
+    destCurrencyCode: undefined
+  },
+  {
     sourcePluginId: 'dogecoin',
     volatilitySpread: 0.01,
     sourceTokenId: undefined,
@@ -131,11 +131,13 @@ export const INVALID_CURRENCY_CODES: InvalidCurrencyCodes = {
 }
 
 export const EVM_CURRENCY_CODES: { [cc: string]: boolean } = {
+  ARB: true,
   AVAX: true,
   BCH: false,
   BNB: false,
   BSC: true,
   BTC: false,
+  DASH: false,
   DOGE: false,
   ETC: true,
   ETH: true,
@@ -144,26 +146,11 @@ export const EVM_CURRENCY_CODES: { [cc: string]: boolean } = {
   THOR: false
 }
 
-// Network names that don't match parent network currency code
-export const MAINNET_CODE_TRANSCRIPTION: { [cc: string]: ChainTypes } = {
-  avalanche: 'AVAX',
-  binancechain: 'BNB',
-  binancesmartchain: 'BSC',
-  bitcoin: 'BTC',
-  bitcoincash: 'BCH',
-  dogecoin: 'DOGE',
-  ethereum: 'ETH',
-  litecoin: 'LTC',
-  thorchainrune: 'THOR'
-}
-
 export const asInitOptions = asObject({
   appId: asOptional(asString, 'edge'),
   affiliateFeeBasis: asOptional(asString, AFFILIATE_FEE_BASIS_DEFAULT),
   ninerealmsClientId: asOptional(asString, ''),
-  thorname: asOptional(asString, 'ej'),
-  thorswapApiKey: asOptional(asString),
-  thorswapXApiKey: asOptional(asString)
+  thorname: asOptional(asString, 'ej')
 })
 
 export const asInboundAddresses = asArray(
@@ -196,26 +183,23 @@ export const asAssetSpread = asObject({
   volatilitySpread: asNumber
 })
 
-export const asExchangeInfo = asObject({
+const asExchangeInfo = asObject({
+  perAssetSpread: asArray(asAssetSpread),
+  perAssetSpreadStreaming: asOptional(asArray(asAssetSpread)),
+  volatilitySpread: asNumber,
+  volatilitySpreadStreaming: asOptional(asNumber),
+  likeKindVolatilitySpread: asNumber,
+  likeKindVolatilitySpreadStreaming: asOptional(asNumber),
+  midgardServers: asArray(asString),
+  affiliateFeeBasis: asOptional(asString),
+  streamingInterval: asOptional(asNumber),
+  streamingQuantity: asOptional(asNumber),
+  thornodeServers: asOptional(asArray(asString))
+})
+
+const asExchangeInfoMap = asObject({
   swap: asObject({
-    plugins: asObject({
-      thorchain: asObject({
-        perAssetSpread: asArray(asAssetSpread),
-        perAssetSpreadStreaming: asOptional(asArray(asAssetSpread)),
-        volatilitySpread: asNumber,
-        volatilitySpreadStreaming: asOptional(asNumber),
-        likeKindVolatilitySpread: asNumber,
-        likeKindVolatilitySpreadStreaming: asOptional(asNumber),
-        daVolatilitySpread: asNumber,
-        midgardServers: asArray(asString),
-        affiliateFeeBasis: asOptional(asString),
-        nineRealmsServers: asOptional(asArray(asString)),
-        streamingInterval: asOptional(asNumber),
-        streamingQuantity: asOptional(asNumber),
-        thornodeServers: asOptional(asArray(asString)),
-        thorSwapServers: asOptional(asArray(asString))
-      })
-    })
+    plugins: asObject(asMaybe(asExchangeInfo))
   })
 })
 
@@ -255,10 +239,11 @@ type AssetSpread = ReturnType<typeof asAssetSpread>
 type Pool = ReturnType<typeof asPool>
 type ExchangeInfo = ReturnType<typeof asExchangeInfo>
 interface CalcSwapParams {
+  swapInfo: EdgeSwapInfo
   log: Function
   fetch: EdgeFetchFunction
   thornodes: string[]
-  thornodesFetchOptions: any
+  thornodesFetchOptions: Record<string, string>
   fromWallet: EdgeCurrencyWallet
   fromCurrencyCode: string
   toWallet: EdgeCurrencyWallet
@@ -292,19 +277,33 @@ interface CalcSwapResponse {
 let exchangeInfo: ExchangeInfo | undefined
 let exchangeInfoLastUpdate: number = 0
 
-export function makeThorchainPlugin(
-  opts: EdgeCorePluginOptions
+interface ThorchainOpts {
+  MAINNET_CODE_TRANSCRIPTION: { [cc: string]: string }
+  MIDGARD_SERVERS_DEFAULT: string[]
+  THORNODE_SERVERS_DEFAULT: string[]
+  orderUri: string
+  swapInfo: EdgeSwapInfo
+  thornodesFetchOptions?: Record<string, string>
+}
+
+export function makeThorchainBasedPlugin(
+  opts: EdgeCorePluginOptions,
+  thorchainOpts: ThorchainOpts
 ): EdgeSwapPlugin {
   const { io, log } = opts
   const { fetchCors = io.fetch } = io
   const initOptions = asInitOptions(opts.initOptions)
-  const { appId, thorname, ninerealmsClientId } = initOptions
+  const { appId, thorname } = initOptions
   let { affiliateFeeBasis = AFFILIATE_FEE_BASIS_DEFAULT } = initOptions
 
-  const headers = {
-    'Content-Type': 'application/json',
-    'x-client-id': ninerealmsClientId
-  }
+  const {
+    MAINNET_CODE_TRANSCRIPTION,
+    MIDGARD_SERVERS_DEFAULT,
+    THORNODE_SERVERS_DEFAULT,
+    orderUri,
+    swapInfo,
+    thornodesFetchOptions = {}
+  } = thorchainOpts
 
   const fetchSwapQuoteInner = async (
     request: EdgeSwapRequestPlugin,
@@ -364,7 +363,12 @@ export function makeThorchainPlugin(
         )
 
         if (exchangeInfoResponse.ok === true) {
-          exchangeInfo = asExchangeInfo(await exchangeInfoResponse.json())
+          const exchangeInfoMap = asExchangeInfoMap(
+            await exchangeInfoResponse.json()
+          )
+          exchangeInfo = asExchangeInfo(
+            exchangeInfoMap.swap.plugins[swapInfo.pluginId]
+          )
           exchangeInfoLastUpdate = now
         } else {
           // Error is ok. We just use defaults
@@ -379,23 +383,21 @@ export function makeThorchainPlugin(
     }
 
     if (exchangeInfo != null) {
-      const { thorchain } = exchangeInfo.swap.plugins
-      likeKindVolatilitySpread =
-        exchangeInfo.swap.plugins.thorchain.likeKindVolatilitySpread
-      volatilitySpread = thorchain.volatilitySpread
+      likeKindVolatilitySpread = exchangeInfo.likeKindVolatilitySpread
+      volatilitySpread = exchangeInfo.volatilitySpread
       likeKindVolatilitySpreadStreaming =
-        exchangeInfo.swap.plugins.thorchain.likeKindVolatilitySpreadStreaming ??
+        exchangeInfo.likeKindVolatilitySpreadStreaming ??
         likeKindVolatilitySpreadStreaming
       volatilitySpreadStreaming =
-        thorchain.volatilitySpreadStreaming ?? volatilitySpreadStreaming
-      midgardServers = thorchain.midgardServers
-      thornodeServers = thorchain.thornodeServers ?? thornodeServers
-      perAssetSpread = thorchain.perAssetSpread
+        exchangeInfo.volatilitySpreadStreaming ?? volatilitySpreadStreaming
+      midgardServers = exchangeInfo.midgardServers
+      thornodeServers = exchangeInfo.thornodeServers ?? thornodeServers
+      perAssetSpread = exchangeInfo.perAssetSpread
       perAssetSpreadStreaming =
-        thorchain.perAssetSpreadStreaming ?? perAssetSpreadStreaming
-      affiliateFeeBasis = thorchain.affiliateFeeBasis ?? affiliateFeeBasis
-      streamingInterval = thorchain.streamingInterval ?? streamingInterval
-      streamingQuantity = thorchain.streamingQuantity ?? streamingQuantity
+        exchangeInfo.perAssetSpreadStreaming ?? perAssetSpreadStreaming
+      affiliateFeeBasis = exchangeInfo.affiliateFeeBasis ?? affiliateFeeBasis
+      streamingInterval = exchangeInfo.streamingInterval ?? streamingInterval
+      streamingQuantity = exchangeInfo.streamingQuantity ?? streamingQuantity
     }
 
     const volatilitySpreadFinal = isEstimate
@@ -436,7 +438,7 @@ export function makeThorchainPlugin(
       fetchCors,
       midgardServers,
       'v2/pools',
-      { headers }
+      thornodesFetchOptions
     )
 
     if (!poolResponse.ok) {
@@ -449,6 +451,7 @@ export function makeThorchainPlugin(
 
     const sourcePool = getPool(
       request,
+      swapInfo,
       fromMainnetCode,
       fromCurrencyCode,
       pools
@@ -463,15 +466,22 @@ export function makeThorchainPlugin(
         : undefined
     log(`fromAsset: ${fromAsset}`)
 
-    const destPool = getPool(request, toMainnetCode, toCurrencyCode, pools)
+    const destPool = getPool(
+      request,
+      swapInfo,
+      toMainnetCode,
+      toCurrencyCode,
+      pools
+    )
 
     let calcResponse: CalcSwapResponse
     if (quoteFor === 'from' || quoteFor === 'max') {
       calcResponse = await calcSwapFrom({
+        swapInfo,
         log,
         fetch: fetchCors,
         thornodes: thornodeServers,
-        thornodesFetchOptions: { headers },
+        thornodesFetchOptions,
         fromWallet,
         fromCurrencyCode,
         toWallet,
@@ -491,10 +501,11 @@ export function makeThorchainPlugin(
       })
     } else {
       calcResponse = await calcSwapTo({
+        swapInfo,
         log,
         fetch: fetchCors,
         thornodes: thornodeServers,
-        thornodesFetchOptions: { headers },
+        thornodesFetchOptions,
         fromWallet,
         fromCurrencyCode,
         toWallet,
@@ -531,7 +542,7 @@ export function makeThorchainPlugin(
     const savedAction: EdgeTxActionSwap = {
       actionType: 'swap',
       swapInfo,
-      orderUri: 'https://track.ninerealms.com/',
+      orderUri,
       isEstimate,
       toAsset: {
         pluginId: toWallet.currencyInfo.pluginId,
@@ -755,6 +766,7 @@ export function makeThorchainPlugin(
 
 const getPool = (
   request: EdgeSwapRequestPlugin,
+  swapInfo: EdgeSwapInfo,
   mainnetCode: string,
   tokenCode: string,
   pools: Pool[]
@@ -770,7 +782,7 @@ const getPool = (
     const pool: Pool = {
       asset: 'THOR.RUNE',
       assetPrice: '1',
-      assetPriceUSD: div(assetPriceUSD, assetPrice, 16)
+      assetPriceUSD: div18(assetPriceUSD, assetPrice)
     }
     return pool
   }
@@ -786,6 +798,7 @@ const getPool = (
 }
 
 const calcSwapFrom = async ({
+  swapInfo,
   log,
   fetch,
   thornodes,
@@ -838,6 +851,7 @@ const calcSwapFrom = async ({
     streaming_quantity: streamingQuantity
   }
   const bestQuote = await getBestQuote(
+    swapInfo,
     [noStreamParams, streamParams],
     fetch,
     thornodes,
@@ -874,11 +888,7 @@ const calcSwapFrom = async ({
 
   log(`toThorAmountWithSpread = limit: ${toThorAmountWithSpread}`)
 
-  const toExchangeAmount = div(
-    toThorAmountWithSpread,
-    THOR_LIMIT_UNITS,
-    DIVIDE_PRECISION
-  )
+  const toExchangeAmount = div(toThorAmountWithSpread, THOR_LIMIT_UNITS)
   log(`toExchangeAmount: ${toExchangeAmount}`)
 
   const toNativeAmountFloat = await toWallet.denominationToNative(
@@ -906,6 +916,7 @@ const calcSwapFrom = async ({
 }
 
 const calcSwapTo = async ({
+  swapInfo,
   log,
   fetch,
   thornodes,
@@ -944,7 +955,7 @@ const calcSwapTo = async ({
 
   const requestedFromExchangeAmount = mul(
     toExchangeAmount,
-    div(destPrice, sourcePrice, DIVIDE_PRECISION)
+    div18(destPrice, sourcePrice)
   )
 
   const requestedFromThorAmount = round(
@@ -969,6 +980,7 @@ const calcSwapTo = async ({
   }
 
   const bestQuote = await getBestQuote(
+    swapInfo,
     [noStreamParams, streamParams],
     fetch,
     thornodes,
@@ -994,7 +1006,7 @@ const calcSwapTo = async ({
   // Get the percent drop from the 'to' amount the user wanted compared to the
   // 'to' amount returned by the API. Add that percent to the 'from' amount to
   // estimate how much more the user has to send.
-  const feeRatio = div(requestedToThorAmount, toThorAmount, DIVIDE_PRECISION)
+  const feeRatio = div18(requestedToThorAmount, toThorAmount)
   log(`feeRatio: ${feeRatio}`)
 
   const fromThorAmount = mul(requestedFromThorAmount, feeRatio)
@@ -1016,11 +1028,7 @@ const calcSwapTo = async ({
 
   log(`fromThorAmountWithSpread = limit: ${fromThorAmountWithSpread}`)
 
-  const fromExchangeAmount = div(
-    fromThorAmountWithSpread,
-    THOR_LIMIT_UNITS,
-    DIVIDE_PRECISION
-  )
+  const fromExchangeAmount = div18(fromThorAmountWithSpread, THOR_LIMIT_UNITS)
   log(`fromExchangeAmount: ${fromExchangeAmount}`)
 
   const fromNativeAmountFloat = await fromWallet.denominationToNative(
@@ -1047,18 +1055,8 @@ const calcSwapTo = async ({
   }
 }
 
-type ChainTypes =
-  | 'BTC'
-  | 'ETH'
-  | 'BCH'
-  | 'BSC'
-  | 'DOGE'
-  | 'LTC'
-  | 'AVAX'
-  | 'BNB'
-  | 'THOR'
-
 const getBestQuote = async (
+  swapInfo: EdgeSwapInfo,
   params: QueryParams[],
   fetch: EdgeFetchFunction,
   thornodes: string[],
@@ -1104,11 +1102,7 @@ const getBestQuote = async (
     if (bestError == null) {
       throw new Error('Could not get quote')
     } else {
-      const minExchangeAmount = div(
-        bestError.minThorAmount,
-        THOR_LIMIT_UNITS,
-        DIVIDE_PRECISION
-      )
+      const minExchangeAmount = div18(bestError.minThorAmount, THOR_LIMIT_UNITS)
       const minNativeAmount = await fromWallet.denominationToNative(
         minExchangeAmount,
         fromCurrencyCode
@@ -1134,7 +1128,7 @@ const getQuote = async (
     const response = await fetchWaterfall(
       fetch,
       thornodes,
-      `thorchain/quote/swap?${params}`,
+      `quote/swap?${params}`,
       thornodesFetchOptions
     )
     let json
@@ -1180,7 +1174,7 @@ const getQuote = async (
 }
 
 export const getGasLimit = (
-  chain: ChainTypes,
+  chain: string,
   tokenId: string | null
 ): string | undefined => {
   if (EVM_CURRENCY_CODES[chain]) {
