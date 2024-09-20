@@ -97,6 +97,7 @@ async function main(): Promise<void> {
       polygon: config.POLYGON_INIT,
       piratechain: true,
       rango: config.RANGO_INIT,
+      swapkit: config.THORCHAIN_INIT,
       thorchain: config.THORCHAIN_INIT,
       thorchainda: config.THORCHAIN_INIT
     }

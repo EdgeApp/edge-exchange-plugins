@@ -53,16 +53,16 @@ import {
   THORNODE_SERVERS_DEFAULT
 } from './thorchain'
 
-const pluginId = 'thorchainda'
+const pluginId = 'swapkit'
 const swapInfo: EdgeSwapInfo = {
   pluginId,
   isDex: true,
-  displayName: 'Thorchain DEX Aggregator',
+  displayName: 'Swap Kit',
   supportEmail: 'support@edge.app'
 }
 
 // This needs to be a type so adding the '& {}' prevents auto correction to an interface
-type ThorSwapQuoteParams = {
+type SwapKitSwapQuoteParams = {
   sellAsset: string
   buyAsset: string
   sellAmount: string
@@ -78,7 +78,7 @@ const asCalldata = asObject({
   memo: asOptional(asString)
 })
 
-const asThorSwapRoute = asObject({
+const asSwapKitSwapRoute = asObject({
   contract: asEither(asString, asNull),
   contractMethod: asEither(asString, asNull),
   contractInfo: asOptional(asString),
@@ -93,8 +93,8 @@ const asThorSwapRoute = asObject({
   deadline: asOptional(asString)
 })
 
-const asThorSwapQuoteResponse = asObject({
-  routes: asArray(asThorSwapRoute)
+const asSwapKitSwapQuoteResponse = asObject({
+  routes: asArray(asSwapKitSwapRoute)
 })
 
 /** Max slippage for 5% for estimated quotes */
@@ -111,9 +111,7 @@ const tokenProxyMap: { [currencyPluginId: string]: string } = {
   avalanche: '0x69ba883af416ff5501d54d5e27a1f497fbd97156'
 }
 
-export function makeThorchainDaPlugin(
-  opts: EdgeCorePluginOptions
-): EdgeSwapPlugin {
+export function makeSwapKitPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
   const { io, log } = opts
   const { fetchCors = io.fetch } = io
   const {
@@ -225,7 +223,7 @@ export function makeThorchainDaPlugin(
       fromCurrencyCode
     )
 
-    const quoteParams: ThorSwapQuoteParams = {
+    const quoteParams: SwapKitSwapQuoteParams = {
       sellAsset:
         `${fromMainnetCode}.${fromCurrencyCode}` +
         (fromTokenId != null ? `-0x${fromTokenId}` : ''),
@@ -263,7 +261,7 @@ export function makeThorchainDaPlugin(
     if (!iaResponse.ok) {
       const responseText = await iaResponse.text()
       throw new Error(
-        `Thorchain could not fetch inbound_addresses: ${JSON.stringify(
+        `Swap Kit could not fetch inbound_addresses: ${JSON.stringify(
           responseText,
           null,
           2
@@ -273,11 +271,7 @@ export function makeThorchainDaPlugin(
     if (!thorSwapResponse.ok) {
       const responseText = await thorSwapResponse.text()
       throw new Error(
-        `Thorchain could not get thorswap quote: ${JSON.stringify(
-          responseText,
-          null,
-          2
-        )}`
+        `Swap Kit could not get quote: ${JSON.stringify(responseText, null, 2)}`
       )
     }
 
@@ -285,7 +279,7 @@ export function makeThorchainDaPlugin(
     const inboundAddresses = asInboundAddresses(iaJson)
 
     const thorSwapJson = await thorSwapResponse.json()
-    const thorSwapQuote = asThorSwapQuoteResponse(thorSwapJson)
+    const thorSwapQuote = asSwapKitSwapQuoteResponse(thorSwapJson)
 
     // Check for supported chain and asset
     const inAddressObject = inboundAddresses.find(

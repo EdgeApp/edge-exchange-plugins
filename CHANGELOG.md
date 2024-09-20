@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- changed: Changed 'thorchainda' pluginId to 'swapkit.' 'thorchainda' still exists for backwards compatibility
+
 ## 2.8.0 (2024-09-12)
 
 - added: `minReceiveAmount` passed in `EdgeSwapQuotes` for lifi and rango
