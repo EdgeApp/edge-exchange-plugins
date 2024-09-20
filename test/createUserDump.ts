@@ -42,6 +42,7 @@ async function main(): Promise<void> {
       avalanche: true,
       piratechain: true,
       polygon: true,
+      swapkit: true,
       thorchainda: true
     }
   })

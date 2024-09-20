@@ -13,7 +13,7 @@ import { make0xGaslessPlugin } from './swap/defi/0x/0xGasless'
 import { makeCosmosIbcPlugin } from './swap/defi/cosmosIbc'
 import { makeLifiPlugin } from './swap/defi/lifi'
 import { makeRangoPlugin } from './swap/defi/rango'
-import { makeThorchainDaPlugin } from './swap/defi/swapKit'
+import { makeSwapKitPlugin } from './swap/defi/swapKit'
 import { makeThorchainPlugin } from './swap/defi/thorchain'
 import { makeSpookySwapPlugin } from './swap/defi/uni-v2-based/plugins/spookySwap'
 import { makeTombSwapPlugin } from './swap/defi/uni-v2-based/plugins/tombSwap'
@@ -33,9 +33,11 @@ const plugins = {
   rango: makeRangoPlugin,
   sideshift: makeSideshiftPlugin,
   spookySwap: makeSpookySwapPlugin,
+  swapkit: makeSwapKitPlugin,
   swapuz: makeSwapuzPlugin,
   thorchain: makeThorchainPlugin,
-  thorchainda: makeThorchainDaPlugin,
+  /** @deprecated - For backwards compatibility with swapkit */
+  thorchainda: makeSwapKitPlugin,
   tombSwap: makeTombSwapPlugin,
   transfer: makeTransferPlugin,
   velodrome: makeVelodromePlugin,
