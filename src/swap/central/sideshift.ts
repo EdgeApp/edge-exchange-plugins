@@ -1,7 +1,17 @@
-import { asBoolean, asEither, asObject, asOptional, asString } from 'cleaners'
+import {
+  asArray,
+  asBoolean,
+  asEither,
+  asMaybe,
+  asObject,
+  asOptional,
+  asString,
+  asUnknown
+} from 'cleaners'
 import {
   EdgeCorePluginOptions,
   EdgeFetchFunction,
+  EdgeLog,
   EdgeMemo,
   EdgeSpendInfo,
   EdgeSwapInfo,
@@ -16,11 +26,12 @@ import {
 } from 'edge-core-js/types'
 
 import {
+  ChainCodeTickerMap,
   checkInvalidCodes,
   checkWhitelistedMainnetCodes,
   CurrencyPluginIdSwapChainCodeMap,
   ensureInFuture,
-  getCodesWithTranscription,
+  getChainAndTokenCodes,
   getMaxSwappable,
   InvalidCurrencyCodes,
   makeSwapPluginQuote,
@@ -116,12 +127,12 @@ async function checkQuoteError(
   request: EdgeSwapRequestPlugin,
   quoteErrorMessage: string
 ): Promise<void> {
-  const { fromCurrencyCode, fromWallet } = request
+  const { fromWallet } = request
 
   if (quoteErrorMessage === 'Amount too low') {
     const nativeMin = await fromWallet.denominationToNative(
       rate.min,
-      fromCurrencyCode
+      request.fromCurrencyCode
     )
     throw new SwapBelowLimitError(swapInfo, nativeMin)
   }
@@ -129,7 +140,7 @@ async function checkQuoteError(
   if (quoteErrorMessage === 'Amount too high') {
     const nativeMax = await fromWallet.denominationToNative(
       rate.max,
-      fromCurrencyCode
+      request.fromCurrencyCode
     )
     throw new SwapAboveLimitError(swapInfo, nativeMax)
   }
@@ -202,7 +213,12 @@ const fetchSwapQuoteInner = async (
     toCurrencyCode,
     fromMainnetCode,
     toMainnetCode
-  } = getCodesWithTranscription(request, MAINNET_CODE_TRANSCRIPTION)
+  } = await getChainAndTokenCodes(
+    request,
+    swapInfo,
+    chainCodeTickerMap,
+    MAINNET_CODE_TRANSCRIPTION
+  )
 
   const rate = asRate(
     await api.get<typeof asRate>(
@@ -334,9 +350,75 @@ const fetchSwapQuoteInner = async (
   }
 }
 
-const createFetchSwapQuote = (api: SideshiftApi, affiliateId: string) =>
+// Provider data
+let chainCodeTickerMap: ChainCodeTickerMap = new Map()
+let lastUpdated = 0
+const EXPIRATION = 1000 * 60 * 60 // 1 hour
+
+async function fetchSupportedAssets(
+  api: CreateSideshiftApiResponse,
+  log: EdgeLog
+): Promise<void> {
+  if (lastUpdated > Date.now() - EXPIRATION) return
+
+  try {
+    const json = await api.get('/coins')
+    const assets = asSideshiftAssets(json)
+
+    const chaincodeArray = Object.values(MAINNET_CODE_TRANSCRIPTION)
+    const out: ChainCodeTickerMap = new Map()
+    for (const asset of assets) {
+      const mainnetObj = asMaybe(asMainnetAsset)(asset)
+      if (mainnetObj != null) {
+        for (const network of mainnetObj.networks) {
+          if (chaincodeArray.includes(network)) {
+            const tokenCodes = out.get(network) ?? []
+            tokenCodes.push({
+              tokenCode: mainnetObj.coin,
+              contractAddress: null
+            })
+            out.set(network, tokenCodes)
+          }
+        }
+      }
+
+      const tokenObj = asMaybe(asTokenAsset)(asset)
+      if (tokenObj != null) {
+        for (const network of tokenObj.networks) {
+          if (chaincodeArray.includes(network)) {
+            const tokenCodes = out.get(network) ?? []
+            const networkObj = Object.keys(tokenObj.tokenDetails).find(
+              networkName => networkName === network
+            )
+            if (networkObj == null) continue
+            tokenCodes.push({
+              tokenCode: tokenObj.coin,
+              contractAddress: tokenObj.tokenDetails[networkObj].contractAddress
+            })
+            out.set(network, tokenCodes)
+          }
+        }
+      }
+    }
+
+    chainCodeTickerMap = out
+    lastUpdated = Date.now()
+  } catch (e) {
+    log.warn('SideShift: Error updating supported assets', e)
+  }
+}
+
+const createFetchSwapQuote = (
+  api: SideshiftApi,
+  affiliateId: string,
+  log: EdgeLog
+) =>
   async function fetchSwapQuote(req: EdgeSwapRequest): Promise<EdgeSwapQuote> {
     const request = convertRequest(req)
+
+    // Fetch and persist chaincode/tokencode maps from provider
+    await fetchSupportedAssets(api, log)
+
     checkInvalidCodes(INVALID_CURRENCY_CODES, request, swapInfo)
     checkWhitelistedMainnetCodes(MAINNET_CODE_TRANSCRIPTION, request, swapInfo)
 
@@ -355,7 +437,11 @@ export function makeSideshiftPlugin(
 ): EdgeSwapPlugin {
   const { io, initOptions } = opts
   const api = createSideshiftApi(SIDESHIFT_BASE_URL, io.fetchCors ?? io.fetch)
-  const fetchSwapQuote = createFetchSwapQuote(api, initOptions.affiliateId)
+  const fetchSwapQuote = createFetchSwapQuote(
+    api,
+    initOptions.affiliateId,
+    opts.log
+  )
 
   return {
     swapInfo,
@@ -428,3 +514,19 @@ const asOrder = asEither(
   }),
   asError
 )
+
+const asMainnetAsset = asObject({
+  networks: asArray(asString),
+  coin: asString,
+  mainnet: asString
+})
+const asTokenAsset = asObject({
+  networks: asArray(asString),
+  coin: asString,
+  tokenDetails: asObject(
+    asObject({
+      contractAddress: asString
+    })
+  )
+})
+const asSideshiftAssets = asArray(asUnknown)
