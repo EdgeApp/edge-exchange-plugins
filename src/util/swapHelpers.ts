@@ -630,7 +630,7 @@ export const getChainAndTokenCodes = async (
   swapInfo: EdgeSwapInfo,
   chainCodeTickerMap: ChainCodeTickerMap,
   MAINNET_CODE_TRANSCRIPTION: CurrencyPluginIdSwapChainCodeMap,
-  SPECIAL_MAINNET_CASES: EdgeIdSwapIdMap
+  SPECIAL_MAINNET_CASES: EdgeIdSwapIdMap = new Map()
 ): Promise<{
   fromCurrencyCode: string
   toCurrencyCode: string
