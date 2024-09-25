@@ -27,13 +27,11 @@ import {
 
 import {
   ChainCodeTickerMap,
-  checkInvalidCodes,
   checkWhitelistedMainnetCodes,
   CurrencyPluginIdSwapChainCodeMap,
   ensureInFuture,
   getChainAndTokenCodes,
   getMaxSwappable,
-  InvalidCurrencyCodes,
   makeSwapPluginQuote,
   SwapOrder
 } from '../../util/swapHelpers'
@@ -100,16 +98,6 @@ const MAINNET_CODE_TRANSCRIPTION: CurrencyPluginIdSwapChainCodeMap = {
   zcash: 'shielded',
   zcoin: null,
   zksync: 'zksyncera'
-}
-
-const INVALID_CURRENCY_CODES: InvalidCurrencyCodes = {
-  from: {
-    optimism: ['VELO'],
-    polygon: ['USDC', 'USDC.e']
-  },
-  to: {
-    polygon: ['USDC', 'USDC.e']
-  }
 }
 
 const SIDESHIFT_BASE_URL = 'https://sideshift.ai/api/v2'
@@ -419,7 +407,6 @@ const createFetchSwapQuote = (
     // Fetch and persist chaincode/tokencode maps from provider
     await fetchSupportedAssets(api, log)
 
-    checkInvalidCodes(INVALID_CURRENCY_CODES, request, swapInfo)
     checkWhitelistedMainnetCodes(MAINNET_CODE_TRANSCRIPTION, request, swapInfo)
 
     const newRequest = await getMaxSwappable(

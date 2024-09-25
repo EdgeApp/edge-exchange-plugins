@@ -57,12 +57,8 @@ const orderUri = 'https://changenow.io/exchange/txs/'
 const uri = 'https://api.changenow.io/v2/'
 
 const INVALID_CURRENCY_CODES: InvalidCurrencyCodes = {
-  from: {
-    optimism: ['VELO'],
-    polygon: ['USDC', 'USDC.e']
-  },
+  from: {},
   to: {
-    polygon: ['USDC', 'USDC.e'],
     zcash: ['ZEC']
   }
 }
