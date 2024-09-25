@@ -490,18 +490,5 @@ export const isLikeKind = (
   return false
 }
 
-export const getTokenId = (
-  coreWallet: EdgeCurrencyWallet,
-  currencyCode: string
-): string | null => {
-  if (coreWallet.currencyInfo.currencyCode === currencyCode) return null
-  const { allTokens } = coreWallet.currencyConfig
-  return (
-    Object.keys(allTokens).find(
-      edgeToken => allTokens[edgeToken].currencyCode === currencyCode
-    ) ?? null
-  )
-}
-
 export const consify = (val: any): void =>
   console.log(JSON.stringify(val, null, 2))
