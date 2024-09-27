@@ -25,7 +25,9 @@ import {
 import {
   checkInvalidCodes,
   checkWhitelistedMainnetCodes,
+  CurrencyCodeTranscriptionMap,
   ensureInFuture,
+  getCodes,
   getCodesWithTranscription,
   getMaxSwappable,
   InvalidCurrencyCodes,
@@ -128,6 +130,10 @@ const SPECIAL_MAINNET_CASES: {
   avalanche: new Map([[null, 'cchain']])
 }
 
+const CURRENCY_CODE_TRANSCRIPTION: CurrencyCodeTranscriptionMap = {
+  polygon: { POL: 'matic' }
+}
+
 export function makeChangeNowPlugin(
   opts: EdgeCorePluginOptions
 ): EdgeSwapPlugin {
@@ -153,21 +159,26 @@ export function makeChangeNowPlugin(
       getAddress(request.toWallet)
     ])
 
-    const {
-      fromCurrencyCode,
-      toCurrencyCode,
-      fromMainnetCode: defaultFromMainnetCode,
-      toMainnetCode: defaultToMainnetCode
-    } = getCodesWithTranscription(request, MAINNET_CODE_TRANSCRIPTION)
-    const fromMainnetCode =
+    // Get our currency codes
+    const { fromCurrencyCode, toCurrencyCode } = getCodes(request)
+
+    // Get Changenow's codes for the request
+    const changenowCodes = getCodesWithTranscription(
+      request,
+      MAINNET_CODE_TRANSCRIPTION,
+      CURRENCY_CODE_TRANSCRIPTION
+    )
+    // Modify special mainnet code cases
+    changenowCodes.fromMainnetCode =
       SPECIAL_MAINNET_CASES[request.fromWallet.currencyInfo.pluginId]?.get(
         request.fromTokenId
-      ) ?? defaultFromMainnetCode
-    const toMainnetCode =
+      ) ?? changenowCodes.fromMainnetCode
+    changenowCodes.toMainnetCode =
       SPECIAL_MAINNET_CASES[request.toWallet.currencyInfo.pluginId]?.get(
         request.toTokenId
-      ) ?? defaultToMainnetCode
-    const currencyString = `fromCurrency=${fromCurrencyCode}&toCurrency=${toCurrencyCode}&fromNetwork=${fromMainnetCode}&toNetwork=${toMainnetCode}`
+      ) ?? changenowCodes.toMainnetCode
+
+    const currencyString = `fromCurrency=${changenowCodes.fromCurrencyCode}&toCurrency=${changenowCodes.toCurrencyCode}&fromNetwork=${changenowCodes.fromMainnetCode}&toNetwork=${changenowCodes.toMainnetCode}`
 
     async function createOrder(
       flow: 'fixed-rate' | 'standard',
@@ -192,10 +203,10 @@ export function makeChangeNowPlugin(
 
       // Create order
       const orderBody = {
-        fromCurrency: fromCurrencyCode,
-        toCurrency: toCurrencyCode,
-        fromNetwork: fromMainnetCode,
-        toNetwork: toMainnetCode,
+        fromCurrency: changenowCodes.fromCurrencyCode,
+        toCurrency: changenowCodes.toCurrencyCode,
+        fromNetwork: changenowCodes.fromMainnetCode,
+        toNetwork: changenowCodes.toMainnetCode,
         fromAmount: isSelling ? largeDenomAmount : '',
         toAmount: isSelling ? '' : largeDenomAmount,
         type,
