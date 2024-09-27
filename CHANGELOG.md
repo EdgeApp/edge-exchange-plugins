@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- fixed: POL currency code transcriptions for `letsexchange` and `changenow`
+
 ## 2.9.0 (2024-09-27)
 
 - added: Add Maya Protocol
