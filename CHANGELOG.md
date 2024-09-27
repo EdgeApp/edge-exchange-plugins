@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 2.9.0 (2024-09-27)
+
 - added: Add Maya Protocol
 - changed: Separate thorchain and thorchainda initOptions and exchangeInfo cleaner
 
