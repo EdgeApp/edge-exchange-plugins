@@ -112,7 +112,7 @@ const MAINNET_CODE_TRANSCRIPTION = {
   osmosis: 'OSMO',
   piratechain: 'ARRR',
   polkadot: 'DOT',
-  polygon: 'MATIC',
+  polygon: 'POL',
   pulsechain: 'PLS',
   qtum: 'QTUM',
   ravencoin: 'RVN',
