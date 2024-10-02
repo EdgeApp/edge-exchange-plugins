@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## 2.8.1 (2024-10-02)
+
+- fixed: POL currency code transcriptions for `letsexchange` and `changenow`
+
 ## 2.9.1 (2024-09-30)
 
 - fixed: POL currency code transcriptions for `letsexchange` and `changenow`
