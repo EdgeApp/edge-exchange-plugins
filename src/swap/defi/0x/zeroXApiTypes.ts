@@ -85,7 +85,7 @@ export interface GaslessSwapQuoteRequest {
    * specifies. If not provided, it means the caller accepts any types whose
    * default value is currently set to `metatransaction_v2` and `otc`.
    */
-  acceptedTypes?: string
+  acceptedTypes?: 'metatransaction_v2' | 'otc'
 
   /**
    * [optional] The maximum amount of slippage acceptable to the user; any
@@ -122,7 +122,7 @@ export interface GaslessSwapQuoteRequest {
    * would, however, potentially improve the pricing the endpoint returned as
    * there are more sources for liquidity.
    */
-  feeType?: string
+  feeType?: 'volume'
 
   /**
    * [optional] The address the integrator fee would be transferred to. This is
@@ -137,7 +137,7 @@ export interface GaslessSwapQuoteRequest {
    * `sellToken` integrator charges as fee. For example, setting it to `0.01`
    * means 1% of the `sellToken` would be charged as fee for the integrator.
    */
-  feeSellTokenPercentage?: string
+  feeSellTokenPercentage?: number
 
   /**
    * [optional] A boolean that indicates whether or not to check for approval and
