@@ -57,8 +57,32 @@ const MAX_SLIPPAGE = '0.05'
 const LIFI_SERVERS_DEFAULT = ['https://li.quest']
 const EXPIRATION_MS = 1000 * 60
 const EXCHANGE_INFO_UPDATE_FREQ_MS = 60000
-const PARENT_TOKEN_CONTRACT_ADDRESS =
-  '0x0000000000000000000000000000000000000000'
+
+// https://li.quest/v1/chains
+const getParentTokenContractAddress = (pluginId: string): string => {
+  switch (pluginId) {
+    // chainType UTXO
+    case 'bitcoin': {
+      return 'bitcoin'
+    }
+
+    // chainType SVM
+    case 'solana': {
+      return '11111111111111111111111111111111'
+    }
+
+    // chainType EVM
+    case 'celo': {
+      return '0x471EcE3750Da237f93B8E339c536989b8978a438'
+    }
+    case 'metis': {
+      return '0xDeadDeAddeAddEAddeadDEaDDEAdDeaDDeAD0000'
+    }
+    default: {
+      return '0x0000000000000000000000000000000000000000'
+    }
+  }
+}
 
 export const INVALID_CURRENCY_CODES: InvalidCurrencyCodes = {
   from: {},
@@ -83,6 +107,7 @@ const MAINNET_CODE_TRANSCRIPTION: StringMap = {
   fuse: 'FUS',
   gnosis: 'DAI',
   harmony: 'ONE',
+  metis: 'METIS',
   moonbeam: 'MOO',
   moonriver: 'MOR',
   okexchain: 'OKT',
@@ -206,7 +231,9 @@ export function makeLifiPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
     let fromContractAddress
     let sendingToken = false
     if (fromCurrencyCode === fromWallet.currencyInfo.currencyCode) {
-      fromContractAddress = PARENT_TOKEN_CONTRACT_ADDRESS
+      fromContractAddress = getParentTokenContractAddress(
+        fromWallet.currencyInfo.pluginId
+      )
     } else {
       sendingToken = true
       fromContractAddress = fromToken?.networkLocation?.contractAddress
@@ -215,7 +242,9 @@ export function makeLifiPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
     const toToken = toWallet.currencyConfig.allTokens[toTokenId ?? '']
     let toContractAddress
     if (toCurrencyCode === toWallet.currencyInfo.currencyCode) {
-      toContractAddress = PARENT_TOKEN_CONTRACT_ADDRESS
+      toContractAddress = getParentTokenContractAddress(
+        toWallet.currencyInfo.pluginId
+      )
     } else {
       toContractAddress = toToken?.networkLocation?.contractAddress
     }
