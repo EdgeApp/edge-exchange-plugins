@@ -3,6 +3,7 @@
 ## Unreleased
 
 - added: (LI.FI) Added unique parent contract addresses
+- fixed: Division precision for Thorchain `toExchangeAmount`
 
 ## 2.8.1 (2024-10-02)
 

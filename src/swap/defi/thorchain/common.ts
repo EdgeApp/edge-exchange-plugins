@@ -1,4 +1,4 @@
-import { add, div, gt, mul, round, sub } from 'biggystring'
+import { add, gt, mul, round, sub } from 'biggystring'
 import {
   asArray,
   asBoolean,
@@ -888,7 +888,7 @@ const calcSwapFrom = async ({
 
   log(`toThorAmountWithSpread = limit: ${toThorAmountWithSpread}`)
 
-  const toExchangeAmount = div(toThorAmountWithSpread, THOR_LIMIT_UNITS)
+  const toExchangeAmount = div18(toThorAmountWithSpread, THOR_LIMIT_UNITS)
   log(`toExchangeAmount: ${toExchangeAmount}`)
 
   const toNativeAmountFloat = await toWallet.denominationToNative(
