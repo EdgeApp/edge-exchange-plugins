@@ -105,7 +105,7 @@ const asExchangeInfo = asObject({
       thorchainda: asObject({
         daVolatilitySpread: asOptional(asNumber),
         affiliateFeeBasis: asOptional(asString),
-        thornodeServers: asOptional(asArray(asString)),
+        thornodeServersWithPath: asOptional(asArray(asString)),
         thorSwapServers: asOptional(asArray(asString))
       })
     })
@@ -184,7 +184,7 @@ export function makeThorchainDaPlugin(
     const isEstimate = true
 
     let daVolatilitySpread: number = DA_VOLATILITY_SPREAD_DEFAULT
-    let thornodeServers: string[] = THORNODE_SERVERS_DEFAULT
+    let thornodeServersWithPath: string[] = THORNODE_SERVERS_DEFAULT
     let thorswapServers: string[] = THORSWAP_DEFAULT_SERVERS
 
     checkInvalidCodes(INVALID_CURRENCY_CODES, request, swapInfo)
@@ -232,7 +232,8 @@ export function makeThorchainDaPlugin(
       daVolatilitySpread =
         thorchainda.daVolatilitySpread ?? DA_VOLATILITY_SPREAD_DEFAULT
       thorswapServers = thorchainda.thorSwapServers ?? THORSWAP_DEFAULT_SERVERS
-      thornodeServers = thorchainda.thornodeServers ?? thornodeServers
+      thornodeServersWithPath =
+        thorchainda.thornodeServersWithPath ?? thornodeServersWithPath
     }
 
     const volatilitySpreadFinal = daVolatilitySpread // Might add a likeKind spread later
@@ -271,7 +272,7 @@ export function makeThorchainDaPlugin(
     log.warn(uri)
 
     const [iaResponse, thorSwapResponse] = await Promise.all([
-      fetchWaterfall(fetchCors, thornodeServers, 'inbound_addresses', {
+      fetchWaterfall(fetchCors, thornodeServersWithPath, 'inbound_addresses', {
         headers
       }),
       fetchWaterfall(fetchCors, thorswapServers, uri, {

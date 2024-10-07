@@ -194,7 +194,7 @@ const asExchangeInfo = asObject({
   affiliateFeeBasis: asOptional(asString),
   streamingInterval: asOptional(asNumber),
   streamingQuantity: asOptional(asNumber),
-  thornodeServers: asOptional(asArray(asString))
+  thornodeServersWithPath: asOptional(asArray(asString))
 })
 
 const asExchangeInfoMap = asObject({
@@ -330,7 +330,7 @@ export function makeThorchainBasedPlugin(
     }
 
     let midgardServers: string[] = MIDGARD_SERVERS_DEFAULT
-    let thornodeServers: string[] = THORNODE_SERVERS_DEFAULT
+    let thornodeServersWithPath: string[] = THORNODE_SERVERS_DEFAULT
     let likeKindVolatilitySpread: number = LIKE_KIND_VOLATILITY_SPREAD_DEFAULT
     let likeKindVolatilitySpreadStreaming: number = LIKE_KIND_VOLATILITY_SPREAD_STREAMING_DEFAULT
     let volatilitySpread: number = VOLATILITY_SPREAD_DEFAULT
@@ -395,8 +395,9 @@ export function makeThorchainBasedPlugin(
         infoServer.exchangeInfo.volatilitySpreadStreaming ??
         volatilitySpreadStreaming
       midgardServers = infoServer.exchangeInfo.midgardServers
-      thornodeServers =
-        infoServer.exchangeInfo.thornodeServers ?? thornodeServers
+      thornodeServersWithPath =
+        infoServer.exchangeInfo.thornodeServersWithPath ??
+        thornodeServersWithPath
       perAssetSpread = infoServer.exchangeInfo.perAssetSpread
       perAssetSpreadStreaming =
         infoServer.exchangeInfo.perAssetSpreadStreaming ??
@@ -489,7 +490,7 @@ export function makeThorchainBasedPlugin(
         swapInfo,
         log,
         fetch: fetchCors,
-        thornodes: thornodeServers,
+        thornodes: thornodeServersWithPath,
         thornodesFetchOptions,
         fromWallet,
         fromCurrencyCode,
@@ -513,7 +514,7 @@ export function makeThorchainBasedPlugin(
         swapInfo,
         log,
         fetch: fetchCors,
-        thornodes: thornodeServers,
+        thornodes: thornodeServersWithPath,
         thornodesFetchOptions,
         fromWallet,
         fromCurrencyCode,
