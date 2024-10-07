@@ -237,7 +237,7 @@ interface QuoteError {
 type QuoteSwapFull = QuoteSwap | QuoteError
 type AssetSpread = ReturnType<typeof asAssetSpread>
 type Pool = ReturnType<typeof asPool>
-type ExchangeInfo = ReturnType<typeof asExchangeInfo>
+export type ExchangeInfo = ReturnType<typeof asExchangeInfo>
 interface CalcSwapParams {
   swapInfo: EdgeSwapInfo
   log: Function
@@ -274,13 +274,14 @@ interface CalcSwapResponse {
   memo: string
 }
 
-let exchangeInfo: ExchangeInfo | undefined
-let exchangeInfoLastUpdate: number = 0
-
 interface ThorchainOpts {
   MAINNET_CODE_TRANSCRIPTION: { [cc: string]: string }
   MIDGARD_SERVERS_DEFAULT: string[]
   THORNODE_SERVERS_DEFAULT: string[]
+  infoServer: {
+    exchangeInfo: ExchangeInfo | undefined
+    exchangeInfoLastUpdate: number
+  }
   orderUri: string
   swapInfo: EdgeSwapInfo
   thornodesFetchOptions?: Record<string, string>
@@ -300,6 +301,7 @@ export function makeThorchainBasedPlugin(
     MAINNET_CODE_TRANSCRIPTION,
     MIDGARD_SERVERS_DEFAULT,
     THORNODE_SERVERS_DEFAULT,
+    infoServer,
     orderUri,
     swapInfo,
     thornodesFetchOptions = {}
@@ -354,8 +356,8 @@ export function makeThorchainBasedPlugin(
 
     const now = Date.now()
     if (
-      now - exchangeInfoLastUpdate > EXCHANGE_INFO_UPDATE_FREQ_MS ||
-      exchangeInfo == null
+      now - infoServer.exchangeInfoLastUpdate > EXCHANGE_INFO_UPDATE_FREQ_MS ||
+      infoServer.exchangeInfo == null
     ) {
       try {
         const exchangeInfoResponse = await promiseWithTimeout(
@@ -366,10 +368,10 @@ export function makeThorchainBasedPlugin(
           const exchangeInfoMap = asExchangeInfoMap(
             await exchangeInfoResponse.json()
           )
-          exchangeInfo = asExchangeInfo(
+          infoServer.exchangeInfo = asExchangeInfo(
             exchangeInfoMap.swap.plugins[swapInfo.pluginId]
           )
-          exchangeInfoLastUpdate = now
+          infoServer.exchangeInfoLastUpdate = now
         } else {
           // Error is ok. We just use defaults
           log('Error getting info server exchangeInfo. Using defaults...')
@@ -382,22 +384,29 @@ export function makeThorchainBasedPlugin(
       }
     }
 
-    if (exchangeInfo != null) {
-      likeKindVolatilitySpread = exchangeInfo.likeKindVolatilitySpread
-      volatilitySpread = exchangeInfo.volatilitySpread
+    if (infoServer.exchangeInfo != null) {
+      likeKindVolatilitySpread =
+        infoServer.exchangeInfo.likeKindVolatilitySpread
+      volatilitySpread = infoServer.exchangeInfo.volatilitySpread
       likeKindVolatilitySpreadStreaming =
-        exchangeInfo.likeKindVolatilitySpreadStreaming ??
+        infoServer.exchangeInfo.likeKindVolatilitySpreadStreaming ??
         likeKindVolatilitySpreadStreaming
       volatilitySpreadStreaming =
-        exchangeInfo.volatilitySpreadStreaming ?? volatilitySpreadStreaming
-      midgardServers = exchangeInfo.midgardServers
-      thornodeServers = exchangeInfo.thornodeServers ?? thornodeServers
-      perAssetSpread = exchangeInfo.perAssetSpread
+        infoServer.exchangeInfo.volatilitySpreadStreaming ??
+        volatilitySpreadStreaming
+      midgardServers = infoServer.exchangeInfo.midgardServers
+      thornodeServers =
+        infoServer.exchangeInfo.thornodeServers ?? thornodeServers
+      perAssetSpread = infoServer.exchangeInfo.perAssetSpread
       perAssetSpreadStreaming =
-        exchangeInfo.perAssetSpreadStreaming ?? perAssetSpreadStreaming
-      affiliateFeeBasis = exchangeInfo.affiliateFeeBasis ?? affiliateFeeBasis
-      streamingInterval = exchangeInfo.streamingInterval ?? streamingInterval
-      streamingQuantity = exchangeInfo.streamingQuantity ?? streamingQuantity
+        infoServer.exchangeInfo.perAssetSpreadStreaming ??
+        perAssetSpreadStreaming
+      affiliateFeeBasis =
+        infoServer.exchangeInfo.affiliateFeeBasis ?? affiliateFeeBasis
+      streamingInterval =
+        infoServer.exchangeInfo.streamingInterval ?? streamingInterval
+      streamingQuantity =
+        infoServer.exchangeInfo.streamingQuantity ?? streamingQuantity
     }
 
     const volatilitySpreadFinal = isEstimate

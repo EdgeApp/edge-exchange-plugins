@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- fixed: Use unique info server cache for each Thorchain-based plugin
+
 ## 2.11.0 (2024-10-08)
 
 - added: 0xGasless swap fee

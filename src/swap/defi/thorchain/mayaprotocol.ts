@@ -4,7 +4,7 @@ import {
   EdgeSwapPlugin
 } from 'edge-core-js/types'
 
-import { makeThorchainBasedPlugin } from './common'
+import { ExchangeInfo, makeThorchainBasedPlugin } from './common'
 
 const swapInfo: EdgeSwapInfo = {
   pluginId: 'mayaprotocol',
@@ -16,6 +16,11 @@ const orderUri = 'https://www.mayascan.org/tx/'
 
 const MIDGARD_SERVERS_DEFAULT = ['https://midgard.mayachain.info']
 const THORNODE_SERVERS_DEFAULT = ['https://mayanode.mayachain.info/mayachain']
+
+const infoServer: {
+  exchangeInfo: ExchangeInfo | undefined
+  exchangeInfoLastUpdate: number
+} = { exchangeInfo: undefined, exchangeInfoLastUpdate: 0 }
 
 // Network names that don't match parent network currency code
 export const MAINNET_CODE_TRANSCRIPTION: { [cc: string]: string } = {
@@ -34,6 +39,7 @@ export const makeMayaProtocolPlugin = (
     MAINNET_CODE_TRANSCRIPTION,
     MIDGARD_SERVERS_DEFAULT,
     THORNODE_SERVERS_DEFAULT,
+    infoServer,
     orderUri,
     swapInfo
   })

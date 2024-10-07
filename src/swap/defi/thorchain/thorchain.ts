@@ -4,7 +4,7 @@ import {
   EdgeSwapPlugin
 } from 'edge-core-js/types'
 
-import { asInitOptions, makeThorchainBasedPlugin } from './common'
+import { asInitOptions, ExchangeInfo, makeThorchainBasedPlugin } from './common'
 
 const swapInfo: EdgeSwapInfo = {
   pluginId: 'thorchain',
@@ -18,6 +18,11 @@ const MIDGARD_SERVERS_DEFAULT = ['https://midgard.thorchain.info']
 export const THORNODE_SERVERS_DEFAULT = [
   'https://thornode.ninerealms.com/thorchain'
 ]
+
+const infoServer: {
+  exchangeInfo: ExchangeInfo | undefined
+  exchangeInfoLastUpdate: number
+} = { exchangeInfo: undefined, exchangeInfoLastUpdate: 0 }
 
 // Network names that don't match parent network currency code
 export const MAINNET_CODE_TRANSCRIPTION: { [cc: string]: string } = {
@@ -46,6 +51,7 @@ export const makeThorchainPlugin = (
     MAINNET_CODE_TRANSCRIPTION,
     MIDGARD_SERVERS_DEFAULT,
     THORNODE_SERVERS_DEFAULT,
+    infoServer,
     orderUri,
     swapInfo,
     thornodesFetchOptions
