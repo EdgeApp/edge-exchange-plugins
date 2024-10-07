@@ -315,17 +315,13 @@ export function makeThorchainDaPlugin(
     }
     const { router, address: thorAddress } = inAddressObject
     const { routes } = thorSwapQuote
-    const [thorSwap] = routes
+    const thorSwap = routes.find(route => route.providers.length > 1)
 
     if (thorSwap == null) throw new SwapCurrencyError(swapInfo, request)
 
     const { providers, path, contractMethod, expectedOutput } = thorSwap
 
     const calldata = asCalldata(thorSwap.calldata)
-
-    if (providers.length <= 1) {
-      throw new SwapCurrencyError(swapInfo, request)
-    }
 
     const tcDirect = providers[0] === 'THORCHAIN'
 
