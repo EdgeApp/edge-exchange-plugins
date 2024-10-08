@@ -80,11 +80,15 @@ export const make0xGaslessPlugin: EdgeCorePluginFactory = opts => {
         swapRequest.fromWallet.currencyInfo.pluginId
       )
       const apiSwapQuote = await api.gaslessSwapQuote(chainId, {
-        checkApproval: true,
-        sellToken: fromTokenAddress ?? NATIVE_TOKEN_ADDRESS,
+        [amountField]: swapNativeAmount,
+        acceptedTypes: 'metatransaction_v2',
         buyToken: toTokenAddress ?? NATIVE_TOKEN_ADDRESS,
-        takerAddress: fromWalletAddress,
-        [amountField]: swapNativeAmount
+        checkApproval: true,
+        feeRecipient: initOptions.feeReceiveAddress,
+        feeSellTokenPercentage: initOptions.feePercentage,
+        feeType: 'volume',
+        sellToken: fromTokenAddress ?? NATIVE_TOKEN_ADDRESS,
+        takerAddress: fromWalletAddress
       })
 
       if (!apiSwapQuote.liquidityAvailable)

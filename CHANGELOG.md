@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- added: 0xGasless swap fee
+
 ## 2.10.0 (2024-10-04)
 
 - added: (LI.FI) Added unique parent contract addresses
