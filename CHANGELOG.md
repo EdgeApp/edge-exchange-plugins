@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 2.11.0 (2024-10-08)
+
 - added: 0xGasless swap fee
 
 ## 2.10.0 (2024-10-04)
