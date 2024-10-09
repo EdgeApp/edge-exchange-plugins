@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 2.12.0 (2024-10-09)
+
 - changed: Use new info server variable for thornode server urls with chain name included
 - fixed: Use unique info server cache for each Thorchain-based plugin
 
