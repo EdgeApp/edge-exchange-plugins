@@ -96,6 +96,7 @@ const MAINNET_CODE_TRANSCRIPTION: StringMap = {
   // telos:
   tezos: 'tezos',
   // thorchainrune:
+  // ton: 'ton', // This is the blockchain specified in the ChangeHero API but didn't work in testing
   tron: 'tron',
   // ufo:
   // vertcoin:
