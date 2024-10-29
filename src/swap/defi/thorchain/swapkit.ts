@@ -55,11 +55,11 @@ import {
   THORNODE_SERVERS_DEFAULT
 } from './thorchain'
 
-const pluginId = 'thorchainda'
+const pluginId = 'swapkit'
 const swapInfo: EdgeSwapInfo = {
   pluginId,
   isDex: true,
-  displayName: 'Thorchain DEX Aggregator',
+  displayName: 'SwapKit',
   supportEmail: 'support@edge.app'
 }
 
@@ -102,7 +102,7 @@ const asThorSwapQuoteResponse = asObject({
 const asExchangeInfo = asObject({
   swap: asObject({
     plugins: asObject({
-      thorchainda: asObject({
+      swapkit: asObject({
         daVolatilitySpread: asOptional(asNumber),
         affiliateFeeBasis: asOptional(asString),
         thornodeServersWithPath: asOptional(asArray(asString)),
@@ -135,9 +135,7 @@ const tokenProxyMap: { [currencyPluginId: string]: string } = {
   avalanche: '0x69ba883af416ff5501d54d5e27a1f497fbd97156'
 }
 
-export function makeThorchainDaPlugin(
-  opts: EdgeCorePluginOptions
-): EdgeSwapPlugin {
+export function makeSwapKitPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
   const { io, log } = opts
   const { fetchCors = io.fetch } = io
   const {
@@ -228,12 +226,12 @@ export function makeThorchainDaPlugin(
     }
 
     if (exchangeInfo != null) {
-      const { thorchainda } = exchangeInfo.swap.plugins
+      const { swapkit } = exchangeInfo.swap.plugins
       daVolatilitySpread =
-        thorchainda.daVolatilitySpread ?? DA_VOLATILITY_SPREAD_DEFAULT
-      thorswapServers = thorchainda.thorSwapServers ?? THORSWAP_DEFAULT_SERVERS
+        swapkit.daVolatilitySpread ?? DA_VOLATILITY_SPREAD_DEFAULT
+      thorswapServers = swapkit.thorSwapServers ?? THORSWAP_DEFAULT_SERVERS
       thornodeServersWithPath =
-        thorchainda.thornodeServersWithPath ?? thornodeServersWithPath
+        swapkit.thornodeServersWithPath ?? thornodeServersWithPath
     }
 
     const volatilitySpreadFinal = daVolatilitySpread // Might add a likeKind spread later
