@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 2.13.0 (2024-10-31)
+
 - added: Add TON unique IDs to swap partners
 
 ## 2.12.0 (2024-10-09)
