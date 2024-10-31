@@ -143,6 +143,7 @@ const MAINNET_CODE_TRANSCRIPTION = {
   // telos:
   tron: 'TRX',
   // thorchainrune:
+  ton: 'TON',
   // vertcoin:
   // ufo:
   zcash: 'ZEC',

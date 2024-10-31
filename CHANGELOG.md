@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- added: Add TON unique IDs to swap partners
+
 ## 2.12.0 (2024-10-09)
 
 - changed: Use new info server variable for thornode server urls with chain name included
