@@ -118,6 +118,15 @@ export const asTestConfig = asObject({
       thorname: asOptional(asString, 'ej')
     }).withRest
   ),
+  SWAPKIT_INIT: asCorePluginInit(
+    asObject({
+      affiliateFeeBasis: asOptional(asString, '50'),
+      appId: asOptional(asString, 'edge'),
+      ninerealmsClientId: asOptional(asString, ''),
+      thorname: asOptional(asString, 'ej'),
+      thorswapApiKey: asOptional(asString)
+    }).withRest
+  ),
   TOMB_SWAP_INIT: asCorePluginInit(
     asObject({
       quiknodeApiKey: asOptional(asString, '')

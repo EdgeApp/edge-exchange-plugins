@@ -98,7 +98,7 @@ async function main(): Promise<void> {
       piratechain: true,
       rango: config.RANGO_INIT,
       thorchain: config.THORCHAIN_INIT,
-      thorchainda: config.THORCHAIN_INIT
+      swapkit: config.SWAPKIT_INIT
     }
   }
 
