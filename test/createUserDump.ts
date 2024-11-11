@@ -42,7 +42,7 @@ async function main(): Promise<void> {
       avalanche: true,
       piratechain: true,
       polygon: true,
-      thorchainda: true
+      swapkit: true
     }
   })
   const account = await context.createAccount({
