@@ -263,7 +263,7 @@ interface CalcSwapParams {
 }
 
 interface CalcSwapResponse {
-  canBePartial: boolean
+  // canBePartial: boolean
   fromNativeAmount: string
   fromExchangeAmount: string
   maxFulfillmentSeconds?: number
@@ -535,7 +535,7 @@ export function makeThorchainBasedPlugin(
       })
     }
     const {
-      canBePartial,
+      // canBePartial,
       fromNativeAmount,
       maxFulfillmentSeconds,
       toNativeAmount,
@@ -638,7 +638,7 @@ export function makeThorchainBasedPlugin(
 
       return {
         addTxidToOrderUri: true,
-        canBePartial,
+        canBePartial: false, // Partial quotes are disabled for now
         maxFulfillmentSeconds,
         request,
         makeTxParams,
@@ -733,7 +733,7 @@ export function makeThorchainBasedPlugin(
 
     return {
       addTxidToOrderUri: true,
-      canBePartial,
+      canBePartial: false, // Partial quotes are disabled for now
       maxFulfillmentSeconds,
       request,
       spendInfo,
@@ -913,7 +913,7 @@ const calcSwapFrom = async ({
     : preMemo.replace(':0/', `:${toThorAmountWithSpread}/`)
 
   return {
-    canBePartial,
+    // canBePartial,
     fromNativeAmount,
     fromExchangeAmount,
     maxFulfillmentSeconds,
@@ -1053,7 +1053,7 @@ const calcSwapTo = async ({
     : preMemo.replace(':0/', `:${requestedToThorAmount}/`)
 
   return {
-    canBePartial,
+    // canBePartial,
     fromNativeAmount,
     fromExchangeAmount,
     toNativeAmount,
