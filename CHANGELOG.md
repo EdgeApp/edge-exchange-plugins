@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 2.14.0 (2024-11-11)
+
 - changed: Rename Thorchain DEX Aggregator to SwapKit
 
 ## 2.13.0 (2024-10-31)
