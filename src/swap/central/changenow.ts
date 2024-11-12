@@ -1,7 +1,10 @@
 import { gt, lt } from 'biggystring'
 import {
+  asArray,
   asDate,
+  asEither,
   asMaybe,
+  asNull,
   asNumber,
   asObject,
   asOptional,
@@ -16,20 +19,19 @@ import {
   EdgeSwapPlugin,
   EdgeSwapQuote,
   EdgeSwapRequest,
-  EdgeTokenId,
   SwapAboveLimitError,
   SwapBelowLimitError,
   SwapCurrencyError
 } from 'edge-core-js/types'
 
 import {
+  ChainCodeTickerMap,
   checkInvalidCodes,
   checkWhitelistedMainnetCodes,
-  CurrencyCodeTranscriptionMap,
   CurrencyPluginIdSwapChainCodeMap,
+  EdgeIdSwapIdMap,
   ensureInFuture,
-  getCodes,
-  getCodesWithTranscription,
+  getChainAndTokenCodes,
   getMaxSwappable,
   InvalidCurrencyCodes,
   makeSwapPluginQuote,
@@ -128,26 +130,59 @@ const MAINNET_CODE_TRANSCRIPTION: CurrencyPluginIdSwapChainCodeMap = {
   zksync: 'zksync'
 }
 
-const SPECIAL_MAINNET_CASES: {
-  [pId: string]: Map<EdgeTokenId, string>
-} = {
-  avalanche: new Map([[null, 'cchain']])
-}
+const SPECIAL_MAINNET_CASES: EdgeIdSwapIdMap = new Map([
+  ['avalanche', new Map([[null, { chainCode: 'cchain', tokenCode: 'avax' }]])]
+])
 
-const CURRENCY_CODE_TRANSCRIPTION: CurrencyCodeTranscriptionMap = {
-  polygon: { POL: 'matic' }
-}
+// Provider data
+let chainCodeTickerMap: ChainCodeTickerMap = new Map()
+let lastUpdated = 0
+const EXPIRATION = 1000 * 60 * 60 // 1 hour
 
 export function makeChangeNowPlugin(
   opts: EdgeCorePluginOptions
 ): EdgeSwapPlugin {
-  const { io } = opts
+  const { io, log } = opts
   const { fetchCors = io.fetch } = io
   const { apiKey } = asInitOptions(opts.initOptions)
 
   const headers = {
     'Content-Type': 'application/json',
     'x-changenow-api-key': apiKey
+  }
+
+  async function fetchSupportedAssets(): Promise<void> {
+    if (lastUpdated > Date.now() - EXPIRATION) return
+
+    try {
+      const response = await fetchCors(
+        `${uri}exchange/currencies?active=true&isFiat=false`
+      )
+      if (!response.ok) {
+        const message = await response.text()
+        throw new Error(message)
+      }
+      const json = await response.json()
+      const assets = asChangeNowAssets(json)
+
+      const chaincodeArray = Object.values(MAINNET_CODE_TRANSCRIPTION)
+      const out: ChainCodeTickerMap = new Map()
+      for (const asset of assets) {
+        if (chaincodeArray.includes(asset.network)) {
+          const tokenCodes = out.get(asset.network) ?? []
+          tokenCodes.push({
+            tokenCode: asset.ticker,
+            contractAddress: asset.tokenContract
+          })
+          out.set(asset.network, tokenCodes)
+        }
+      }
+
+      chainCodeTickerMap = out
+      lastUpdated = Date.now()
+    } catch (e) {
+      log.warn('ChangeNow: Error updating supported assets', e)
+    }
   }
 
   const fetchSwapQuoteInner = async (
@@ -163,24 +198,13 @@ export function makeChangeNowPlugin(
       getAddress(request.toWallet)
     ])
 
-    // Get our currency codes
-    const { fromCurrencyCode, toCurrencyCode } = getCodes(request)
-
-    // Get Changenow's codes for the request
-    const changenowCodes = getCodesWithTranscription(
+    const changenowCodes = await getChainAndTokenCodes(
       request,
+      swapInfo,
+      chainCodeTickerMap,
       MAINNET_CODE_TRANSCRIPTION,
-      CURRENCY_CODE_TRANSCRIPTION
+      SPECIAL_MAINNET_CASES
     )
-    // Modify special mainnet code cases
-    changenowCodes.fromMainnetCode =
-      SPECIAL_MAINNET_CASES[request.fromWallet.currencyInfo.pluginId]?.get(
-        request.fromTokenId
-      ) ?? changenowCodes.fromMainnetCode
-    changenowCodes.toMainnetCode =
-      SPECIAL_MAINNET_CASES[request.toWallet.currencyInfo.pluginId]?.get(
-        request.toTokenId
-      ) ?? changenowCodes.toMainnetCode
 
     const currencyString = `fromCurrency=${changenowCodes.fromCurrencyCode}&toCurrency=${changenowCodes.toCurrencyCode}&fromNetwork=${changenowCodes.fromMainnetCode}&toNetwork=${changenowCodes.toMainnetCode}`
 
@@ -242,7 +266,7 @@ export function makeChangeNowPlugin(
     ): Promise<SwapOrder> {
       const largeDenomAmount = await request.fromWallet.nativeToDenomination(
         nativeAmount,
-        fromCurrencyCode
+        request.fromCurrencyCode
       )
 
       // Get min and max
@@ -260,7 +284,7 @@ export function makeChangeNowPlugin(
       if (lt(largeDenomAmount, minAmount.toString())) {
         const minNativeAmount = await request.fromWallet.denominationToNative(
           minAmount.toString(),
-          fromCurrencyCode
+          request.fromCurrencyCode
         )
         throw new SwapBelowLimitError(swapInfo, minNativeAmount)
       }
@@ -268,7 +292,7 @@ export function makeChangeNowPlugin(
       if (maxAmount != null && gt(largeDenomAmount, maxAmount.toString())) {
         const maxNativeAmount = await request.fromWallet.denominationToNative(
           maxAmount.toString(),
-          fromCurrencyCode
+          request.fromCurrencyCode
         )
         throw new SwapAboveLimitError(swapInfo, maxNativeAmount)
       }
@@ -283,7 +307,7 @@ export function makeChangeNowPlugin(
 
       const toNativeAmount = await request.toWallet.denominationToNative(
         toAmount.toString(),
-        toCurrencyCode
+        request.toCurrencyCode
       )
 
       const memos: EdgeMemo[] =
@@ -305,7 +329,8 @@ export function makeChangeNowPlugin(
           }
         ],
         memos,
-        networkFeeOption: fromCurrencyCode === 'BTC' ? 'high' : 'standard',
+        networkFeeOption:
+          request.fromCurrencyCode === 'BTC' ? 'high' : 'standard',
         assetAction: {
           assetActionType: 'swap'
         },
@@ -347,7 +372,7 @@ export function makeChangeNowPlugin(
       // Skip min/max check when requesting a purchase amount
       const largeDenomAmount = await request.toWallet.nativeToDenomination(
         nativeAmount,
-        toCurrencyCode
+        request.toCurrencyCode
       )
 
       const {
@@ -360,7 +385,7 @@ export function makeChangeNowPlugin(
 
       const fromNativeAmount = await request.fromWallet.denominationToNative(
         fromAmount.toString(),
-        fromCurrencyCode
+        request.fromCurrencyCode
       )
 
       const memos: EdgeMemo[] =
@@ -382,7 +407,8 @@ export function makeChangeNowPlugin(
           }
         ],
         memos,
-        networkFeeOption: fromCurrencyCode === 'BTC' ? 'high' : 'standard',
+        networkFeeOption:
+          request.fromCurrencyCode === 'BTC' ? 'high' : 'standard',
         assetAction: {
           assetActionType: 'swap'
         },
@@ -449,6 +475,9 @@ export function makeChangeNowPlugin(
     ): Promise<EdgeSwapQuote> {
       const request = convertRequest(req)
 
+      // Fetch and persist chaincode/tokencode maps from provider
+      await fetchSupportedAssets()
+
       checkInvalidCodes(INVALID_CURRENCY_CODES, request, swapInfo)
       checkWhitelistedMainnetCodes(
         MAINNET_CODE_TRANSCRIPTION,
@@ -499,3 +528,22 @@ const asOrder = asObject({
 })
 
 type ChangeNowResponse = ReturnType<typeof asOrder> & { validUntil?: Date }
+
+const asChangeNowAssets = asArray(
+  asObject({
+    ticker: asString, // "btc",
+    // "name": "Bitcoin",
+    // "image": "https://content-api.changenow.io/uploads/btc_1_527dc9ec3c.svg",
+    // "hasExternalId": false,
+    // "isExtraIdSupported": false,
+    // "isFiat": false,
+    // "featured": true,
+    // "isStable": false,
+    // "supportsFixedRate": true,
+    network: asString, // "btc",
+    tokenContract: asEither(asNull, asString) // null,
+    // "buy": true,
+    // "sell": true,
+    // "legacyTicker": "btc"
+  })
+)

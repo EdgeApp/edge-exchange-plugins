@@ -8,6 +8,8 @@ import {
   EdgeSwapQuote,
   EdgeSwapRequest,
   EdgeSwapResult,
+  EdgeToken,
+  EdgeTokenId,
   EdgeTransaction,
   JsonObject,
   SwapCurrencyError
@@ -570,3 +572,106 @@ export type CurrencyPluginIdSwapChainCodeMap = Record<
   EdgeCurrencyPluginId,
   string | null
 >
+
+// Map of swap provider's chain codes and the tokens they support
+export type ChainCodeTickerMap = Map<
+  string,
+  Array<{ tokenCode: string; contractAddress: string | null }>
+>
+
+// A map of EdgeTokenId to a swap provider's chain/token code pair
+export type EdgeIdSwapIdMap = Map<
+  EdgeCurrencyPluginId,
+  Map<EdgeTokenId, { chainCode: string; tokenCode: string }>
+>
+
+const createEdgeIdToSwapIdMap = async (
+  wallet: EdgeCurrencyWallet,
+  chainCode: string | null,
+  tickerSet: Array<{ tokenCode: string; contractAddress: string | null }>,
+  defaultSwapChainCodeTokenCodeMap: EdgeIdSwapIdMap = new Map()
+): Promise<EdgeIdSwapIdMap> => {
+  const out: EdgeIdSwapIdMap = new Map(
+    defaultSwapChainCodeTokenCodeMap.entries()
+  )
+  if (chainCode === null) return out
+
+  const edgePluginId = wallet.currencyInfo.pluginId as EdgeCurrencyPluginId
+  const tokenIdMap =
+    out.get(edgePluginId) ??
+    new Map([
+      [null, { chainCode, tokenCode: wallet.currencyInfo.currencyCode }]
+    ])
+  for (const { tokenCode, contractAddress } of tickerSet) {
+    if (contractAddress !== null) {
+      const fakeToken: EdgeToken = {
+        currencyCode: 'FAKE',
+        denominations: [{ name: 'FAKE', multiplier: '1' }],
+        displayName: 'FAKE',
+        networkLocation: {
+          contractAddress
+        }
+      }
+      try {
+        const tokenId = await wallet.currencyConfig.getTokenId(fakeToken)
+        tokenIdMap.set(tokenId, { chainCode, tokenCode })
+      } catch (e) {
+        // ignore tokens that fail validation
+      }
+    }
+  }
+  out.set(edgePluginId, tokenIdMap)
+
+  return out
+}
+
+export const getChainAndTokenCodes = async (
+  request: EdgeSwapRequest,
+  swapInfo: EdgeSwapInfo,
+  chainCodeTickerMap: ChainCodeTickerMap,
+  MAINNET_CODE_TRANSCRIPTION: CurrencyPluginIdSwapChainCodeMap,
+  SPECIAL_MAINNET_CASES: EdgeIdSwapIdMap
+): Promise<{
+  fromCurrencyCode: string
+  toCurrencyCode: string
+  fromMainnetCode: string
+  toMainnetCode: string
+}> => {
+  let supportedAssetsMap = new Map(SPECIAL_MAINNET_CASES)
+
+  const fromPluginId = request.fromWallet.currencyInfo
+    .pluginId as EdgeCurrencyPluginId
+  supportedAssetsMap = await createEdgeIdToSwapIdMap(
+    request.fromWallet,
+    MAINNET_CODE_TRANSCRIPTION[fromPluginId],
+    chainCodeTickerMap.get(MAINNET_CODE_TRANSCRIPTION[fromPluginId] ?? '') ??
+      [],
+    supportedAssetsMap
+  )
+
+  const toPluginId = request.toWallet.currencyInfo
+    .pluginId as EdgeCurrencyPluginId
+  supportedAssetsMap = await createEdgeIdToSwapIdMap(
+    request.toWallet,
+    MAINNET_CODE_TRANSCRIPTION[toPluginId],
+    chainCodeTickerMap.get(MAINNET_CODE_TRANSCRIPTION[toPluginId] ?? '') ?? [],
+    supportedAssetsMap
+  )
+
+  const fromCodes = supportedAssetsMap
+    .get(fromPluginId)
+    ?.get(request.fromTokenId)
+
+  const toCodes = supportedAssetsMap.get(toPluginId)?.get(request.toTokenId)
+
+  if (fromCodes == null || toCodes == null) {
+    throw new SwapCurrencyError(swapInfo, request)
+  }
+
+  return {
+    fromCurrencyCode: fromCodes.tokenCode,
+    fromMainnetCode: fromCodes.chainCode,
+    toCurrencyCode: toCodes.tokenCode,
+    toMainnetCode: toCodes.chainCode
+  }
+}
