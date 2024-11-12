@@ -24,6 +24,7 @@ import { div18 } from '../../util/biggystringplus'
 import {
   checkInvalidCodes,
   checkWhitelistedMainnetCodes,
+  CurrencyPluginIdSwapChainCodeMap,
   ensureInFuture,
   getCodesWithTranscription,
   getMaxSwappable,
@@ -67,64 +68,65 @@ const INVALID_CURRENCY_CODES: InvalidCurrencyCodes = {
 
 // Network names that don't match parent network currency code
 // See https://swapuz.com/ for list of supported currencies
-const MAINNET_CODE_TRANSCRIPTION = {
+const MAINNET_CODE_TRANSCRIPTION: CurrencyPluginIdSwapChainCodeMap = {
   arbitrum: 'ARBITRUM',
   algorand: 'ALGO',
-  // avalanche:
-  // axelar:
-  // base:
-  // binance:
+  avalanche: 'CCHAIN',
+  axelar: null,
+  base: 'BASE',
+  binance: null,
   binancesmartchain: 'BSC',
   bitcoin: 'BTC',
   bitcoincash: 'BCH',
-  // bitcoingold:
-  // bitcoinsv:
+  bitcoingold: null,
+  bitcoinsv: null,
+  bobevm: null,
   cardano: 'ADA',
   celo: 'CELO',
-  // coreum:
-  // cosmoshub:
+  coreum: null,
+  cosmoshub: 'ATOM',
   dash: 'DASH',
-  // digibyte:
+  digibyte: 'DGB',
   dogecoin: 'DOGE',
-  // eboost:
+  eboost: null,
   eos: 'EOS',
   ethereum: 'ETH',
   ethereumclassic: 'ETC',
-  // ethereumpow:
+  ethereumpow: null,
   fantom: 'FTM',
-  // feathercoin:
+  feathercoin: null,
   filecoin: 'FIL',
-  // filecoinfevm:
-  // fio:
-  // groestlcoin:
+  filecoinfevm: null,
+  fio: null,
+  groestlcoin: null,
   hedera: 'HBAR',
-  // liberland:
+  liberland: null,
   litecoin: 'LTC',
   monero: 'XMR',
   optimism: 'OPTIMISM',
-  // osmosis:
-  // piratechain:
+  osmosis: null,
+  piratechain: null,
   polkadot: 'DOT',
   polygon: 'MATIC',
-  // pulsechain:
+  pulsechain: null,
   qtum: 'QTUM',
   ravencoin: 'RVN',
   ripple: 'XRP',
-  // rsk:
-  // smartcash:
+  rsk: null,
+  smartcash: null,
   solana: 'SOL',
   stellar: 'XLM',
-  // telos:
+  telos: null,
   tezos: 'XTZ',
-  // thorchainrune:
+  thorchainrune: 'THORCHAIN',
   ton: 'TON',
   tron: 'TRX',
-  // ufo:
-  // vertcoin:
-  // wax:
-  zcash: 'ZEC'
-  // zcoin:
-  // zksync:
+  ufo: null,
+  vertcoin: null,
+  wax: 'WAXP',
+  zcash: 'ZEC',
+  zcoin: null,
+  zksync: null
 }
 
 export function makeSwapuzPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {

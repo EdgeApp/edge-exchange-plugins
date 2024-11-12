@@ -24,6 +24,7 @@ import {
   checkInvalidCodes,
   checkWhitelistedMainnetCodes,
   CurrencyCodeTranscriptionMap,
+  CurrencyPluginIdSwapChainCodeMap,
   getCodesWithTranscription,
   getMaxSwappable,
   InvalidCurrencyCodes,
@@ -31,7 +32,7 @@ import {
   SwapOrder
 } from '../../util/swapHelpers'
 import { convertRequest, getAddress, memoType } from '../../util/utils'
-import { EdgeSwapRequestPlugin, StringMap } from '../types'
+import { EdgeSwapRequestPlugin } from '../types'
 
 const pluginId = 'changehero'
 
@@ -46,64 +47,65 @@ const asInitOptions = asObject({
   apiKey: asString
 })
 
-const MAINNET_CODE_TRANSCRIPTION: StringMap = {
+const MAINNET_CODE_TRANSCRIPTION: CurrencyPluginIdSwapChainCodeMap = {
   algorand: 'algorand',
   arbitrum: 'arbitrum',
   avalanche: 'avalanche_(c-chain)',
-  // axelar:
+  axelar: null,
   base: 'base',
-  binance: 'binance_dex',
+  binance: null,
   binancesmartchain: 'binance_smart_chain',
   bitcoin: 'bitcoin',
   bitcoincash: 'bitcoin_cash',
-  // bitcoingold:
+  bitcoingold: null,
   bitcoinsv: 'bitcoin_sv',
+  bobevm: null,
   cardano: 'cardano',
-  // celo:
-  // coreum:
-  // cosmoshub:
+  celo: null,
+  coreum: null,
+  cosmoshub: null,
   dash: 'dash',
   digibyte: 'digibyte',
   dogecoin: 'doge',
-  // eboost:
-  // eos:
+  eboost: null,
+  eos: null,
   ethereum: 'ethereum',
   ethereumclassic: 'ethereum_classic',
-  // ethereumpow:
+  ethereumpow: null,
   fantom: 'ftm',
-  // feathercoin:
-  // filecoin:
-  // filecoinfevm:
-  // fio:
-  // groestlcoin:
+  feathercoin: null,
+  filecoin: null,
+  filecoinfevm: null,
+  fio: null,
+  groestlcoin: null,
   hedera: 'hedera',
-  // liberland:
+  liberland: null,
   litecoin: 'litecoin',
   monero: 'monero',
   optimism: 'optimism',
-  // osmosis:
-  // piratechain:
+  osmosis: null,
+  piratechain: null,
   polkadot: 'polkadot',
   polygon: 'polygon',
-  // pulsechain:
+  pulsechain: null,
   qtum: 'qtum',
-  // ravencoin:
+  ravencoin: null,
   ripple: 'ripple',
-  // rsk:
-  // smartcash:
+  rsk: null,
+  smartcash: null,
   solana: 'solana',
   stellar: 'stellar',
-  // telos:
+  telos: null,
   tezos: 'tezos',
-  // thorchainrune:
-  // ton: 'ton', // This is the blockchain specified in the ChangeHero API but didn't work in testing
+  thorchainrune: null,
+  ton: null, // 'ton', This is the blockchain specified in the ChangeHero API but didn't work in testing
   tron: 'tron',
-  // ufo:
-  // vertcoin:
-  // wax:
-  zcash: 'zcash'
-  // zcoin:
-  // zksync:
+  ufo: null,
+  vertcoin: null,
+  wax: null,
+  zcash: 'zcash',
+  zcoin: null,
+  zksync: null
 }
 
 const CURRENCY_CODE_TRANSCRIPTION: CurrencyCodeTranscriptionMap = {

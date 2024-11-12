@@ -26,6 +26,7 @@ import {
   checkInvalidCodes,
   checkWhitelistedMainnetCodes,
   CurrencyCodeTranscriptionMap,
+  CurrencyPluginIdSwapChainCodeMap,
   ensureInFuture,
   getCodes,
   getCodesWithTranscription,
@@ -36,6 +37,7 @@ import {
 } from '../../util/swapHelpers'
 import { convertRequest, getAddress, memoType } from '../../util/utils'
 import { EdgeSwapRequestPlugin } from '../types'
+
 const pluginId = 'changenow'
 
 const swapInfo: EdgeSwapInfo = {
@@ -65,11 +67,11 @@ const INVALID_CURRENCY_CODES: InvalidCurrencyCodes = {
 
 // Network names that don't match parent network currency code
 // See https://changenow.io/currencies for list of supported currencies
-const MAINNET_CODE_TRANSCRIPTION = {
+const MAINNET_CODE_TRANSCRIPTION: CurrencyPluginIdSwapChainCodeMap = {
   algorand: 'algo',
   arbitrum: 'arbitrum',
   avalanche: 'avaxc',
-  // axelar:
+  axelar: 'axl',
   base: 'base',
   binance: 'bnb',
   binancesmartchain: 'bsc',
@@ -77,48 +79,49 @@ const MAINNET_CODE_TRANSCRIPTION = {
   bitcoincash: 'bch',
   bitcoingold: 'btg',
   bitcoinsv: 'bsv',
+  bobevm: null,
   cardano: 'ada',
   celo: 'celo',
-  // coreum:
+  coreum: 'coreum',
   cosmoshub: 'atom',
   dash: 'dash',
   digibyte: 'dgb',
   dogecoin: 'doge',
-  // eboost:
+  eboost: null,
   eos: 'eos',
   ethereum: 'eth',
   ethereumclassic: 'etc',
   ethereumpow: 'ethw',
   fantom: 'ftm',
-  // feathercoin:
+  feathercoin: null,
   filecoin: 'fil',
-  // filecoinfevm:
+  filecoinfevm: null,
   fio: 'fio',
-  // groestlcoin:
+  groestlcoin: null,
   hedera: 'hbar',
-  // liberland:
+  liberland: null,
   litecoin: 'ltc',
   monero: 'xmr',
   optimism: 'op',
   osmosis: 'osmo',
-  // piratechain:
+  piratechain: null,
   polkadot: 'dot',
   polygon: 'matic',
   pulsechain: 'pulse',
   qtum: 'qtum',
   ravencoin: 'rvn',
   ripple: 'xrp',
-  // rsk:
-  // smartcash:
+  rsk: null,
+  smartcash: null,
   solana: 'sol',
   stellar: 'xlm',
-  // telos:
+  telos: null,
   tezos: 'xtz',
-  // thorchainrune:
+  thorchainrune: null,
   ton: 'ton',
   tron: 'trx',
-  // ufo:
-  // vertcoin:
+  ufo: null,
+  vertcoin: null,
   wax: 'waxp',
   zcash: 'zec',
   zcoin: 'firo',

@@ -18,6 +18,7 @@ import {
   checkInvalidCodes,
   checkWhitelistedMainnetCodes,
   CurrencyCodeTranscriptionMap,
+  CurrencyPluginIdSwapChainCodeMap,
   getCodesWithTranscription,
   getMaxSwappable,
   InvalidCurrencyCodes,
@@ -74,38 +75,39 @@ const INVALID_CURRENCY_CODES: InvalidCurrencyCodes = {
 }
 
 // See https://letsexchange.io/exchange-pairs for list of supported currencies
-const MAINNET_CODE_TRANSCRIPTION = {
+const MAINNET_CODE_TRANSCRIPTION: CurrencyPluginIdSwapChainCodeMap = {
   algorand: 'ALGO',
   arbitrum: 'ARBITRUM',
   avalanche: 'AVAXC',
-  // axelar: // Shows up as WAXL from the API but is currently disabled
-  // base:
+  axelar: 'WAXL',
+  base: null,
   binance: 'BEP2',
   binancesmartchain: 'BEP20',
   bitcoin: 'BTC',
   bitcoincash: 'BCH',
   bitcoingold: 'BTG',
   bitcoinsv: 'BSV',
+  bobevm: null,
   cardano: 'ADA',
   celo: 'CELO',
-  // coreum:
+  coreum: 'COREUM',
   cosmoshub: 'ATOM',
   dash: 'DASH',
   digibyte: 'DGB',
   dogecoin: 'DOGE',
-  // eboost:
+  eboost: null,
   eos: 'EOS',
   ethereum: 'ERC20',
   ethereumclassic: 'ETC',
   ethereumpow: 'ETHW',
   fantom: 'FTM',
-  // feathercoin:
+  feathercoin: null,
   filecoin: 'FIL',
-  // filecoinfevm:
+  filecoinfevm: null,
   fio: 'FIO',
   groestlcoin: 'GRS',
   hedera: 'HBAR',
-  // liberland:
+  liberland: null,
   litecoin: 'LTC',
   monero: 'XMR',
   optimism: 'OPTIMISM',
@@ -118,7 +120,7 @@ const MAINNET_CODE_TRANSCRIPTION = {
   ravencoin: 'RVN',
   ripple: 'XRP',
   rsk: 'RSK',
-  // smartcash:
+  smartcash: null,
   solana: 'SOL',
   stellar: 'XLM',
   telos: 'TLOS',
@@ -126,12 +128,12 @@ const MAINNET_CODE_TRANSCRIPTION = {
   thorchainrune: 'RUNE',
   ton: 'TON',
   tron: 'TRC20',
-  // ufo:
-  // vertcoin:
+  ufo: null,
+  vertcoin: null,
   wax: 'WAX',
   zcash: 'ZEC',
   zcoin: 'FIRO',
-  zksync: 'ZKSYNC'
+  zksync: 'ZKSERA'
 }
 
 const SPECIAL_MAINNET_CASES: {

@@ -26,6 +26,7 @@ import { div18 } from '../../util/biggystringplus'
 import {
   checkInvalidCodes,
   checkWhitelistedMainnetCodes,
+  CurrencyPluginIdSwapChainCodeMap,
   getCodesWithTranscription,
   getMaxSwappable,
   InvalidCurrencyCodes,
@@ -69,51 +70,52 @@ const addressTypeMap: StringMap = {
 }
 
 // See https://exolix.com/currencies for list of supported currencies
-const MAINNET_CODE_TRANSCRIPTION = {
+const MAINNET_CODE_TRANSCRIPTION: CurrencyPluginIdSwapChainCodeMap = {
   algorand: 'ALGO',
   arbitrum: 'ARBITRUM',
   avalanche: 'AVAXC',
-  // axelar:
-  // base:
-  // binance:
+  axelar: null,
+  base: 'BASE',
+  binance: null,
   binancesmartchain: 'BSC',
   bitcoin: 'BTC',
   bitcoincash: 'BCH',
-  // bitcoingold:
-  // bitcoinsv:
+  bitcoingold: null,
+  bitcoinsv: null,
+  bobevm: null,
   cardano: 'ADA',
   celo: 'CELO',
-  // coreum:
+  coreum: null,
   cosmoshub: 'ATOM',
   dash: 'DASH',
   digibyte: 'DGB',
   dogecoin: 'DOGE',
-  // eboost:
+  eboost: null,
   eos: 'EOS',
   ethereum: 'ETH',
   ethereumclassic: 'ETC',
-  // ethereumpow:
+  ethereumpow: null,
   fantom: 'FTM',
-  // feathercoin:
+  feathercoin: null,
   filecoin: 'FIL',
-  // filecoinfevm:
-  // fio:
-  // groestlcoin:
+  filecoinfevm: null,
+  fio: null,
+  groestlcoin: null,
   hedera: 'HBAR',
-  // liberland:
+  liberland: null,
   litecoin: 'LTC',
   monero: 'XMR',
   optimism: 'OPTIMISM',
   osmosis: 'OSMO',
   piratechain: 'ARRR',
   polkadot: 'DOT',
-  // polygon:
-  // pulsechain:
+  polygon: 'POLYGON',
+  pulsechain: null,
   qtum: 'QTUM',
   ravencoin: 'RVN',
   ripple: 'XRP',
-  // rsk:
-  // smartcash:
+  rsk: null,
+  smartcash: null,
   solana: 'SOL',
   stellar: 'XLM',
   telos: 'TELOS',
@@ -121,12 +123,12 @@ const MAINNET_CODE_TRANSCRIPTION = {
   thorchainrune: 'RUNE',
   ton: 'ton',
   tron: 'TRX',
-  // ufo:
-  // vertcoin:
-  // wax:
-  zcash: 'ZEC'
-  // zcoin:
-  // zksync:
+  ufo: null,
+  vertcoin: null,
+  wax: null,
+  zcash: 'ZEC',
+  zcoin: null,
+  zksync: null
 }
 
 const orderUri = 'https://exolix.com/transaction/'

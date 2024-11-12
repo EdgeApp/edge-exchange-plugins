@@ -384,10 +384,11 @@ export function checkInvalidCodes(
 }
 
 export const checkWhitelistedMainnetCodes = (
-  whitelist: StringMap,
+  currencyPluginIdSwapNetworkMap: CurrencyPluginIdSwapChainCodeMap,
   request: EdgeSwapRequest,
   swapInfo: EdgeSwapInfo
 ): void => {
+  const whitelist = toStringMap(currencyPluginIdSwapNetworkMap)
   if (
     whitelist[request.fromWallet.currencyInfo.pluginId] == null ||
     whitelist[request.toWallet.currencyInfo.pluginId] == null
@@ -428,9 +429,10 @@ const defaultMainnetTranscriptionMap: MainnetPluginIdTranscriptionMap = {
  */
 export const getCodesWithTranscription = (
   request: EdgeSwapRequestPlugin,
-  mainnetTranscriptionMap: MainnetPluginIdTranscriptionMap,
+  currencyPluginIdSwapNetworkMap: CurrencyPluginIdSwapChainCodeMap,
   currencyCodeTranscriptionMap: CurrencyCodeTranscriptionMap = {}
 ): AllCodes => {
+  const mainnetTranscriptionMap = toStringMap(currencyPluginIdSwapNetworkMap)
   const {
     fromCurrencyCode,
     toCurrencyCode,
@@ -492,3 +494,79 @@ export const isLikeKind = (
 
 export const consify = (val: any): void =>
   console.log(JSON.stringify(val, null, 2))
+
+export type EdgeCurrencyPluginId =
+  | 'algorand'
+  | 'arbitrum'
+  | 'avalanche'
+  | 'axelar'
+  | 'base'
+  | 'binance'
+  | 'binancesmartchain'
+  | 'bitcoin'
+  | 'bitcoincash'
+  | 'bitcoingold'
+  | 'bitcoinsv'
+  | 'bobevm'
+  | 'cardano'
+  | 'celo'
+  | 'coreum'
+  | 'cosmoshub'
+  | 'dash'
+  | 'digibyte'
+  | 'dogecoin'
+  | 'eboost'
+  | 'eos'
+  | 'ethereum'
+  | 'ethereumclassic'
+  | 'ethereumpow'
+  | 'fantom'
+  | 'feathercoin'
+  | 'filecoin'
+  | 'filecoinfevm'
+  | 'fio'
+  | 'groestlcoin'
+  | 'hedera'
+  | 'liberland'
+  | 'litecoin'
+  | 'monero'
+  | 'optimism'
+  | 'osmosis'
+  | 'piratechain'
+  | 'polkadot'
+  | 'polygon'
+  | 'pulsechain'
+  | 'qtum'
+  | 'ravencoin'
+  | 'ripple'
+  | 'rsk'
+  | 'smartcash'
+  | 'solana'
+  | 'stellar'
+  | 'telos'
+  | 'tezos'
+  | 'thorchainrune'
+  | 'ton'
+  | 'tron'
+  | 'ufo'
+  | 'vertcoin'
+  | 'wax'
+  | 'zcash'
+  | 'zcoin'
+  | 'zksync'
+
+export const toStringMap = (
+  map: CurrencyPluginIdSwapChainCodeMap
+): StringMap => {
+  const out: StringMap = {}
+  for (const [key, value] of Object.entries(map)) {
+    if (value === null) continue
+    out[key] = value
+  }
+  return out
+}
+
+export type CurrencyPluginIdSwapChainCodeMap = Record<
+  EdgeCurrencyPluginId,
+  string | null
+>

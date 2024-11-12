@@ -18,6 +18,7 @@ import {
 import {
   checkInvalidCodes,
   checkWhitelistedMainnetCodes,
+  CurrencyPluginIdSwapChainCodeMap,
   ensureInFuture,
   getCodesWithTranscription,
   getMaxSwappable,
@@ -29,63 +30,64 @@ import { convertRequest, getAddress, memoType } from '../../util/utils'
 import { EdgeSwapRequestPlugin } from '../types'
 
 // See https://help.sideshift.ai/en/articles/4559664-which-coins-and-tokens-are-listed for list of supported currencies
-const MAINNET_CODE_TRANSCRIPTION = {
+const MAINNET_CODE_TRANSCRIPTION: CurrencyPluginIdSwapChainCodeMap = {
   algorand: 'algorand',
   arbitrum: 'arbitrum',
   avalanche: 'avax',
-  // axelar:
+  axelar: null,
   base: 'base',
-  // binance:
+  binance: null,
   binancesmartchain: 'bsc',
   bitcoin: 'bitcoin',
   bitcoincash: 'bitcoincash',
-  // bitcoingold:
+  bitcoingold: null,
   bitcoinsv: 'bsv',
+  bobevm: null,
   cardano: 'cardano',
-  // celo:
-  // coreum:
+  celo: null,
+  coreum: null,
   cosmoshub: 'cosmos',
   dash: 'dash',
-  // digibyte:
+  digibyte: null,
   dogecoin: 'doge',
-  // eboost:
-  // eos:
+  eboost: null,
+  eos: null,
   ethereum: 'ethereum',
   ethereumclassic: 'etc',
-  // ethereumpow:
+  ethereumpow: null,
   fantom: 'fantom',
-  // feathercoin:
-  // filecoin:
-  // filecoinfevm:
-  // fio:
+  feathercoin: null,
+  filecoin: null,
+  filecoinfevm: null,
+  fio: null,
   groestlcoin: 'grs',
-  // hedera:
-  // liberland:
+  hedera: null,
+  liberland: null,
   litecoin: 'litecoin',
   monero: 'monero',
   optimism: 'optimism',
-  // osmosis:
-  // piratechain:
+  osmosis: null,
+  piratechain: null,
   polkadot: 'polkadot',
   polygon: 'polygon',
-  // pulsechain:
-  // qtum:
-  // ravencoin:
+  pulsechain: null,
+  qtum: null,
+  ravencoin: null,
   ripple: 'ripple',
-  // rsk:
-  // smartcash:
+  rsk: 'rootstock',
+  smartcash: null,
   solana: 'solana',
   stellar: 'stellar',
-  // telos:
+  telos: null,
   tezos: 'tezos',
-  // thorchainrune:
+  thorchainrune: null,
   ton: 'ton',
   tron: 'tron',
-  // ufo:
-  // vertcoin:
-  // wax:
+  ufo: null,
+  vertcoin: null,
+  wax: null,
   zcash: 'shielded',
-  // zcoin:
+  zcoin: null,
   zksync: 'zksyncera'
 }
 
