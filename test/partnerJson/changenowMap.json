@@ -1,0 +1,3691 @@
+[
+  [
+    "btc",
+    [
+      {
+        "contractAddress": null,
+        "tokenCode": "btc"
+      }
+    ]
+  ],
+  [
+    "eth",
+    [
+      {
+        "contractAddress": null,
+        "tokenCode": "eth"
+      },
+      {
+        "contractAddress": "0xdAC17F958D2ee523a2206206994597C13D831ec7",
+        "tokenCode": "usdt"
+      },
+      {
+        "contractAddress": "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48",
+        "tokenCode": "usdc"
+      },
+      {
+        "contractAddress": "0x95ad61b0a150d79219dcf64e1e6cc01f0b64c4ce",
+        "tokenCode": "shib"
+      },
+      {
+        "contractAddress": "0x582d872A1B094FC48F5DE31D3B73F2D9bE47def1",
+        "tokenCode": "ton"
+      },
+      {
+        "contractAddress": "0x514910771af9ca656af840dff83e8264ecf986ca",
+        "tokenCode": "link"
+      },
+      {
+        "contractAddress": "0x2AF5D2aD76741191D15Dfe7bF6aC92d4Bd912Ca3",
+        "tokenCode": "leo"
+      },
+      {
+        "contractAddress": "0x6982508145454Ce325dDbE47a25d4ec3d2311933",
+        "tokenCode": "pepe"
+      },
+      {
+        "contractAddress": "0x6b175474e89094c44da98b954eedeac495271d0f",
+        "tokenCode": "dai"
+      },
+      {
+        "contractAddress": "0x1f9840a85d5aF5bf1D1762F925BDADdC4201F984",
+        "tokenCode": "uni"
+      },
+      {
+        "contractAddress": "0xA0b73E1Ff0B80914AB6fe0444E65848C4C34450b",
+        "tokenCode": "cro"
+      },
+      {
+        "contractAddress": "0xaea46A60368A7bD060eec7DF8CBa43b7EF41Ad85",
+        "tokenCode": "fet"
+      },
+      {
+        "contractAddress": "0x7Fc66500c84A76Ad7e9c93437bFc5Ac33E2DDaE9",
+        "tokenCode": "aave"
+      },
+      {
+        "contractAddress": "0x75231f58b43240c9718dd58b4967c5114342a86c",
+        "tokenCode": "okb"
+      },
+      {
+        "contractAddress": "0x3c3a81e81dc49A522A592e7622A7E711c06bf354",
+        "tokenCode": "mnt"
+      },
+      {
+        "contractAddress": "0xe28b3B32B6c345A34Ff64674606124Dd5Aceca30",
+        "tokenCode": "inj"
+      },
+      {
+        "contractAddress": "0xc5f0f7b66764F6ec8C8Dff7BA683102295E16409",
+        "tokenCode": "fdusd"
+      },
+      {
+        "contractAddress": "0xf57e7e7c23978c3caec3c3548e3d615c346e79ff",
+        "tokenCode": "imx"
+      },
+      {
+        "contractAddress": "0x4e15361fd6b4bb609fa63c81a2be19d873717870",
+        "tokenCode": "ftm"
+      },
+      {
+        "contractAddress": "0x54D2252757e1672EEaD234D27B1270728fF90581",
+        "tokenCode": "bgb"
+      },
+      {
+        "contractAddress": "0xcf0c122c6b73ff809c693db761e7baebe62b6a2e",
+        "tokenCode": "floki"
+      },
+      {
+        "contractAddress": "0xc944e90c64b2c07662a292be6244bdf05cda44a7",
+        "tokenCode": "grt"
+      },
+      {
+        "contractAddress": "0x57e114B691Db790C35207b2e685D4A43181e6061",
+        "tokenCode": "ena"
+      },
+      {
+        "contractAddress": "0x163f8C2467924be0ae7B5347228CABF260318753",
+        "tokenCode": "wld"
+      },
+      {
+        "contractAddress": "0xf34960d9d60be18cC1D5Afc1A6F012A723a28811",
+        "tokenCode": "kcs"
+      },
+      {
+        "contractAddress": "0x9f8f72aa9304c8b593d555f12ef6589cc3a579a2",
+        "tokenCode": "mkr"
+      },
+      {
+        "contractAddress": "0x3593d125a4f7849a1b059e64f4517a86dd60c95d",
+        "tokenCode": "om"
+      },
+      {
+        "contractAddress": "0xfAbA6f8e4a5E8Ab82F62fe7C39859FA577269BE3",
+        "tokenCode": "ondo"
+      },
+      {
+        "contractAddress": "0x812Ba41e071C7b7fA4EBcFB62dF5F45f6fA853Ee",
+        "tokenCode": "neiro"
+      },
+      {
+        "contractAddress": "0x5a98fcbea516cf06857215779fd812ca3bef1b32",
+        "tokenCode": "ldo"
+      },
+      {
+        "contractAddress": "0x74232704659ef37c08995e386A2E26cc27a8d7B1",
+        "tokenCode": "strk"
+      },
+      {
+        "contractAddress": "0x7420B4b9a0110cdC71fB720908340C03F9Bc03EC",
+        "tokenCode": "jasmy"
+      },
+      {
+        "contractAddress": "0x7D1AfA7B718fb893dB30A3aBc0Cfc608AaCfeBB0",
+        "tokenCode": "matic"
+      },
+      {
+        "contractAddress": "0xd1d2Eb1B1e90B638588728b4130137D262C87cae",
+        "tokenCode": "gala"
+      },
+      {
+        "contractAddress": "0x62359Ed7505Efc61FF1D56fEF82158CcaffA23D7",
+        "tokenCode": "core"
+      },
+      {
+        "contractAddress": "0x808507121B80c02388fAd14726482e061B8da827",
+        "tokenCode": "pendle"
+      },
+      {
+        "contractAddress": "0xe66747a101bff2dba3697199dcce5b743b454759",
+        "tokenCode": "gt"
+      },
+      {
+        "contractAddress": "0x4d224452801aced8b2f0aebe155379bb5d594381",
+        "tokenCode": "ape"
+      },
+      {
+        "contractAddress": "0xbb0e17ef65f82ab018d8edd776e8dd940327b28b",
+        "tokenCode": "axs"
+      },
+      {
+        "contractAddress": "0x92d6c1e31e14520e676a687f0a93788b716beff5",
+        "tokenCode": "dydx"
+      },
+      {
+        "contractAddress": "0x4a220e6096b25eadb88358cb44068a3248254675",
+        "tokenCode": "qnt"
+      },
+      {
+        "contractAddress": "0xb62132e35a6c13ee1ee0f84dc5d40bad8d815206",
+        "tokenCode": "nexo"
+      },
+      {
+        "contractAddress": "0x0c10bf8fcb7bf5412187a595ab97a3609160b5c6",
+        "tokenCode": "usdd"
+      },
+      {
+        "contractAddress": "0x3845badAde8e6dFF049820680d1F14bD3903a5d0",
+        "tokenCode": "sand"
+      },
+      {
+        "contractAddress": "0xaaeE1A9723aaDB7afA2810263653A34bA2C21C7a",
+        "tokenCode": "mog"
+      },
+      {
+        "contractAddress": "0x0f5d2fb29fb7d3cfee444a200298f468908cc942",
+        "tokenCode": "mana"
+      },
+      {
+        "contractAddress": "0xe53ec727dbdeb9e2d5456c3be40cff031ab40a55",
+        "tokenCode": "super"
+      },
+      {
+        "contractAddress": "0xB0fFa8000886e57F86dd5264b9582b2Ad87b2b91",
+        "tokenCode": "w"
+      },
+      {
+        "contractAddress": "0x6810e776880c02933d47db1b9fc05908e5386b96",
+        "tokenCode": "gno"
+      },
+      {
+        "contractAddress": "0x68749665FF8D2d112Fa859AA293F07A622782F38",
+        "tokenCode": "xaut"
+      },
+      {
+        "contractAddress": "0x50d1c9771902476076ecfc8b2a83ad6b9355a4c9",
+        "tokenCode": "ftt"
+      },
+      {
+        "contractAddress": "0xC18360217D8F7Ab5e7c516566761Ea12Ce7F9D72",
+        "tokenCode": "ens"
+      },
+      {
+        "contractAddress": "0x3506424f91fd33084466f402d5d97f05f8e3b4af",
+        "tokenCode": "chz"
+      },
+      {
+        "contractAddress": "0x5aFE3855358E112B5647B952709E6165e1c1eEEe",
+        "tokenCode": "safe"
+      },
+      {
+        "contractAddress": "0xec53bF9167f50cDEB3Ae105f56099aaaB9061F83",
+        "tokenCode": "eigen"
+      },
+      {
+        "contractAddress": "0xc011a73ee8576fb46f5e1c5751ca3b9fe0af2a6f",
+        "tokenCode": "snx"
+      },
+      {
+        "contractAddress": "0xde4EE8057785A7e8e800Db58F9784845A5C2Cbd6",
+        "tokenCode": "dexe"
+      },
+      {
+        "contractAddress": "0x6c3ea9036406852006290770BEdFcAbA0e23A0e8",
+        "tokenCode": "pyusd"
+      },
+      {
+        "contractAddress": "0x5283d291dbcf85356a21ba090e6db59121208b44",
+        "tokenCode": "blur"
+      },
+      {
+        "contractAddress": "0x45804880de22913dafe09f4980848ece6ecbaf78",
+        "tokenCode": "paxg"
+      },
+      {
+        "contractAddress": "0x0000000000085d4780b73119b644ae5ecd22b376",
+        "tokenCode": "tusd"
+      },
+      {
+        "contractAddress": "0x6E2a43be0B1d33b726f0CA3b8de60b3482b8b050",
+        "tokenCode": "arkm"
+      },
+      {
+        "contractAddress": "0x4691937a7508860F876c9c0a2a617E7d9E945D4B",
+        "tokenCode": "woo"
+      },
+      {
+        "contractAddress": "0xc00e94cb662c3520282e6f5717214004a7f26888",
+        "tokenCode": "comp"
+      },
+      {
+        "contractAddress": "0xe3c408BD53c31C085a1746AF401A4042954ff740",
+        "tokenCode": "gmt"
+      },
+      {
+        "contractAddress": "0xb131f4A55907B10d1F0A50d8ab8FA09EC342cd74",
+        "tokenCode": "meme"
+      },
+      {
+        "contractAddress": "0x58b6a8a3302369daec383334672404ee733ab239",
+        "tokenCode": "lpt"
+      },
+      {
+        "contractAddress": "0x6985884c4392d348587b19cb9eaaf157f13271cd",
+        "tokenCode": "zro"
+      },
+      {
+        "contractAddress": "0xf091867EC603A6628eD83D274E835539D82e9cc8",
+        "tokenCode": "zeta"
+      },
+      {
+        "contractAddress": "0x111111111117dc0aa78b770fa6a738034120c302",
+        "tokenCode": "1inch"
+      },
+      {
+        "contractAddress": "0x320623b8e4ff03373931769a31fc52a4e78b5d70",
+        "tokenCode": "rsr"
+      },
+      {
+        "contractAddress": "0x6c6ee5e31d828de241282b9606c8e98ea48526e2",
+        "tokenCode": "hot"
+      },
+      {
+        "contractAddress": "0xb23d80f5fefcddaa212212f028021b41ded428cf",
+        "tokenCode": "prime"
+      },
+      {
+        "contractAddress": "0xFe0c30065B384F05761f15d0CC899D4F9F9Cc0eB",
+        "tokenCode": "ethfi"
+      },
+      {
+        "contractAddress": "0x7DD9c5Cba05E151C895FDe1CF355C9A1D5DA6429",
+        "tokenCode": "glm"
+      },
+      {
+        "contractAddress": "0xff20817765cb7f73d4bde2e66e067e58d11095c2",
+        "tokenCode": "amp"
+      },
+      {
+        "contractAddress": "0xD533a949740bb3306d119CC777fa900bA034cd52",
+        "tokenCode": "crv"
+      },
+      {
+        "contractAddress": "0x2dfF88A56767223A5529eA5960Da7A3F5f766406",
+        "tokenCode": "id"
+      },
+      {
+        "contractAddress": "0xB528edBef013aff855ac3c50b381f253aF13b997",
+        "tokenCode": "aevo"
+      },
+      {
+        "contractAddress": "0x467719aD09025FcC6cF6F8311755809d45a5E5f3",
+        "tokenCode": "waxl"
+      },
+      {
+        "contractAddress": "0xe41d2489571d322189246dafa5ebde1f4699f498",
+        "tokenCode": "zrx"
+      },
+      {
+        "contractAddress": "0x69af81e73a73b40adf4f3d4223cd9b1ece623074",
+        "tokenCode": "mask"
+      },
+      {
+        "contractAddress": "0x7A58c0Be72BE218B41C608b7Fe7C5bB630736C71",
+        "tokenCode": "people"
+      },
+      {
+        "contractAddress": "0x8290333cef9e6d528dd5618fb97a76f268f3edd4",
+        "tokenCode": "ankr"
+      },
+      {
+        "contractAddress": "0xaA7a9CA87d3694B5755f213B5D04094b8d0F0A6F",
+        "tokenCode": "trac"
+      },
+      {
+        "contractAddress": "0x9E32b13ce7f2E80A01932B42553652E053D6ed8e",
+        "tokenCode": "metis"
+      },
+      {
+        "contractAddress": "0x0d8775f648430679a709e98d2b0cb6250d2887ef",
+        "tokenCode": "bat"
+      },
+      {
+        "contractAddress": "0xbf2179859fc6D5BEE9Bf9158632Dc51678a4100e",
+        "tokenCode": "elf"
+      },
+      {
+        "contractAddress": "0x11eef04c884e24d9b7b4760e7476d06ddf797f36",
+        "tokenCode": "mx"
+      },
+      {
+        "contractAddress": "0x8457CA5040ad67fdebbCC8EdCE889A335Bc0fbFB",
+        "tokenCode": "alt"
+      },
+      {
+        "contractAddress": "0x9C7BEBa8F6eF6643aBd725e45a4E8387eF260649",
+        "tokenCode": "g"
+      },
+      {
+        "contractAddress": "0xCdF7028ceAB81fA0C6971208e83fa7872994beE5",
+        "tokenCode": "t"
+      },
+      {
+        "contractAddress": "0x9D65fF81a3c488d585bBfb0Bfe3c7707c7917f54",
+        "tokenCode": "ssv"
+      },
+      {
+        "contractAddress": "0x4c9edd5852cd905f086c759e8383e09bff1e68b3",
+        "tokenCode": "usde"
+      },
+      {
+        "contractAddress": "0xE0f63A424a4439cBE457D80E4f4b51aD25b2c56C",
+        "tokenCode": "spx"
+      },
+      {
+        "contractAddress": "0x853d955acef822db058eb8505911ed77f175b99e",
+        "tokenCode": "frax"
+      },
+      {
+        "contractAddress": "0xA9E8aCf069C58aEc8825542845Fd754e41a9489A",
+        "tokenCode": "pepecoin"
+      },
+      {
+        "contractAddress": "0xA35923162C49cF95e6BF26623385eb431ad920D3",
+        "tokenCode": "turbo"
+      },
+      {
+        "contractAddress": "0x44ff8620b8cA30902395A7bD3F2407e1A091BF73",
+        "tokenCode": "virtual"
+      },
+      {
+        "contractAddress": "0x594DaaD7D77592a2b97b725A7AD59D7E188b5bFa",
+        "tokenCode": "apu"
+      },
+      {
+        "contractAddress": "0x28561B8A2360F463011c16b6Cc0B0cbEF8dbBcad",
+        "tokenCode": "moodeng"
+      },
+      {
+        "contractAddress": "0xbe0ed4138121ecfc5c0e56b40517da27e6c5226b",
+        "tokenCode": "ath"
+      },
+      {
+        "contractAddress": "0x8ed97a637a790be1feff5e888d43629dc05408f6",
+        "tokenCode": "npc"
+      },
+      {
+        "contractAddress": "0xD33526068D116cE69F19A9ee46F0bd304F21A51f",
+        "tokenCode": "rpl"
+      },
+      {
+        "contractAddress": "0xf17e65822b568b3903685a7c9f496cf7656cc6c2",
+        "tokenCode": "bico"
+      },
+      {
+        "contractAddress": "0x00c83aeCC790e8a4453e5dD3B0B4b3680501a7A7",
+        "tokenCode": "skl"
+      },
+      {
+        "contractAddress": "0x04Fa0d235C4abf4BcF4787aF4CF447DE572eF828",
+        "tokenCode": "uma"
+      },
+      {
+        "contractAddress": "0x467Bccd9d29f223BcE8043b84E8C8B282827790F",
+        "tokenCode": "tel"
+      },
+      {
+        "contractAddress": "0x720CD16b011b987Da3518fbf38c3071d4F0D1495",
+        "tokenCode": "flux"
+      },
+      {
+        "contractAddress": "0x3429d03c6F7521AeC737a0BBF2E5ddcef2C3Ae31",
+        "tokenCode": "pixel"
+      },
+      {
+        "contractAddress": "0x0bc529c00C6401aEF6D220BE8C6Ea1667F6Ad93e",
+        "tokenCode": "yfi"
+      },
+      {
+        "contractAddress": "0x767fe9edc9e0df98e07454847909b5e959d7ca0e",
+        "tokenCode": "ilv"
+      },
+      {
+        "contractAddress": "0x6B3595068778DD592e39A122f4f5a5cF09C90fE2",
+        "tokenCode": "sushi"
+      },
+      {
+        "contractAddress": "0x25f8087ead173b73d6e8b84329989a8eea16cf73",
+        "tokenCode": "ygg"
+      },
+      {
+        "contractAddress": "0x4e3fbd56cd56c3e72c1403e103b45db9da5b9d2b",
+        "tokenCode": "cvx"
+      },
+      {
+        "contractAddress": "0x88dF592F8eb5D7Bd38bFeF7dEb0fBc02cf3778a0",
+        "tokenCode": "trb"
+      },
+      {
+        "contractAddress": "0xbbbbca6a901c926f240b89eacb641d8aec7aeafd",
+        "tokenCode": "lrc"
+      },
+      {
+        "contractAddress": "0x64Bc2cA1Be492bE7185FAA2c8835d9b824c8a194",
+        "tokenCode": "bigtime"
+      },
+      {
+        "contractAddress": "0xba11d00c5f74255f56a5e366f4f77f5a186d7f55",
+        "tokenCode": "band"
+      },
+      {
+        "contractAddress": "0xddb3422497e61e13543bea06989c0789117555c5",
+        "tokenCode": "coti"
+      },
+      {
+        "contractAddress": "0xb64ef51c888972c908cfacf59b47c1afbc0ab8ac",
+        "tokenCode": "storj"
+      },
+      {
+        "contractAddress": "0xed04915c23f00a313a544955524eb7dbd823143d",
+        "tokenCode": "ach"
+      },
+      {
+        "contractAddress": "0x3432b6a60d23ca0dfca7761b7ab56459d9c964d0",
+        "tokenCode": "fxs"
+      },
+      {
+        "contractAddress": "0xa3EE21C306A700E682AbCdfe9BaA6A08F3820419",
+        "tokenCode": "ctc"
+      },
+      {
+        "contractAddress": "0x18aaa7115705e8be94bffebde57af9bfc265b998",
+        "tokenCode": "audio"
+      },
+      {
+        "contractAddress": "0xAdF7C35560035944e805D98fF17d58CDe2449389",
+        "tokenCode": "spec"
+      },
+      {
+        "contractAddress": "0x8a2279d4a90b6fe1c4b30fa660cc9f926797baa2",
+        "tokenCode": "chr"
+      },
+      {
+        "contractAddress": "0x8DE5B80a0C1B02Fe4976851D030B36122dbb8624",
+        "tokenCode": "vanry"
+      },
+      {
+        "contractAddress": "0x6033F7f88332B8db6ad452B7C6D5bB643990aE3f",
+        "tokenCode": "lsk"
+      },
+      {
+        "contractAddress": "0x0b38210ea11411557c13457D4dA7dC6ea731B88a",
+        "tokenCode": "api3"
+      },
+      {
+        "contractAddress": "0x579CEa1889991f68aCc35Ff5c3dd0621fF29b0C9",
+        "tokenCode": "iq"
+      },
+      {
+        "contractAddress": "0x41e5560054824ea6b0732e656e3ad64e20e94e45",
+        "tokenCode": "cvc"
+      },
+      {
+        "contractAddress": "0xba100000625a3754423978a60c9317c58a424e3d",
+        "tokenCode": "bal"
+      },
+      {
+        "contractAddress": "0x595832f8fc6bf59c85c527fec3740a1b7a361269",
+        "tokenCode": "powr"
+      },
+      {
+        "contractAddress": "0x744d70fdbe2ba4cf95131626614a1763df805b9e",
+        "tokenCode": "snt"
+      },
+      {
+        "contractAddress": "0xdBB7a34Bf10169d6d2D0d02A6cbb436cF4381BFa",
+        "tokenCode": "zent"
+      },
+      {
+        "contractAddress": "0x761d38e5ddf6ccf6cf7c55759d5210750b5d60f3",
+        "tokenCode": "elon"
+      },
+      {
+        "contractAddress": "0x607F4C5BB672230e8672085532f7e901544a7375",
+        "tokenCode": "rlc"
+      },
+      {
+        "contractAddress": "0x10dea67478c5F8C5E2D90e5E9B26dBe60c54d800",
+        "tokenCode": "taiko"
+      },
+      {
+        "contractAddress": "0xF944e35f95E819E752f3cCB5Faf40957d311e8c5",
+        "tokenCode": "moca"
+      },
+      {
+        "contractAddress": "0xCC8Fa225D80b9c7D42F96e9570156c65D6cAAa25",
+        "tokenCode": "slp"
+      },
+      {
+        "contractAddress": "0x0000000000095413afc295d19edeb1ad7b71c952",
+        "tokenCode": "lon"
+      },
+      {
+        "contractAddress": "0x1776e1f26f98b1a5df9cd347953a26dd3cb46671",
+        "tokenCode": "nmr"
+      },
+      {
+        "contractAddress": "0x0fd10b9899882a6f2fcb5c371e17e70fdee00c38",
+        "tokenCode": "pundix"
+      },
+      {
+        "contractAddress": "0x491604c0fdf08347dd1fa4ee062a822a5dd06b5d",
+        "tokenCode": "ctsi"
+      },
+      {
+        "contractAddress": "0x9813037ee2218799597d83D4a5B6F3b6778218d9",
+        "tokenCode": "bone"
+      },
+      {
+        "contractAddress": "0xAE12C5930881c53715B369ceC7606B70d8EB229f",
+        "tokenCode": "c98"
+      },
+      {
+        "contractAddress": "0x0f2D719407FdBeFF09D87557AbB7232601FD9F29",
+        "tokenCode": "syn"
+      },
+      {
+        "contractAddress": "0x4C19596f5aAfF459fA38B0f7eD92F11AE6543784",
+        "tokenCode": "tru"
+      },
+      {
+        "contractAddress": "0x430EF9263E76DAE63c84292C3409D61c598E9682",
+        "tokenCode": "pyr"
+      },
+      {
+        "contractAddress": "0x090185f2135308bad17527004364ebcc2d37e5f6",
+        "tokenCode": "spell"
+      },
+      {
+        "contractAddress": "0x8e870d67f660d95d5be530380d0ec0bd388289e1",
+        "tokenCode": "usdp"
+      },
+      {
+        "contractAddress": "0x6DEA81C8171D0bA574754EF6F8b412F2Ed88c54D",
+        "tokenCode": "lqty"
+      },
+      {
+        "contractAddress": "0x67466be17df832165f8c80a5a120ccc652bd7e69",
+        "tokenCode": "wolf"
+      },
+      {
+        "contractAddress": "0xF10c41cA085FC8d9326a65408D14Dae28A3E69a5",
+        "tokenCode": "islm"
+      },
+      {
+        "contractAddress": "0x4f9254c83eb525f9fcf346490bbb3ed28a81c667",
+        "tokenCode": "celr"
+      },
+      {
+        "contractAddress": "0x32353A6C91143bfd6C7d363B546e62a9A2489A20",
+        "tokenCode": "agld"
+      },
+      {
+        "contractAddress": "0x14778860E937f509e651192a90589dE711Fb88a9",
+        "tokenCode": "cyber"
+      },
+      {
+        "contractAddress": "0x25931894a86D47441213199621F1F2994e1c39Aa",
+        "tokenCode": "cgpt"
+      },
+      {
+        "contractAddress": "0x1abaea1f7c830bd89acc67ec4af516284b1bc33c",
+        "tokenCode": "eurc"
+      },
+      {
+        "contractAddress": "0x3597bfd533a99c9aa083587b074434e61eb0a258",
+        "tokenCode": "dent"
+      },
+      {
+        "contractAddress": "0x71Ab77b7dbB4fa7e017BC15090b2163221420282",
+        "tokenCode": "high"
+      },
+      {
+        "contractAddress": "0xfc82bb4ba86045Af6F327323a46E80412b91b27d",
+        "tokenCode": "prom"
+      },
+      {
+        "contractAddress": "0x081131434f93063751813C619Ecca9C4dC7862a3",
+        "tokenCode": "dar"
+      },
+      {
+        "contractAddress": "0x84ca8bc7997272c7cfb4d0cd3d55cd942b3c9419",
+        "tokenCode": "dia"
+      },
+      {
+        "contractAddress": "0x12970E6868f88f6557B76120662c1B3E50A646bf",
+        "tokenCode": "ladys"
+      },
+      {
+        "contractAddress": "0xA9B1Eb5908CfC3cdf91F9B8B3a74108598009096",
+        "tokenCode": "auction"
+      },
+      {
+        "contractAddress": "0x57b946008913b82e4df85f501cbaed910e58d26c",
+        "tokenCode": "pond"
+      },
+      {
+        "contractAddress": "0x940a2db1b7008b6c776d4faaca729d6d4a4aa551",
+        "tokenCode": "dusk"
+      },
+      {
+        "contractAddress": "0xde7d85157d9714eadf595045cc12ca4a5f3e2adb",
+        "tokenCode": "stpt"
+      },
+      {
+        "contractAddress": "0xff56Cc6b1E6dEd347aA0B7676C85AB0B3D08B0FA",
+        "tokenCode": "orbs"
+      },
+      {
+        "contractAddress": "0xba5BDe662c17e2aDFF1075610382B9B691296350",
+        "tokenCode": "rare"
+      },
+      {
+        "contractAddress": "0x43Dfc4159D86F3A37A5A4B3D4580b888ad7d4DDd",
+        "tokenCode": "dodo"
+      },
+      {
+        "contractAddress": "0x6c5bA91642F10282b576d91922Ae6448C9d52f4E",
+        "tokenCode": "pha"
+      },
+      {
+        "contractAddress": "0x12BB890508c125661E03b09EC06E404bc9289040",
+        "tokenCode": "raca"
+      },
+      {
+        "contractAddress": "0xa117000000f279D81A1D3cc75430fAA017FA5A2e",
+        "tokenCode": "ant"
+      },
+      {
+        "contractAddress": "0x36E66fbBce51e4cD5bd3C62B637Eb411b18949D4",
+        "tokenCode": "omni"
+      },
+      {
+        "contractAddress": "0x03AA6298F1370642642415EDC0db8b957783e8D6",
+        "tokenCode": "nmt"
+      },
+      {
+        "contractAddress": "0x5026F006B85729a8b14553FAE6af249aD16c9aaB",
+        "tokenCode": "wojak"
+      },
+      {
+        "contractAddress": "0x8806926Ab68EB5a7b909DcAf6FdBe5d93271D6e2",
+        "tokenCode": "uqc"
+      },
+      {
+        "contractAddress": "0xba50933c268f567bdc86e1ac131be072c6b0b71a",
+        "tokenCode": "arpa"
+      },
+      {
+        "contractAddress": "0xc98D64DA73a6616c42117b582e832812e7B8D57F",
+        "tokenCode": "rss3"
+      },
+      {
+        "contractAddress": "0x4b9278b94a1112cAD404048903b8d343a810B07e",
+        "tokenCode": "hifi"
+      },
+      {
+        "contractAddress": "0x42476F744292107e34519F9c357927074Ea3F75D",
+        "tokenCode": "loom"
+      },
+      {
+        "contractAddress": "0x8f8221afbb33998d8584a2b05749ba73c37a938a",
+        "tokenCode": "req"
+      },
+      {
+        "contractAddress": "0x6B0b3a982b4634aC68dD83a4DBF02311cE324181",
+        "tokenCode": "ali"
+      },
+      {
+        "contractAddress": "0x7448c7456a97769F6cD04F1E83A4a23cCdC46aBD",
+        "tokenCode": "mav"
+      },
+      {
+        "contractAddress": "0xa62cc35625b0c8dc1faea39d33625bb4c15bd71c",
+        "tokenCode": "stmx"
+      },
+      {
+        "contractAddress": "0x55296f69f40ea6d20e478533c15a6b08b654e758",
+        "tokenCode": "xyo"
+      },
+      {
+        "contractAddress": "0xAC51066d7bEC65Dc4589368da368b212745d63E8",
+        "tokenCode": "alice"
+      },
+      {
+        "contractAddress": "0xAaAAAA20D9E0e2461697782ef11675f668207961",
+        "tokenCode": "aurora"
+      },
+      {
+        "contractAddress": "0x1F573D6Fb3F13d689FF844B4cE37794d79a7FF1C",
+        "tokenCode": "bnt"
+      },
+      {
+        "contractAddress": "0x68A47Fe1CF42eBa4a030a10CD4D6a1031Ca3CA0a",
+        "tokenCode": "tet"
+      },
+      {
+        "contractAddress": "0x4575f41308EC1483f3d399aa9a2826d74Da13Deb",
+        "tokenCode": "oxt"
+      },
+      {
+        "contractAddress": "0x137dDB47Ee24EaA998a535Ab00378d6BFa84F893",
+        "tokenCode": "rdnt"
+      },
+      {
+        "contractAddress": "0xEA26c4aC16D4a5A106820BC8AEE85fd0b7b2b664",
+        "tokenCode": "qkc"
+      },
+      {
+        "contractAddress": "0xb3999F658C0391d94A37f7FF328F3feC942BcADC",
+        "tokenCode": "hft"
+      },
+      {
+        "contractAddress": "0x5f98805A4E8be255a32880FDeC7F6728C6568bA0",
+        "tokenCode": "lusd"
+      },
+      {
+        "contractAddress": "0x4B5f49487ea7B3609b1aD05459BE420548789f1f",
+        "tokenCode": "lever"
+      },
+      {
+        "contractAddress": "0xa1faa113cbE53436Df28FF0aEe54275c13B40975",
+        "tokenCode": "alpha"
+      },
+      {
+        "contractAddress": "0xAf5191B0De278C7286d6C7CC6ab6BB8A73bA2Cd6",
+        "tokenCode": "stg"
+      },
+      {
+        "contractAddress": "0x8207c1ffc5b6804f6024322ccf34f29c3541ae26",
+        "tokenCode": "ogn"
+      },
+      {
+        "contractAddress": "0x056Fd409E1d7A124BD7017459dFEa2F387b6d5Cd",
+        "tokenCode": "gusd"
+      },
+      {
+        "contractAddress": "0x3472a5a71965499acd81997a54bba8d852c6e53d",
+        "tokenCode": "badger"
+      },
+      {
+        "contractAddress": "0x3B50805453023a91a8bf641e279401a0b23FA6F9",
+        "tokenCode": "rez"
+      },
+      {
+        "contractAddress": "0x31c8EAcBFFdD875c74b94b077895Bd78CF1E64A3",
+        "tokenCode": "rad"
+      },
+      {
+        "contractAddress": "0xccc8cb5229b0ac8069c51fd58367fd1e622afd97",
+        "tokenCode": "gods"
+      },
+      {
+        "contractAddress": "0x0f51bb10119727a7e5ea3538074fb341f56b09ad",
+        "tokenCode": "dao"
+      },
+      {
+        "contractAddress": "0xDe30da39c46104798bB5aA3fe8B9e0e1F348163F",
+        "tokenCode": "gtc"
+      },
+      {
+        "contractAddress": "0xBBc2AE13b23d715c30720F079fcd9B4a74093505",
+        "tokenCode": "ern"
+      },
+      {
+        "contractAddress": "0x3ffeea07a27fab7ad1df5297fa75e77a43cb5790",
+        "tokenCode": "peipei"
+      },
+      {
+        "contractAddress": "0x888888848B652B3E3a0f34c96E00EEC0F3a23F72",
+        "tokenCode": "tlm"
+      },
+      {
+        "contractAddress": "0x1494ca1f11d487c2bbe4543e90080aeba4ba3c2b",
+        "tokenCode": "dpi"
+      },
+      {
+        "contractAddress": "0x91af0fbb28aba7e31403cb457106ce79397fd4e6",
+        "tokenCode": "aergo"
+      },
+      {
+        "contractAddress": "0xd01409314aCb3b245CEa9500eCE3F6Fd4d70ea30",
+        "tokenCode": "lto"
+      },
+      {
+        "contractAddress": "0x3F382DbD960E3a9bbCeaE22651E88158d2791550",
+        "tokenCode": "ghst"
+      },
+      {
+        "contractAddress": "0xB4b9DC1C77bdbb135eA907fd5a08094d98883A35",
+        "tokenCode": "sweat"
+      },
+      {
+        "contractAddress": "0x5732046a883704404f284ce41ffadd5b007fd668",
+        "tokenCode": "blz"
+      },
+      {
+        "contractAddress": "0xa2120b9e674d3fc3875f415a7df52e382f141225",
+        "tokenCode": "ata"
+      },
+      {
+        "contractAddress": "0xbC396689893D065F41bc2C6EcbeE5e0085233447",
+        "tokenCode": "perp"
+      },
+      {
+        "contractAddress": "0xA2b4C0Af19cC16a6CfAcCe81F192B024d625817D",
+        "tokenCode": "kishu"
+      },
+      {
+        "contractAddress": "0xA2cd3D43c775978A96BdBf12d733D5A1ED94fb18",
+        "tokenCode": "xcn"
+      },
+      {
+        "contractAddress": "0x77FbA179C79De5B7653F68b5039Af940AdA60ce0",
+        "tokenCode": "forth"
+      },
+      {
+        "contractAddress": "0x42069026EAC8Eee0Fd9b5f7aDFa4f6E6D69a2B39",
+        "tokenCode": "mstr"
+      },
+      {
+        "contractAddress": "0xdbdb4d16eda451d0503b854cf79d55697f90c8df",
+        "tokenCode": "alcx"
+      },
+      {
+        "contractAddress": "0x9AAb071B4129B083B01cB5A0Cb513Ce7ecA26fa5",
+        "tokenCode": "hunt"
+      },
+      {
+        "contractAddress": "0xf4d2888d29D722226FafA5d9B24F9164c092421E",
+        "tokenCode": "looks"
+      },
+      {
+        "contractAddress": "0xec67005c4e498ec7f55e092bd1d35cbc47c91892",
+        "tokenCode": "mln"
+      },
+      {
+        "contractAddress": "0xfca59cd816ab1ead66534d82bc21e7515ce441cf",
+        "tokenCode": "rari"
+      },
+      {
+        "contractAddress": "0xe6fd75ff38Adca4B97FBCD938c86b98772431867",
+        "tokenCode": "ela"
+      },
+      {
+        "contractAddress": "0x1E053D89E08c24aA2CE5C5B4206744Dc2D7BD8F5",
+        "tokenCode": "tt"
+      },
+      {
+        "contractAddress": "0x3Da932456D082CBa208FEB0B096d49b202Bf89c8",
+        "tokenCode": "dego"
+      },
+      {
+        "contractAddress": "0xa91ac63d040deb1b7a5e4d4134ad23eb0ba07e14",
+        "tokenCode": "bel"
+      },
+      {
+        "contractAddress": "0x549020a9Cb845220D66d3E9c6D9F9eF61C981102",
+        "tokenCode": "sidus"
+      },
+      {
+        "contractAddress": "0xaa95f26e30001251fb905d264Aa7b00eE9dF6C18",
+        "tokenCode": "kendu"
+      },
+      {
+        "contractAddress": "0x8f693ca8D21b157107184d29D398A8D082b38b76",
+        "tokenCode": "data"
+      },
+      {
+        "contractAddress": "0x408e41876cccdc0f92210600ef50372656052a38",
+        "tokenCode": "ren"
+      },
+      {
+        "contractAddress": "0xd26114cd6EE289AccF82350c8d8487fedB8A0C07",
+        "tokenCode": "omg"
+      },
+      {
+        "contractAddress": "0x628A3b2E302C7e896AcC432D2d0dD22B6cb9bc88",
+        "tokenCode": "lmwr"
+      },
+      {
+        "contractAddress": "0xC581b735A1688071A1746c968e0798D642EDE491",
+        "tokenCode": "eurt"
+      },
+      {
+        "contractAddress": "0x9d1a7a3191102e9f900faa10540837ba84dcbae7",
+        "tokenCode": "euri"
+      },
+      {
+        "contractAddress": "0xBe1a001FE942f96Eea22bA08783140B9Dcc09D28",
+        "tokenCode": "beta"
+      },
+      {
+        "contractAddress": "0xb59490aB09A0f526Cc7305822aC65f2Ab12f9723",
+        "tokenCode": "lit"
+      },
+      {
+        "contractAddress": "0x589891a198195061Cb8ad1a75357A3b7DbaDD7Bc",
+        "tokenCode": "cos"
+      },
+      {
+        "contractAddress": "0xb7109df1a93f8fe2b8162c6207c9b846c1c68090",
+        "tokenCode": "max"
+      },
+      {
+        "contractAddress": "0xC477D038d5420C6A9e0b031712f61c5120090de9",
+        "tokenCode": "boson"
+      },
+      {
+        "contractAddress": "0x61e90a50137e1f645c9ef4a0d3a4f01477738406",
+        "tokenCode": "loka"
+      },
+      {
+        "contractAddress": "0xD4F4D0a10BcaE123bB6655E8Fe93a30d01eEbD04",
+        "tokenCode": "lnq"
+      },
+      {
+        "contractAddress": "0x4d1C297d39C5c1277964D0E3f8Aa901493664530",
+        "tokenCode": "puffer"
+      },
+      {
+        "contractAddress": "0x27c70cd1946795b66be9d954418546998b546634",
+        "tokenCode": "leash"
+      },
+      {
+        "contractAddress": "0xa3d4BEe77B05d4a0C943877558Ce21A763C4fa29",
+        "tokenCode": "root"
+      },
+      {
+        "contractAddress": "0xef3a930e1ffffacd2fc13434ac81bd278b0ecc8d",
+        "tokenCode": "fis"
+      },
+      {
+        "contractAddress": "0x431ad2ff6a9C365805eBaD47Ee021148d6f7DBe0",
+        "tokenCode": "df"
+      },
+      {
+        "contractAddress": "0x42bBFa2e77757C645eeaAd1655E0911a7553Efbc",
+        "tokenCode": "boba"
+      },
+      {
+        "contractAddress": "0x3E9BC21C9b189C09dF3eF1B824798658d5011937",
+        "tokenCode": "lina"
+      },
+      {
+        "contractAddress": "0x80C62FE4487E1351b47Ba49809EBD60ED085bf52",
+        "tokenCode": "clv"
+      },
+      {
+        "contractAddress": "0xfe3e6a25e6b192a42a44ecddcd13796471735acf",
+        "tokenCode": "reef"
+      },
+      {
+        "contractAddress": "0x814e0908b12a99fecf5bc101bb5d0b8b5cdf7d26",
+        "tokenCode": "mdt"
+      },
+      {
+        "contractAddress": "0xc03fBF20A586fa89C2a5f6F941458E1Fbc40c661",
+        "tokenCode": "combo"
+      },
+      {
+        "contractAddress": "0xB705268213D593B8FD88d3FDEFF93AFF5CbDcfAE",
+        "tokenCode": "idex"
+      },
+      {
+        "contractAddress": "0x2a9bDCFF37aB68B95A53435ADFd8892e86084F93",
+        "tokenCode": "aqt"
+      },
+      {
+        "contractAddress": "0x419D0d8BdD9aF5e606Ae2232ed285Aff190E711b",
+        "tokenCode": "fun"
+      },
+      {
+        "contractAddress": "0x3be7bf1a5f23bd8336787d0289b70602f1940875",
+        "tokenCode": "vidt"
+      },
+      {
+        "contractAddress": "0xd2bA23dE8a19316A638dc1e7a9ADdA1d74233368",
+        "tokenCode": "quick"
+      },
+      {
+        "contractAddress": "0xa0246c9032bC3A600820415aE600c6388619A14D",
+        "tokenCode": "farm"
+      },
+      {
+        "contractAddress": "0xd13c7342e1ef687c5ad21b27c2b65d772cab5c8c",
+        "tokenCode": "uos"
+      },
+      {
+        "contractAddress": "0x2ba592F78dB6436527729929AAf6c908497cB200",
+        "tokenCode": "cream"
+      },
+      {
+        "contractAddress": "0x83e6f1e41cdd28eaceb20cb649155049fac3d5aa",
+        "tokenCode": "pols"
+      },
+      {
+        "contractAddress": "0x1a3496c18d558bd9c6c8f609e1b129f67ab08163",
+        "tokenCode": "dep"
+      },
+      {
+        "contractAddress": "0xae41b275aaAF484b541A5881a2dDED9515184CCA",
+        "tokenCode": "cswap"
+      },
+      {
+        "contractAddress": "0x80D55c03180349Fff4a229102F62328220A96444",
+        "tokenCode": "opul"
+      },
+      {
+        "contractAddress": "0x442b153f6f61c0c99a33aa4170dcb31e1abda1d0",
+        "tokenCode": "ava"
+      },
+      {
+        "contractAddress": "0x7D8146cf21e8D7cbe46054e01588207b51198729",
+        "tokenCode": "bob"
+      },
+      {
+        "contractAddress": "0xdc9Ac3C20D1ed0B540dF9b1feDC10039Df13F99c",
+        "tokenCode": "utk"
+      },
+      {
+        "contractAddress": "0xADE00C28244d5CE17D72E40330B1c318cD12B7c3",
+        "tokenCode": "adx"
+      },
+      {
+        "contractAddress": "0x8642A849D0dcb7a15a974794668ADcfbe4794B56",
+        "tokenCode": "pros"
+      },
+      {
+        "contractAddress": "0xB1F1ee126e9c96231Cc3d3fAD7C08b4cf873b1f1",
+        "tokenCode": "bifi"
+      },
+      {
+        "contractAddress": "0x362bc847A3a9637d3af6624EeC853618a43ed7D2",
+        "tokenCode": "prq"
+      },
+      {
+        "contractAddress": "0x0202Be363B8a4820f3F4DE7FaF5224fF05943AB1",
+        "tokenCode": "uft"
+      },
+      {
+        "contractAddress": "0xb056c38f6b7Dc4064367403E26424CD2c60655e1",
+        "tokenCode": "ceek"
+      },
+      {
+        "contractAddress": "0x03049b395147713ae53C0617093675B4b86dDE78",
+        "tokenCode": "psps"
+      },
+      {
+        "contractAddress": "0xd47bdf574b4f76210ed503e0efe81b58aa061f3d",
+        "tokenCode": "trvl"
+      },
+      {
+        "contractAddress": "0x9E9FbDE7C7a83c43913BddC8779158F1368F0413",
+        "tokenCode": "pandora"
+      },
+      {
+        "contractAddress": "0xc770eefad204b5180df6a14ee197d99d808ee52d",
+        "tokenCode": "fox"
+      },
+      {
+        "contractAddress": "0x7f792db54B0e580Cdc755178443f0430Cf799aCa",
+        "tokenCode": "volt"
+      },
+      {
+        "contractAddress": "0x249e38ea4102d0cf8264d3701f1a0e39c4f2dc3b",
+        "tokenCode": "ufo"
+      },
+      {
+        "contractAddress": "0xeef9f339514298c6a857efcfc1a762af84438dee",
+        "tokenCode": "hez"
+      },
+      {
+        "contractAddress": "0x993864E43Caa7F7F12953AD6fEb1d1Ca635B875F",
+        "tokenCode": "sdao"
+      },
+      {
+        "contractAddress": "0x8ab7404063ec4dbcfd4598215992dc3f8ec853d7",
+        "tokenCode": "akro"
+      },
+      {
+        "contractAddress": "0xf1f955016EcbCd7321c7266BccFB96c68ea5E49b",
+        "tokenCode": "rly"
+      },
+      {
+        "contractAddress": "0x968f6f898a6df937fc1859b323ac2f14643e3fed",
+        "tokenCode": "nwc"
+      },
+      {
+        "contractAddress": "0xd3E4Ba569045546D09CF021ECC5dFe42b1d7f6E4",
+        "tokenCode": "mnw"
+      },
+      {
+        "contractAddress": "0x2c974b2d0ba1716e644c1fc59982a89ddd2ff724",
+        "tokenCode": "vib"
+      },
+      {
+        "contractAddress": "0x97A9a15168C22B3C137E6381037E1499C8ad0978",
+        "tokenCode": "dop"
+      },
+      {
+        "contractAddress": "0xAFCdd4f666c84Fed1d8BD825aA762e3714F652c9",
+        "tokenCode": "vinu"
+      },
+      {
+        "contractAddress": "0x27054b13b1b798b345b591a4d22e6562d47ea75a",
+        "tokenCode": "ast"
+      },
+      {
+        "contractAddress": "0xa1d0E215a23d7030842FC67cE582a6aFa3CCaB83",
+        "tokenCode": "yfii"
+      },
+      {
+        "contractAddress": "0x26c8afbbfe1ebaca03c2bb082e69d0476bffe099",
+        "tokenCode": "cell"
+      },
+      {
+        "contractAddress": "0x8fc8f8269ebca376d046ce292dc7eac40c8d358a",
+        "tokenCode": "dfi"
+      },
+      {
+        "contractAddress": "0x0bb217e40f8a5cb79adf04e1aab60e5abd0dfc1e",
+        "tokenCode": "swftc"
+      },
+      {
+        "contractAddress": "0x701C244b988a513c945973dEFA05de933b23Fe1D",
+        "tokenCode": "oax"
+      },
+      {
+        "contractAddress": "0x485d17A6f1B8780392d53D64751824253011A260",
+        "tokenCode": "time"
+      },
+      {
+        "contractAddress": "0x93ed3fbe21207ec2e8f2d3c3de6e058cb73bc04d",
+        "tokenCode": "pnk"
+      },
+      {
+        "contractAddress": "10xd0a6053f087E87a25dC60701ba6E663b1a548E85",
+        "tokenCode": "lrds"
+      },
+      {
+        "contractAddress": "0x0391D2021f89DC339F60Fff84546EA23E337750f",
+        "tokenCode": "bond"
+      },
+      {
+        "contractAddress": "0xc5fB36dd2fb59d3B98dEfF88425a3F425Ee469eD",
+        "tokenCode": "tsuka"
+      },
+      {
+        "contractAddress": "0x712bd4Beb54C6B958267d9dB0259abdBb0BFF606",
+        "tokenCode": "uds"
+      },
+      {
+        "contractAddress": "0xf0f9d895aca5c8678f706fb8216fa22957685a13",
+        "tokenCode": "cult"
+      },
+      {
+        "contractAddress": "0x221657776846890989a759ba2973e427dff5c9bb",
+        "tokenCode": "rep"
+      },
+      {
+        "contractAddress": "0x8e6cd950ad6ba651f6dd608dc70e5886b1aa6b24",
+        "tokenCode": "starl"
+      },
+      {
+        "contractAddress": "0xe9a95d175a5f4c9369f3b74222402eb1b837693b",
+        "tokenCode": "now"
+      },
+      {
+        "contractAddress": "0x3301ee63fb29f863f2333bd4466acb46cd8323e6",
+        "tokenCode": "akita"
+      },
+      {
+        "contractAddress": "0xB3912b20b3aBc78C15e85E13EC0bF334fbB924f7",
+        "tokenCode": "hana"
+      },
+      {
+        "contractAddress": "0x441761326490cacf7af299725b6292597ee822c2",
+        "tokenCode": "unfi"
+      },
+      {
+        "contractAddress": "0xaaaebe6fe48e54f431b0c390cfaf0b017d09d42d",
+        "tokenCode": "cel"
+      },
+      {
+        "contractAddress": "0x32b86b99441480a7E5BD3A26c124ec2373e3F015",
+        "tokenCode": "bad"
+      },
+      {
+        "contractAddress": "0x7A65CB87F596Caf31a4932f074c59c0592bE77D7",
+        "tokenCode": "zypto"
+      },
+      {
+        "contractAddress": "0xfad45e47083e4607302aa43c65fb3106f1cd7607",
+        "tokenCode": "hoge"
+      },
+      {
+        "contractAddress": "0x656C00e1BcD96f256F224AD9112FF426Ef053733",
+        "tokenCode": "efi"
+      },
+      {
+        "contractAddress": "0x57Ab1ec28D129707052df4dF418D58a2D46d5f51",
+        "tokenCode": "susd"
+      },
+      {
+        "contractAddress": "0x476c5E26a75bd202a9683ffD34359C0CC15be0fF",
+        "tokenCode": "srm"
+      },
+      {
+        "contractAddress": "0xf819d9Cb1c2A819Fd991781A822dE3ca8607c3C9",
+        "tokenCode": "unibot"
+      },
+      {
+        "contractAddress": "0x52498F8d9791736f1D6398fE95ba3BD868114d10",
+        "tokenCode": "netvr"
+      },
+      {
+        "contractAddress": "0x8400d94a5cb0fa0d041a3788e395285d61c9ee5e",
+        "tokenCode": "ubt"
+      },
+      {
+        "contractAddress": "0x1ceb5cb57c4d4e2b2433641b95dd330a33185a44",
+        "tokenCode": "kp3r"
+      },
+      {
+        "contractAddress": "0x970b9bb2c0444f5e81e9d0efb84c8ccdcdcaf84d",
+        "tokenCode": "fuse"
+      },
+      {
+        "contractAddress": "0xD9c2D319Cd7e6177336b0a9c93c21cb48d84Fb54",
+        "tokenCode": "hapi"
+      },
+      {
+        "contractAddress": "0x4123a133ae3c521fd134d7b13a2dec35b56c2463",
+        "tokenCode": "open"
+      },
+      {
+        "contractAddress": "0x2A8e1E676Ec238d8A992307B495b45B3fEAa5e86",
+        "tokenCode": "ousd"
+      },
+      {
+        "contractAddress": "0xc314b0E758D5FF74f63e307A86EbfE183C95767b",
+        "tokenCode": "adp"
+      },
+      {
+        "contractAddress": "0xBBa39Fd2935d5769116ce38d46a71bde9cf03099",
+        "tokenCode": "cho"
+      },
+      {
+        "contractAddress": "0x246908BfF0b1ba6ECaDCF57fb94F6AE2FcD43a77",
+        "tokenCode": "divi"
+      },
+      {
+        "contractAddress": "0x38e4adB44ef08F22F5B5b76A8f0c2d0dCbE7DcA1",
+        "tokenCode": "cvp"
+      },
+      {
+        "contractAddress": "0x446c9033e7516d820cc9a2ce2d0b7328b579406f",
+        "tokenCode": "solve"
+      },
+      {
+        "contractAddress": "0x44709a920fCcF795fbC57BAA433cc3dd53C44DbE",
+        "tokenCode": "radar"
+      },
+      {
+        "contractAddress": "0x249cA82617eC3DfB2589c4c17ab7EC9765350a18",
+        "tokenCode": "verse"
+      },
+      {
+        "contractAddress": "0xd98f75b1a3261dab9eed4956c93f33749027a964",
+        "tokenCode": "shr"
+      },
+      {
+        "contractAddress": "0x6226e00bcac68b0fe55583b90a1d727c14fab77f",
+        "tokenCode": "mtv"
+      },
+      {
+        "contractAddress": "0xb6ca7399b4f9ca56fc27cbff44f4d2e4eef1fc81",
+        "tokenCode": "muse"
+      },
+      {
+        "contractAddress": "0x2aD9adDD0d97EC3cDBA27F92bF6077893b76Ab0b",
+        "tokenCode": "planet"
+      },
+      {
+        "contractAddress": "0x662b67d00A13FAf93254714DD601F5Ed49Ef2F51",
+        "tokenCode": "orc"
+      },
+      {
+        "contractAddress": "0xa71d0588EAf47f12B13cF8eC750430d21DF04974",
+        "tokenCode": "qom"
+      },
+      {
+        "contractAddress": "0x1cc7047E15825F639E0752Eb1b89E4225F5327F2",
+        "tokenCode": "plx"
+      },
+      {
+        "contractAddress": "0xeEAA40B28A2d1b0B08f6f97bB1DD4B75316c6107",
+        "tokenCode": "govi"
+      },
+      {
+        "contractAddress": "0x1fcdce58959f536621d76f5b7ffb955baa5a672f",
+        "tokenCode": "for"
+      },
+      {
+        "contractAddress": "0x4385328cc4D643Ca98DfEA734360C0F596C83449",
+        "tokenCode": "tomi"
+      },
+      {
+        "contractAddress": "0x5cac718a3ae330d361e39244bf9e67ab17514ce8",
+        "tokenCode": "cot"
+      },
+      {
+        "contractAddress": "0x49642110B712C1FD7261Bc074105E9E44676c68F",
+        "tokenCode": "dino"
+      },
+      {
+        "contractAddress": "0x34950ff2b487d9e5282c5ab342d08a2f712eb79f",
+        "tokenCode": "wozx"
+      },
+      {
+        "contractAddress": "0x2559813BBb508C4C79e9CCCE4703Bcb1f149EDd7",
+        "tokenCode": "wait"
+      },
+      {
+        "contractAddress": "0xc6DdDB5bc6E61e0841C54f3e723Ae1f3A807260b",
+        "tokenCode": "urus"
+      },
+      {
+        "contractAddress": "0x0e8d6b471e332f140e7d9dbb99e5e3822f728da6",
+        "tokenCode": "abyss"
+      },
+      {
+        "contractAddress": "0x7714f320Adca62B149df2579361AfEC729c5FE6A",
+        "tokenCode": "tup"
+      },
+      {
+        "contractAddress": "0x4947b72fED037AdE3365dA050A9be5c063E605A7",
+        "tokenCode": "peanut"
+      },
+      {
+        "contractAddress": "0xa23C1194d421F252b4e6D5edcc3205F7650a4eBE",
+        "tokenCode": "lbp"
+      },
+      {
+        "contractAddress": "0xcFEB09C3c5F0f78aD72166D55f9e6E9A60e96eEC",
+        "tokenCode": "vemp"
+      },
+      {
+        "contractAddress": "0x8b9b95292f890DF47fFf5aC9Cbe93d5fC242bd51",
+        "tokenCode": "befi"
+      },
+      {
+        "contractAddress": "0xf7168c8AbB0ff80116413a8d95396BBdC318A3fF",
+        "tokenCode": "keke"
+      },
+      {
+        "contractAddress": "0x0488401c3f535193fa8df029d9ffe615a06e74e6",
+        "tokenCode": "srk"
+      },
+      {
+        "contractAddress": "0x3Ab6Ed69Ef663bd986Ee59205CCaD8A20F98b4c2",
+        "tokenCode": "drep"
+      },
+      {
+        "contractAddress": "0xad22f63404f7305e4713ccbd4f296f34770513f4",
+        "tokenCode": "awc"
+      },
+      {
+        "contractAddress": "0xbA6B0dbb2bA8dAA8F5D6817946393Aef8D3A4487",
+        "tokenCode": "hsf"
+      },
+      {
+        "contractAddress": "0xeca82185adce47f39c684352b0439f030f860318",
+        "tokenCode": "perl"
+      },
+      {
+        "contractAddress": "0x3893b9422Cd5D70a81eDeFfe3d5A1c6A978310BB",
+        "tokenCode": "mith"
+      },
+      {
+        "contractAddress": "0x6c936D4AE98E6d2172dB18c16C4b601C99918EE6",
+        "tokenCode": "life"
+      },
+      {
+        "contractAddress": "0xb8baa0e4287890a5f79863ab62b7f175cecbd433",
+        "tokenCode": "swrv"
+      },
+      {
+        "contractAddress": "0x9B9647431632AF44be02ddd22477Ed94d14AacAa",
+        "tokenCode": "kok"
+      },
+      {
+        "contractAddress": "0x1dd80016e3d4ae146ee2ebb484e8edd92dacc4ce",
+        "tokenCode": "lead"
+      },
+      {
+        "contractAddress": "0x88909D489678dD17aA6D9609F89B0419Bf78FD9a",
+        "tokenCode": "l3"
+      },
+      {
+        "contractAddress": "0xC9bCa88B04581699fAb5aa276CCafF7Df957cbbf",
+        "tokenCode": "vista"
+      },
+      {
+        "contractAddress": "0xDA987c655ebC38C801DB64A8608bc1AA56Cd9a31",
+        "tokenCode": "synt"
+      },
+      {
+        "contractAddress": "0x0CCAe1Bc46Fb018DD396Ed4c45565d4Cb9d41098",
+        "tokenCode": "misha"
+      },
+      {
+        "contractAddress": "0x382ea807A61a418479318Efd96F1EFbC5c1F2C21",
+        "tokenCode": "pew"
+      },
+      {
+        "contractAddress": "0xFE67A4450907459c3e1FFf623aA927dD4e28c67a",
+        "tokenCode": "next"
+      },
+      {
+        "contractAddress": "0xC82E3dB60A52CF7529253b4eC688f631aad9e7c2",
+        "tokenCode": "arc"
+      },
+      {
+        "contractAddress": "0x1A4b46696b2bB4794Eb3D4c26f1c55F9170fa4C5",
+        "tokenCode": "bit"
+      },
+      {
+        "contractAddress": "0x1a2EB478FA07125C9935A77b3C03a82470801E30",
+        "tokenCode": "amo"
+      },
+      {
+        "contractAddress": "0x82a605d6d9114f4ad6d5ee461027477eeed31e34",
+        "tokenCode": "snsy"
+      },
+      {
+        "contractAddress": "0x2b591e99afe9f32eaa6214f7b7629768c40eeb39",
+        "tokenCode": "hex"
+      },
+      {
+        "contractAddress": "0x922D8563631B03C2c4cf817f4d18f6883AbA0109",
+        "tokenCode": "lock"
+      },
+      {
+        "contractAddress": "0x005D1123878Fc55fbd56b54C73963b234a64af3c",
+        "tokenCode": "kiba"
+      },
+      {
+        "contractAddress": "0x66a0f676479cee1d7373f3dc2e2952778bff5bd6",
+        "tokenCode": "wise"
+      },
+      {
+        "contractAddress": "0x423f4e6138E475D85CF7Ea071AC92097Ed631eea",
+        "tokenCode": "pndc"
+      },
+      {
+        "contractAddress": "0x94Be6962be41377d5BedA8dFe1b100F3BF0eaCf3",
+        "tokenCode": "dorkl"
+      },
+      {
+        "contractAddress": "0xdefa4e8a7bcba345f687a2f1456f5edd9ce97202",
+        "tokenCode": "knc"
+      },
+      {
+        "contractAddress": "0x7a2Bc711E19ba6aff6cE8246C546E8c4B4944DFD",
+        "tokenCode": "waxe"
+      },
+      {
+        "contractAddress": "0x54012cDF4119DE84218F7EB90eEB87e25aE6EBd7",
+        "tokenCode": "luffy"
+      },
+      {
+        "contractAddress": "0x01fF50f8b7f74E4f00580d9596cd3D0d6d6E326f",
+        "tokenCode": "bft"
+      },
+      {
+        "contractAddress": "0xE453C3409f8Ad2B1FE1ED08E189634d359705A5B",
+        "tokenCode": "dgi"
+      },
+      {
+        "contractAddress": "0x3eE4B152824b657644c7A9B50694787e80EB8F4a",
+        "tokenCode": "bazed"
+      },
+      {
+        "contractAddress": "0x00b78238925c320159023c2ac9ef89da8f16d007",
+        "tokenCode": "vps"
+      },
+      {
+        "contractAddress": "0x51db5ad35c671a87207d88fc11d593ac0c8415bd",
+        "tokenCode": "mda"
+      },
+      {
+        "contractAddress": "0xA67E9F021B9d208F7e3365B2A155E3C55B27de71",
+        "tokenCode": "klee"
+      },
+      {
+        "contractAddress": "0xf970b8e36e23f7fc3fd752eea86f8be8d83375a6",
+        "tokenCode": "rcn"
+      },
+      {
+        "contractAddress": "0x4554CC10898f92D45378b98D6D6c2dD54c687Fb2",
+        "tokenCode": "jbx"
+      },
+      {
+        "contractAddress": "0x7c5a0ce9267ed19b22f8cae653f198e3e8daf098",
+        "tokenCode": "san"
+      },
+      {
+        "contractAddress": "0x60F5672A271C7E39E787427A18353ba59A4A3578",
+        "tokenCode": "pika"
+      },
+      {
+        "contractAddress": "0x8a6d4c8735371ebaf8874fbd518b56edd66024eb",
+        "tokenCode": "blocks"
+      },
+      {
+        "contractAddress": "0xd0D56273290D339aaF1417D9bfa1bb8cFe8A0933",
+        "tokenCode": "foom"
+      },
+      {
+        "contractAddress": "0xae7ab96520de3a18e5e111b5eaab095312d7fe84",
+        "tokenCode": "steth"
+      },
+      {
+        "contractAddress": "0x2260fac5e5542a773aa44fbcfedf7c193bc2c599",
+        "tokenCode": "wbtc"
+      },
+      {
+        "contractAddress": "0x0d438F3b5175Bebc262bF23753C1E53d03432bDE",
+        "tokenCode": "wnxm"
+      },
+      {
+        "contractAddress": "0x3C4B6E6e1eA3D4863700D7F76b36B7f3D3f13E3d",
+        "tokenCode": "vgx"
+      },
+      {
+        "contractAddress": "0xc669928185dbce49d2230cc9b0979be6dc797957",
+        "tokenCode": "bttc"
+      },
+      {
+        "contractAddress": "0xB50721BCf8d664c30412Cfbc6cf7a15145234ad1",
+        "tokenCode": "arb"
+      },
+      {
+        "contractAddress": "0x1ce270557C1f68Cfb577b856766310Bf8B47FD9C",
+        "tokenCode": "mong"
+      },
+      {
+        "contractAddress": "0xa6C0c097741D55ECd9a3A7DeF3A8253fD022ceB9",
+        "tokenCode": "ava2"
+      },
+      {
+        "contractAddress": "0x38E68A37E401F7271568CecaAc63c6B1e19130B4",
+        "tokenCode": "banana"
+      },
+      {
+        "contractAddress": "0x455e53CBB86018Ac2B8092FdCd39d8444aFFC3F6",
+        "tokenCode": "pol"
+      },
+      {
+        "contractAddress": "0x62D0A8458eD7719FDAF978fe5929C6D342B0bFcE",
+        "tokenCode": "beamx"
+      },
+      {
+        "contractAddress": "0xa1f410f13B6007fCa76833ee7eb58478D47Bc5Ef",
+        "tokenCode": "rjv"
+      },
+      {
+        "contractAddress": "0x7ABc8A5768E6bE61A6c693a6e4EAcb5B60602C4D",
+        "tokenCode": "cxt"
+      },
+      {
+        "contractAddress": "0xEE2a03Aa6Dacf51C18679C516ad5283d8E7C2637",
+        "tokenCode": "neiroeth"
+      },
+      {
+        "contractAddress": "0x0f7F961648aE6Db43C75663aC7E5414Eb79b5704",
+        "tokenCode": "xio"
+      },
+      {
+        "contractAddress": "0x3802c218221390025bceabbad5d8c59f40eb74b8",
+        "tokenCode": "geth"
+      },
+      {
+        "contractAddress": "0x106552c11272420aad5d7e94f8acab9095a6c952",
+        "tokenCode": "keanu"
+      },
+      {
+        "contractAddress": "0xbf494f02ee3fde1f20bee6242bce2d1ed0c15e47",
+        "tokenCode": "world"
+      },
+      {
+        "contractAddress": "0x3b484b82567a09e2588A13D54D032153f0c0aEe0",
+        "tokenCode": "sos"
+      },
+      {
+        "contractAddress": "0x118b552725e1892137740cB4d29390D952709639",
+        "tokenCode": "nyxt"
+      },
+      {
+        "contractAddress": "0x52662717e448be36cb54588499d5a8328bd95292",
+        "tokenCode": "tenshi"
+      },
+      {
+        "contractAddress": "0x4DB26817c88A57D2ef84cFd90168f535Ee83bDA9",
+        "tokenCode": "hiazuki"
+      },
+      {
+        "contractAddress": "0x115eC79F1de567eC68B7AE7eDA501b406626478e",
+        "tokenCode": "cre"
+      },
+      {
+        "contractAddress": "0x9DB0FB0Aebe6A925B7838D16e3993A3976A64AaB",
+        "tokenCode": "bam"
+      }
+    ]
+  ],
+  [
+    "bsc",
+    [
+      {
+        "contractAddress": "0x2170ed0880ac9a755fd29b2688956bd959f933f8",
+        "tokenCode": "eth"
+      },
+      {
+        "contractAddress": "0x55d398326f99059fF775485246999027B3197955",
+        "tokenCode": "usdt"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "bnb"
+      },
+      {
+        "contractAddress": "0xbA2aE424d960c26247Dd6c32edC70B295c744C43",
+        "tokenCode": "doge"
+      },
+      {
+        "contractAddress": "0x1d2f0da169ceb9fc7b3144628db156f3f6c60dbe",
+        "tokenCode": "xrp"
+      },
+      {
+        "contractAddress": "0x8ac76a51cc950d9822d68b83fe1ad97b32cd580d",
+        "tokenCode": "usdc"
+      },
+      {
+        "contractAddress": "0x3ee2200efb3400fabb9aacf31297cbdd1d435d47",
+        "tokenCode": "ada"
+      },
+      {
+        "contractAddress": "0xCE7de646e7208a4Ef112cb6ed5038FA6cC6b12e3",
+        "tokenCode": "trx"
+      },
+      {
+        "contractAddress": "0x2859e4544C4bB03966803b044A93563Bd2D0DD4D",
+        "tokenCode": "shib"
+      },
+      {
+        "contractAddress": "0x76A797A59Ba2C17726896976B7B3747BfD1d220f",
+        "tokenCode": "ton"
+      },
+      {
+        "contractAddress": "0x1ce0c2827e2ef14d5c4f29a091d735a204794041",
+        "tokenCode": "avax"
+      },
+      {
+        "contractAddress": "0xf8a0bf9cf54bb92f17374d9e9a321e6a111a51bd",
+        "tokenCode": "link"
+      },
+      {
+        "contractAddress": "0x8fF795a6F4D97E7887C79beA79aba5cc76444aDf",
+        "tokenCode": "bch"
+      },
+      {
+        "contractAddress": "0x7083609fce4d1d8dc0c979aab8c869ea2c873402",
+        "tokenCode": "dot"
+      },
+      {
+        "contractAddress": "0x1fa4a73a3f0133f0025378af00236f3abdee5d63",
+        "tokenCode": "near"
+      },
+      {
+        "contractAddress": "0x4338665cbb7b2485a8855a139b75d5e34ab0db94",
+        "tokenCode": "ltc"
+      },
+      {
+        "contractAddress": "0x1af3f329e8be154074d8769d1ffa4ee058b1dbc3",
+        "tokenCode": "dai"
+      },
+      {
+        "contractAddress": "0xBf5140A22578168FD562DCcF235E5D43A02ce9B1",
+        "tokenCode": "uni"
+      },
+      {
+        "contractAddress": "0x3d6545b08693dae087e957cb1180ee38b9e3c25e",
+        "tokenCode": "etc"
+      },
+      {
+        "contractAddress": "0x031b41e504677879370e9dbcf937283a8691fa7f",
+        "tokenCode": "fet"
+      },
+      {
+        "contractAddress": "0xfb6115445Bff7b52FeB98650C87f44907E58f802",
+        "tokenCode": "aave"
+      },
+      {
+        "contractAddress": "0x0d8ce2a99bb6e3b7db580ed848240e4a0f9ae153",
+        "tokenCode": "fil"
+      },
+      {
+        "contractAddress": "0xA697e272a73744b343528C3Bc4702F2565b2F422",
+        "tokenCode": "bonk"
+      },
+      {
+        "contractAddress": "0xa2B726B1145A4773F68593CF171187d8EBe4d495",
+        "tokenCode": "inj"
+      },
+      {
+        "contractAddress": "0xc5f0f7b66764F6ec8C8Dff7BA683102295E16409",
+        "tokenCode": "fdusd"
+      },
+      {
+        "contractAddress": "0x6FDcdfef7c496407cCb0cEC90f9C5Aaa1Cc8D888",
+        "tokenCode": "vet"
+      },
+      {
+        "contractAddress": "0xAD29AbB318791D579433D831ed122aFeAf29dcfe",
+        "tokenCode": "ftm"
+      },
+      {
+        "contractAddress": "0x0eb3a705fc54725037cc9e008bdede697f62f335",
+        "tokenCode": "atom"
+      },
+      {
+        "contractAddress": "0xfb5b838b6cfeedc2873ab27866079ac55363d37e",
+        "tokenCode": "floki"
+      },
+      {
+        "contractAddress": "0x5f0da599bb2cccfcf6fdfd7d81743b6020864350",
+        "tokenCode": "mkr"
+      },
+      {
+        "contractAddress": "0xF78D2e7936F5Fe18308A3B2951A93b6c4a41F5e2",
+        "tokenCode": "om"
+      },
+      {
+        "contractAddress": "0x8595f9da7b868b1822194faed312235e43007b49",
+        "tokenCode": "btt"
+      },
+      {
+        "contractAddress": "0xcc42724c6683b7e57334c4e856f4c9965ed682bd",
+        "tokenCode": "matic"
+      },
+      {
+        "contractAddress": "0xC943c5320B9c18C153d1e2d12cC3074bebfb31A2",
+        "tokenCode": "flow"
+      },
+      {
+        "contractAddress": "0x56b6fb708fc5732dec1afc8d8556423a2edccbd6",
+        "tokenCode": "eos"
+      },
+      {
+        "contractAddress": "0xbf7c81fff98bbe61b40ed186e4afd6ddd01337fe",
+        "tokenCode": "egld"
+      },
+      {
+        "contractAddress": "0x33d08D8C7a168333a85285a68C0042b39fC3741D",
+        "tokenCode": "aioz"
+      },
+      {
+        "contractAddress": "0xc762043e211571eb34f1ef377e5e8e76914962f9",
+        "tokenCode": "ape"
+      },
+      {
+        "contractAddress": "0x715d400f88c167884bbcc41c5fea407ed4d2f8a0",
+        "tokenCode": "axs"
+      },
+      {
+        "contractAddress": "0xd17479997F34dd9156Deef8F95A52D81D265be9c",
+        "tokenCode": "usdd"
+      },
+      {
+        "contractAddress": "0x16939ef78684453bfdfb47825f8a5f714f12623a",
+        "tokenCode": "xtz"
+      },
+      {
+        "contractAddress": "0x045c4324039dA91c52C55DF5D785385Aab073DcF",
+        "tokenCode": "cfx"
+      },
+      {
+        "contractAddress": "0x67b725d7e342d7b611fa85e859df9697d9378b2e",
+        "tokenCode": "sand"
+      },
+      {
+        "contractAddress": "0x26433c8127d9b4e9B71Eaa15111DF99Ea2EeB2f8",
+        "tokenCode": "mana"
+      },
+      {
+        "contractAddress": "0x62D0A8458eD7719FDAF978fe5929C6D342B0bFcE",
+        "tokenCode": "beamx"
+      },
+      {
+        "contractAddress": "0x1ba42e5193dfa8b03d15dd1b86a3113bbbef8eeb",
+        "tokenCode": "zec"
+      },
+      {
+        "contractAddress": "0x8b1f4432F943c465A973FeDC6d7aa50Fc96f1f65",
+        "tokenCode": "axl"
+      },
+      {
+        "contractAddress": "0x0e09fabb73bd3ade0a17ecc321fd13a19e81ce82",
+        "tokenCode": "cake"
+      },
+      {
+        "contractAddress": "0x9ac983826058b8a9c7aa1c9171441191232e8404",
+        "tokenCode": "snx"
+      },
+      {
+        "contractAddress": "0xd944f1d1e9d5f9bb90b62f9d45e447d989580782",
+        "tokenCode": "iota"
+      },
+      {
+        "contractAddress": "0x40af3827F39D0EAcBF4A168f8D4ee67c121D11c9",
+        "tokenCode": "tusd"
+      },
+      {
+        "contractAddress": "0x4691937a7508860F876c9c0a2a617E7d9E945D4B",
+        "tokenCode": "woo"
+      },
+      {
+        "contractAddress": "0x52CE071Bd9b1C4B00A0b92D298c512478CaD67e8",
+        "tokenCode": "comp"
+      },
+      {
+        "contractAddress": "0x3019BF2a2eF8040C242C9a4c5c4BD4C81678b2A1",
+        "tokenCode": "gmt"
+      },
+      {
+        "contractAddress": "0x4b0f1812e5df2a09796481ff14017e6005508003",
+        "tokenCode": "twt"
+      },
+      {
+        "contractAddress": "0x6985884c4392d348587b19cb9eaaf157f13271cd",
+        "tokenCode": "zro"
+      },
+      {
+        "contractAddress": "0xc748673057861a797275cd8a068abb95a902e8de",
+        "tokenCode": "babydoge"
+      },
+      {
+        "contractAddress": "0x9678e42cebeb63f23197d726b29b1cb20d0064e5",
+        "tokenCode": "iotx"
+      },
+      {
+        "contractAddress": "0x111111111117dc0aa78b770fa6a738034120c302",
+        "tokenCode": "1inch"
+      },
+      {
+        "contractAddress": "0xd41fdb03ba84762dd66a0af1a6c8540ff1ba5dfb",
+        "tokenCode": "sfp"
+      },
+      {
+        "contractAddress": "0x2dfF88A56767223A5529eA5960Da7A3F5f766406",
+        "tokenCode": "id"
+      },
+      {
+        "contractAddress": "0xb86AbCb37C3A4B64f74f59301AFF131a1BEcC787",
+        "tokenCode": "zil"
+      },
+      {
+        "contractAddress": "0xea998d307aca04d4f0a3b3036aba84ae2e409c0a",
+        "tokenCode": "jst"
+      },
+      {
+        "contractAddress": "0x2eD9a5C8C13b93955103B9a7C167B67Ef4d568a3",
+        "tokenCode": "mask"
+      },
+      {
+        "contractAddress": "0x2c44b726adf1963ca47af88b284c06f30380fc78",
+        "tokenCode": "people"
+      },
+      {
+        "contractAddress": "0xf307910a4c7bbc79691fd374889b36d8531b08e3",
+        "tokenCode": "ankr"
+      },
+      {
+        "contractAddress": "0x101d82428437127bf1608f699cd651e6abf9766e",
+        "tokenCode": "bat"
+      },
+      {
+        "contractAddress": "0xa3f020a5C92e15be13CAF0Ee5C95cF79585EeCC9",
+        "tokenCode": "elf"
+      },
+      {
+        "contractAddress": "0x9C7BEBa8F6eF6643aBd725e45a4E8387eF260649",
+        "tokenCode": "g"
+      },
+      {
+        "contractAddress": "0x6894CDe390a3f51155ea41Ed24a33A4827d3063D",
+        "tokenCode": "cat"
+      },
+      {
+        "contractAddress": "0xaff9084f2374585879e8b434c399e29e80cce635",
+        "tokenCode": "flux"
+      },
+      {
+        "contractAddress": "0x88f1a5ae2a3bf98aeaf342d26b30a79438c9142e",
+        "tokenCode": "yfi"
+      },
+      {
+        "contractAddress": "0x4d5AC5cc4f8aBdf2EC2Cb986C00C382369f787D4",
+        "tokenCode": "ilv"
+      },
+      {
+        "contractAddress": "0x5b1f874d0b0C5ee17a495CbB70AB8bf64107A3BD",
+        "tokenCode": "bnx"
+      },
+      {
+        "contractAddress": "0xa1e6c58d503e4eee986167f45a063853cefe08c3",
+        "tokenCode": "sun"
+      },
+      {
+        "contractAddress": "0x947950BcC74888a40Ffa2593C5798F11Fc9124C4",
+        "tokenCode": "sushi"
+      },
+      {
+        "contractAddress": "0x13Ab6739368a4e4abf24695bf52959224367391f",
+        "tokenCode": "ygg"
+      },
+      {
+        "contractAddress": "0x66e4d38b20173F509A1fF5d82866949e4fE898da",
+        "tokenCode": "lrc"
+      },
+      {
+        "contractAddress": "0xAD6cAEb32CD2c308980a548bD0Bc5AA4306c6c18",
+        "tokenCode": "band"
+      },
+      {
+        "contractAddress": "0xAdBAF88B39D37Dc68775eD1541F1bf83A5A45feB",
+        "tokenCode": "coti"
+      },
+      {
+        "contractAddress": "0xBc7d6B50616989655AfD682fb42743507003056D",
+        "tokenCode": "ach"
+      },
+      {
+        "contractAddress": "0xfd7b3a77848f1c2d67e05e54d78d174a0c850335",
+        "tokenCode": "ont"
+      },
+      {
+        "contractAddress": "0xBdEAe1cA48894A1759A8374D63925f21f2Ee2639",
+        "tokenCode": "edu"
+      },
+      {
+        "contractAddress": "0xf9CeC8d50f6c8ad3Fb6dcCEC577e05aA32B224FE",
+        "tokenCode": "chr"
+      },
+      {
+        "contractAddress": "0xd4ed60d8368a92b5f1ca33af61ef2a94714b2d46",
+        "tokenCode": "bal"
+      },
+      {
+        "contractAddress": "0xcF6BB5389c92Bdda8a3747Ddb454cB7a64626C63",
+        "tokenCode": "xvs"
+      },
+      {
+        "contractAddress": "0x070a08BeEF8d36734dD67A491202fF35a6A16d97",
+        "tokenCode": "slp"
+      },
+      {
+        "contractAddress": "0x8dA443F84fEA710266C8eB6bC34B71702d033EF2",
+        "tokenCode": "ctsi"
+      },
+      {
+        "contractAddress": "0xaec945e04baf28b135fa7c640f624f8d90f1c3a6",
+        "tokenCode": "c98"
+      },
+      {
+        "contractAddress": "0xb4FCDcB8A0b29247466720Ff81587D1A6f4FC4D7",
+        "tokenCode": "tru"
+      },
+      {
+        "contractAddress": "0x1f9f6a696C6Fd109cD3956F45dC709d2b3902163",
+        "tokenCode": "celr"
+      },
+      {
+        "contractAddress": "0xf486ad071f3bEE968384D2E39e2D8aF0fCf6fd46",
+        "tokenCode": "velo"
+      },
+      {
+        "contractAddress": "0x9840652DC04fb9db2C43853633f0F62BE6f00f98",
+        "tokenCode": "cgpt"
+      },
+      {
+        "contractAddress": "0xb6c53431608e626ac81a9776ac3e999c5556717c",
+        "tokenCode": "tlos"
+      },
+      {
+        "contractAddress": "0x477bc8d23c634c154061869478bce96be6045d12",
+        "tokenCode": "sfund"
+      },
+      {
+        "contractAddress": "0x5f4Bde007Dc06b867f86EBFE4802e34A1fFEEd63",
+        "tokenCode": "high"
+      },
+      {
+        "contractAddress": "0xa8c2b8eec3d368c0253ad3dae65a5f2bbb89c929",
+        "tokenCode": "ctk"
+      },
+      {
+        "contractAddress": "0xaF53d56ff99f1322515E54FdDE93FF8b3b7DAFd5",
+        "tokenCode": "prom"
+      },
+      {
+        "contractAddress": "0x0409633A72D846fc5BBe2f98D88564D35987904D",
+        "tokenCode": "phb"
+      },
+      {
+        "contractAddress": "0x23ce9e926048273ef83be0a3a8ba9cb6d45cd978",
+        "tokenCode": "dar"
+      },
+      {
+        "contractAddress": "0x99956D38059cf7bEDA96Ec91Aa7BB2477E0901DD",
+        "tokenCode": "dia"
+      },
+      {
+        "contractAddress": "0x2D060Ef4d6BF7f9e5edDe373Ab735513c0e4F944",
+        "tokenCode": "aitech"
+      },
+      {
+        "contractAddress": "0x1188d953afc697c031851169eef640f23ac8529c",
+        "tokenCode": "auction"
+      },
+      {
+        "contractAddress": "0xfe56d5892bdffc7bf58f2e84be1b2c32d21c308b",
+        "tokenCode": "knc"
+      },
+      {
+        "contractAddress": "0xB2BD0749DBE21f623d9BABa856D3B0f0e1BFEc9C",
+        "tokenCode": "dusk"
+      },
+      {
+        "contractAddress": "0xc27A719105A987b4c34116223CAE8bd8F4B5def4",
+        "tokenCode": "ace"
+      },
+      {
+        "contractAddress": "0x67ee3Cb086F8a16f34beE3ca72FAD36F7Db929e2",
+        "tokenCode": "dodo"
+      },
+      {
+        "contractAddress": "0x0112e557d400474717056C4e6D40eDD846F38351",
+        "tokenCode": "pha"
+      },
+      {
+        "contractAddress": "0x12BB890508c125661E03b09EC06E404bc9289040",
+        "tokenCode": "raca"
+      },
+      {
+        "contractAddress": "0xa260E12d2B924cb899AE80BB58123ac3fEE1E2F0",
+        "tokenCode": "hook"
+      },
+      {
+        "contractAddress": "0x6F769E65c14Ebd1f68817F5f1DcDb61Cfa2D6f7e",
+        "tokenCode": "arpa"
+      },
+      {
+        "contractAddress": "0xaef0d72a118ce24fee3cd1d43d383897d05b4e99",
+        "tokenCode": "win"
+      },
+      {
+        "contractAddress": "0xAC51066d7bEC65Dc4589368da368b212745d63E8",
+        "tokenCode": "alice"
+      },
+      {
+        "contractAddress": "0xFceB31A79F71AC9CBDCF853519c1b12D379EdC46",
+        "tokenCode": "lista"
+      },
+      {
+        "contractAddress": "0x8729438EB15e2C8B576fCc6AeCdA6A148776C0F5",
+        "tokenCode": "qi"
+      },
+      {
+        "contractAddress": "0xE02dF9e3e622DeBdD69fb838bB799E3F168902c5",
+        "tokenCode": "bake"
+      },
+      {
+        "contractAddress": "0xA069008A669e2Af00a86673D9D584cfb524A42Cc",
+        "tokenCode": "bnt"
+      },
+      {
+        "contractAddress": "0xf7DE7E8A6bd59ED41a4b5fe50278b3B7f31384dF",
+        "tokenCode": "rdnt"
+      },
+      {
+        "contractAddress": "0x44Ec807ce2F4a6F2737A92e985f318d035883e47",
+        "tokenCode": "hft"
+      },
+      {
+        "contractAddress": "0xe9e7cea3dedca5984780bafc599bd69add087d56",
+        "tokenCode": "busd"
+      },
+      {
+        "contractAddress": "0xa1faa113cbe53436df28ff0aee54275c13b40975",
+        "tokenCode": "alpha"
+      },
+      {
+        "contractAddress": "0xB0D502E938ed5f4df2E681fE6E419ff29631d62b",
+        "tokenCode": "stg"
+      },
+      {
+        "contractAddress": "0x3203c9e46ca618c8c1ce5dc67e7e9d75f5da2377",
+        "tokenCode": "mbox"
+      },
+      {
+        "contractAddress": "0x4507cEf57C46789eF8d1a19EA45f4216bae2B528",
+        "tokenCode": "token"
+      },
+      {
+        "contractAddress": "0x2222227e22102fe3322098e4cbfe18cfebd57c95",
+        "tokenCode": "tlm"
+      },
+      {
+        "contractAddress": "0x9f589e3eabe42ebc94a44727b3f3531c0c877809",
+        "tokenCode": "tko"
+      },
+      {
+        "contractAddress": "0x857B222Fc79e1cBBf8Ca5f78CB133d1b7CF34BBd",
+        "tokenCode": "lto"
+      },
+      {
+        "contractAddress": "0x935a544Bf5816E3A7C13DB2EFe3009Ffda0aCdA2",
+        "tokenCode": "blz"
+      },
+      {
+        "contractAddress": "0xA2120b9e674d3fC3875f415A7DF52e382F141225",
+        "tokenCode": "ata"
+      },
+      {
+        "contractAddress": "0xc335Df7C25b72eEC661d5Aa32a7c2B7b2a1D1874",
+        "tokenCode": "ice"
+      },
+      {
+        "contractAddress": "0x4e7f408be2d4e9d60f49a64b89bb619c84c7c6f5",
+        "tokenCode": "perp"
+      },
+      {
+        "contractAddress": "0x6d41F64C567acbF36f88763306fF6fB50fF61458",
+        "tokenCode": "troy"
+      },
+      {
+        "contractAddress": "0x990E7154bB999FAa9b2fa5Ed29E822703311eA85",
+        "tokenCode": "tt"
+      },
+      {
+        "contractAddress": "0x3Da932456D082CBa208FEB0B096d49b202Bf89c8",
+        "tokenCode": "dego"
+      },
+      {
+        "contractAddress": "0x8443f091997f06a61670b735ed92734f5628692f",
+        "tokenCode": "bel"
+      },
+      {
+        "contractAddress": "0x0864c156b3C5F69824564dEC60c629aE6401bf2a",
+        "tokenCode": "data"
+      },
+      {
+        "contractAddress": "0xCDAF240C90F989847c56aC9Dee754F76F41c5833",
+        "tokenCode": "arrr"
+      },
+      {
+        "contractAddress": "0x9d1A7A3191102e9F900Faa10540837ba84dCBAE7",
+        "tokenCode": "euri"
+      },
+      {
+        "contractAddress": "0x9eC02756A559700d8D9e79ECe56809f7bcC5dC27",
+        "tokenCode": "why"
+      },
+      {
+        "contractAddress": "0xBe1a001FE942f96Eea22bA08783140B9Dcc09D28",
+        "tokenCode": "beta"
+      },
+      {
+        "contractAddress": "0xD74b782E05AA25c50e7330Af541d46E18f36661C",
+        "tokenCode": "quack"
+      },
+      {
+        "contractAddress": "0x89Af13A10b32F1b2f8d1588f93027F69B6F4E27e",
+        "tokenCode": "gafi"
+      },
+      {
+        "contractAddress": "0x8CD6e29d3686d24d3C2018CEe54621eA0f89313B",
+        "tokenCode": "nuls"
+      },
+      {
+        "contractAddress": "0x2003f7ba57Ea956B05B85C60B4B2Ceea9b111256",
+        "tokenCode": "kmd"
+      },
+      {
+        "contractAddress": "0x4A9A2b2b04549C3927dd2c9668A5eF3fCA473623",
+        "tokenCode": "df"
+      },
+      {
+        "contractAddress": "0xe9c803f48dffe50180bd5b01dc04da939e3445fc",
+        "tokenCode": "vlx"
+      },
+      {
+        "contractAddress": "0x20de22029ab63cf9A7Cf5fEB2b737Ca1eE4c82A6",
+        "tokenCode": "chess"
+      },
+      {
+        "contractAddress": "0x965f527d9159dce6288a2219db51fc6eef120dd1",
+        "tokenCode": "bsw"
+      },
+      {
+        "contractAddress": "0x762539b45A1dCcE3D36d080F74d1AED37844b878",
+        "tokenCode": "lina"
+      },
+      {
+        "contractAddress": "0x09e889bb4d5b474f561db0491c38702f367a4e4d",
+        "tokenCode": "clv"
+      },
+      {
+        "contractAddress": "0xF21768cCBC73Ea5B6fd3C687208a7c2def2d966e",
+        "tokenCode": "reef"
+      },
+      {
+        "contractAddress": "0x668DB7aa38eaC6B40c9D13dBE61361DC4c4611d1",
+        "tokenCode": "mdt"
+      },
+      {
+        "contractAddress": "0x9c4a515cd72D27A4710571Aca94858a53D9278D5",
+        "tokenCode": "vidt"
+      },
+      {
+        "contractAddress": "0xd4CB328A82bDf5f03eB737f37Fa6B370aef3e888",
+        "tokenCode": "cream"
+      },
+      {
+        "contractAddress": "0x7e624FA0E1c4AbFD309cC15719b7E2580887f570",
+        "tokenCode": "pols"
+      },
+      {
+        "contractAddress": "0xcaF5191fc480F43e4DF80106c7695ECA56E48B18",
+        "tokenCode": "dep"
+      },
+      {
+        "contractAddress": "0x003d87d02A2A01E9E8a20f507C83E15DD83A33d1",
+        "tokenCode": "gtai"
+      },
+      {
+        "contractAddress": "0xfea292e5ea4510881bdb840e3cec63abd43f936f",
+        "tokenCode": "copi"
+      },
+      {
+        "contractAddress": "0x6bfF4Fb161347ad7de4A625AE5aa3A1CA7077819",
+        "tokenCode": "adx"
+      },
+      {
+        "contractAddress": "0x8f0528ce5ef7b51152a59745befdd91d97091d2f",
+        "tokenCode": "alpaca"
+      },
+      {
+        "contractAddress": "0xEd8c8Aa8299C10f067496BB66f8cC7Fb338A3405",
+        "tokenCode": "pros"
+      },
+      {
+        "contractAddress": "0xAe9269f27437f0fcBC232d39Ec814844a51d6b8f",
+        "tokenCode": "burger"
+      },
+      {
+        "contractAddress": "0x2645d5f59D952ef2317C8e0AaA5A61c392cCd44d",
+        "tokenCode": "uft"
+      },
+      {
+        "contractAddress": "0xA64455a4553C9034236734FadDAddbb64aCE4Cc7",
+        "tokenCode": "santos"
+      },
+      {
+        "contractAddress": "0xe0f94ac5462997d2bc57287ac3a3ae4c31345d66",
+        "tokenCode": "ceek"
+      },
+      {
+        "contractAddress": "0x6a8Fd46F88dBD7bdC2D536C604f811C63052ce0F",
+        "tokenCode": "trvl"
+      },
+      {
+        "contractAddress": "0xf79037f6f6be66832de4e7516be52826bc3cbcc4",
+        "tokenCode": "hard"
+      },
+      {
+        "contractAddress": "0x7f792db54B0e580Cdc755178443f0430Cf799aCa",
+        "tokenCode": "volt"
+      },
+      {
+        "contractAddress": "0x90Ed8F1dc86388f14b64ba8fb4bbd23099f18240",
+        "tokenCode": "sdao"
+      },
+      {
+        "contractAddress": "0xd5d0322b6bAb6a762C79f8c81A0B674778E13aeD",
+        "tokenCode": "firo"
+      },
+      {
+        "contractAddress": "0x72fF5742319eF07061836F5C924aC6D72c919080",
+        "tokenCode": "gft"
+      },
+      {
+        "contractAddress": "0x287880Ea252b52b63Cc5f40a2d3E5A44aa665a76",
+        "tokenCode": "alpine"
+      },
+      {
+        "contractAddress": "0xA7f552078dcC247C2684336020c03648500C6d9F",
+        "tokenCode": "eps"
+      },
+      {
+        "contractAddress": "0xA57ac35CE91Ee92CaEfAA8dc04140C8e232c2E50",
+        "tokenCode": "pit"
+      },
+      {
+        "contractAddress": "0x77d547256a2cd95f32f67ae0313e450ac200648d",
+        "tokenCode": "lazio"
+      },
+      {
+        "contractAddress": "0x361C60b7c2828fCAb80988d00D1D542c83387b50",
+        "tokenCode": "dfi"
+      },
+      {
+        "contractAddress": "0x49f2145d6366099e13B10FbF80646C0F377eE7f6",
+        "tokenCode": "porto"
+      },
+      {
+        "contractAddress": "0x1633b7157e7638c4d6593436111bf125ee74703f",
+        "tokenCode": "sps"
+      },
+      {
+        "contractAddress": "0x3b198e26E473b8faB2085b37978e36c9DE5D7f68",
+        "tokenCode": "time"
+      },
+      {
+        "contractAddress": "0x02533c1e9AbBAfE5816ed8B27c0D22a8731075E0",
+        "tokenCode": "now"
+      },
+      {
+        "contractAddress": "0x728C5baC3C3e370E372Fc4671f9ef6916b814d8B",
+        "tokenCode": "unfi"
+      },
+      {
+        "contractAddress": "0xbAeA9aBA1454DF334943951d51116aE342eAB255",
+        "tokenCode": "poolx"
+      },
+      {
+        "contractAddress": "0x02fF5065692783374947393723dbA9599e59F591",
+        "tokenCode": "yooshi"
+      },
+      {
+        "contractAddress": "0xC17c30e98541188614dF99239cABD40280810cA3",
+        "tokenCode": "rise"
+      },
+      {
+        "contractAddress": "0x2FA5dAF6Fe0708fBD63b1A7D1592577284f52256",
+        "tokenCode": "marsh"
+      },
+      {
+        "contractAddress": "0xffba7529ac181c2ee1844548e6d7061c9a597df4",
+        "tokenCode": "caps"
+      },
+      {
+        "contractAddress": "0xae2df9f730c54400934c06a17462c41c08a06ed8",
+        "tokenCode": "dobo"
+      },
+      {
+        "contractAddress": "0x5f78f4bfcb2b43bc174fe16a69a13945cefa2978",
+        "tokenCode": "xr"
+      },
+      {
+        "contractAddress": "0x450593Bf7f2d7E559E38496CfB06bDCE5E963795",
+        "tokenCode": "bccoin"
+      },
+      {
+        "contractAddress": "0x679D5b2d94f454c950d683D159b87aa8eae37C9e",
+        "tokenCode": "ham"
+      },
+      {
+        "contractAddress": "0x1f3Af095CDa17d63cad238358837321e95FC5915",
+        "tokenCode": "mint"
+      },
+      {
+        "contractAddress": "0xaf41054c1487b0e5e2b9250c0332ecbce6ce9d71",
+        "tokenCode": "epx"
+      },
+      {
+        "contractAddress": "0x6679eb24f59dfe111864aec72b443d1da666b360",
+        "tokenCode": "arv"
+      },
+      {
+        "contractAddress": "0x658A109C5900BC6d2357c87549B651670E5b0539",
+        "tokenCode": "for"
+      },
+      {
+        "contractAddress": "0x78650b139471520656b9e7aa7a5e9276814a38e9",
+        "tokenCode": "btcst"
+      },
+      {
+        "contractAddress": "0x44a21B3577924DCD2e9C81A3347D204C36a55466",
+        "tokenCode": "ego"
+      },
+      {
+        "contractAddress": "0xC598275452fA319d75ee5f176FD3B8384925b425",
+        "tokenCode": "strm"
+      },
+      {
+        "contractAddress": "0xa184088a740c695E156F91f5cC086a06bb78b827",
+        "tokenCode": "auto"
+      },
+      {
+        "contractAddress": "0x6e4a971B81CA58045a2AA982EaA3d50C4Ac38F42",
+        "tokenCode": "brg"
+      },
+      {
+        "contractAddress": "0x9d173e6c594f479b4d47001f8e6a95a7adda42bc",
+        "tokenCode": "zoon"
+      },
+      {
+        "contractAddress": "0xaFCC12e4040615E7Afe9fb4330eB3D9120acAC05",
+        "tokenCode": "pirate"
+      },
+      {
+        "contractAddress": "0x4fa7163e153419e0e1064e418dd7a99314ed27b6",
+        "tokenCode": "hotcross"
+      },
+      {
+        "contractAddress": "0xE0e514c71282b6f4e823703a39374Cf58dc3eA4f",
+        "tokenCode": "belt"
+      },
+      {
+        "contractAddress": "0x6D3a160B86eDcD46D8F9bBa25c2F88ccCADe19fc",
+        "tokenCode": "fwc"
+      },
+      {
+        "contractAddress": "0xde3dbbe30cfa9f437b293294d1fd64b26045c71a",
+        "tokenCode": "nftb"
+      },
+      {
+        "contractAddress": "0xd7730681b1dc8f6f969166b29d8a5ea8568616a3",
+        "tokenCode": "naft"
+      },
+      {
+        "contractAddress": "0xEC583f25A049CC145dA9A256CDbE9B6201a705Ff",
+        "tokenCode": "drep"
+      },
+      {
+        "contractAddress": "0x798aF7725376765e7F3cA86d5e0Cf1BEaEf19F34",
+        "tokenCode": "awc"
+      },
+      {
+        "contractAddress": "0x9b4bdddaeb68d85b0848bab7774e6855439fd94e",
+        "tokenCode": "tking"
+      },
+      {
+        "contractAddress": "0x154a9f9cbd3449ad22fdae23044319d6ef2a1fab",
+        "tokenCode": "skill"
+      },
+      {
+        "contractAddress": "0xe56842ed550ff2794f010738554db45e60730371",
+        "tokenCode": "bin"
+      },
+      {
+        "contractAddress": "0xF6Cb4ad242BaB681EfFc5dE40f7c8FF921a12d63",
+        "tokenCode": "cns"
+      },
+      {
+        "contractAddress": "0xd52669712f253CD6b2Fe8A8638F66ed726cb770C",
+        "tokenCode": "xcur"
+      },
+      {
+        "contractAddress": "0xc9849e6fdb743d08faee3e34dd2d1bc69ea11a51",
+        "tokenCode": "bunny"
+      },
+      {
+        "contractAddress": "0x37ac4d6140e54304d77437a5c11924f61a2d976f",
+        "tokenCode": "sfuel"
+      },
+      {
+        "contractAddress": "0xcE403dbDFf00853860C68739611c64F0Bd1c9aFf",
+        "tokenCode": "kiteai"
+      },
+      {
+        "contractAddress": "0xc3afde95b6eb9ba8553cdaea6645d45fb3a7faf5",
+        "tokenCode": "kiba"
+      },
+      {
+        "contractAddress": "0xa177bdd433aea3702beb46652adcfc64248d4ab3",
+        "tokenCode": "pbx"
+      },
+      {
+        "contractAddress": "0x555296de6a86e72752e5c5dc091fe49713aa145c",
+        "tokenCode": "grape"
+      },
+      {
+        "contractAddress": "0x922722E9Ef614EC9A3E94b78496e92AbFBb5A624",
+        "tokenCode": "capo"
+      },
+      {
+        "contractAddress": "0xa045E37a0D1dd3A45fefb8803D22457abc0A728a",
+        "tokenCode": "ghny"
+      },
+      {
+        "contractAddress": "0xf606bd19b1e61574ed625d9ea96c841d4e247a32",
+        "tokenCode": "guard"
+      },
+      {
+        "contractAddress": "0x23125108bc4c63E4677b2E253Fa498cCb4B3298b",
+        "tokenCode": "dogecoin"
+      },
+      {
+        "contractAddress": "0x4a68c250486a116dc8d6a0c5b0677de07cc09c5d",
+        "tokenCode": "poodl"
+      },
+      {
+        "contractAddress": "0x502B8136c48977b975a6C62B08Ac4E15Dabc8172",
+        "tokenCode": "cs"
+      },
+      {
+        "contractAddress": "0x41Fe2441c9eeaB2158e29185D128EBAB82aa8198",
+        "tokenCode": "stkk"
+      },
+      {
+        "contractAddress": "0x7130d2a12b9bcbfae4f2634d864a1ee1ce3ead9c",
+        "tokenCode": "btcb"
+      },
+      {
+        "contractAddress": "0x570A5D26f7765Ecb712C0924E4De545B89fD43dF",
+        "tokenCode": "sol"
+      },
+      {
+        "contractAddress": "0x256D1fCE1b1221e8398f65F9B36033CE50B2D497",
+        "tokenCode": "walv"
+      },
+      {
+        "contractAddress": "0x09Faf80c7Df27d0Fb8A717324963cB871f6814f7",
+        "tokenCode": "clear"
+      },
+      {
+        "contractAddress": "0x352Cb5E19b12FC216548a2677bD0fce83BaE434B",
+        "tokenCode": "bttc"
+      },
+      {
+        "contractAddress": "0xEE246AA7e2ecF136466c6FE4808f395861C6a04e",
+        "tokenCode": "ppm"
+      },
+      {
+        "contractAddress": "0xe097bcEb09bfb18047Cf259F321cC129b7bEba5e",
+        "tokenCode": "tipsy"
+      },
+      {
+        "contractAddress": "0x85EAC5Ac2F758618dFa09bDbe0cf174e7d574D5B",
+        "tokenCode": "trxold"
+      },
+      {
+        "contractAddress": "0x9A2478C4036548864d96a97Fbf93f6a3341fedac",
+        "tokenCode": "zax"
+      },
+      {
+        "contractAddress": "0xE37DbF20A4fFf3B88233e456355dc49B76B6fe19",
+        "tokenCode": "lee"
+      },
+      {
+        "contractAddress": "0x602B6C6ccE5F95c00603bd07D8fA7EbAF3747D44",
+        "tokenCode": "rjv"
+      },
+      {
+        "contractAddress": "0xd9483EA7214FCfd89B4Fb8f513B544920E315A52",
+        "tokenCode": "ava2"
+      },
+      {
+        "contractAddress": "0x1b9A8C4f2DF5Dc7B8744B1A170d8d727360C67eE",
+        "tokenCode": "momento"
+      },
+      {
+        "contractAddress": "0x7fa6f63b11cc1af508cd19ba823853d6aacd9d65",
+        "tokenCode": "fire"
+      },
+      {
+        "contractAddress": "0xa3abe68db1b8467b44715eb94542b20dc134f005",
+        "tokenCode": "fluf"
+      },
+      {
+        "contractAddress": "0xbf151f63d8d1287db5fc7a3bc104a9c38124cdeb",
+        "tokenCode": "avn"
+      },
+      {
+        "contractAddress": "0x2407f9136df8ddf84fd9bde34d48cfc32305447b",
+        "tokenCode": "hmc"
+      },
+      {
+        "contractAddress": "0x1606940bb5cd6de59a7e25367f4fb8965f38f122",
+        "tokenCode": "aquagoat"
+      },
+      {
+        "contractAddress": "0x495205d4c6307A73595C5C11B44Bee9B3418Ac69",
+        "tokenCode": "gafa"
+      },
+      {
+        "contractAddress": "0x18359CF655A444204e46F286eDC445C9D30fFc54",
+        "tokenCode": "dgmoon"
+      }
+    ]
+  ],
+  [
+    "arbitrum",
+    [
+      {
+        "contractAddress": null,
+        "tokenCode": "eth"
+      },
+      {
+        "contractAddress": "0xFd086bC7CD5C481DCC9C85ebE478A1C0b69FCbb9",
+        "tokenCode": "usdt"
+      },
+      {
+        "contractAddress": "0xaf88d065e77c8cC2239327C5EDb3A432268e5831",
+        "tokenCode": "usdc"
+      },
+      {
+        "contractAddress": "0xf97f4df75117a78c1A5a0DBb814Af92458539FB4",
+        "tokenCode": "link"
+      },
+      {
+        "contractAddress": "0xDA10009cBd5D07dd0CeCc66161FC93D7c9000da1",
+        "tokenCode": "dai"
+      },
+      {
+        "contractAddress": "0xFa7F8980b0f1E64A2062791cc3b0871572f1F7f0",
+        "tokenCode": "uni"
+      },
+      {
+        "contractAddress": "0x912CE59144191C1204E64559FE8253a0e49E6548",
+        "tokenCode": "arb"
+      },
+      {
+        "contractAddress": "0x9623063377AD1B27544C965cCd7342f7EA7e88C7",
+        "tokenCode": "grt"
+      },
+      {
+        "contractAddress": "0x13Ad51ed4F1B7e9Dc168d8a00cB3f4dDD85EfA60",
+        "tokenCode": "ldo"
+      },
+      {
+        "contractAddress": "0x0c880f6761F1af8d9Aa9C466984b80DAb9a8c9e8",
+        "tokenCode": "pendle"
+      },
+      {
+        "contractAddress": "0xcAFcD85D8ca7Ad1e1C6F82F651fA15E33AEfD07b",
+        "tokenCode": "woo"
+      },
+      {
+        "contractAddress": "0x6985884C4392D348587B19cb9eAAf157F13271cd",
+        "tokenCode": "zro"
+      },
+      {
+        "contractAddress": "0x11cDb42B0EB46D95f990BeDD4695A6e3fA034978",
+        "tokenCode": "crv"
+      },
+      {
+        "contractAddress": "0xfc5A1A6EB076a2C7aD06eD22C90d7E710E35ad0a",
+        "tokenCode": "gmx"
+      },
+      {
+        "contractAddress": "0x4Cb9a7AE498CEDcBb5EAe9f25736aE7d428C9D66",
+        "tokenCode": "xai"
+      },
+      {
+        "contractAddress": "0x539bdE0d7Dbd336b79148AA742883198BBF60342",
+        "tokenCode": "magic"
+      },
+      {
+        "contractAddress": "0x1A6B3A62391ECcaaa992ade44cd4AFe6bEC8CfF1",
+        "tokenCode": "uxlink"
+      },
+      {
+        "contractAddress": "0x18c11FD286C5EC11c3b683Caa813B77f5163A122",
+        "tokenCode": "gns"
+      },
+      {
+        "contractAddress": "0x406d59819Bc2AeF682F4Ff2769085c98a264F97b",
+        "tokenCode": "bebe"
+      },
+      {
+        "contractAddress": "0x088cd8f5eF3652623c22D48b1605DCfE860Cd704",
+        "tokenCode": "vela"
+      },
+      {
+        "contractAddress": "0x2f2a2543B76A4166549F7aaB2e75Bef0aefC5B0f",
+        "tokenCode": "wbtc"
+      },
+      {
+        "contractAddress": "0xFF970A61A04b1cA14834A43f5dE4533eBDDB5CC8",
+        "tokenCode": "arbusdce"
+      }
+    ]
+  ],
+  [
+    "op",
+    [
+      {
+        "contractAddress": null,
+        "tokenCode": "eth"
+      },
+      {
+        "contractAddress": "0x94b008aA00579c1307B0EF2c499aD98a8ce58e58",
+        "tokenCode": "usdt"
+      },
+      {
+        "contractAddress": "0x0b2c639c533813f4aa9d7837caf62653d097ff85",
+        "tokenCode": "usdc"
+      },
+      {
+        "contractAddress": "0xDA10009cBd5D07dd0CeCc66161FC93D7c9000da1",
+        "tokenCode": "dai"
+      },
+      {
+        "contractAddress": "0x4200000000000000000000000000000000000042",
+        "tokenCode": "op"
+      },
+      {
+        "contractAddress": "0xdC6fF44d5d932Cbd77B52E5612Ba0529DC6226F1",
+        "tokenCode": "wld"
+      },
+      {
+        "contractAddress": "0x8700dAec35aF8Ff88c16BdF0418774CB3D7599B4",
+        "tokenCode": "snx"
+      },
+      {
+        "contractAddress": "0x14778860E937f509e651192a90589dE711Fb88a9",
+        "tokenCode": "cyber"
+      },
+      {
+        "contractAddress": "0x68f180fcCe6836688e9084f035309E29Bf0A2095",
+        "tokenCode": "wbtc"
+      },
+      {
+        "contractAddress": "0x7F5c764cBc14f9669B88837ca1490cCa17c31607",
+        "tokenCode": "opusdce"
+      }
+    ]
+  ],
+  [
+    "zksync",
+    [
+      {
+        "contractAddress": null,
+        "tokenCode": "eth"
+      },
+      {
+        "contractAddress": "0x5A7d6b2F92C77FAD6CCaBd7EE0624E64907Eaf3E",
+        "tokenCode": "zk"
+      }
+    ]
+  ],
+  [
+    "base",
+    [
+      {
+        "contractAddress": null,
+        "tokenCode": "eth"
+      },
+      {
+        "contractAddress": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
+        "tokenCode": "usdc"
+      },
+      {
+        "contractAddress": "0x532f27101965dd16442e59d40670faf5ebb142e4",
+        "tokenCode": "brett"
+      },
+      {
+        "contractAddress": "0x940181a94A35A4569E4529A3CDfB74e38FD98631",
+        "tokenCode": "aero"
+      },
+      {
+        "contractAddress": "0x2Da56AcB9Ea78330f947bD57C54119Debda7AF71",
+        "tokenCode": "mog"
+      },
+      {
+        "contractAddress": "0x6985884C4392D348587B19cb9eAAf157F13271cd",
+        "tokenCode": "zro"
+      },
+      {
+        "contractAddress": "0x4ed4E862860beD51a9570b96d89aF5E1B0Efefed",
+        "tokenCode": "degen"
+      },
+      {
+        "contractAddress": "0xc08Cd26474722cE93F4D0c34D16201461c10AA8C",
+        "tokenCode": "carv"
+      },
+      {
+        "contractAddress": "0xd722E55C1d9D9fA0021A5215Cbb904b92B3dC5d4",
+        "tokenCode": "rdnt"
+      },
+      {
+        "contractAddress": "0xD3C68968137317a57a9bAbeacC7707Ec433548B4",
+        "tokenCode": "social"
+      },
+      {
+        "contractAddress": "0x01aaC2b594F7bdBeC740F0F1AA22910EbB4B74Ab",
+        "tokenCode": "unio"
+      },
+      {
+        "contractAddress": "0x9a33406165f562E16C3abD82fd1185482E01b49a",
+        "tokenCode": "talent"
+      }
+    ]
+  ],
+  [
+    "trx",
+    [
+      {
+        "contractAddress": "TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t",
+        "tokenCode": "usdt"
+      },
+      {
+        "contractAddress": "TEkxiTehnzSmSe2XqrBj4w32RUN966rdz8",
+        "tokenCode": "usdc"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "trx"
+      },
+      {
+        "contractAddress": "TPYmHEhy5n8TCEfYGqW2rPxsghSfzghPDn",
+        "tokenCode": "usdd"
+      },
+      {
+        "contractAddress": "TUpMhErZL2fhh4sVNULAbNKLokS4GjC1F4",
+        "tokenCode": "tusd"
+      },
+      {
+        "contractAddress": "TFczxzPhnThNSqr5by8tvxsdCFRRz6cPNq",
+        "tokenCode": "nft"
+      },
+      {
+        "contractAddress": "TCFLL5dx5ZJdKnWuesXxi1VPwjLVmWZZy9",
+        "tokenCode": "jst"
+      },
+      {
+        "contractAddress": "TSSMHYeV2uE9qYH95DqyoCuNCzEL1NvU3S",
+        "tokenCode": "sun"
+      },
+      {
+        "contractAddress": "TXL6rJbvmjD46zeN1JssfgxvSo99qC8MRT",
+        "tokenCode": "sundog"
+      },
+      {
+        "contractAddress": "TMwFHYXLJaRUPeW6421aqXL4ZEzPRFGkGT",
+        "tokenCode": "usdj"
+      },
+      {
+        "contractAddress": "TLa2f6VPqDgRE67v1736s7bJ8Ray5wYjU7",
+        "tokenCode": "win"
+      },
+      {
+        "contractAddress": "TVj7RNVHy6thbM7BWdSe9G6gXwKhjhdNZS",
+        "tokenCode": "klv"
+      },
+      {
+        "contractAddress": "TQWQTZ7LzyttfnHQyfLUkKUs8eZZepgXiQ",
+        "tokenCode": "fud"
+      },
+      {
+        "contractAddress": "TAFjULxiVgT4qWk6UZwjqwZXTSaGaqnVp4",
+        "tokenCode": "bttc"
+      }
+    ]
+  ],
+  [
+    "sol",
+    [
+      {
+        "contractAddress": "Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB",
+        "tokenCode": "usdt"
+      },
+      {
+        "contractAddress": "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
+        "tokenCode": "usdc"
+      },
+      {
+        "contractAddress": "rndrizKT3MK1iimdxRdWabcF7Zg7AR5T4nud4EkHBof",
+        "tokenCode": "render"
+      },
+      {
+        "contractAddress": "EKpQGSJtjMFqKZ9KQanSqYXRcF8fBopzLHYxdM65zcjm",
+        "tokenCode": "wif"
+      },
+      {
+        "contractAddress": "DezXAZ8z7PnrnRJjz3wXBoRgixCa6xjnB7YaB1pPB263",
+        "tokenCode": "bonk"
+      },
+      {
+        "contractAddress": "JUPyiwrYJFskUPiHa7hkeR8VUtAeFoSYbKedZNsDvCN",
+        "tokenCode": "jup"
+      },
+      {
+        "contractAddress": "7GCihgDB8fe6KNjn2MYtkzZcRjQy3t9GHdC8uHYmW2hr",
+        "tokenCode": "popcat"
+      },
+      {
+        "contractAddress": "HZ1JovNiVvGrGNiiYvEozEVgZ58xaU3RKwX8eACQBCt3",
+        "tokenCode": "pyth"
+      },
+      {
+        "contractAddress": "4k3Dyjzvzp8eMZWUXbBCjEvwSkkk59S5iCNLY3QrkX6R",
+        "tokenCode": "ray"
+      },
+      {
+        "contractAddress": "hntyVP6YFm1Hg25TN9WGLqM12b8TQmcknKrdu1oxWux",
+        "tokenCode": "hnt"
+      },
+      {
+        "contractAddress": "CzLSujWBLFsSjncfkh59rUFqvafWcY5tzedWJSuypump",
+        "tokenCode": "goat"
+      },
+      {
+        "contractAddress": "MEW1gQWJ3nEXg2qgERiKu7FAFj79PHvQVREQUzScPP5",
+        "tokenCode": "mew"
+      },
+      {
+        "contractAddress": "85VBFQZC9TZkfaptBWjvUw7YbZjy52A6mjtPGjstQAmQ",
+        "tokenCode": "w"
+      },
+      {
+        "contractAddress": "ukHH6c7mMyiWCf1b9pnWe25TSpkDDt3H5pQZgZ74J82",
+        "tokenCode": "bome"
+      },
+      {
+        "contractAddress": "7i5KKsX2weiTkry7jA4ZwSuXGhs5eJBEjY8vVxR4pfRx",
+        "tokenCode": "gmt"
+      },
+      {
+        "contractAddress": "jtojtomepa8beP8AuQc6eXt5FriJwfFMwQx2v2f9mCL",
+        "tokenCode": "jto"
+      },
+      {
+        "contractAddress": "BZLbGTNCSFfoth2GYDtwr7e4imWzpR5jqcUuGEwr646K",
+        "tokenCode": "io"
+      },
+      {
+        "contractAddress": "5z3EqYQo9HiCEs3R84RCDMu2n7anpDMxRhdK8PSWmrRC",
+        "tokenCode": "ponke"
+      },
+      {
+        "contractAddress": "Grass7B4RdKfBCjTKgSqnXkqjwiGvQyFbuSCUJr3XXjs",
+        "tokenCode": "grass"
+      },
+      {
+        "contractAddress": "GJAFwWjJ3vnTsrQVabjBVK2TYB1YtRCQXRDfDgUnpump",
+        "tokenCode": "act"
+      },
+      {
+        "contractAddress": "2qEHjDLDLbuBgRYvsxhc5D6uDWAivNFZGan56P1tpump",
+        "tokenCode": "pnut"
+      },
+      {
+        "contractAddress": "DriFtupJYLTosbwoN8koMbEYSx54aFAVLddWsbksjwg7",
+        "tokenCode": "drift"
+      },
+      {
+        "contractAddress": "ED5nyyWEzpPPiWimP8vYm7sD7TD3LAt3Q3gRTWHzPJBY",
+        "tokenCode": "moodeng"
+      },
+      {
+        "contractAddress": "nosXBVoaCTtYdLvKY6Csb4AC8JCdQKKAaWYtx2ZMoo7",
+        "tokenCode": "nos"
+      },
+      {
+        "contractAddress": "CBdCxKo9QavR9hfShgpEBG3zekorAeD7W1jfq2o3pump",
+        "tokenCode": "luce"
+      },
+      {
+        "contractAddress": "EchesyfXePKdLtoiZSL8pBe8Myagyy8ZRqsACNCFGnvp",
+        "tokenCode": "fida"
+      },
+      {
+        "contractAddress": "HhJpBhRRn4g56VsyLuT8DL5Bv31HkXqsrahTTUCZeZg4",
+        "tokenCode": "myro"
+      },
+      {
+        "contractAddress": "7BgBvyjrZX1YKz4oh9mjb8ZScatkkwb8DzFx7LoiVkM3",
+        "tokenCode": "slerf"
+      },
+      {
+        "contractAddress": "WENWENvqqNya429ubCdR81ZmD69brwQaaBYY6p3LCpk",
+        "tokenCode": "wen"
+      },
+      {
+        "contractAddress": "Hax9LTgsQkze1YFychnBLtFH8gYbQKtKfWKKg2SP6gdD",
+        "tokenCode": "tai"
+      },
+      {
+        "contractAddress": "3S8qX1MsMqRbiwKg2cQyx7nis1oHMgaCuc9c4VfvVdPN",
+        "tokenCode": "mother"
+      },
+      {
+        "contractAddress": "4Cnk9EPnW5ixfLZatCPJjDB1PUtcRpVVgTQukm9epump",
+        "tokenCode": "daddy"
+      },
+      {
+        "contractAddress": "TNSRxcUxoT9xBG3de7PiJyTDYu7kskLqcpddxnEJAS6",
+        "tokenCode": "tnsr"
+      },
+      {
+        "contractAddress": "4LLbsb5ReP3yEtYzmXewyGjcir5uXtKFURtaEUVC2AHs",
+        "tokenCode": "prcl"
+      },
+      {
+        "contractAddress": "ATLASXmbPQxBUYbxPsV97usA3fPQYEqzQBUHgiFCUsXx",
+        "tokenCode": "atlas"
+      },
+      {
+        "contractAddress": "8wXtPeU6557ETkp9WHFY1n1EcU6NxDvbAggHGsMYiHsB",
+        "tokenCode": "gme"
+      },
+      {
+        "contractAddress": "AFbX8oGjGpmVFywbVouvhQSRmiW2aR1mohfahi4Y2AdB",
+        "tokenCode": "gst"
+      },
+      {
+        "contractAddress": "A3eME5CetyZPBoWbRUwY3tSe25S6tb18ba9ZPbWk9eFJ",
+        "tokenCode": "peng"
+      },
+      {
+        "contractAddress": "SRMuApVNdxXokk5GT7XD5cUUgXMBCoAz2LHeuAoKWRt",
+        "tokenCode": "srm"
+      },
+      {
+        "contractAddress": "CKaKtYvz6dKPyMvYq9Rh3UBrnNqYZAyd7iF4hJtjUvks",
+        "tokenCode": "gari"
+      },
+      {
+        "contractAddress": "3vmfEaTR9M2Pp5JcFNC8c8u6U4eFUBdq6FQjgPpcnfKS",
+        "tokenCode": "doai"
+      },
+      {
+        "contractAddress": "CxrhHSqyW8YTDWc4csJMMgo7uBUJSXzNzrWhtw9ULdru",
+        "tokenCode": "never"
+      },
+      {
+        "contractAddress": "DBRiDgJAMsM95moTzJs7M9LnkGErpbv9v6CUR1DXnUu5",
+        "tokenCode": "dbr"
+      },
+      {
+        "contractAddress": "3GEznP41VaAGv9yRdBiuYdA8zkffNc8b7DzNJgFbH4Kh",
+        "tokenCode": "scrat"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "sol"
+      }
+    ]
+  ],
+  [
+    "matic",
+    [
+      {
+        "contractAddress": "0xc2132d05d31c914a87c6611c10748aeb04b58e8f",
+        "tokenCode": "usdt"
+      },
+      {
+        "contractAddress": "0x3c499c542cef5e3811e1192ce70d8cc03d5c3359",
+        "tokenCode": "usdc"
+      },
+      {
+        "contractAddress": "0x53E0bca35eC356BD5ddDFebbD1Fc0fD03FaBad39",
+        "tokenCode": "link"
+      },
+      {
+        "contractAddress": "0x5fe2b58c013d7601147dcdd68c143a77499f5531",
+        "tokenCode": "grt"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "matic"
+      },
+      {
+        "contractAddress": "0x41b3966b4ff7b427969ddf5da3627d6aeae9a48e",
+        "tokenCode": "nexo"
+      },
+      {
+        "contractAddress": "0xBbba073C31bF03b8ACf7c28EF0738DeCF3695683",
+        "tokenCode": "sand"
+      },
+      {
+        "contractAddress": "0x172370d5Cd63279eFa6d502DAB29171933a610AF",
+        "tokenCode": "crv"
+      },
+      {
+        "contractAddress": "0x430EF9263E76DAE63c84292C3409D61c598E9682",
+        "tokenCode": "pyr"
+      },
+      {
+        "contractAddress": "0x311434160D7537be358930def317AfB606C0D737",
+        "tokenCode": "naka"
+      },
+      {
+        "contractAddress": "0x2F6F07CDcf3588944Bf4C42aC74ff24bF56e7590",
+        "tokenCode": "stg"
+      },
+      {
+        "contractAddress": "0xE5417Af564e4bFDA1c483642db72007871397896",
+        "tokenCode": "gns"
+      },
+      {
+        "contractAddress": "0x385eeac5cb85a38a9a07a70c73e0a3271cfb54a7",
+        "tokenCode": "ghst"
+      },
+      {
+        "contractAddress": "0xbEd0B9240bdbcC8e33f66d2ca650A5Ef60a5bAb0",
+        "tokenCode": "max"
+      },
+      {
+        "contractAddress": "0xd0258a3fd00f38aa8090dfee343f10a9d4d30d3f",
+        "tokenCode": "voxel"
+      },
+      {
+        "contractAddress": "0xB5C064F955D8e7F38fE0460C556a72987494eE17",
+        "tokenCode": "quick"
+      },
+      {
+        "contractAddress": "0x5B4CF2C120A9702225814E18543ee658c5f8631e",
+        "tokenCode": "uft"
+      },
+      {
+        "contractAddress": "0x3ce1327867077B551ae9A6987bF10C9fd08edCE1",
+        "tokenCode": "swch"
+      },
+      {
+        "contractAddress": "0x229b1b6C23ff8953D663C4cBB519717e323a0a84",
+        "tokenCode": "blok"
+      },
+      {
+        "contractAddress": "0xA3c322Ad15218fBFAEd26bA7f616249f7705D945",
+        "tokenCode": "mv"
+      },
+      {
+        "contractAddress": "0xFF22c94FFb6bB5d1DF18bEb5fd1dFE7583D3B214",
+        "tokenCode": "ipmb"
+      },
+      {
+        "contractAddress": "0x1BFD67037B42Cf73acF2047067bd4F2C47D9BfD6",
+        "tokenCode": "wbtc"
+      },
+      {
+        "contractAddress": "0x8f3Cf7ad23Cd3CaDbD9735AFf958023239c6A063",
+        "tokenCode": "dai"
+      },
+      {
+        "contractAddress": "0xFd55e4a6767fF7FfC0b8105262A8cDAabE7FBF3F",
+        "tokenCode": "ppy"
+      },
+      {
+        "contractAddress": "0x2791bca1f2de4661ed88a30c99a7a9449aa84174",
+        "tokenCode": "maticusdce"
+      },
+      {
+        "contractAddress": "0x8E677CA17065eD74675BC27bCaBadB7Eef10A292",
+        "tokenCode": "raincoin"
+      }
+    ]
+  ],
+  [
+    "algo",
+    [
+      {
+        "contractAddress": "312769",
+        "tokenCode": "usdt"
+      },
+      {
+        "contractAddress": "31566704",
+        "tokenCode": "usdc"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "algo"
+      },
+      {
+        "contractAddress": "287867876",
+        "tokenCode": "opul"
+      }
+    ]
+  ],
+  [
+    "avaxc",
+    [
+      {
+        "contractAddress": "0x9702230A8Ea53601f5cD2dc00fDBc13d4dF4A8c7",
+        "tokenCode": "usdt"
+      },
+      {
+        "contractAddress": "0xB97EF9Ef8734C71904D8002F8b6Bc66Dd9c48a6E",
+        "tokenCode": "usdc"
+      },
+      {
+        "contractAddress": "0x1C20E891Bab6b1727d14Da358FAe2984Ed9B59EB",
+        "tokenCode": "tusd"
+      },
+      {
+        "contractAddress": "0x62edc0692BD897D2295872a9FFCac5425011c661",
+        "tokenCode": "gmx"
+      },
+      {
+        "contractAddress": "0x6e84a6216eA6dACC71eE8E6b0a5B7322EEbC0fDd",
+        "tokenCode": "joe"
+      },
+      {
+        "contractAddress": "0x8729438EB15e2C8B576fCc6AeCdA6A148776C0F5",
+        "tokenCode": "qi"
+      },
+      {
+        "contractAddress": "0x2F6F07CDcf3588944Bf4C42aC74ff24bF56e7590",
+        "tokenCode": "stg"
+      },
+      {
+        "contractAddress": "0x60781c2586d68229fde47564546784ab3faca982",
+        "tokenCode": "png"
+      },
+      {
+        "contractAddress": "0x714f020C54cc9D104B6F4f6998C63ce2a31D1888",
+        "tokenCode": "fitfi"
+      }
+    ]
+  ],
+  [
+    "eos",
+    [
+      {
+        "contractAddress": "tethertether",
+        "tokenCode": "usdt"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "eos"
+      }
+    ]
+  ],
+  [
+    "xtz",
+    [
+      {
+        "contractAddress": "KT1XnTn74bUtxHfDtBmm2bGZAQfhPbvKWR8o",
+        "tokenCode": "usdt"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "xtz"
+      }
+    ]
+  ],
+  [
+    "ton",
+    [
+      {
+        "contractAddress": "EQCxE6mUtQJKFnGfaROTKOt1lZbDiiX1kCixRv7Nw2Id_sDs",
+        "tokenCode": "usdt"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "ton"
+      },
+      {
+        "contractAddress": "EQAvlWFDxGF2lXm67y4yzC17wYKD9A0guwPkMs1gOsM__NOT",
+        "tokenCode": "not"
+      },
+      {
+        "contractAddress": "EQCvxJy4eG8hyHBFsZ7eePxrRsUQSFE_jpptRAYBmcG_DOGS",
+        "tokenCode": "dogs"
+      },
+      {
+        "contractAddress": "EQAJ8uWd7EBqsmpSWaRdf_I-8R8-XHwh3gsNKhy-UrdrPcUo",
+        "tokenCode": "hmstr"
+      },
+      {
+        "contractAddress": "EQB4zZusHsbU2vVTPqjhlokIOoiZhEdCMT703CWEzhTOo__X",
+        "tokenCode": "x"
+      },
+      {
+        "contractAddress": "EQCD7lrrxpOcq5A5R6nTLeF1kuIbl1BKCe5OnanGe3cB4FVB",
+        "tokenCode": "rbtc"
+      },
+      {
+        "contractAddress": "EQD-cvR0Nz6XAyRBvbhz-abTrRC6sI5tvHvvpeQraV9UAAD7",
+        "tokenCode": "cati"
+      },
+      {
+        "contractAddress": "EQAQXlWJvGbbFfE8F3oS8s87lIgdovS455IsWFaRdmJetTon",
+        "tokenCode": "jetton"
+      },
+      {
+        "contractAddress": "EQA3AshPEVly8wQ6mZincrKC_CkJSKXqqjyg0VMsVjF_CATS",
+        "tokenCode": "cats"
+      }
+    ]
+  ],
+  [
+    "celo",
+    [
+      {
+        "contractAddress": "0x48065fbBE25f71C9282ddf5e1cD6D6A887483D5e",
+        "tokenCode": "usdt"
+      },
+      {
+        "contractAddress": "0xcebA9300f2b948710d2653dD7B07f33A8B32118C",
+        "tokenCode": "usdc"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "celo"
+      },
+      {
+        "contractAddress": "0x765de816845861e75a25fca122bb6898b8b1282a",
+        "tokenCode": "cusd"
+      }
+    ]
+  ],
+  [
+    "bnb",
+    [
+      {
+        "contractAddress": null,
+        "tokenCode": "bnb"
+      },
+      {
+        "contractAddress": "NOW-E68",
+        "tokenCode": "now"
+      },
+      {
+        "contractAddress": "AWC-986",
+        "tokenCode": "awc"
+      }
+    ]
+  ],
+  [
+    "doge",
+    [
+      {
+        "contractAddress": null,
+        "tokenCode": "doge"
+      }
+    ]
+  ],
+  [
+    "xrp",
+    [
+      {
+        "contractAddress": null,
+        "tokenCode": "xrp"
+      }
+    ]
+  ],
+  [
+    "xlm",
+    [
+      {
+        "contractAddress": "USDC-GA5ZSEJYB37JRC5AVCIA5MOP4RHTM335X2KGX3IHOJAPP5RE34K4KZVN",
+        "tokenCode": "usdc"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "xlm"
+      }
+    ]
+  ],
+  [
+    "ada",
+    [
+      {
+        "contractAddress": null,
+        "tokenCode": "ada"
+      },
+      {
+        "contractAddress": "279c909f348e533da5808898f87f9a14bb2c3dfbbacccd631d927a3f534e454b",
+        "tokenCode": "snek"
+      }
+    ]
+  ],
+  [
+    "bch",
+    [
+      {
+        "contractAddress": null,
+        "tokenCode": "bch"
+      }
+    ]
+  ],
+  [
+    "dot",
+    [
+      {
+        "contractAddress": null,
+        "tokenCode": "dot"
+      }
+    ]
+  ],
+  [
+    "ltc",
+    [
+      {
+        "contractAddress": null,
+        "tokenCode": "ltc"
+      }
+    ]
+  ],
+  [
+    "etc",
+    [
+      {
+        "contractAddress": null,
+        "tokenCode": "etc"
+      }
+    ]
+  ],
+  [
+    "xmr",
+    [
+      {
+        "contractAddress": null,
+        "tokenCode": "xmr"
+      }
+    ]
+  ],
+  [
+    "fil",
+    [
+      {
+        "contractAddress": null,
+        "tokenCode": "fil"
+      }
+    ]
+  ],
+  [
+    "hbar",
+    [
+      {
+        "contractAddress": null,
+        "tokenCode": "hbar"
+      }
+    ]
+  ],
+  [
+    "ftm",
+    [
+      {
+        "contractAddress": null,
+        "tokenCode": "ftm"
+      },
+      {
+        "contractAddress": "0x2F6F07CDcf3588944Bf4C42aC74ff24bF56e7590",
+        "tokenCode": "stg"
+      }
+    ]
+  ],
+  [
+    "atom",
+    [
+      {
+        "contractAddress": null,
+        "tokenCode": "atom"
+      }
+    ]
+  ],
+  [
+    "bsv",
+    [
+      {
+        "contractAddress": null,
+        "tokenCode": "bsv"
+      }
+    ]
+  ],
+  [
+    "zec",
+    [
+      {
+        "contractAddress": null,
+        "tokenCode": "zec"
+      }
+    ]
+  ],
+  [
+    "axl",
+    [
+      {
+        "contractAddress": null,
+        "tokenCode": "axl"
+      }
+    ]
+  ],
+  [
+    "btg",
+    [
+      {
+        "contractAddress": null,
+        "tokenCode": "btg"
+      }
+    ]
+  ],
+  [
+    "ethw",
+    [
+      {
+        "contractAddress": null,
+        "tokenCode": "ethw"
+      }
+    ]
+  ],
+  [
+    "osmo",
+    [
+      {
+        "contractAddress": null,
+        "tokenCode": "osmo"
+      }
+    ]
+  ],
+  [
+    "dash",
+    [
+      {
+        "contractAddress": null,
+        "tokenCode": "dash"
+      }
+    ]
+  ],
+  [
+    "rvn",
+    [
+      {
+        "contractAddress": null,
+        "tokenCode": "rvn"
+      }
+    ]
+  ],
+  [
+    "qtum",
+    [
+      {
+        "contractAddress": null,
+        "tokenCode": "qtum"
+      }
+    ]
+  ],
+  [
+    "waxp",
+    [
+      {
+        "contractAddress": null,
+        "tokenCode": "waxp"
+      }
+    ]
+  ],
+  [
+    "dgb",
+    [
+      {
+        "contractAddress": null,
+        "tokenCode": "dgb"
+      }
+    ]
+  ],
+  [
+    "coreum",
+    [
+      {
+        "contractAddress": null,
+        "tokenCode": "coreum"
+      }
+    ]
+  ],
+  [
+    "fio",
+    [
+      {
+        "contractAddress": null,
+        "tokenCode": "fio"
+      }
+    ]
+  ],
+  [
+    "firo",
+    [
+      {
+        "contractAddress": null,
+        "tokenCode": "firo"
+      }
+    ]
+  ],
+  [
+    "pulse",
+    [
+      {
+        "contractAddress": null,
+        "tokenCode": "pls"
+      }
+    ]
+  ]
+]

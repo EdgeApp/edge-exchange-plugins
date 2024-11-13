@@ -38,7 +38,7 @@ import { asOptionalBlank } from './changenow'
 
 const pluginId = 'letsexchange'
 
-const swapInfo: EdgeSwapInfo = {
+export const swapInfo: EdgeSwapInfo = {
   pluginId,
   isDex: false,
   displayName: 'LetsExchange',
@@ -77,7 +77,7 @@ const INVALID_CURRENCY_CODES: InvalidCurrencyCodes = {
 }
 
 // See https://letsexchange.io/exchange-pairs for list of supported currencies
-const MAINNET_CODE_TRANSCRIPTION: CurrencyPluginIdSwapChainCodeMap = {
+export const MAINNET_CODE_TRANSCRIPTION: CurrencyPluginIdSwapChainCodeMap = {
   algorand: 'ALGO',
   arbitrum: 'ARBITRUM',
   avalanche: 'AVAXC',
@@ -138,7 +138,7 @@ const MAINNET_CODE_TRANSCRIPTION: CurrencyPluginIdSwapChainCodeMap = {
   zksync: 'ZKSERA'
 }
 
-const SPECIAL_MAINNET_CASES: EdgeIdSwapIdMap = new Map([
+export const SPECIAL_MAINNET_CASES: EdgeIdSwapIdMap = new Map([
   // axelar: new Map([[null, 'WAXL']]), // currentlyly disabled
   [
     'binancesmartchain',

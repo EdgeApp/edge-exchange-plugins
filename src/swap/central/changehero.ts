@@ -37,7 +37,7 @@ import { EdgeSwapRequestPlugin } from '../types'
 
 const pluginId = 'changehero'
 
-const swapInfo: EdgeSwapInfo = {
+export const swapInfo: EdgeSwapInfo = {
   pluginId,
   isDex: false,
   displayName: 'ChangeHero',
@@ -48,7 +48,7 @@ const asInitOptions = asObject({
   apiKey: asString
 })
 
-const MAINNET_CODE_TRANSCRIPTION: CurrencyPluginIdSwapChainCodeMap = {
+export const MAINNET_CODE_TRANSCRIPTION: CurrencyPluginIdSwapChainCodeMap = {
   algorand: 'algorand',
   arbitrum: 'arbitrum',
   avalanche: 'avalanche_(c-chain)',

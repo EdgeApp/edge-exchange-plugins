@@ -39,7 +39,7 @@ import { convertRequest, getAddress, memoType } from '../../util/utils'
 import { EdgeSwapRequestPlugin } from '../types'
 
 // See https://help.sideshift.ai/en/articles/4559664-which-coins-and-tokens-are-listed for list of supported currencies
-const MAINNET_CODE_TRANSCRIPTION: CurrencyPluginIdSwapChainCodeMap = {
+export const MAINNET_CODE_TRANSCRIPTION: CurrencyPluginIdSwapChainCodeMap = {
   algorand: 'algorand',
   arbitrum: 'arbitrum',
   avalanche: 'avax',
@@ -102,7 +102,7 @@ const MAINNET_CODE_TRANSCRIPTION: CurrencyPluginIdSwapChainCodeMap = {
 
 const SIDESHIFT_BASE_URL = 'https://sideshift.ai/api/v2'
 const pluginId = 'sideshift'
-const swapInfo: EdgeSwapInfo = {
+export const swapInfo: EdgeSwapInfo = {
   pluginId,
   isDex: false,
   displayName: 'SideShift.ai',

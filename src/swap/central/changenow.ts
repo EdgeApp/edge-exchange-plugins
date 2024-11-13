@@ -42,7 +42,7 @@ import { EdgeSwapRequestPlugin } from '../types'
 
 const pluginId = 'changenow'
 
-const swapInfo: EdgeSwapInfo = {
+export const swapInfo: EdgeSwapInfo = {
   pluginId,
   isDex: false,
   displayName: 'Change NOW',
@@ -65,7 +65,7 @@ const INVALID_CURRENCY_CODES: InvalidCurrencyCodes = {
 
 // Network names that don't match parent network currency code
 // See https://changenow.io/currencies for list of supported currencies
-const MAINNET_CODE_TRANSCRIPTION: CurrencyPluginIdSwapChainCodeMap = {
+export const MAINNET_CODE_TRANSCRIPTION: CurrencyPluginIdSwapChainCodeMap = {
   algorand: 'algo',
   arbitrum: 'arbitrum',
   avalanche: 'avaxc',
@@ -126,7 +126,7 @@ const MAINNET_CODE_TRANSCRIPTION: CurrencyPluginIdSwapChainCodeMap = {
   zksync: 'zksync'
 }
 
-const SPECIAL_MAINNET_CASES: EdgeIdSwapIdMap = new Map([
+export const SPECIAL_MAINNET_CASES: EdgeIdSwapIdMap = new Map([
   ['avalanche', new Map([[null, { chainCode: 'cchain', tokenCode: 'avax' }]])]
 ])
 
