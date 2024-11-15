@@ -179,11 +179,27 @@ export const convertRequest = (
   return out
 }
 
-export async function getAddress(wallet: EdgeCurrencyWallet): Promise<string> {
-  const { publicAddress, segwitAddress } = await wallet.getReceiveAddress({
+export async function getAddress(
+  wallet: EdgeCurrencyWallet,
+  requiredAddressType?: string
+): Promise<string> {
+  const allAddresses = await wallet.getAddresses({
     tokenId: null
   })
-  return segwitAddress ?? publicAddress
+
+  if (requiredAddressType != null) {
+    const address = allAddresses.find(
+      address => address.addressType === requiredAddressType
+    )
+    if (address != null) return address.publicAddress
+    else throw new Error(`No address of type ${requiredAddressType}`)
+  }
+
+  const segwitAddress = allAddresses.find(
+    address => address.addressType === 'segwitAddress'
+  )
+
+  return (segwitAddress ?? allAddresses[0]).publicAddress
 }
 
 export const hexToDecimal = (hex: string): string => {

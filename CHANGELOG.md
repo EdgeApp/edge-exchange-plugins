@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- added: (Exolix) Support Zcash buys
+- changed: Upgrade edge-core-js
+
 ## 2.14.0 (2024-11-11)
 
 - changed: Rename Thorchain DEX Aggregator to SwapKit
