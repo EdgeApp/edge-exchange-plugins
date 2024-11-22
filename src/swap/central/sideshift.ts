@@ -152,7 +152,8 @@ interface CreateSideshiftApiResponse {
 
 const createSideshiftApi = (
   baseUrl: string,
-  fetchCors: EdgeFetchFunction
+  fetchCors: EdgeFetchFunction,
+  privateKey?: string
 ): CreateSideshiftApiResponse => {
   async function request<R>(
     method: 'GET' | 'POST',
@@ -161,12 +162,17 @@ const createSideshiftApi = (
   ): Promise<R> {
     const url = `${baseUrl}${path}`
 
+    const headers = {
+      'x-sideshift-secret': privateKey
+    }
+
     const reply = await (method === 'GET'
-      ? fetchCors(url)
+      ? fetchCors(url, { headers })
       : fetchCors(url, {
           method,
           headers: {
-            'Content-Type': 'application/json'
+            'Content-Type': 'application/json',
+            ...headers
           },
           body: JSON.stringify(body)
         }))
@@ -352,7 +358,7 @@ export function makeSideshiftPlugin(
   opts: EdgeCorePluginOptions
 ): EdgeSwapPlugin {
   const { io, initOptions } = opts
-  const api = createSideshiftApi(SIDESHIFT_BASE_URL, io.fetchCors ?? io.fetch)
+  const api = createSideshiftApi(SIDESHIFT_BASE_URL, io.fetchCors ?? io.fetch, initOptions.privateKey)
   const fetchSwapQuote = createFetchSwapQuote(api, initOptions.affiliateId)
 
   return {
