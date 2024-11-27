@@ -113,6 +113,7 @@ const MAINNET_CODE_TRANSCRIPTION: StringMap = {
   okexchain: 'OKT',
   optimism: 'OPT',
   polygon: 'POL',
+  rsk: 'RSK',
   solana: 'SOL',
   velas: 'VEL',
   zksync: 'ERA'

@@ -131,8 +131,9 @@ let exchangeInfo: ExchangeInfo | undefined
 let exchangeInfoLastUpdate: number = 0
 
 const tokenProxyMap: { [currencyPluginId: string]: string } = {
-  ethereum: '0xf892fef9da200d9e84c9b0647ecff0f34633abe8',
-  avalanche: '0x69ba883af416ff5501d54d5e27a1f497fbd97156'
+  avalanche: '0x69ba883af416ff5501d54d5e27a1f497fbd97156',
+  binancesmartchain: '0x5505BE604dFA8A1ad402A71f8A357fba47F9bf5a',
+  ethereum: '0xf892fef9da200d9e84c9b0647ecff0f34633abe8'
 }
 
 export function makeSwapKitPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
