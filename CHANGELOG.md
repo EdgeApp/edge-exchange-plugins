@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- added: (Lifi) Add RSK
+- added: (SwapKit) Add Binance Smart Chain
+
 ## 2.15.1 (2024-12-04)
 
 - changed: Prevent Polygon USDC/USDC.e trading on CEX partners that don't support contract addresses
