@@ -36,7 +36,7 @@ import {
   SwapOrder
 } from '../../util/swapHelpers'
 import { convertRequest, getAddress, memoType } from '../../util/utils'
-import { EdgeSwapRequestPlugin } from '../types'
+import { EdgeSwapRequestPlugin, StringMap } from '../types'
 
 // See https://help.sideshift.ai/en/articles/4559664-which-coins-and-tokens-are-listed for list of supported currencies
 export const MAINNET_CODE_TRANSCRIPTION: CurrencyPluginIdSwapChainCodeMap = {
@@ -153,7 +153,8 @@ interface CreateSideshiftApiResponse {
 
 const createSideshiftApi = (
   baseUrl: string,
-  fetchCors: EdgeFetchFunction
+  fetchCors: EdgeFetchFunction,
+  privateKey?: string
 ): CreateSideshiftApiResponse => {
   async function request<R>(
     method: 'GET' | 'POST',
@@ -162,13 +163,18 @@ const createSideshiftApi = (
   ): Promise<R> {
     const url = `${baseUrl}${path}`
 
+    const headers: StringMap = {
+      'Content-Type': 'application/json'
+    }
+    if (privateKey != null) {
+      headers['x-sideshift-secret'] = privateKey
+    }
+
     const reply = await (method === 'GET'
-      ? fetchCors(url)
+      ? fetchCors(url, { headers })
       : fetchCors(url, {
           method,
-          headers: {
-            'Content-Type': 'application/json'
-          },
+          headers,
           body: JSON.stringify(body)
         }))
 
@@ -423,7 +429,11 @@ export function makeSideshiftPlugin(
   opts: EdgeCorePluginOptions
 ): EdgeSwapPlugin {
   const { io, initOptions } = opts
-  const api = createSideshiftApi(SIDESHIFT_BASE_URL, io.fetchCors ?? io.fetch)
+  const api = createSideshiftApi(
+    SIDESHIFT_BASE_URL,
+    io.fetchCors ?? io.fetch,
+    initOptions.privateKey
+  )
   const fetchSwapQuote = createFetchSwapQuote(
     api,
     initOptions.affiliateId,
