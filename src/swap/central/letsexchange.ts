@@ -1,5 +1,12 @@
 import { gt, lt } from 'biggystring'
-import { asObject, asOptional, asString } from 'cleaners'
+import {
+  asArray,
+  asEither,
+  asNull,
+  asObject,
+  asOptional,
+  asString
+} from 'cleaners'
 import {
   EdgeCorePluginOptions,
   EdgeMemo,
@@ -8,17 +15,18 @@ import {
   EdgeSwapPlugin,
   EdgeSwapQuote,
   EdgeSwapRequest,
-  EdgeTokenId,
   SwapAboveLimitError,
   SwapBelowLimitError,
   SwapCurrencyError
 } from 'edge-core-js/types'
 
 import {
+  ChainCodeTickerMap,
   checkInvalidCodes,
   checkWhitelistedMainnetCodes,
-  CurrencyCodeTranscriptionMap,
-  getCodesWithTranscription,
+  CurrencyPluginIdSwapChainCodeMap,
+  EdgeIdSwapIdMap,
+  getChainAndTokenCodes,
   getMaxSwappable,
   InvalidCurrencyCodes,
   makeSwapPluginQuote,
@@ -30,7 +38,7 @@ import { asOptionalBlank } from './changenow'
 
 const pluginId = 'letsexchange'
 
-const swapInfo: EdgeSwapInfo = {
+export const swapInfo: EdgeSwapInfo = {
   pluginId,
   isDex: false,
   displayName: 'LetsExchange',
@@ -62,50 +70,46 @@ const asInfoReply = asObject({
   amount: asNumberString
 })
 const INVALID_CURRENCY_CODES: InvalidCurrencyCodes = {
-  from: {
-    ethereum: ['MATH'],
-    polygon: ['USDC.e']
-  },
+  from: {},
   to: {
-    ethereum: ['MATH'],
-    polygon: ['USDC.e'],
     zcash: ['ZEC']
   }
 }
 
 // See https://letsexchange.io/exchange-pairs for list of supported currencies
-const MAINNET_CODE_TRANSCRIPTION = {
+export const MAINNET_CODE_TRANSCRIPTION: CurrencyPluginIdSwapChainCodeMap = {
   algorand: 'ALGO',
   arbitrum: 'ARBITRUM',
   avalanche: 'AVAXC',
-  // axelar: // Shows up as WAXL from the API but is currently disabled
-  // base:
+  axelar: 'WAXL',
+  base: null,
   binance: 'BEP2',
   binancesmartchain: 'BEP20',
   bitcoin: 'BTC',
   bitcoincash: 'BCH',
   bitcoingold: 'BTG',
   bitcoinsv: 'BSV',
+  bobevm: null,
   cardano: 'ADA',
   celo: 'CELO',
-  // coreum:
+  coreum: 'COREUM',
   cosmoshub: 'ATOM',
   dash: 'DASH',
   digibyte: 'DGB',
   dogecoin: 'DOGE',
-  // eboost:
+  eboost: null,
   eos: 'EOS',
   ethereum: 'ERC20',
   ethereumclassic: 'ETC',
   ethereumpow: 'ETHW',
   fantom: 'FTM',
-  // feathercoin:
+  feathercoin: null,
   filecoin: 'FIL',
-  // filecoinfevm:
+  filecoinfevm: null,
   fio: 'FIO',
   groestlcoin: 'GRS',
   hedera: 'HBAR',
-  // liberland:
+  liberland: null,
   litecoin: 'LTC',
   monero: 'XMR',
   optimism: 'OPTIMISM',
@@ -118,7 +122,7 @@ const MAINNET_CODE_TRANSCRIPTION = {
   ravencoin: 'RVN',
   ripple: 'XRP',
   rsk: 'RSK',
-  // smartcash:
+  smartcash: null,
   solana: 'SOL',
   stellar: 'XLM',
   telos: 'TLOS',
@@ -126,29 +130,29 @@ const MAINNET_CODE_TRANSCRIPTION = {
   thorchainrune: 'RUNE',
   ton: 'TON',
   tron: 'TRC20',
-  // ufo:
-  // vertcoin:
+  ufo: null,
+  vertcoin: null,
   wax: 'WAX',
   zcash: 'ZEC',
   zcoin: 'FIRO',
-  zksync: 'ZKSYNC'
+  zksync: 'ZKSERA'
 }
 
-const SPECIAL_MAINNET_CASES: {
-  [pId: string]: Map<EdgeTokenId, string>
-} = {
+export const SPECIAL_MAINNET_CASES: EdgeIdSwapIdMap = new Map([
   // axelar: new Map([[null, 'WAXL']]), // currentlyly disabled
-  binancesmartchain: new Map([[null, 'BNB']]),
-  ethereum: new Map([[null, 'ETH']]),
-  rsk: new Map([[null, 'RBTC']]),
-  tron: new Map([[null, 'TRX']])
-}
+  [
+    'binancesmartchain',
+    new Map([[null, { chainCode: 'BNB', tokenCode: 'BNB' }]])
+  ],
+  ['ethereum', new Map([[null, { chainCode: 'ETH', tokenCode: 'ETH' }]])],
+  ['rsk', new Map([[null, { chainCode: 'RBTC', tokenCode: 'RBTC' }]])],
+  ['tron', new Map([[null, { chainCode: 'TRX', tokenCode: 'TRX' }]])]
+])
 
-const CURRENCY_CODE_TRANSCRIPTION: CurrencyCodeTranscriptionMap = {
-  optimism: {
-    VELO: 'VELODROME'
-  }
-}
+// Provider data
+let chainCodeTickerMap: ChainCodeTickerMap = new Map()
+let lastUpdated = 0
+const EXPIRATION = 1000 * 60 * 60 // 1 hour
 
 export function makeLetsExchangePlugin(
   opts: EdgeCorePluginOptions
@@ -157,18 +161,18 @@ export function makeLetsExchangePlugin(
   const { fetchCors = io.fetch } = io
   const initOptions = asInitOptions(opts.initOptions)
 
+  const headers = {
+    'Content-Type': 'application/json',
+    Authorization: `Bearer ${initOptions.apiKey}`,
+    Accept: 'application/json'
+  }
+
   async function call(
     url: string,
     request: EdgeSwapRequestPlugin,
     data: { params: Object }
   ): Promise<Object> {
     const body = JSON.stringify(data.params)
-
-    const headers = {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${initOptions.apiKey}`,
-      Accept: 'application/json'
-    }
     const response = await fetchCors(url, { method: 'POST', body, headers })
     if (!response.ok) {
       if (response.status === 422) {
@@ -177,6 +181,43 @@ export function makeLetsExchangePlugin(
       throw new Error(`letsexchange returned error code ${response.status}`)
     }
     return await response.json()
+  }
+
+  async function fetchSupportedAssets(): Promise<void> {
+    if (lastUpdated > Date.now() - EXPIRATION) return
+
+    try {
+      const response = await fetchCors(
+        `https://api.letsexchange.io/api/v2/coins`,
+        { headers }
+      )
+      if (!response.ok) {
+        const message = await response.text()
+        throw new Error(message)
+      }
+      const json = await response.json()
+      const assets = asLetsExchangeAssets(json)
+
+      const chaincodeArray = Object.values(MAINNET_CODE_TRANSCRIPTION)
+      const out: ChainCodeTickerMap = new Map()
+      for (const asset of assets) {
+        for (const network of asset.networks) {
+          if (chaincodeArray.includes(network.code)) {
+            const tokenCodes = out.get(network.code) ?? []
+            tokenCodes.push({
+              tokenCode: asset.code,
+              contractAddress: network.contract_address
+            })
+            out.set(network.code, tokenCodes)
+          }
+        }
+      }
+
+      chainCodeTickerMap = out
+      lastUpdated = Date.now()
+    } catch (e) {
+      log.warn('LetsExchange: Error updating supported assets', e)
+    }
   }
 
   const fetchSwapQuoteInner = async (
@@ -203,27 +244,25 @@ export function makeLetsExchangePlugin(
             request.toCurrencyCode
           )
 
-    const { fromMainnetCode, toMainnetCode } = getCodesWithTranscription(
+    const {
+      fromCurrencyCode,
+      toCurrencyCode,
+      fromMainnetCode,
+      toMainnetCode
+    } = await getChainAndTokenCodes(
       request,
+      swapInfo,
+      chainCodeTickerMap,
       MAINNET_CODE_TRANSCRIPTION,
-      CURRENCY_CODE_TRANSCRIPTION
+      SPECIAL_MAINNET_CASES
     )
-
-    const { pluginId: fromPluginId } = request.fromWallet.currencyInfo
-    const networkFrom =
-      SPECIAL_MAINNET_CASES[fromPluginId]?.get(request.fromTokenId) ??
-      fromMainnetCode
-
-    const { pluginId: toPluginId } = request.toWallet.currencyInfo
-    const networkTo =
-      SPECIAL_MAINNET_CASES[toPluginId]?.get(request.toTokenId) ?? toMainnetCode
 
     // Swap the currencies if we need a reverse quote:
     const quoteParams = {
-      from: request.fromCurrencyCode,
-      to: request.toCurrencyCode,
-      network_from: networkFrom,
-      network_to: networkTo,
+      from: fromCurrencyCode,
+      to: toCurrencyCode,
+      network_from: fromMainnetCode,
+      network_to: toMainnetCode,
       amount: quoteAmount
     }
 
@@ -290,8 +329,8 @@ export function makeLetsExchangePlugin(
         withdrawal_amount: reverseQuote ? toAmount : undefined,
         coin_from: request.fromCurrencyCode,
         coin_to: request.toCurrencyCode,
-        network_from: networkFrom,
-        network_to: networkTo,
+        network_from: fromMainnetCode,
+        network_to: toMainnetCode,
         withdrawal: toAddress,
         return: fromAddress,
         return_extra_id: null,
@@ -383,6 +422,10 @@ export function makeLetsExchangePlugin(
       opts: { promoCode?: string }
     ): Promise<EdgeSwapQuote> {
       const request = convertRequest(req)
+
+      // Fetch and persist chaincode/tokencode maps from provider
+      await fetchSupportedAssets()
+
       checkInvalidCodes(INVALID_CURRENCY_CODES, request, swapInfo)
       checkWhitelistedMainnetCodes(
         MAINNET_CODE_TRANSCRIPTION,
@@ -402,3 +445,15 @@ export function makeLetsExchangePlugin(
 
   return out
 }
+
+const asLetsExchangeAssets = asArray(
+  asObject({
+    code: asString,
+    networks: asArray(
+      asObject({
+        code: asString,
+        contract_address: asEither(asString, asNull)
+      })
+    )
+  })
+)

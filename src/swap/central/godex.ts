@@ -24,6 +24,7 @@ import {
 import {
   checkInvalidCodes,
   checkWhitelistedMainnetCodes,
+  CurrencyPluginIdSwapChainCodeMap,
   getCodesWithTranscription,
   getMaxSwappable,
   InvalidCurrencyCodes,
@@ -92,63 +93,64 @@ const INVALID_CURRENCY_CODES: InvalidCurrencyCodes = {
 
 // Network names that don't match parent network currency code
 // See https://godex.io/exchange-rate for list of supported currencies
-const MAINNET_CODE_TRANSCRIPTION = {
+const MAINNET_CODE_TRANSCRIPTION: CurrencyPluginIdSwapChainCodeMap = {
   algorand: 'ALGO',
   arbitrum: 'ARBITRUM',
   avalanche: 'AVAXC',
-  // axelar:
-  // base:
+  axelar: 'WAXL',
+  base: 'BASE',
   binance: 'BNB',
   binancesmartchain: 'BSC',
   bitcoin: 'BTC',
   bitcoincash: 'BCH',
-  // bitcoingold:
-  // bitcoinsv:
+  bitcoingold: 'BTG',
+  bitcoinsv: 'BSV',
+  bobevm: null,
   cardano: 'ADA',
   celo: 'CELO',
-  // coreum:
+  coreum: null,
   cosmoshub: 'ATOM',
   dash: 'DASH',
   digibyte: 'DGB',
   dogecoin: 'DOGE',
-  // eboost:
+  eboost: null,
   eos: 'EOS',
   ethereumclassic: 'ETC',
   ethereum: 'ETH',
   fantom: 'FTM',
-  // ethereumpow:
+  ethereumpow: 'ETHW',
   filecoin: 'FIL',
-  // feathercoin:
-  // fio:
-  // filecoinfevm:
+  feathercoin: null,
+  fio: 'FIO',
+  filecoinfevm: null,
   hedera: 'HBAR',
-  // groestlcoin:
+  groestlcoin: null,
   litecoin: 'LTC',
-  // liberland:
+  liberland: null,
   optimism: 'OPTIMISM',
   monero: 'XMR',
-  // piratechain:
-  // osmosis:
+  piratechain: null,
+  osmosis: 'OSMO',
   polygon: 'MATIC',
   polkadot: 'DOT',
   qtum: 'QTUM',
-  // pulsechain:
-  // ripple:
+  pulsechain: null,
+  ripple: 'XRP',
   ravencoin: 'RVN',
-  // smartcash:
+  smartcash: null,
   rsk: 'RSK',
   stellar: 'XLM',
   solana: 'SOL',
   tezos: 'XTZ',
-  // telos:
+  telos: 'TLOS',
   tron: 'TRX',
-  // thorchainrune:
+  thorchainrune: 'RUNE',
   ton: 'TON',
-  // vertcoin:
-  // ufo:
+  ufo: null,
+  vertcoin: null,
   zcash: 'ZEC',
-  // wax:
-  // zksync:
+  wax: 'WAX',
+  zksync: 'ZKSYNC',
   zcoin: 'FIRO'
 }
 

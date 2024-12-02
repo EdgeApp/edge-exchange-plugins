@@ -1,0 +1,762 @@
+[
+  [
+    "ethereum",
+    [
+      {
+        "contractAddress": "0x111111111117dc0aa78b770fa6a738034120c302",
+        "tokenCode": "1INCH"
+      },
+      {
+        "contractAddress": "0x7fc66500c84a76ad7e9c93437bfc5ac33e2ddae9",
+        "tokenCode": "AAVE"
+      },
+      {
+        "contractAddress": "0x5B7533812759B45C2B44C19e320ba2cD2681b542",
+        "tokenCode": "agixerc"
+      },
+      {
+        "contractAddress": "0x8290333cef9e6d528dd5618fb97a76f268f3edd4",
+        "tokenCode": "ANKR"
+      },
+      {
+        "contractAddress": "0x4d224452801aced8b2f0aebe155379bb5d594381",
+        "tokenCode": "APE"
+      },
+      {
+        "contractAddress": "0xB50721BCf8d664c30412Cfbc6cf7a15145234ad1",
+        "tokenCode": "arberc"
+      },
+      {
+        "contractAddress": "0x6E2a43be0B1d33b726f0CA3b8de60b3482b8b050",
+        "tokenCode": "arkm"
+      },
+      {
+        "contractAddress": "0xba50933c268f567bdc86e1ac131be072c6b0b71a",
+        "tokenCode": "arpa"
+      },
+      {
+        "contractAddress": "0xbb0e17ef65f82ab018d8edd776e8dd940327b28b",
+        "tokenCode": "AXS"
+      },
+      {
+        "contractAddress": "0xba100000625a3754423978a60c9317c58a424e3d",
+        "tokenCode": "BAL"
+      },
+      {
+        "contractAddress": "0x0d8775f648430679a709e98d2b0cb6250d2887ef",
+        "tokenCode": "BAT"
+      },
+      {
+        "contractAddress": "0x5283d291dbcf85356a21ba090e6db59121208b44",
+        "tokenCode": "blur"
+      },
+      {
+        "contractAddress": "0x1f573d6fb3f13d689ff844b4ce37794d79a7ff1c",
+        "tokenCode": "BNT"
+      },
+      {
+        "contractAddress": "0x0391D2021f89DC339F60Fff84546EA23E337750f",
+        "tokenCode": "bonderc"
+      },
+      {
+        "contractAddress": "0x8A2279d4A90B6fe1C4B30fa660cC9f926797bAA2",
+        "tokenCode": "chrerc"
+      },
+      {
+        "contractAddress": "0x3506424f91fd33084466f402d5d97f05f8e3b4af",
+        "tokenCode": "CHZ"
+      },
+      {
+        "contractAddress": "0xc00e94cb662c3520282e6f5717214004a7f26888",
+        "tokenCode": "COMP"
+      },
+      {
+        "contractAddress": "0xa0b73e1ff0b80914ab6fe0444e65848c4c34450b",
+        "tokenCode": "CRO"
+      },
+      {
+        "contractAddress": "0xd533a949740bb3306d119cc777fa900ba034cd52",
+        "tokenCode": "CRV"
+      },
+      {
+        "contractAddress": "0x6b175474e89094c44da98b954eedeac495271d0f",
+        "tokenCode": "DAI"
+      },
+      {
+        "contractAddress": "0x43Dfc4159D86F3A37A5A4B3D4580b888ad7d4DDd",
+        "tokenCode": "dodoerc"
+      },
+      {
+        "contractAddress": "0x92d6c1e31e14520e676a687f0a93788b716beff5",
+        "tokenCode": "DYDX"
+      },
+      {
+        "contractAddress": "0xc18360217d8f7ab5e7c516566761ea12ce7f9d72",
+        "tokenCode": "ENS"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "ETH"
+      },
+      {
+        "contractAddress": "0xcf0c122c6b73ff809c693db761e7baebe62b6a2e",
+        "tokenCode": "floki"
+      },
+      {
+        "contractAddress": "0x720cd16b011b987da3518fbf38c3071d4f0d1495",
+        "tokenCode": "fluxerc"
+      },
+      {
+        "contractAddress": "0x4e15361fd6b4bb609fa63c81a2be19d873717870",
+        "tokenCode": "FTM"
+      },
+      {
+        "contractAddress": "0x50d1c9771902476076ecfc8b2a83ad6b9355a4c9",
+        "tokenCode": "FTT"
+      },
+      {
+        "contractAddress": "0x7dd9c5cba05e151c895fde1cf355c9a1d5da6429",
+        "tokenCode": "GLM"
+      },
+      {
+        "contractAddress": "0x6810e776880c02933d47db1b9fc05908e5386b96",
+        "tokenCode": "gno"
+      },
+      {
+        "contractAddress": "0xc944e90c64b2c07662a292be6244bdf05cda44a7",
+        "tokenCode": "GRT"
+      },
+      {
+        "contractAddress": "0xf57e7e7c23978c3caec3c3548e3d615c346e79ff",
+        "tokenCode": "IMX"
+      },
+      {
+        "contractAddress": "0x7420B4b9a0110cdC71fB720908340C03F9Bc03EC",
+        "tokenCode": "jasmyerc"
+      },
+      {
+        "contractAddress": "0x4cc19356f2d37338b9802aa8e8fc58b0373296e7",
+        "tokenCode": "KEY"
+      },
+      {
+        "contractAddress": "0xdefa4e8a7bcba345f687a2f1456f5edd9ce97202",
+        "tokenCode": "KNC"
+      },
+      {
+        "contractAddress": "0x5A98FcBEA516Cf06857215779Fd812CA3beF1B32",
+        "tokenCode": "LDO"
+      },
+      {
+        "contractAddress": "0x514910771af9ca656af840dff83e8264ecf986ca",
+        "tokenCode": "LINK"
+      },
+      {
+        "contractAddress": "0x42476f744292107e34519f9c357927074ea3f75d",
+        "tokenCode": "LOOM"
+      },
+      {
+        "contractAddress": "0xbbbbca6a901c926f240b89eacb641d8aec7aeafd",
+        "tokenCode": "LRC"
+      },
+      {
+        "contractAddress": "0x0f5d2fb29fb7d3cfee444a200298f468908cc942",
+        "tokenCode": "MANA"
+      },
+      {
+        "contractAddress": "0x69af81e73a73b40adf4f3d4223cd9b1ece623074",
+        "tokenCode": "maskerc"
+      },
+      {
+        "contractAddress": "0x9E32b13ce7f2E80A01932B42553652E053D6ed8e",
+        "tokenCode": "metiserc"
+      },
+      {
+        "contractAddress": "0x9f8f72aa9304c8b593d555f12ef6589cc3a579a2",
+        "tokenCode": "MKR"
+      },
+      {
+        "contractAddress": "0xee2a03aa6dacf51c18679c516ad5283d8e7c2637",
+        "tokenCode": "neiroerc"
+      },
+      {
+        "contractAddress": "0xb62132e35a6c13ee1ee0f84dc5d40bad8d815206",
+        "tokenCode": "NEXO"
+      },
+      {
+        "contractAddress": "0xABD4C63d2616A5201454168269031355f4764337",
+        "tokenCode": "ordererc"
+      },
+      {
+        "contractAddress": "0x8e870d67f660d95d5be530380d0ec0bd388289e1",
+        "tokenCode": "USDP"
+      },
+      {
+        "contractAddress": "0x45804880de22913dafe09f4980848ece6ecbaf78",
+        "tokenCode": "paxgerc"
+      },
+      {
+        "contractAddress": "0x3ffeea07a27fab7ad1df5297fa75e77a43cb5790",
+        "tokenCode": "peipeierc"
+      },
+      {
+        "contractAddress": "0x6982508145454Ce325dDbE47a25d4ec3d2311933",
+        "tokenCode": "pepeerc"
+      },
+      {
+        "contractAddress": "0x3429d03c6F7521AeC737a0BBF2E5ddcef2C3Ae31",
+        "tokenCode": "pixelerc"
+      },
+      {
+        "contractAddress": "0x455e53cbb86018ac2b8092fdcd39d8444affc3f6",
+        "tokenCode": "polerc"
+      },
+      {
+        "contractAddress": "0x595832f8fc6bf59c85c527fec3740a1b7a361269",
+        "tokenCode": "powrerc"
+      },
+      {
+        "contractAddress": "0x4a220e6096b25eadb88358cb44068a3248254675",
+        "tokenCode": "QNT"
+      },
+      {
+        "contractAddress": "0xba5BDe662c17e2aDFF1075610382B9B691296350",
+        "tokenCode": "RARE"
+      },
+      {
+        "contractAddress": "0x3330bfb7332ca23cd071631837dc289b09c33333",
+        "tokenCode": "rbcerc"
+      },
+      {
+        "contractAddress": "0x137dDB47Ee24EaA998a535Ab00378d6BFa84F893",
+        "tokenCode": "rdnterc"
+      },
+      {
+        "contractAddress": "0x6de037ef9ad2725eb40118bb1702ebb27e4aeb24",
+        "tokenCode": "RNDR"
+      },
+      {
+        "contractAddress": "0x3845badade8e6dff049820680d1f14bd3903a5d0",
+        "tokenCode": "SAND"
+      },
+      {
+        "contractAddress": "0x95ad61b0a150d79219dcf64e1e6cc01f0b64c4ce",
+        "tokenCode": "SHIB"
+      },
+      {
+        "contractAddress": "0x744d70fdbe2ba4cf95131626614a1763df805b9e",
+        "tokenCode": "SNT"
+      },
+      {
+        "contractAddress": "0xc011a73ee8576fb46f5e1c5751ca3b9fe0af2a6f",
+        "tokenCode": "SNX"
+      },
+      {
+        "contractAddress": "0xa62cc35625B0C8dc1fAEA39d33625Bb4C15bD71C",
+        "tokenCode": "stmxerc"
+      },
+      {
+        "contractAddress": "0xe53ec727dbdeb9e2d5456c3be40cff031ab40a55",
+        "tokenCode": "SUPER"
+      },
+      {
+        "contractAddress": "0x68A47Fe1CF42eBa4a030a10CD4D6a1031Ca3CA0a",
+        "tokenCode": "teterc"
+      },
+      {
+        "contractAddress": "0x0000000000085d4780b73119b644ae5ecd22b376",
+        "tokenCode": "TUSD"
+      },
+      {
+        "contractAddress": "0x04fa0d235c4abf4bcf4787af4cf447de572ef828",
+        "tokenCode": "UMA"
+      },
+      {
+        "contractAddress": "0x1f9840a85d5af5bf1d1762f925bdaddc4201f984",
+        "tokenCode": "UNI"
+      },
+      {
+        "contractAddress": "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48",
+        "tokenCode": "USDC"
+      },
+      {
+        "contractAddress": "0xdac17f958d2ee523a2206206994597c13d831ec7",
+        "tokenCode": "USDT"
+      },
+      {
+        "contractAddress": "0x3c4b6e6e1ea3d4863700d7f76b36b7f3d3f13e3d",
+        "tokenCode": "VGX"
+      },
+      {
+        "contractAddress": "0xF411903cbC70a74d22900a5DE66A2dda66507255",
+        "tokenCode": "vraerc"
+      },
+      {
+        "contractAddress": "0x163f8c2467924be0ae7b5347228cabf260318753",
+        "tokenCode": "wld"
+      },
+      {
+        "contractAddress": "0x4691937a7508860F876c9c0a2a617E7d9E945D4B",
+        "tokenCode": "wooerc"
+      },
+      {
+        "contractAddress": "0x0bc529c00C6401aEF6D220BE8C6Ea1667F6Ad93e",
+        "tokenCode": "yfi"
+      },
+      {
+        "contractAddress": "0xe41d2489571d322189246dafa5ebde1f4699f498",
+        "tokenCode": "ZRX"
+      }
+    ]
+  ],
+  [
+    "cardano",
+    [
+      {
+        "contractAddress": null,
+        "tokenCode": "ada"
+      }
+    ]
+  ],
+  [
+    "binance_smart_chain",
+    [
+      {
+        "contractAddress": "0x3EE2200Efb3400fAbB9AacF31297cBdD1d435D47",
+        "tokenCode": "adabsc"
+      },
+      {
+        "contractAddress": "0xAC51066d7bEC65Dc4589368da368b212745d63E8",
+        "tokenCode": "alicebsc"
+      },
+      {
+        "contractAddress": "0x8f0528ce5ef7b51152a59745befdd91d97091d2f",
+        "tokenCode": "alpaca"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "BNB"
+      },
+      {
+        "contractAddress": "0x0e09fabb73bd3ade0a17ecc321fd13a19e81ce82",
+        "tokenCode": "CAKE"
+      },
+      {
+        "contractAddress": "0xf9CeC8d50f6c8ad3Fb6dcCEC577e05aA32B224FE",
+        "tokenCode": "chrbsc"
+      },
+      {
+        "contractAddress": "0x67ee3Cb086F8a16f34beE3ca72FAD36F7Db929e2",
+        "tokenCode": "dodobsc"
+      },
+      {
+        "contractAddress": "0x2170ed0880ac9a755fd29b2688956bd959f933f8",
+        "tokenCode": "ETH"
+      },
+      {
+        "contractAddress": "0x0D8Ce2A99Bb6e3B7Db580eD848240e4a0F9aE153",
+        "tokenCode": "filbsc"
+      },
+      {
+        "contractAddress": "0xaff9084f2374585879e8b434c399e29e80cce635",
+        "tokenCode": "fluxbsc"
+      },
+      {
+        "contractAddress": "0xe4cc45bb5dbda06db6183e8bf016569f40497aa5",
+        "tokenCode": "GAL"
+      },
+      {
+        "contractAddress": "0x5f4Bde007Dc06b867f86EBFE4802e34A1fFEEd63",
+        "tokenCode": "highbsc"
+      },
+      {
+        "contractAddress": "0xa2B726B1145A4773F68593CF171187d8EBe4d495",
+        "tokenCode": "injbsc"
+      },
+      {
+        "contractAddress": "0x9678e42cebeb63f23197d726b29b1cb20d0064e5",
+        "tokenCode": "iotxbsc"
+      },
+      {
+        "contractAddress": "0x7bC75e291E656E8658D66Be1cc8154A3769A35Dd",
+        "tokenCode": "limebsc"
+      },
+      {
+        "contractAddress": "0xCC42724C6683B7E57334c4E856f4c9965ED682bD",
+        "tokenCode": "maticbsc"
+      },
+      {
+        "contractAddress": "0x9C65AB58d8d978DB963e63f2bfB7121627e3a739",
+        "tokenCode": "mdxbsc"
+      },
+      {
+        "contractAddress": "0x1Fa4a73a3F0133f0025378af00236f3aBDEE5D63",
+        "tokenCode": "nearbsc"
+      },
+      {
+        "contractAddress": "0x12BB890508c125661E03b09EC06E404bc9289040",
+        "tokenCode": "racabsc"
+      },
+      {
+        "contractAddress": "0xA64455a4553C9034236734FadDAddbb64aCE4Cc7",
+        "tokenCode": "santosbsc"
+      },
+      {
+        "contractAddress": "0xd41fdb03ba84762dd66a0af1a6c8540ff1ba5dfb",
+        "tokenCode": "sfpbsc"
+      },
+      {
+        "contractAddress": "0x4b0f1812e5df2a09796481ff14017e6005508003",
+        "tokenCode": "twtbsc"
+      },
+      {
+        "contractAddress": "0x8ac76a51cc950d9822d68b83fe1ad97b32cd580d",
+        "tokenCode": "USDC"
+      },
+      {
+        "contractAddress": "0x55d398326f99059ff775485246999027b3197955",
+        "tokenCode": "USDT"
+      },
+      {
+        "contractAddress": "0x88f1a5ae2a3bf98aeaf342d26b30a79438c9142e",
+        "tokenCode": "yfibsc"
+      },
+      {
+        "contractAddress": "0xb86abcb37c3a4b64f74f59301aff131a1becc787",
+        "tokenCode": "zilbsc"
+      }
+    ]
+  ],
+  [
+    "algorand",
+    [
+      {
+        "contractAddress": null,
+        "tokenCode": "algo"
+      },
+      {
+        "contractAddress": "31566704",
+        "tokenCode": "usdcalgo"
+      }
+    ]
+  ],
+  [
+    "arbitrum",
+    [
+      {
+        "contractAddress": "0x912CE59144191C1204E64559FE8253a0e49E6548",
+        "tokenCode": "arbarb"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "etharb"
+      },
+      {
+        "contractAddress": "0x539bdE0d7Dbd336b79148AA742883198BBF60342",
+        "tokenCode": "magicarb"
+      },
+      {
+        "contractAddress": "0xFd086bC7CD5C481DCC9C85ebE478A1C0b69FCbb9",
+        "tokenCode": "USDT"
+      }
+    ]
+  ],
+  [
+    "avalanche_(c-chain)",
+    [
+      {
+        "contractAddress": null,
+        "tokenCode": "AVAX"
+      },
+      {
+        "contractAddress": "0xB97EF9Ef8734C71904D8002F8b6Bc66Dd9c48a6E",
+        "tokenCode": "USDC"
+      },
+      {
+        "contractAddress": "0x9702230A8Ea53601f5cD2dc00fDBc13d4dF4A8c7",
+        "tokenCode": "usdtavaxc"
+      }
+    ]
+  ],
+  [
+    "bitcoin_cash",
+    [
+      {
+        "contractAddress": null,
+        "tokenCode": "BCH"
+      }
+    ]
+  ],
+  [
+    "base",
+    [
+      {
+        "contractAddress": "0xBC45647eA894030a4E9801Ec03479739FA2485F0",
+        "tokenCode": "benjibase"
+      },
+      {
+        "contractAddress": "0x532f27101965dd16442e59d40670faf5ebb142e4",
+        "tokenCode": "brettbase"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "ethbase"
+      },
+      {
+        "contractAddress": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
+        "tokenCode": "usdcbase"
+      }
+    ]
+  ],
+  [
+    "solana",
+    [
+      {
+        "contractAddress": "DezXAZ8z7PnrnRJjz3wXBoRgixCa6xjnB7YaB1pPB263",
+        "tokenCode": "bonksol"
+      },
+      {
+        "contractAddress": "EchesyfXePKdLtoiZSL8pBe8Myagyy8ZRqsACNCFGnvp",
+        "tokenCode": "fidasol"
+      },
+      {
+        "contractAddress": "7i5KKsX2weiTkry7jA4ZwSuXGhs5eJBEjY8vVxR4pfRx",
+        "tokenCode": "GMT"
+      },
+      {
+        "contractAddress": "JUPyiwrYJFskUPiHa7hkeR8VUtAeFoSYbKedZNsDvCN",
+        "tokenCode": "jupsol"
+      },
+      {
+        "contractAddress": "5z3EqYQo9HiCEs3R84RCDMu2n7anpDMxRhdK8PSWmrRC",
+        "tokenCode": "ponkesol"
+      },
+      {
+        "contractAddress": "4k3Dyjzvzp8eMZWUXbBCjEvwSkkk59S5iCNLY3QrkX6R",
+        "tokenCode": "RAY"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "SOL"
+      },
+      {
+        "contractAddress": "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
+        "tokenCode": "USDC"
+      },
+      {
+        "contractAddress": "Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB",
+        "tokenCode": "USDT"
+      },
+      {
+        "contractAddress": "EKpQGSJtjMFqKZ9KQanSqYXRcF8fBopzLHYxdM65zcjm",
+        "tokenCode": "wifsol"
+      }
+    ]
+  ],
+  [
+    "bitcoin_sv",
+    [
+      {
+        "contractAddress": null,
+        "tokenCode": "BSV"
+      }
+    ]
+  ],
+  [
+    "bitcoin",
+    [
+      {
+        "contractAddress": null,
+        "tokenCode": "BTC"
+      }
+    ]
+  ],
+  [
+    "tron",
+    [
+      {
+        "contractAddress": "TAFjULxiVgT4qWk6UZwjqwZXTSaGaqnVp4",
+        "tokenCode": "btt"
+      },
+      {
+        "contractAddress": "TCFLL5dx5ZJdKnWuesXxi1VPwjLVmWZZy9",
+        "tokenCode": "JST"
+      },
+      {
+        "contractAddress": "TSSMHYeV2uE9qYH95DqyoCuNCzEL1NvU3S",
+        "tokenCode": "SUN"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "TRX"
+      },
+      {
+        "contractAddress": "TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t",
+        "tokenCode": "USDT"
+      }
+    ]
+  ],
+  [
+    "polygon",
+    [
+      {
+        "contractAddress": "0x8f3Cf7ad23Cd3CaDbD9735AFf958023239c6A063",
+        "tokenCode": "daipolygon"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "MATIC"
+      },
+      {
+        "contractAddress": "0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359",
+        "tokenCode": "USDC"
+      },
+      {
+        "contractAddress": "0xc2132d05d31c914a87c6611c10748aeb04b58e8f",
+        "tokenCode": "USDT"
+      }
+    ]
+  ],
+  [
+    "dash",
+    [
+      {
+        "contractAddress": null,
+        "tokenCode": "DASH"
+      }
+    ]
+  ],
+  [
+    "digibyte",
+    [
+      {
+        "contractAddress": null,
+        "tokenCode": "DGB"
+      }
+    ]
+  ],
+  [
+    "doge",
+    [
+      {
+        "contractAddress": null,
+        "tokenCode": "DOGE"
+      }
+    ]
+  ],
+  [
+    "polkadot",
+    [
+      {
+        "contractAddress": null,
+        "tokenCode": "DOT"
+      }
+    ]
+  ],
+  [
+    "ethereum_classic",
+    [
+      {
+        "contractAddress": null,
+        "tokenCode": "ETC"
+      }
+    ]
+  ],
+  [
+    "optimism",
+    [
+      {
+        "contractAddress": null,
+        "tokenCode": "ETH"
+      },
+      {
+        "contractAddress": "0x4200000000000000000000000000000000000042",
+        "tokenCode": "OP"
+      },
+      {
+        "contractAddress": "0xdC6fF44d5d932Cbd77B52E5612Ba0529DC6226F1",
+        "tokenCode": "wldop"
+      }
+    ]
+  ],
+  [
+    "ftm",
+    [
+      {
+        "contractAddress": null,
+        "tokenCode": "FTM"
+      }
+    ]
+  ],
+  [
+    "hedera",
+    [
+      {
+        "contractAddress": null,
+        "tokenCode": "hbar"
+      }
+    ]
+  ],
+  [
+    "litecoin",
+    [
+      {
+        "contractAddress": null,
+        "tokenCode": "LTC"
+      }
+    ]
+  ],
+  [
+    "qtum",
+    [
+      {
+        "contractAddress": null,
+        "tokenCode": "QTUM"
+      }
+    ]
+  ],
+  [
+    "stellar",
+    [
+      {
+        "contractAddress": null,
+        "tokenCode": "XLM"
+      }
+    ]
+  ],
+  [
+    "monero",
+    [
+      {
+        "contractAddress": null,
+        "tokenCode": "XMR"
+      }
+    ]
+  ],
+  [
+    "ripple",
+    [
+      {
+        "contractAddress": null,
+        "tokenCode": "XRP"
+      }
+    ]
+  ],
+  [
+    "tezos",
+    [
+      {
+        "contractAddress": null,
+        "tokenCode": "XTZ"
+      }
+    ]
+  ],
+  [
+    "zcash",
+    [
+      {
+        "contractAddress": null,
+        "tokenCode": "ZEC"
+      }
+    ]
+  ]
+]

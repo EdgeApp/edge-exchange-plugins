@@ -2,6 +2,7 @@ import { gt, lt } from 'biggystring'
 import {
   asArray,
   asEither,
+  asNull,
   asNumber,
   asObject,
   asOptional,
@@ -21,21 +22,22 @@ import {
 } from 'edge-core-js/types'
 
 import {
+  ChainCodeTickerMap,
   checkInvalidCodes,
   checkWhitelistedMainnetCodes,
-  CurrencyCodeTranscriptionMap,
-  getCodesWithTranscription,
+  CurrencyPluginIdSwapChainCodeMap,
+  getChainAndTokenCodes,
   getMaxSwappable,
   InvalidCurrencyCodes,
   makeSwapPluginQuote,
   SwapOrder
 } from '../../util/swapHelpers'
 import { convertRequest, getAddress, memoType } from '../../util/utils'
-import { EdgeSwapRequestPlugin, StringMap } from '../types'
+import { EdgeSwapRequestPlugin } from '../types'
 
 const pluginId = 'changehero'
 
-const swapInfo: EdgeSwapInfo = {
+export const swapInfo: EdgeSwapInfo = {
   pluginId,
   isDex: false,
   displayName: 'ChangeHero',
@@ -46,75 +48,70 @@ const asInitOptions = asObject({
   apiKey: asString
 })
 
-const MAINNET_CODE_TRANSCRIPTION: StringMap = {
+export const MAINNET_CODE_TRANSCRIPTION: CurrencyPluginIdSwapChainCodeMap = {
   algorand: 'algorand',
   arbitrum: 'arbitrum',
   avalanche: 'avalanche_(c-chain)',
-  // axelar:
+  axelar: null,
   base: 'base',
-  binance: 'binance_dex',
+  binance: null,
   binancesmartchain: 'binance_smart_chain',
   bitcoin: 'bitcoin',
   bitcoincash: 'bitcoin_cash',
-  // bitcoingold:
+  bitcoingold: null,
   bitcoinsv: 'bitcoin_sv',
+  bobevm: null,
   cardano: 'cardano',
-  // celo:
-  // coreum:
-  // cosmoshub:
+  celo: null,
+  coreum: null,
+  cosmoshub: null,
   dash: 'dash',
   digibyte: 'digibyte',
   dogecoin: 'doge',
-  // eboost:
-  // eos:
+  eboost: null,
+  eos: null,
   ethereum: 'ethereum',
   ethereumclassic: 'ethereum_classic',
-  // ethereumpow:
+  ethereumpow: null,
   fantom: 'ftm',
-  // feathercoin:
-  // filecoin:
-  // filecoinfevm:
-  // fio:
-  // groestlcoin:
+  feathercoin: null,
+  filecoin: null,
+  filecoinfevm: null,
+  fio: null,
+  groestlcoin: null,
   hedera: 'hedera',
-  // liberland:
+  liberland: null,
   litecoin: 'litecoin',
   monero: 'monero',
   optimism: 'optimism',
-  // osmosis:
-  // piratechain:
+  osmosis: null,
+  piratechain: null,
   polkadot: 'polkadot',
   polygon: 'polygon',
-  // pulsechain:
+  pulsechain: null,
   qtum: 'qtum',
-  // ravencoin:
+  ravencoin: null,
   ripple: 'ripple',
-  // rsk:
-  // smartcash:
+  rsk: null,
+  smartcash: null,
   solana: 'solana',
   stellar: 'stellar',
-  // telos:
+  telos: null,
   tezos: 'tezos',
-  // thorchainrune:
-  // ton: 'ton', // This is the blockchain specified in the ChangeHero API but didn't work in testing
+  thorchainrune: null,
+  ton: null, // 'ton', This is the blockchain specified in the ChangeHero API but didn't work in testing
   tron: 'tron',
-  // ufo:
-  // vertcoin:
-  // wax:
-  zcash: 'zcash'
-  // zcoin:
-  // zksync:
-}
-
-const CURRENCY_CODE_TRANSCRIPTION: CurrencyCodeTranscriptionMap = {
-  polygon: { 'USDC.e': 'USDCE' }
+  ufo: null,
+  vertcoin: null,
+  wax: null,
+  zcash: 'zcash',
+  zcoin: null,
+  zksync: null
 }
 
 // See https://changehero.io/currencies for list of supported currencies
 const INVALID_CURRENCY_CODES: InvalidCurrencyCodes = {
-  from: {
-    optimism: ['VELO']
-  },
+  from: {},
   to: {
     zcash: ['ZEC'] // ChangeHero doesn't support sending to shielded addresses
   }
@@ -168,10 +165,15 @@ function checkReply(
   }
 }
 
+// Provider data
+let chainCodeTickerMap: ChainCodeTickerMap = new Map()
+let lastUpdated = 0
+const EXPIRATION = 1000 * 60 * 60 // 1 hour
+
 export function makeChangeHeroPlugin(
   opts: EdgeCorePluginOptions
 ): EdgeSwapPlugin {
-  const { io } = opts
+  const { io, log } = opts
   const { fetchCors = io.fetch } = io
   const { apiKey } = asInitOptions(opts.initOptions)
 
@@ -190,6 +192,39 @@ export function makeChangeHeroPlugin(
     return await response.json()
   }
 
+  async function fetchSupportedAssets(): Promise<void> {
+    if (lastUpdated > Date.now() - EXPIRATION) return
+
+    try {
+      const json = await call({
+        jsonrpc: '2.0',
+        id: 'one',
+        method: 'getCurrenciesFull',
+        params: {}
+      })
+
+      const assets = asChangeheroAssets(json)
+
+      const chaincodeArray = Object.values(MAINNET_CODE_TRANSCRIPTION)
+      const out: ChainCodeTickerMap = new Map()
+      for (const asset of assets.result) {
+        if (chaincodeArray.includes(asset.blockchain)) {
+          const tokenCodes = out.get(asset.blockchain) ?? []
+          tokenCodes.push({
+            tokenCode: asset.name,
+            contractAddress: asset.contractAddress
+          })
+          out.set(asset.blockchain, tokenCodes)
+        }
+      }
+
+      chainCodeTickerMap = out
+      lastUpdated = Date.now()
+    } catch (e) {
+      log.warn('ChangeHero: Error updating supported assets', e)
+    }
+  }
+
   async function getFixedQuote(
     request: EdgeSwapRequestPlugin
   ): Promise<SwapOrder> {
@@ -203,21 +238,22 @@ export function makeChangeHeroPlugin(
       toCurrencyCode,
       fromMainnetCode,
       toMainnetCode
-    } = getCodesWithTranscription(
+    } = await getChainAndTokenCodes(
       request,
-      MAINNET_CODE_TRANSCRIPTION,
-      CURRENCY_CODE_TRANSCRIPTION
+      swapInfo,
+      chainCodeTickerMap,
+      MAINNET_CODE_TRANSCRIPTION
     )
 
     const quoteAmount =
       request.quoteFor === 'from'
         ? await request.fromWallet.nativeToDenomination(
             request.nativeAmount,
-            fromCurrencyCode
+            request.fromCurrencyCode
           )
         : await request.toWallet.nativeToDenomination(
             request.nativeAmount,
-            toCurrencyCode
+            request.toCurrencyCode
           )
 
     const fixRate = {
@@ -240,19 +276,19 @@ export function makeChangeHeroPlugin(
     ] = asGetFixRateReply(fixedRateQuote).result
     const maxFromNative = await request.fromWallet.denominationToNative(
       maxFrom,
-      fromCurrencyCode
+      request.fromCurrencyCode
     )
     const maxToNative = await request.toWallet.denominationToNative(
       maxTo,
-      toCurrencyCode
+      request.toCurrencyCode
     )
     const minFromNative = await request.fromWallet.denominationToNative(
       minFrom,
-      fromCurrencyCode
+      request.fromCurrencyCode
     )
     const minToNative = await request.toWallet.denominationToNative(
       minTo,
-      toCurrencyCode
+      request.toCurrencyCode
     )
 
     if (request.quoteFor === 'from') {
@@ -314,11 +350,11 @@ export function makeChangeHeroPlugin(
     const quoteInfo = asCreateFixTransactionReply(sendReply).result
     const amountExpectedFromNative = await request.fromWallet.denominationToNative(
       `${quoteInfo.amountExpectedFrom.toString()}`,
-      fromCurrencyCode
+      request.fromCurrencyCode
     )
     const amountExpectedToNative = await request.toWallet.denominationToNative(
       `${quoteInfo.amountExpectedTo.toString()}`,
-      toCurrencyCode
+      request.toCurrencyCode
     )
 
     const memos: EdgeMemo[] =
@@ -380,6 +416,10 @@ export function makeChangeHeroPlugin(
     swapInfo,
     async fetchSwapQuote(req: EdgeSwapRequest): Promise<EdgeSwapQuote> {
       const request = convertRequest(req)
+
+      // Fetch and persist chaincode/tokencode maps from provider
+      await fetchSupportedAssets()
+
       checkInvalidCodes(INVALID_CURRENCY_CODES, request, swapInfo)
       checkWhitelistedMainnetCodes(
         MAINNET_CODE_TRANSCRIPTION,
@@ -395,3 +435,13 @@ export function makeChangeHeroPlugin(
 
   return out
 }
+
+const asChangeheroAssets = asObject({
+  result: asArray(
+    asObject({
+      name: asString,
+      blockchain: asString,
+      contractAddress: asEither(asString, asNull)
+    })
+  )
+})
