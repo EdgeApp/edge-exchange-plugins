@@ -130,7 +130,8 @@ export async function makeSwapPluginQuote(
     minReceiveAmount,
     networkFee: {
       currencyCode: fromWallet.currencyInfo.currencyCode,
-      nativeAmount
+      nativeAmount,
+      tokenId: null
     },
     pluginId: swapInfo.pluginId,
     request,

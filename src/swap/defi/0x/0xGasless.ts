@@ -213,6 +213,7 @@ export const make0xGaslessPlugin: EdgeCorePluginFactory = opts => {
             nativeAmount: swapNativeAmount,
             // There is no fee for a gasless swap
             networkFee: '0',
+            networkFees: [],
             ourReceiveAddresses: [],
             savedAction,
             signedTx: '', // Signing is done by the tx-relay server
@@ -235,7 +236,8 @@ export const make0xGaslessPlugin: EdgeCorePluginFactory = opts => {
         isEstimate: false,
         networkFee: {
           currencyCode: swapRequest.fromWallet.currencyInfo.currencyCode,
-          nativeAmount: '0' // There is no fee for a gasless swap
+          nativeAmount: '0', // There is no fee for a gasless swap
+          tokenId: null
         },
         pluginId: swapInfo.pluginId,
         request: swapRequest,

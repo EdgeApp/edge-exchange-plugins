@@ -326,6 +326,7 @@ class FakeCurrencyEngine {
       isSend: true,
       nativeAmount: total,
       networkFee: tokenSpend ? '0' : this.defaultSettings.networkFee,
+      networkFees: [],
       parentNetworkFee: tokenSpend
         ? this.defaultSettings.parentNetworkFee
         : undefined,
