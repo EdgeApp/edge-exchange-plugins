@@ -38,7 +38,12 @@ import {
   getAddress,
   memoType
 } from '../../util/utils'
-import { asRatesResponse, EdgeSwapRequestPlugin, RatesRespose } from '../types'
+import {
+  asRatesResponse,
+  EdgeSwapRequestPlugin,
+  RatesRespose,
+  StringMap
+} from '../types'
 
 const pluginId = 'exolix'
 
@@ -56,9 +61,11 @@ const asInitOptions = asObject({
 const MAX_USD_VALUE = '70000'
 const INVALID_CURRENCY_CODES: InvalidCurrencyCodes = {
   from: {},
-  to: {
-    zcash: ['ZEC']
-  }
+  to: {}
+}
+
+const addressTypeMap: StringMap = {
+  zcash: 'transparentAddress'
 }
 
 // See https://exolix.com/currencies for list of supported currencies
@@ -203,8 +210,14 @@ export function makeExolixPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
     }
 
     const [fromAddress, toAddress] = await Promise.all([
-      getAddress(request.fromWallet),
-      getAddress(request.toWallet)
+      getAddress(
+        request.fromWallet,
+        addressTypeMap[request.fromWallet.currencyInfo.pluginId]
+      ),
+      getAddress(
+        request.toWallet,
+        addressTypeMap[request.toWallet.currencyInfo.pluginId]
+      )
     ])
 
     const exchangeQuoteAmount =
