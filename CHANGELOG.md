@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 2.15.0 (2024-12-02)
+
 - added: (Exolix) Support Zcash buys
 - changed: Add dynamic whitelisting to changehero, changenow, letsexchange, and sideshift plugins
 - changed: Upgrade edge-core-js
