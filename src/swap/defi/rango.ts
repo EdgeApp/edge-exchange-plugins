@@ -74,7 +74,8 @@ const MAINNET_CODE_TRANSCRIPTION: StringMap = {
   // thorchainrune: 'THOR',
   // solana: 'SOLANA',
   // tron: 'TRON',
-  zksync: 'ZKSYNC'
+  zksync: 'ZKSYNC',
+  solana: 'SOLANA'
 }
 
 const RANGO_SERVERS_DEFAULT = ['https://api.rango.exchange']
@@ -85,17 +86,13 @@ const DEFAULT_SLIPPAGE = '5.0'
 
 interface Asset {
   blockchain: string
-  address: string | null
-  symbol: string
+  address: string
 }
 
-function assetToString(asset: Asset): string {
-  if (
-    !(asset.address == null) &&
-    asset.address !== PARENT_TOKEN_CONTRACT_ADDRESS
-  )
-    return `${asset.blockchain}.${asset.symbol}--${asset.address}`
-  else return `${asset.blockchain}.${asset.symbol}`
+export function assetToString(asset: Asset): string {
+  return `${asset.blockchain}${
+    asset.address === PARENT_TOKEN_CONTRACT_ADDRESS ? '' : '--' + asset.address
+  }`
 }
 
 const asInitOptions = asObject({
@@ -115,19 +112,6 @@ const asExchangeInfo = asObject({
       )
     })
   })
-})
-
-const asCompactToken = asObject({
-  // blockchain
-  b: asString,
-  // address
-  a: asOptional(asString),
-  // symbol
-  s: asString
-})
-
-const asCompactMetaResponse = asObject({
-  tokens: asArray(asCompactToken)
 })
 
 const asToken = asObject({
@@ -200,20 +184,19 @@ const asEvmTransaction = asObject({
   maxFeePerGas: asEither(asString, asNull)
 })
 
+const asSolanaTransaction = asObject({
+  type: asValue('SOLANA'),
+  serializedMessage: asEither(asArray(asNumber), asNull)
+})
+
 const asSwapResponse = asObject({
   resultType: asRoutingResultType,
   route: asEither(asSwapSimulationResult, asNull),
   error: asEither(asString, asNull),
-  tx: asEither(asEvmTransaction, asNull)
+  tx: asEither(asEvmTransaction, asSolanaTransaction, asNull)
 })
 
 type ExchangeInfo = ReturnType<typeof asExchangeInfo>
-
-type TokenSymbol = string
-
-const rangoTokens: {
-  [blockchain: string]: { [address: string]: TokenSymbol }
-} = {}
 
 let exchangeInfo: ExchangeInfo | undefined
 let exchangeInfoLastUpdate = 0
@@ -231,23 +214,6 @@ export function makeRangoPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
 
   let rangoServers: string[] = RANGO_SERVERS_DEFAULT
 
-  let params = makeQueryParams({
-    apiKey: rangoApiKey
-  })
-
-  Object.values(MAINNET_CODE_TRANSCRIPTION).forEach(
-    blockchain => (params += `&blockchains=${blockchain}`)
-  )
-
-  const metaRequest = fetchWaterfall(
-    fetchCors,
-    rangoServers,
-    `meta/compact?${params}`,
-    {
-      headers
-    }
-  )
-
   const fetchSwapQuoteInner = async (
     request: EdgeSwapRequestPlugin
   ): Promise<SwapOrder> => {
@@ -264,35 +230,6 @@ export function makeRangoPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
     }
 
     let ethNativeAmount = nativeAmount
-
-    if (Object.keys(rangoTokens).length === 0) {
-      await metaRequest
-        .then(async metaResponse => {
-          if (metaResponse.ok) {
-            return await metaResponse.json()
-          } else {
-            const text = await metaResponse.text()
-            throw new Error(text)
-          }
-        })
-        .then(meta => {
-          const { tokens } = asCompactMetaResponse(meta)
-          tokens.forEach(token => {
-            const tokenBlockchain = token.b
-            const tokenAddress = token.a
-            const tokenSymbol = token.s
-            if (rangoTokens[tokenBlockchain] === undefined) {
-              rangoTokens[tokenBlockchain] = {}
-            }
-            rangoTokens[tokenBlockchain][
-              tokenAddress ?? PARENT_TOKEN_CONTRACT_ADDRESS
-            ] = tokenSymbol
-          })
-        })
-        .catch(e => {
-          throw new Error(`Error fetching Rango meta ${String(e)}`)
-        })
-    }
 
     const fromToken =
       fromTokenId != null
@@ -338,15 +275,6 @@ export function makeRangoPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
       MAINNET_CODE_TRANSCRIPTION[toWallet.currencyInfo.pluginId]
 
     if (fromMainnetCode == null || toMainnetCode == null) {
-      throw new SwapCurrencyError(swapInfo, request)
-    }
-
-    const fromSymbol =
-      rangoTokens[fromMainnetCode]?.[fromContractAddress.toLowerCase()]
-    const toSymbol =
-      rangoTokens[toMainnetCode]?.[toContractAddress.toLowerCase()]
-
-    if (fromSymbol == null || toSymbol == null) {
       throw new SwapCurrencyError(swapInfo, request)
     }
 
@@ -398,13 +326,11 @@ export function makeRangoPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
       apiKey: rangoApiKey,
       from: assetToString({
         blockchain: fromMainnetCode,
-        address: fromContractAddress,
-        symbol: fromSymbol
+        address: fromContractAddress
       }),
       to: assetToString({
         blockchain: toMainnetCode,
-        address: toContractAddress,
-        symbol: toSymbol
+        address: toContractAddress
       }),
       fromAddress: fromAddress,
       toAddress: toAddress,
@@ -453,93 +379,155 @@ export function makeRangoPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
       )
     }
 
-    if (
-      route?.path == null ||
-      route.outputAmount === '' ||
-      tx == null ||
-      tx.txData == null
-    ) {
+    if (route?.path == null || route.outputAmount === '' || tx == null) {
       throw new Error('Rango could not proceed with the exchange')
     }
 
     const providers = route.path.map(p => p.swapper.title)
 
     let preTx: EdgeTransaction | undefined
-    if (tx.type === 'EVM' && tx.approveData != null && tx.approveTo != null) {
-      const approvalData = tx.approveData.replace('0x', '')
+    let spendInfo: EdgeSpendInfo
 
-      const spendInfo: EdgeSpendInfo = {
-        tokenId: null,
-        memos: [{ type: 'hex', value: approvalData }],
-        spendTargets: [
-          {
-            nativeAmount: '0',
-            publicAddress: fromContractAddress
-          }
-        ],
-        assetAction: {
-          assetActionType: 'tokenApproval'
-        },
-        savedAction: {
-          actionType: 'tokenApproval',
-          tokenApproved: {
-            pluginId: fromWallet.currencyInfo.pluginId,
-            tokenId: fromTokenId,
-            nativeAmount
+    switch (tx.type) {
+      case 'SOLANA': {
+        const solanaTransaction = asSolanaTransaction(tx)
+        if (solanaTransaction.serializedMessage === null) {
+          throw new SwapCurrencyError(swapInfo, request)
+        }
+        const SOLANA_PARENT_TOKEN_PROGRAM_ID =
+          '11111111111111111111111111111111'
+
+        spendInfo = {
+          tokenId: request.fromTokenId,
+          spendTargets: [
+            {
+              nativeAmount,
+              publicAddress:
+                fromContractAddress === PARENT_TOKEN_CONTRACT_ADDRESS
+                  ? SOLANA_PARENT_TOKEN_PROGRAM_ID
+                  : fromContractAddress
+            }
+          ],
+          otherParams: {
+            unsignedTx: Buffer.from(
+              solanaTransaction.serializedMessage
+            ).toString('base64')
           },
-          tokenContractAddress: fromContractAddress,
-          contractAddress: tx.approveTo
+          memos: [],
+          networkFeeOption: 'high',
+          assetAction: {
+            assetActionType: 'swap'
+          },
+          savedAction: {
+            actionType: 'swap',
+            swapInfo,
+            isEstimate: true,
+            toAsset: {
+              pluginId: toWallet.currencyInfo.pluginId,
+              tokenId: toTokenId,
+              nativeAmount: route.outputAmount
+            },
+            fromAsset: {
+              pluginId: fromWallet.currencyInfo.pluginId,
+              tokenId: fromTokenId,
+              nativeAmount: nativeAmount
+            },
+            payoutAddress: toAddress,
+            payoutWalletId: toWallet.id,
+            refundAddress: fromAddress
+          }
         }
+
+        break
       }
-      preTx = await request.fromWallet.makeSpend(spendInfo)
-    }
 
-    const customNetworkFee = {
-      gasLimit: tx.gasLimit != null ? hexToDecimal(tx.gasLimit) : undefined,
-      gasPrice:
-        tx.gasPrice != null ? div18(tx.gasPrice, '1000000000') : undefined,
-      maxFeePerGas: tx.maxFeePerGas ?? undefined,
-      maxPriorityFeePerGas: tx.maxPriorityFeePerGas ?? undefined
-    }
-
-    const networkFeeOption: EdgeSpendInfo['networkFeeOption'] =
-      customNetworkFee.gasLimit != null || customNetworkFee.gasPrice != null
-        ? 'custom'
-        : undefined
-
-    const value = tx.txData.replace('0x', '')
-    const spendInfo: EdgeSpendInfo = {
-      tokenId: request.fromTokenId,
-      memos: [{ type: 'hex', value }],
-      customNetworkFee,
-      spendTargets: [
-        {
-          memo: tx.txData,
-          nativeAmount: ethNativeAmount,
-          publicAddress: tx.txTo
+      default: {
+        const evmTransaction = asEvmTransaction(tx)
+        if (evmTransaction.txData == null) {
+          throw new Error('Rango could not proceed with the exchange')
         }
-      ],
-      networkFeeOption,
-      assetAction: {
-        assetActionType: 'swap'
-      },
-      savedAction: {
-        actionType: 'swap',
-        swapInfo,
-        isEstimate: true,
-        toAsset: {
-          pluginId: toWallet.currencyInfo.pluginId,
-          tokenId: toTokenId,
-          nativeAmount: route.outputAmount
-        },
-        fromAsset: {
-          pluginId: fromWallet.currencyInfo.pluginId,
-          tokenId: fromTokenId,
-          nativeAmount: nativeAmount
-        },
-        payoutAddress: toAddress,
-        payoutWalletId: toWallet.id,
-        refundAddress: fromAddress
+        const { approveData, approveTo } = evmTransaction
+        if (approveData != null && approveTo != null) {
+          const approvalData = approveData.replace('0x', '')
+
+          spendInfo = {
+            tokenId: null,
+            memos: [{ type: 'hex', value: approvalData }],
+            spendTargets: [
+              {
+                nativeAmount: '0',
+                publicAddress: fromContractAddress
+              }
+            ],
+            assetAction: {
+              assetActionType: 'tokenApproval'
+            },
+            savedAction: {
+              actionType: 'tokenApproval',
+              tokenApproved: {
+                pluginId: fromWallet.currencyInfo.pluginId,
+                tokenId: fromTokenId,
+                nativeAmount
+              },
+              tokenContractAddress: fromContractAddress,
+              contractAddress: approveTo
+            }
+          }
+          preTx = await request.fromWallet.makeSpend(spendInfo)
+        }
+        const customNetworkFee = {
+          gasLimit:
+            evmTransaction.gasLimit != null
+              ? hexToDecimal(evmTransaction.gasLimit)
+              : undefined,
+          gasPrice:
+            evmTransaction.gasPrice != null
+              ? div18(evmTransaction.gasPrice, '1000000000')
+              : undefined,
+          maxFeePerGas: evmTransaction.maxFeePerGas ?? undefined,
+          maxPriorityFeePerGas: evmTransaction.maxPriorityFeePerGas ?? undefined
+        }
+
+        const networkFeeOption: EdgeSpendInfo['networkFeeOption'] =
+          customNetworkFee.gasLimit != null || customNetworkFee.gasPrice != null
+            ? 'custom'
+            : undefined
+
+        const value = evmTransaction.txData.replace('0x', '')
+        spendInfo = {
+          tokenId: request.fromTokenId,
+          memos: [{ type: 'hex', value }],
+          customNetworkFee,
+          spendTargets: [
+            {
+              memo: evmTransaction.txData,
+              nativeAmount: ethNativeAmount,
+              publicAddress: evmTransaction.txTo
+            }
+          ],
+          networkFeeOption,
+          assetAction: {
+            assetActionType: 'swap'
+          },
+          savedAction: {
+            actionType: 'swap',
+            swapInfo,
+            isEstimate: true,
+            toAsset: {
+              pluginId: toWallet.currencyInfo.pluginId,
+              tokenId: toTokenId,
+              nativeAmount: route.outputAmount
+            },
+            fromAsset: {
+              pluginId: fromWallet.currencyInfo.pluginId,
+              tokenId: fromTokenId,
+              nativeAmount: nativeAmount
+            },
+            payoutAddress: toAddress,
+            payoutWalletId: toWallet.id,
+            refundAddress: fromAddress
+          }
+        }
       }
     }
 
