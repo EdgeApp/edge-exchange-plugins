@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- added: (Lifi) Add RSK
+- added: (SwapKit) Add Binance Smart Chain
+
 ## 2.15.0 (2024-12-02)
 
 - added: (Exolix) Support Zcash buys
