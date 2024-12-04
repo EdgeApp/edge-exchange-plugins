@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 2.15.1 (2024-12-04)
+
 - changed: Prevent Polygon USDC/USDC.e trading on CEX partners that don't support contract addresses
 
 ## 2.15.0 (2024-12-02)
