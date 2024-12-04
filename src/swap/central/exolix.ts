@@ -61,8 +61,12 @@ const asInitOptions = asObject({
 
 const MAX_USD_VALUE = '70000'
 const INVALID_CURRENCY_CODES: InvalidCurrencyCodes = {
-  from: {},
-  to: {}
+  from: {
+    polygon: ['USDC', 'USDC.e']
+  },
+  to: {
+    polygon: ['USDC', 'USDC.e']
+  }
 }
 
 const addressTypeMap: StringMap = {
