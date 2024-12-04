@@ -84,9 +84,11 @@ const asQuoteInfo = asObject({
 
 const INVALID_CURRENCY_CODES: InvalidCurrencyCodes = {
   from: {
-    digibyte: 'allCodes'
+    digibyte: 'allCodes',
+    polygon: ['USDC', 'USDC.e']
   },
   to: {
+    polygon: ['USDC', 'USDC.e'],
     zcash: ['ZEC'] // Godex doesn't support sending to unified addresses
   }
 }

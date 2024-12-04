@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- changed: Prevent Polygon USDC/USDC.e trading on CEX partners that don't support contract addresses
+
 ## 2.15.0 (2024-12-02)
 
 - added: (Exolix) Support Zcash buys
