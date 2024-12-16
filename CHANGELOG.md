@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+## 2.16.0 (2024-12-16)
+
+- added: (Rango) Add Solana support
 - added: (Lifi) Add RSK
 - added: (SwapKit) Add Binance Smart Chain
 
