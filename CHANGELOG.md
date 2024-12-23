@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- changed: (SwapKit) Use `data` provided by quote endpoint instead of encoding it locally
 - fixed: Incorrect date timestamp for 0xGasless transactions.
 
 ## 2.16.0 (2024-12-16)

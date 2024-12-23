@@ -3,6 +3,7 @@ import {
   asArray,
   asBoolean,
   asEither,
+  asMaybe,
   asNull,
   asNumber,
   asObject,
@@ -19,10 +20,8 @@ import {
   EdgeSwapQuote,
   EdgeSwapRequest,
   EdgeTransaction,
-  JsonObject,
   SwapCurrencyError
 } from 'edge-core-js/types'
-import { ethers } from 'ethers'
 
 import {
   checkInvalidCodes,
@@ -39,7 +38,6 @@ import {
   promiseWithTimeout
 } from '../../../util/utils'
 import { EdgeSwapRequestPlugin } from '../../types'
-import { abiMap } from '../abi/abiMap'
 import { getEvmApprovalData, getEvmTokenData } from '../defiUtils'
 import {
   AFFILIATE_FEE_BASIS_DEFAULT,
@@ -92,6 +90,11 @@ const asThorSwapRoute = asObject({
   // expectedOutputMaxSlippage: asString,
   // expectedOutputUSD: asString,
   // expectedOutputMaxSlippageUSD: asString,
+  transaction: asMaybe(
+    asObject({
+      data: asString
+    })
+  ),
   deadline: asOptional(asString)
 })
 
@@ -319,7 +322,13 @@ export function makeSwapKitPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
 
     if (thorSwap == null) throw new SwapCurrencyError(swapInfo, request)
 
-    const { providers, path, contractMethod, expectedOutput } = thorSwap
+    const {
+      providers,
+      path,
+      contractMethod,
+      expectedOutput,
+      transaction
+    } = thorSwap
 
     const calldata = asCalldata(thorSwap.calldata)
 
@@ -362,7 +371,6 @@ export function makeSwapKitPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
     log.warn(memo)
 
     const contractAddress = tcDirect ? router : thorSwap.contract
-    const calldataAny: any = thorSwap.calldata
     let ethNativeAmount = nativeAmount
     let publicAddress = thorAddress
     let approvalData
@@ -391,12 +399,7 @@ export function makeSwapKitPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
           if (contractAddress == null)
             throw new Error('Invalid null contractAddress')
 
-          memo = await getCalldataData(
-            fromWallet.currencyInfo.pluginId,
-            contractAddress,
-            contractMethod,
-            calldataAny
-          )
+          memo = asString(transaction?.data)
         }
 
         ethNativeAmount = '0'
@@ -527,74 +530,4 @@ export function makeSwapKitPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
     }
   }
   return out
-}
-
-const calldataOrder = {
-  TC_ROUTER_GENERIC: [
-    'tcRouter',
-    'tcVault',
-    'tcMemo',
-    'token',
-    'amount',
-    'router',
-    'data',
-    'deadline'
-  ],
-  TC_ROUTER_UNISWAP: [
-    'tcRouter',
-    'tcVault',
-    'tcMemo',
-    'token',
-    'amount',
-    'amountOutMin',
-    'deadline'
-  ],
-  TC_ROUTER_PANGOLIN: [
-    'tcRouter',
-    'tcVault',
-    'tcMemo',
-    'token',
-    'amount',
-    'amountOutMin',
-    'deadline'
-  ]
-}
-
-export const getCalldataData = async (
-  currencyPluginId: string,
-  contractAddress: string,
-  contractMethod: string,
-  calldata: JsonObject
-): Promise<string> => {
-  let abi, contractType
-  try {
-    const { type, data } = abiMap[currencyPluginId][
-      contractAddress.toLowerCase()
-    ]
-    if (type === 'INVALID') {
-      throw new Error(`Unsupported contract`)
-    }
-    abi = data
-    contractType = type
-  } catch (e: any) {
-    throw new Error(
-      `Could not find ABI for contract ${currencyPluginId}-${contractAddress}`
-    )
-  }
-
-  const contractParams = calldataOrder[contractType].map(key => calldata[key])
-
-  // initialize contract
-  const contract = new ethers.Contract(
-    contractAddress,
-    abi,
-    ethers.providers.getDefaultProvider()
-  )
-
-  // call the deposit method on the contract
-  const tx = await contract.populateTransaction[contractMethod](
-    ...contractParams
-  )
-  if (tx.data == null) throw new Error('No data in tx object')
-  return tx.data
 }
