@@ -116,6 +116,7 @@ const MAINNET_CODE_TRANSCRIPTION: CurrencyPluginIdSwapChainCodeMap = {
   smartcash: null,
   solana: 'SOL',
   stellar: 'XLM',
+  sui: 'SUI',
   telos: null,
   tezos: 'XTZ',
   thorchainrune: 'THORCHAIN',
