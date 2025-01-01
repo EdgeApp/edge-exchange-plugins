@@ -36,7 +36,7 @@ import {
   promiseWithTimeout
 } from '../../util/utils'
 import { asNumberString, EdgeSwapRequestPlugin, StringMap } from '../types'
-import { getEvmApprovalData } from './defiUtils'
+import { getEvmApprovalData, WEI_MULTIPLIER } from './defiUtils'
 
 const pluginId = 'lifi'
 const swapInfo: EdgeSwapInfo = {
@@ -404,7 +404,7 @@ export function makeLifiPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
         const transactionRequest = asTransactionRequest(transactionRequestRaw)
         const { data, gasLimit, gasPrice } = transactionRequest
         const gasPriceDecimal = hexToDecimal(gasPrice)
-        const gasPriceGwei = div18(gasPriceDecimal, '1000000000')
+        const gasPriceGwei = div18(gasPriceDecimal, WEI_MULTIPLIER)
 
         if (sendingToken) {
           const approvalData = await getEvmApprovalData({

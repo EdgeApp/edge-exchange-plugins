@@ -141,3 +141,5 @@ export const getEvmTokenData = async (params: {
   if (tx.data == null) throw new Error('No data in tx object')
   return tx.data
 }
+
+export const WEI_MULTIPLIER = '1000000000'
