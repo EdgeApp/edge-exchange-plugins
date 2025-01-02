@@ -86,7 +86,7 @@ const makeCosmosFees = (): SwapNetworkFees => {
 
 // https://api.zcx.com/trade/v1/info/chains
 // https://docs.unizen.io/api-get-started/utxo-assets-and-cosmos-swap/get-trade-v1-chainid-quote-cross-1
-const PLUGIN_ID_UNIZEN_MAP: {
+export const PLUGIN_ID_UNIZEN_MAP: {
   [pluginId: string]: {
     unizenId: number
     unizenName: string
@@ -315,7 +315,7 @@ export function makeUnizenPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
   return out
 }
 
-const makeSpendParams = (
+export const makeSpendParams = (
   request: EdgeSwapRequestPlugin,
   log: EdgeLog,
   fromChainId: number,
