@@ -207,7 +207,7 @@ export const make0xGaslessPlugin: EdgeCorePluginFactory = opts => {
             assetAction,
             blockHeight: 0,
             currencyCode: fromCurrencyCode,
-            date: Date.now(),
+            date: Date.now() / 1000,
             isSend: true,
             memos: [],
             nativeAmount: swapNativeAmount,
