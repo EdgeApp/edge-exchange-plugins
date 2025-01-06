@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- fixed: Incorrect date timestamp for 0xGasless transactions.
+
 ## 2.16.0 (2024-12-16)
 
 - added: (Rango) Add Solana support
