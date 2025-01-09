@@ -3,6 +3,7 @@
 ## Unreleased
 
 - added: Add Unizen DEX
+- changed: Upgrade Swapkit to v2 API
 
 ## 2.16.1 (2025-01-09)
 
