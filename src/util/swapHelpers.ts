@@ -149,7 +149,9 @@ export async function makeSwapPluginQuote(
       }
       tx.metadata = { ...(opts?.metadata ?? {}), ...tx.metadata }
       if (metadataNotes != null) {
-        tx.metadata.notes = `${metadataNotes}\n\n` + (tx.metadata.notes ?? '')
+        tx.metadata.notes =
+          metadataNotes +
+          (tx.metadata.notes != null ? `\n\n${tx.metadata.notes}` : '')
       }
 
       const signedTransaction = await fromWallet.signTx(tx)

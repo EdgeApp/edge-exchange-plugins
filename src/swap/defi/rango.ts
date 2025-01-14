@@ -38,6 +38,7 @@ import {
   promiseWithTimeout
 } from '../../util/utils'
 import { EdgeSwapRequestPlugin, StringMap } from '../types'
+import { WEI_MULTIPLIER } from './defiUtils'
 
 const swapInfo: EdgeSwapInfo = {
   pluginId: 'rango',
@@ -482,7 +483,7 @@ export function makeRangoPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
               : undefined,
           gasPrice:
             evmTransaction.gasPrice != null
-              ? div18(evmTransaction.gasPrice, '1000000000')
+              ? div18(evmTransaction.gasPrice, WEI_MULTIPLIER)
               : undefined,
           maxFeePerGas: evmTransaction.maxFeePerGas ?? undefined,
           maxPriorityFeePerGas: evmTransaction.maxPriorityFeePerGas ?? undefined

@@ -12,6 +12,7 @@ import { makeSwapuzPlugin } from './swap/central/swapuz'
 import { make0xGaslessPlugin } from './swap/defi/0x/0xGasless'
 import { makeCosmosIbcPlugin } from './swap/defi/cosmosIbc'
 import { makeLifiPlugin } from './swap/defi/lifi'
+import { makeUnizenPlugin } from './swap/defi/unizen'
 import { makeRangoPlugin } from './swap/defi/rango'
 import { makeMayaProtocolPlugin } from './swap/defi/thorchain/mayaprotocol'
 import { makeSwapKitPlugin } from './swap/defi/thorchain/swapkit'
@@ -40,6 +41,7 @@ const plugins = {
   swapkit: makeSwapKitPlugin,
   tombSwap: makeTombSwapPlugin,
   transfer: makeTransferPlugin,
+  unizen: makeUnizenPlugin,
   velodrome: makeVelodromePlugin,
   xrpdex,
   '0xgasless': make0xGaslessPlugin

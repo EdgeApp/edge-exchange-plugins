@@ -2111,6 +2111,11 @@
   resolved "https://registry.yarnpkg.com/@ungap/promise-all-settled/-/promise-all-settled-1.1.2.tgz#aa58042711d6e3275dd37dc597e5d31e8c290a44"
   integrity sha512-sL/cEvJWAnClXw0wHk85/2L0G6Sj8UB0Ctc1TEMbKSsmpRosqhwj9gWgFRZSrBr2f9tiXISwNhCPmlfqUqyb9Q==
 
+"@unizen-io/unizen-contract-addresses@^0.0.15":
+  version "0.0.15"
+  resolved "https://registry.yarnpkg.com/@unizen-io/unizen-contract-addresses/-/unizen-contract-addresses-0.0.15.tgz#b4f2029524d26f8b19e5663a8b8ca81e45b836c7"
+  integrity sha512-+CvUqwYZh8IkhdvmdYUAq9M2bb4U/MbazDrxLAdLtS1dMdj2EKtxm/2xtCt8XU3ChRjPeMxXWDR3QYwHFDdoDA==
+
 "@webassemblyjs/ast@1.11.6", "@webassemblyjs/ast@^1.11.5":
   version "1.11.6"
   resolved "https://registry.yarnpkg.com/@webassemblyjs/ast/-/ast-1.11.6.tgz#db046555d3c413f8966ca50a95176a0e2c642e24"

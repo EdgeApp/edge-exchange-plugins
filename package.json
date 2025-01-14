@@ -46,6 +46,7 @@
   },
   "dependencies": {
     "@cosmjs/encoding": "^0.32.2",
+    "@unizen-io/unizen-contract-addresses": "^0.0.15",
     "biggystring": "^4.2.3",
     "cleaners": "^0.3.13",
     "ethers": "^5.7.0",

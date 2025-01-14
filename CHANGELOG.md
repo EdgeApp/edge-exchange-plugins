@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- added: Add Unizen DEX
+
 ## 2.16.1 (2025-01-09)
 
 - changed: (SwapKit) Use `data` provided by quote endpoint instead of encoding it locally
