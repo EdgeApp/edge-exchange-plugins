@@ -69,8 +69,8 @@ const INVALID_CURRENCY_CODES: InvalidCurrencyCodes = {
 // Network names that don't match parent network currency code
 // See https://swapuz.com/ for list of supported currencies
 const MAINNET_CODE_TRANSCRIPTION: CurrencyPluginIdSwapChainCodeMap = {
-  arbitrum: 'ARBITRUM',
   algorand: 'ALGO',
+  arbitrum: 'ARBITRUM',
   avalanche: 'CCHAIN',
   axelar: null,
   base: 'BASE',
@@ -116,6 +116,7 @@ const MAINNET_CODE_TRANSCRIPTION: CurrencyPluginIdSwapChainCodeMap = {
   smartcash: null,
   solana: 'SOL',
   stellar: 'XLM',
+  sui: 'SUI',
   telos: null,
   tezos: 'XTZ',
   thorchainrune: 'THORCHAIN',

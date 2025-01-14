@@ -547,6 +547,7 @@ export type EdgeCurrencyPluginId =
   | 'smartcash'
   | 'solana'
   | 'stellar'
+  | 'sui'
   | 'telos'
   | 'tezos'
   | 'thorchainrune'
