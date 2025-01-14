@@ -1,10 +1,8 @@
-import { toFixed } from 'biggystring'
+import { gt, toFixed } from 'biggystring'
 import {
   asArray,
-  asBoolean,
   asEither,
   asMaybe,
-  asNull,
   asNumber,
   asObject,
   asOptional,
@@ -34,24 +32,19 @@ import {
   fetchInfo,
   fetchWaterfall,
   getAddress,
-  makeQueryParams,
   promiseWithTimeout
 } from '../../../util/utils'
 import { EdgeSwapRequestPlugin } from '../../types'
-import { getEvmApprovalData, getEvmTokenData } from '../defiUtils'
+import { getEvmApprovalData } from '../defiUtils'
 import {
   AFFILIATE_FEE_BASIS_DEFAULT,
-  asInboundAddresses,
   EVM_CURRENCY_CODES,
   EXCHANGE_INFO_UPDATE_FREQ_MS,
   EXPIRATION_MS,
   getGasLimit,
   INVALID_CURRENCY_CODES
 } from './common'
-import {
-  MAINNET_CODE_TRANSCRIPTION,
-  THORNODE_SERVERS_DEFAULT
-} from './thorchain'
+import { MAINNET_CODE_TRANSCRIPTION } from './thorchain'
 
 const pluginId = 'swapkit'
 const swapInfo: EdgeSwapInfo = {
@@ -66,40 +59,68 @@ type ThorSwapQuoteParams = {
   sellAsset: string
   buyAsset: string
   sellAmount: string
-  slippage: string // 5 = 5%
-  recipientAddress: string
-  senderAddress?: string
-  affiliateAddress: string
-  affiliateBasisPoints: string // '50' => 0.5%
+  slippage: number
+  sourceAddress: string
+  destinationAddress: string
+  affiliate: string
+  affiliateFee: number
+  referer?: string
+  includeTx: boolean
 } & {}
 
-const asCalldata = asObject({
-  tcMemo: asOptional(asString),
-  memo: asOptional(asString)
+const asEvmCleaner = asObject({
+  // to: asString,
+  // from: asString,
+  // gas: asString,
+  // gasPrice: asString,
+  // value: asString,
+  data: asString
+})
+
+const asCosmosCleaner = asObject({
+  memo: asString,
+  accountNumber: asNumber,
+  sequence: asNumber,
+  chainId: asString,
+  msgs: asArray(asObject({ typeUrl: asString, value: asUnknown })),
+  fee: asObject({
+    amount: asArray(
+      asObject({
+        denom: asString,
+        amount: asString
+      })
+    ),
+    gas: asString
+  })
 })
 
 const asThorSwapRoute = asObject({
-  contract: asEither(asString, asNull),
-  contractMethod: asEither(asString, asNull),
-  contractInfo: asOptional(asString),
-  complete: asBoolean,
-  path: asString,
+  // buyAsset: asString,
+  // destinationAddress: asString,
+  expectedBuyAmount: asString,
+  // expectedBuyAmountMaxSlippage: asString,
+  // fees,
+  // legs,
+  meta: asObject({
+    approvalAddress: asOptional(asString)
+  }),
   providers: asArray(asString),
-  calldata: asUnknown,
-  expectedOutput: asString,
-  // expectedOutputMaxSlippage: asString,
-  // expectedOutputUSD: asString,
-  // expectedOutputMaxSlippageUSD: asString,
-  transaction: asMaybe(
-    asObject({
-      data: asString
-    })
-  ),
-  deadline: asOptional(asString)
+  // sellAsset: asString,
+  // sellAmount: asString,
+  // sourceAddress: asString,
+  // totalSlippageBps: asNumber,
+  // warnings,
+  // estimatedTime,
+  expiration: asOptional(asString),
+  // inboundAddress: asOptional(asString),
+  targetAddress: asString,
+  tx: asOptional(asEither(asEvmCleaner, asCosmosCleaner)),
+  memo: asOptional(asString)
+  // txType
 })
 
 const asThorSwapQuoteResponse = asObject({
-  routes: asArray(asThorSwapRoute)
+  routes: asArray(asMaybe(asThorSwapRoute))
 })
 
 const asExchangeInfo = asObject({
@@ -107,9 +128,7 @@ const asExchangeInfo = asObject({
     plugins: asObject({
       swapkit: asObject({
         daVolatilitySpread: asOptional(asNumber),
-        affiliateFeeBasis: asOptional(asString),
-        thornodeServersWithPath: asOptional(asArray(asString)),
-        thorSwapServers: asOptional(asArray(asString))
+        affiliateFeeBasis: asOptional(asString)
       })
     })
   })
@@ -126,35 +145,20 @@ const asInitOptions = asObject({
 
 /** Max slippage for 5% for estimated quotes */
 const DA_VOLATILITY_SPREAD_DEFAULT = 0.05
-const THORSWAP_DEFAULT_SERVERS = ['https://api.thorswap.net/aggregator']
+const THORSWAP_DEFAULT_SERVERS = ['https://api.swapkit.dev']
 
 type ExchangeInfo = ReturnType<typeof asExchangeInfo>
 
 let exchangeInfo: ExchangeInfo | undefined
 let exchangeInfoLastUpdate: number = 0
 
-const tokenProxyMap: { [currencyPluginId: string]: string } = {
-  avalanche: '0x69ba883af416ff5501d54d5e27a1f497fbd97156',
-  binancesmartchain: '0x5505BE604dFA8A1ad402A71f8A357fba47F9bf5a',
-  ethereum: '0xf892fef9da200d9e84c9b0647ecff0f34633abe8'
-}
-
 export function makeSwapKitPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
   const { io, log } = opts
   const { fetchCors = io.fetch } = io
-  const {
-    appId,
-    affiliateFeeBasis,
-    ninerealmsClientId,
-    thorname,
-    thorswapApiKey,
-    thorswapXApiKey
-  } = asInitOptions(opts.initOptions)
-
-  const headers = {
-    'Content-Type': 'application/json',
-    'x-client-id': ninerealmsClientId
-  }
+  const { appId, thorname, thorswapApiKey, thorswapXApiKey } = asInitOptions(
+    opts.initOptions
+  )
+  let { affiliateFeeBasis } = asInitOptions(opts.initOptions)
 
   const thorswapHeaders = {
     'Content-Type': 'application/json',
@@ -186,8 +190,7 @@ export function makeSwapKitPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
     const isEstimate = true
 
     let daVolatilitySpread: number = DA_VOLATILITY_SPREAD_DEFAULT
-    let thornodeServersWithPath: string[] = THORNODE_SERVERS_DEFAULT
-    let thorswapServers: string[] = THORSWAP_DEFAULT_SERVERS
+    const thorswapServers: string[] = THORSWAP_DEFAULT_SERVERS
 
     checkInvalidCodes(INVALID_CURRENCY_CODES, request, swapInfo)
 
@@ -231,11 +234,9 @@ export function makeSwapKitPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
 
     if (exchangeInfo != null) {
       const { swapkit } = exchangeInfo.swap.plugins
+      affiliateFeeBasis = swapkit.affiliateFeeBasis ?? affiliateFeeBasis
       daVolatilitySpread =
         swapkit.daVolatilitySpread ?? DA_VOLATILITY_SPREAD_DEFAULT
-      thorswapServers = swapkit.thorSwapServers ?? THORSWAP_DEFAULT_SERVERS
-      thornodeServersWithPath =
-        swapkit.thornodeServersWithPath ?? thornodeServersWithPath
     }
 
     const volatilitySpreadFinal = daVolatilitySpread // Might add a likeKind spread later
@@ -260,40 +261,35 @@ export function makeSwapKitPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
         `${toMainnetCode}.${toCurrencyCode}` +
         (toTokenId != null ? `-0x${toTokenId}` : ''),
       sellAmount,
-      slippage: (volatilitySpreadFinal * 100).toString(),
-      recipientAddress: toAddress,
-      senderAddress: fromAddress,
-      affiliateAddress: thorname,
-      affiliateBasisPoints: affiliateFeeBasis
+      slippage: volatilitySpreadFinal * 100,
+      destinationAddress: toAddress,
+      sourceAddress: fromAddress,
+      includeTx: true,
+      referer: thorswapApiKey,
+      affiliate: thorname,
+      affiliateFee: parseInt(affiliateFeeBasis)
     }
     const sourceTokenContractAddress =
       fromTokenId != null ? `0x${fromTokenId}` : undefined
-    const queryParams = makeQueryParams(quoteParams)
-    const uri = `tokens/quote?${queryParams}`
+    const uri = `quote`
 
-    log.warn(uri)
+    const thorSwapResponse = await fetchWaterfall(
+      fetchCors,
+      thorswapServers,
+      uri,
+      {
+        method: 'POST',
+        headers: thorswapHeaders,
+        body: JSON.stringify(quoteParams)
+      }
+    )
 
-    const [iaResponse, thorSwapResponse] = await Promise.all([
-      fetchWaterfall(fetchCors, thornodeServersWithPath, 'inbound_addresses', {
-        headers
-      }),
-      fetchWaterfall(fetchCors, thorswapServers, uri, {
-        headers: thorswapHeaders
-      })
-    ])
-
-    if (!iaResponse.ok) {
-      const responseText = await iaResponse.text()
-      throw new Error(
-        `SwapKit could not fetch inbound_addresses: ${JSON.stringify(
-          responseText,
-          null,
-          2
-        )}`
-      )
-    }
     if (!thorSwapResponse.ok) {
       const responseText = await thorSwapResponse.text()
+      if (responseText.includes('No routes found for ')) {
+        log.warn('No routes found')
+        throw new SwapCurrencyError(swapInfo, request)
+      }
       throw new Error(
         `SwapKit could not get thorswap quote: ${JSON.stringify(
           responseText,
@@ -303,163 +299,113 @@ export function makeSwapKitPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
       )
     }
 
-    const iaJson = await iaResponse.json()
-    const inboundAddresses = asInboundAddresses(iaJson)
-
     const thorSwapJson = await thorSwapResponse.json()
     const thorSwapQuote = asThorSwapQuoteResponse(thorSwapJson)
 
-    // Check for supported chain and asset
-    const inAddressObject = inboundAddresses.find(
-      addrObj => !addrObj.halted && addrObj.chain === fromMainnetCode
+    const routes = thorSwapQuote.routes.filter(
+      (r: any): r is ReturnType<typeof asThorSwapRoute> => r != null
     )
-    if (inAddressObject == null) {
+
+    const thorSwap = routes
+      .sort((a, b) => (gt(a.expectedBuyAmount, b.expectedBuyAmount) ? -1 : 1))
+      .find(
+        route =>
+          // route.providers.length > 1 &&
+          route.providers.includes('THORCHAIN') ||
+          route.providers.includes('MAYACHAIN')
+      )
+
+    if (thorSwap == null) {
       throw new SwapCurrencyError(swapInfo, request)
     }
-    const { router, address: thorAddress } = inAddressObject
-    const { routes } = thorSwapQuote
-    const thorSwap = routes.find(route => route.providers.length > 1)
 
-    if (thorSwap == null) throw new SwapCurrencyError(swapInfo, request)
-
-    const {
-      providers,
-      path,
-      contractMethod,
-      expectedOutput,
-      transaction
-    } = thorSwap
-
-    const calldata = asCalldata(thorSwap.calldata)
-
-    const tcDirect = providers[0] === 'THORCHAIN'
+    const { expectedBuyAmount, providers, targetAddress, expiration } = thorSwap
 
     const toNativeAmount = toFixed(
-      await toWallet.denominationToNative(expectedOutput, toCurrencyCode),
+      await toWallet.denominationToNative(expectedBuyAmount, toCurrencyCode),
       0,
       0
     )
 
-    // let customNetworkFee
-    // let customNetworkFeeKey
-
-    // const customFeeTemplate = (fromWallet.currencyInfo.customFeeTemplate ??
-    //   [])[0]
-    // const fromCurrencyInfo = fromWallet.currencyInfo
-    // if (customFeeTemplate?.type === 'nativeAmount') {
-    //   customNetworkFee = inAssetGasRate
-    //   customNetworkFeeKey = customFeeTemplate.key
-    // } else if (fromCurrencyInfo.defaultSettings?.customFeeSettings != null) {
-    //   const customFeeSettings = asCustomFeeSettings(
-    //     fromCurrencyInfo.defaultSettings.customFeeSettings
-    //   )
-    //   // Only know about the key 'gasPrice'
-    //   const usesGasPrice = customFeeSettings.find(f => f === 'gasPrice')
-    //   if (usesGasPrice != null) {
-    //     customNetworkFee = inAssetGasRate
-    //     customNetworkFeeKey = 'gasPrice'
-    //   }
-    // }
-
-    // if (customNetworkFee == null || customNetworkFeeKey == null) {
-    //   throw new SwapCurrencyError(swapInfo, request)
-    // }
-
     let memoType: EdgeMemo['type'] = 'hex'
-    let memo = calldata.tcMemo ?? calldata.memo ?? ''
+    let memo = ''
 
-    log.warn(memo)
-
-    const contractAddress = tcDirect ? router : thorSwap.contract
-    let ethNativeAmount = nativeAmount
-    let publicAddress = thorAddress
+    const publicAddress = targetAddress
     let approvalData
+    let preTx: EdgeTransaction | undefined
 
-    if (EVM_CURRENCY_CODES[fromMainnetCode]) {
+    const evmTransaction = asMaybe(asEvmCleaner)(thorSwap.tx)
+    const cosmosTransaction = asMaybe(asCosmosCleaner)(thorSwap.tx)
+    if (evmTransaction != null) {
+      // EVM
       if (fromMainnetCode !== fromCurrencyCode) {
-        if (contractAddress == null)
-          throw new Error(`Missing router address for ${fromMainnetCode}`)
-        if (sourceTokenContractAddress == null)
+        if (sourceTokenContractAddress == null) {
           throw new Error(
             `Missing sourceTokenContractAddress for ${fromMainnetCode}`
           )
-        // Need to use ethers.js to craft a proper tx that calls Thorchain contract, then extract the data payload
-        // Token transactions send no ETH (or other EVM mainnet coin)
-        if (tcDirect) {
-          memo = await getEvmTokenData({
-            assetAddress: sourceTokenContractAddress,
-            amountToSwapWei: Number(nativeAmount),
-            contractAddress,
-            vaultAddress: thorAddress,
-            memo
-          })
-        } else {
-          if (contractMethod == null)
-            throw new Error('Invalid null contractMethod')
-          if (contractAddress == null)
-            throw new Error('Invalid null contractAddress')
-
-          memo = asString(transaction?.data)
         }
 
-        ethNativeAmount = '0'
-        publicAddress = contractAddress
+        memo = evmTransaction.data
+        const dexContractAddress = asString(thorSwap.meta.approvalAddress)
 
         // Check if token approval is required and return necessary data field
         approvalData = await getEvmApprovalData({
-          contractAddress: tokenProxyMap[fromWallet.currencyInfo.pluginId],
+          contractAddress: dexContractAddress,
           assetAddress: sourceTokenContractAddress,
           nativeAmount
         })
+        if (approvalData != null) {
+          if (sourceTokenContractAddress == null) {
+            throw new Error('Cannot approve token w/o contract address')
+          }
+          const spendInfo: EdgeSpendInfo = {
+            // Token approvals only spend the parent currency
+            tokenId: null,
+            memos: [{ type: 'hex', value: approvalData }],
+            spendTargets: [
+              {
+                nativeAmount: '0',
+                publicAddress: sourceTokenContractAddress
+              }
+            ],
+            assetAction: {
+              assetActionType: 'tokenApproval'
+            },
+            savedAction: {
+              actionType: 'tokenApproval',
+              tokenApproved: {
+                pluginId: fromWallet.currencyInfo.pluginId,
+                tokenId: fromTokenId,
+                nativeAmount
+              },
+              tokenContractAddress: sourceTokenContractAddress,
+              contractAddress: dexContractAddress
+            }
+          }
+          preTx = await request.fromWallet.makeSpend(spendInfo)
+        }
       } else {
         memo = Buffer.from(memo).toString('hex')
       }
       memo = memo.replace(/^0x/, '')
+    } else if (cosmosTransaction != null) {
+      // COSMOS
+      // We can add cosmos support later
+      throw new SwapCurrencyError(swapInfo, request)
     } else {
+      // UTXO
       // Cannot yet do tokens on non-EVM chains
-      memoType = 'text'
       if (fromMainnetCode !== fromCurrencyCode) {
         throw new SwapCurrencyError(swapInfo, request)
       }
-    }
-
-    let preTx: EdgeTransaction | undefined
-    if (approvalData != null) {
-      if (sourceTokenContractAddress == null) {
-        throw new Error('Cannot approve token w/o contract address')
-      }
-      const spendInfo: EdgeSpendInfo = {
-        // Token approvals only spend the parent currency
-        tokenId: null,
-        memos: [{ type: 'hex', value: approvalData }],
-        spendTargets: [
-          {
-            nativeAmount: '0',
-            publicAddress: sourceTokenContractAddress
-          }
-        ],
-        assetAction: {
-          assetActionType: 'tokenApproval'
-        },
-        savedAction: {
-          actionType: 'tokenApproval',
-          tokenApproved: {
-            pluginId: fromWallet.currencyInfo.pluginId,
-            tokenId: fromTokenId,
-            nativeAmount
-          },
-          tokenContractAddress: sourceTokenContractAddress,
-          contractAddress: tokenProxyMap[fromWallet.currencyInfo.pluginId]
-        }
-      }
-      preTx = await request.fromWallet.makeSpend(spendInfo)
+      memoType = 'text'
     }
 
     const spendInfo: EdgeSpendInfo = {
       tokenId: request.fromTokenId,
       spendTargets: [
         {
-          nativeAmount: ethNativeAmount,
+          nativeAmount,
           publicAddress
         }
       ],
@@ -479,7 +425,7 @@ export function makeSwapKitPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
         fromAsset: {
           pluginId: request.fromWallet.currencyInfo.pluginId,
           tokenId: request.fromTokenId,
-          nativeAmount: ethNativeAmount
+          nativeAmount
         },
         payoutAddress: toAddress,
         payoutWalletId: toWallet.id,
@@ -505,14 +451,19 @@ export function makeSwapKitPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
     }
 
     const providersStr = providers.join(' -> ')
-    const notes = `DEX Providers: ${providersStr}\nPath: ${path}`
+    const notes = `DEX Providers: ${providersStr}`
+
+    const expirationMs =
+      expiration != null
+        ? parseInt(`${expiration}000`) // expiration provided as seconds
+        : Date.now() + EXPIRATION_MS
 
     return {
       request,
       spendInfo,
       swapInfo,
       fromNativeAmount: nativeAmount,
-      expirationDate: new Date(Date.now() + EXPIRATION_MS),
+      expirationDate: new Date(expirationMs),
       preTx,
       metadataNotes: notes
     }
