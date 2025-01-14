@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 2.17.0 (2025-01-13)
+
 - added: Add Unizen DEX
 - added: Add SUI unique IDs
 - changed: Upgrade Swapkit to v2 API
