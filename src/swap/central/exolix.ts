@@ -70,6 +70,7 @@ const INVALID_CURRENCY_CODES: InvalidCurrencyCodes = {
 }
 
 const addressTypeMap: StringMap = {
+  digibyte: 'publicAddress',
   zcash: 'transparentAddress'
 }
 
