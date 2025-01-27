@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- changed: (Exolix) Use S-address for Digibyte swaps
+
 ## 2.17.0 (2025-01-13)
 
 - added: Add Unizen DEX
