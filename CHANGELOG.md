@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 2.17.1 (2025-01-27)
+
 - changed: (Exolix) Use S-address for Digibyte swaps
 
 ## 2.17.0 (2025-01-13)
