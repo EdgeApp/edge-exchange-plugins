@@ -148,7 +148,7 @@ export const make0xGaslessPlugin: EdgeCorePluginFactory = opts => {
             signature: tradeSignature
           }
 
-          const apiSwapSubmition = await api.gaslessSwapSubmit(chainId, {
+          const apiSwapSubmission = await api.gaslessSwapSubmit(chainId, {
             ...(approvalData !== undefined ? { approval: approvalData } : {}),
             trade: tradeData
           })
@@ -159,7 +159,7 @@ export const make0xGaslessPlugin: EdgeCorePluginFactory = opts => {
             await snooze(500)
             apiSwapStatus = await api.gaslessSwapStatus(
               chainId,
-              apiSwapSubmition.tradeHash
+              apiSwapSubmission.tradeHash
             )
           } while (apiSwapStatus.status === 'pending')
 
@@ -170,7 +170,7 @@ export const make0xGaslessPlugin: EdgeCorePluginFactory = opts => {
           const assetAction: EdgeAssetAction = {
             assetActionType: 'swap'
           }
-          const orderId = apiSwapSubmition.tradeHash
+          const orderId = apiSwapSubmission.tradeHash
 
           const savedAction: EdgeTxAction = {
             actionType: 'swap',
