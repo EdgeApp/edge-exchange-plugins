@@ -3,6 +3,7 @@
 ## Unreleased
 
 - added: Added Base network support to Thorchain plugin.
+- fixed: Fixed 0xGasless plugin orderId.
 
 ## 2.17.1 (2025-01-27)
 

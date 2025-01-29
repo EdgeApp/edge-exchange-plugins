@@ -161,7 +161,21 @@ export const make0xGaslessPlugin: EdgeCorePluginFactory = opts => {
               chainId,
               apiSwapSubmission.tradeHash
             )
-          } while (apiSwapStatus.status === 'pending')
+            if (
+              apiSwapStatus.status === 'succeeded' &&
+              apiSwapStatus.transactions.length > 1
+            ) {
+              throw new Error(
+                `Swap failed: Unexpected multiple transactions for 'succeeded' status: ${apiSwapStatus.transactions.length}`
+              )
+            }
+          } while (
+            apiSwapStatus.status === 'pending' ||
+            // If status==='submitted' there may be multiple transaction
+            // competing. Wait until there's only one (status is 'succeeded'
+            // or 'confirmed')
+            apiSwapStatus.transactions.length !== 1
+          )
 
           if (apiSwapStatus.status === 'failed') {
             throw new Error(`Swap failed: ${apiSwapStatus.reason ?? 'unknown'}`)
@@ -170,7 +184,8 @@ export const make0xGaslessPlugin: EdgeCorePluginFactory = opts => {
           const assetAction: EdgeAssetAction = {
             assetActionType: 'swap'
           }
-          const orderId = apiSwapSubmission.tradeHash
+
+          const orderId: string = apiSwapStatus.transactions[0].hash
 
           const savedAction: EdgeTxAction = {
             actionType: 'swap',
