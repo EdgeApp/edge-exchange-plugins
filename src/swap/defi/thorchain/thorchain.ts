@@ -27,6 +27,7 @@ const infoServer: {
 // Network names that don't match parent network currency code
 export const MAINNET_CODE_TRANSCRIPTION: { [cc: string]: string } = {
   avalanche: 'AVAX',
+  base: 'BASE',
   binancechain: 'BNB',
   binancesmartchain: 'BSC',
   bitcoin: 'BTC',

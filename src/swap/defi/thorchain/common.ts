@@ -133,6 +133,7 @@ export const INVALID_CURRENCY_CODES: InvalidCurrencyCodes = {
 export const EVM_CURRENCY_CODES: { [cc: string]: boolean } = {
   ARB: true,
   AVAX: true,
+  BASE: true,
   BCH: false,
   BNB: false,
   BSC: true,
