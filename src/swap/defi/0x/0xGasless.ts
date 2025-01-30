@@ -148,7 +148,7 @@ export const make0xGaslessPlugin: EdgeCorePluginFactory = opts => {
             signature: tradeSignature
           }
 
-          const apiSwapSubmition = await api.gaslessSwapSubmit(chainId, {
+          const apiSwapSubmission = await api.gaslessSwapSubmit(chainId, {
             ...(approvalData !== undefined ? { approval: approvalData } : {}),
             trade: tradeData
           })
@@ -159,9 +159,23 @@ export const make0xGaslessPlugin: EdgeCorePluginFactory = opts => {
             await snooze(500)
             apiSwapStatus = await api.gaslessSwapStatus(
               chainId,
-              apiSwapSubmition.tradeHash
+              apiSwapSubmission.tradeHash
             )
-          } while (apiSwapStatus.status === 'pending')
+            if (
+              apiSwapStatus.status === 'succeeded' &&
+              apiSwapStatus.transactions.length > 1
+            ) {
+              throw new Error(
+                `Swap failed: Unexpected multiple transactions for 'succeeded' status: ${apiSwapStatus.transactions.length}`
+              )
+            }
+          } while (
+            apiSwapStatus.status === 'pending' ||
+            // If status==='submitted' there may be multiple transaction
+            // competing. Wait until there's only one (status is 'succeeded'
+            // or 'confirmed')
+            apiSwapStatus.transactions.length !== 1
+          )
 
           if (apiSwapStatus.status === 'failed') {
             throw new Error(`Swap failed: ${apiSwapStatus.reason ?? 'unknown'}`)
@@ -170,7 +184,8 @@ export const make0xGaslessPlugin: EdgeCorePluginFactory = opts => {
           const assetAction: EdgeAssetAction = {
             assetActionType: 'swap'
           }
-          const orderId = apiSwapSubmition.tradeHash
+
+          const orderId: string = apiSwapStatus.transactions[0].hash
 
           const savedAction: EdgeTxAction = {
             actionType: 'swap',
@@ -182,6 +197,7 @@ export const make0xGaslessPlugin: EdgeCorePluginFactory = opts => {
               nativeAmount: swapNativeAmount
             },
             orderId,
+            orderUri: `https://explorer.0xprotocol.org/trades/${orderId}`,
             // The payout address is the same as the fromWalletAddress because
             // the swap service only supports swaps of the same network and
             // account/address.
