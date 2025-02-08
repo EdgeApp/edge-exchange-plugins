@@ -127,17 +127,24 @@ export const getEvmTokenData = async (params: {
   // Dummy gasPrice that we won't actually use
   const gasPrice = ethers.BigNumber.from('50')
 
+  // Calculate expiry timestamp (current time + 60 minutes in seconds)
+  const currentTimeSeconds = Math.floor(Date.now() / 1000)
+  const expiryTimeSeconds = currentTimeSeconds + 60 * 60 // 60 minutes in seconds
+
   // setup contract params
   const contractParams: any[] = [
     vaultAddress,
     getEvmCheckSumAddress(assetAddress),
     amountToSwapWei.toFixed(),
     memo,
+    expiryTimeSeconds,
     { gasPrice }
   ]
 
-  // call the deposit method on the thorchain router.
-  const tx = await contract.populateTransaction.deposit(...contractParams)
+  // call the depositWithExpiry method on the thorchain router.
+  const tx = await contract.populateTransaction.depositWithExpiry(
+    ...contractParams
+  )
   if (tx.data == null) throw new Error('No data in tx object')
   return tx.data
 }
