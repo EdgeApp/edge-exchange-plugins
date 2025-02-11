@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 2.17.2 (2025-02-10)
+
 - fixed: (SwapKit) UTXO swap memo handling
 
 ## 2.17.1 (2025-01-27)
