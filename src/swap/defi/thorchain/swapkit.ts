@@ -394,10 +394,15 @@ export function makeSwapKitPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
       throw new SwapCurrencyError(swapInfo, request)
     } else {
       // UTXO
-      // Cannot yet do tokens on non-EVM chains
-      if (fromMainnetCode !== fromCurrencyCode) {
+      if (
+        // Cannot yet do tokens on non-EVM chains
+        fromMainnetCode !== fromCurrencyCode ||
+        // Require memo existence for UTXO chains
+        thorSwap.memo == null
+      ) {
         throw new SwapCurrencyError(swapInfo, request)
       }
+      memo = thorSwap.memo
       memoType = 'text'
     }
 
