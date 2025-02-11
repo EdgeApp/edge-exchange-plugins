@@ -4,8 +4,11 @@
 
 - added: Added Base network support to Thorchain plugin.
 - added: Added orderUri to 0xGasless plugin EdgeTxAction metadata.
-- fixed: (SwapKit) UTXO swap memo handling
 - fixed: Fixed 0xGasless plugin orderId.
+
+## 2.17.2 (2025-02-10)
+
+- fixed: (SwapKit) UTXO swap memo handling
 
 ## 2.17.1 (2025-01-27)
 
