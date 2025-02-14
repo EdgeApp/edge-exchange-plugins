@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 2.18.0 (2025-02-14)
+
 - added: Added Base network support to Thorchain plugin.
 - added: Added orderUri to 0xGasless plugin EdgeTxAction metadata.
 - changed: Use `depositWithExpiry` contract call for EVM swaps on Thorchain
