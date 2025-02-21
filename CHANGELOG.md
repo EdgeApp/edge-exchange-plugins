@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- fixed: (Thorchain) Use `depositWithExpiry` function for every EVM swap
+
 ## 2.18.0 (2025-02-14)
 
 - added: Added Base network support to Thorchain plugin.
