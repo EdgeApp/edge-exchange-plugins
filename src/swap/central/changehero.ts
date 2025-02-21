@@ -64,7 +64,7 @@ export const MAINNET_CODE_TRANSCRIPTION: CurrencyPluginIdSwapChainCodeMap = {
   cardano: 'cardano',
   celo: null,
   coreum: null,
-  cosmoshub: null,
+  cosmoshub: 'cosmos',
   dash: 'dash',
   digibyte: 'digibyte',
   dogecoin: 'doge',
@@ -100,7 +100,7 @@ export const MAINNET_CODE_TRANSCRIPTION: CurrencyPluginIdSwapChainCodeMap = {
   telos: null,
   tezos: 'tezos',
   thorchainrune: null,
-  ton: null, // 'ton', This is the blockchain specified in the ChangeHero API but didn't work in testing
+  ton: 'ton',
   tron: 'tron',
   ufo: null,
   vertcoin: null,
