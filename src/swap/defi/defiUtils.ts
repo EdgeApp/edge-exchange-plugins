@@ -99,7 +99,7 @@ export const getEvmApprovalData = async (params: {
   return approveTx.data != null ? approveTx.data.replace(/^0x/, '') : undefined
 }
 
-export const getEvmTokenData = async (params: {
+export const getDepositWithExpiryData = async (params: {
   memo: string
   // usersSendingAddress: string,
   assetAddress: string

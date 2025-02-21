@@ -44,7 +44,7 @@ import {
   QueryParams
 } from '../../../util/utils'
 import { EdgeSwapRequestPlugin, MakeTxParams } from '../../types'
-import { getEvmApprovalData, getEvmTokenData } from '../defiUtils'
+import { getDepositWithExpiryData,getEvmApprovalData } from '../defiUtils'
 
 export const EXPIRATION_MS = 1000 * 60
 export const EXCHANGE_INFO_UPDATE_FREQ_MS = 60000
@@ -570,29 +570,25 @@ export function makeThorchainBasedPlugin(
     }
 
     if (EVM_CURRENCY_CODES[fromMainnetCode]) {
+      if (router == null)
+        throw new Error(`Missing router address for ${fromMainnetCode}`)
+      if (thorAddress == null) {
+        throw new Error('Invalid vault address')
+      }
+
       memoType = 'hex'
+      let assetAddress = '0x0000000000000000000000000000000000000000' // mainnet
+      publicAddress = router
+
       if (fromTokenId != null) {
-        if (router == null)
-          throw new Error(`Missing router address for ${fromMainnetCode}`)
         if (sourceTokenContractAddress == null)
           throw new Error(
             `Missing sourceTokenContractAddress for ${fromMainnetCode}`
           )
-        // Need to use ethers.js to craft a proper tx that calls Thorchain contract, then extract the data payload
-        if (thorAddress == null) {
-          throw new Error('Invalid vault address')
-        }
-        memo = await getEvmTokenData({
-          assetAddress: sourceTokenContractAddress,
-          amountToSwapWei: Number(fromNativeAmount),
-          contractAddress: router,
-          vaultAddress: thorAddress,
-          memo
-        })
+        assetAddress = sourceTokenContractAddress
 
         // Token transactions send no ETH (or other EVM mainnet coin)
         ethNativeAmount = '0'
-        publicAddress = router
 
         // Check if token approval is required and return necessary data field
         approvalData = await getEvmApprovalData({
@@ -600,9 +596,16 @@ export function makeThorchainBasedPlugin(
           assetAddress: sourceTokenContractAddress,
           nativeAmount: fromNativeAmount
         })
-      } else {
-        memo = Buffer.from(memo).toString('hex')
       }
+
+      // Need to use ethers.js to craft a proper tx that calls Thorchain contract, then extract the data payload
+      memo = await getDepositWithExpiryData({
+        assetAddress,
+        amountToSwapWei: Number(fromNativeAmount),
+        contractAddress: router,
+        vaultAddress: thorAddress,
+        memo
+      })
       memo = memo.replace(/^0x/, '')
     } else if (fromWallet.currencyInfo.pluginId === 'thorchainrune') {
       const makeTxParams: MakeTxParams = {
