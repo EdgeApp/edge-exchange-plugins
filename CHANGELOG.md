@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 2.18.1 (2025-02-24)
+
 - fixed: (Thorchain) Use `depositWithExpiry` function for every EVM swap
 
 ## 2.18.0 (2025-02-14)
