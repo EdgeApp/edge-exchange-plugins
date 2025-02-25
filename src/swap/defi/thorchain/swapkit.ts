@@ -345,7 +345,6 @@ export function makeSwapKitPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
           )
         }
 
-        memo = evmTransaction.data
         const dexContractAddress = asString(thorSwap.meta.approvalAddress)
 
         // Check if token approval is required and return necessary data field
@@ -355,9 +354,6 @@ export function makeSwapKitPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
           nativeAmount
         })
         if (approvalData != null) {
-          if (sourceTokenContractAddress == null) {
-            throw new Error('Cannot approve token w/o contract address')
-          }
           const spendInfo: EdgeSpendInfo = {
             // Token approvals only spend the parent currency
             tokenId: null,
@@ -384,10 +380,8 @@ export function makeSwapKitPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
           }
           preTx = await request.fromWallet.makeSpend(spendInfo)
         }
-      } else {
-        memo = Buffer.from(memo).toString('hex')
       }
-      memo = memo.replace(/^0x/, '')
+      memo = evmTransaction.data.replace(/^0x/, '')
     } else if (cosmosTransaction != null) {
       // COSMOS
       // We can add cosmos support later
