@@ -65,25 +65,6 @@ export const hexToString = (hex: string): string => {
 }
 
 /**
- * Converts a human readable currency code to hexadecimal.
- * If the currency has 3 characters (XRP, EUR, USD...) then return immediately this currency code.
- * If the currency has more than 3 characters, then encode it to the XRP ledger format.
- * Example: USDM will become 5553444D00000000000000000000000000000000
- *
- * @param currencyCode The currency code to potentially encode to the XRP ledger format.
- * @returns A {@link string}
- */
-const convertCurrencyCodeToHex = (currencyCode: string): string => {
-  if (currencyCode.length > 3) {
-    return Buffer.from(currencyCode, 'ascii')
-      .toString('hex')
-      .toUpperCase()
-      .padEnd(NON_STANDARD_CODE_LENGTH, '0')
-  }
-  return currencyCode
-}
-
-/**
  * Helper to correctly display the currency code if its length is more than 3.
  * Example: 5553444D00000000000000000000000000000000 will become USDM
  *
@@ -104,10 +85,6 @@ export const getBookOffers = async (
   { taker_gets, taker_pays, ...rest }: BookOffersRequest,
   { client, showLogs }: MethodOptions
 ): Promise<BookOffersResponse> => {
-  // Convert currencies to hex if needed
-  taker_gets.currency = convertCurrencyCodeToHex(taker_gets.currency)
-  taker_pays.currency = convertCurrencyCodeToHex(taker_pays.currency)
-
   // Send the request
   const response = await client.request({
     taker_gets,
