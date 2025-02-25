@@ -1,7 +1,7 @@
 import { assert } from 'chai'
 import { describe, it } from 'mocha'
 
-import { getVolatilitySpread } from '../src/swap/defi/thorchain/common'
+import { getVolatilitySpread } from '../src/swap/defi/thorchain/thorchainCommon'
 
 describe(`getVolatilitySpread`, function () {
   it('bitcoin source', function () {

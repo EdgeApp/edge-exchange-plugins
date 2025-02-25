@@ -4,7 +4,7 @@ import {
   EdgeSwapPlugin
 } from 'edge-core-js/types'
 
-import { ExchangeInfo, makeThorchainBasedPlugin } from './common'
+import { ExchangeInfo, makeThorchainBasedPlugin } from './thorchainCommon'
 
 const swapInfo: EdgeSwapInfo = {
   pluginId: 'mayaprotocol',

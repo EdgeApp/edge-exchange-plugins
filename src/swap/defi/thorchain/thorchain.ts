@@ -4,7 +4,11 @@ import {
   EdgeSwapPlugin
 } from 'edge-core-js/types'
 
-import { asInitOptions, ExchangeInfo, makeThorchainBasedPlugin } from './common'
+import {
+  asInitOptions,
+  ExchangeInfo,
+  makeThorchainBasedPlugin
+} from './thorchainCommon'
 
 const swapInfo: EdgeSwapInfo = {
   pluginId: 'thorchain',
