@@ -197,7 +197,7 @@ export const make0xGaslessPlugin: EdgeCorePluginFactory = opts => {
               nativeAmount: swapNativeAmount
             },
             orderId,
-            orderUri: `https://explorer.0xprotocol.org/trades/${orderId}`,
+            orderUri: `https://explorer.0xprotocol.org/trades/{{TXID}}`,
             // The payout address is the same as the fromWalletAddress because
             // the swap service only supports swaps of the same network and
             // account/address.

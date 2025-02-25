@@ -16,7 +16,7 @@ const swapInfo: EdgeSwapInfo = {
   displayName: 'Thorchain',
   supportEmail: 'support@edge.app'
 }
-const orderUri = 'https://track.ninerealms.com/'
+const orderUri = 'https://track.ninerealms.com/{{TXID}}'
 
 const MIDGARD_SERVERS_DEFAULT = ['https://midgard.thorchain.info']
 export const THORNODE_SERVERS_DEFAULT = [

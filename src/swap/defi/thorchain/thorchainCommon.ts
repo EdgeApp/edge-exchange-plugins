@@ -641,7 +641,6 @@ export function makeThorchainBasedPlugin(
       }
 
       return {
-        addTxidToOrderUri: true,
         canBePartial: false, // Partial quotes are disabled for now
         maxFulfillmentSeconds,
         request,
@@ -736,7 +735,6 @@ export function makeThorchainBasedPlugin(
     }
 
     return {
-      addTxidToOrderUri: true,
       canBePartial: false, // Partial quotes are disabled for now
       maxFulfillmentSeconds,
       request,

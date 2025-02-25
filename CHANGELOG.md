@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- changed: Dex `orderUris` no longer include hard-coded `txIds`, and instead include a
+  '{{TXID}}' tag to be replaced by the caller
+
 ## 2.18.2 (2025-02-28)
 
 - fixed: (SwapKit) Fix EVM memo handling

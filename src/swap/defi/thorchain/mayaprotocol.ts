@@ -12,7 +12,7 @@ const swapInfo: EdgeSwapInfo = {
   displayName: 'Maya Protocol',
   supportEmail: 'support@edge.app'
 }
-const orderUri = 'https://www.mayascan.org/tx/'
+const orderUri = 'https://www.mayascan.org/tx/{{TXID}}'
 
 const MIDGARD_SERVERS_DEFAULT = ['https://midgard.mayachain.info']
 const THORNODE_SERVERS_DEFAULT = ['https://mayanode.mayachain.info/mayachain']
