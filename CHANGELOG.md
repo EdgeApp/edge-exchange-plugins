@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## 2.18.2 (2025-02-28)
+
+- fixed: (SwapKit) Fix EVM memo handling
+
 ## 2.18.1 (2025-02-24)
 
 - fixed: (Thorchain) Use `depositWithExpiry` function for every EVM swap

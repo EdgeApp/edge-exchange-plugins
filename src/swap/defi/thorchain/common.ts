@@ -44,7 +44,7 @@ import {
   QueryParams
 } from '../../../util/utils'
 import { EdgeSwapRequestPlugin, MakeTxParams } from '../../types'
-import { getDepositWithExpiryData,getEvmApprovalData } from '../defiUtils'
+import { getDepositWithExpiryData, getEvmApprovalData } from '../defiUtils'
 
 export const EXPIRATION_MS = 1000 * 60
 export const EXCHANGE_INFO_UPDATE_FREQ_MS = 60000
