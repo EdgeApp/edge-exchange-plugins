@@ -46,7 +46,6 @@ interface SwapOrderMakeTx {
 type SwapOrderInner = SwapOrderMakeTx | SwapOrderSpendInfo
 
 export type SwapOrder = SwapOrderInner & {
-  addTxidToOrderUri?: boolean
   canBePartial?: boolean
   expirationDate?: Date
   fromNativeAmount: string
@@ -62,7 +61,6 @@ export async function makeSwapPluginQuote(
   order: SwapOrder
 ): Promise<EdgeSwapQuote> {
   const {
-    addTxidToOrderUri = false,
     canBePartial,
     expirationDate,
     fromNativeAmount,
@@ -158,15 +156,6 @@ export async function makeSwapPluginQuote(
       const broadcastedTransaction = await fromWallet.broadcastTx(
         signedTransaction
       )
-      const savedAction = signedTransaction.savedAction
-      if (
-        addTxidToOrderUri &&
-        savedAction != null &&
-        'orderUri' in savedAction
-      ) {
-        if (savedAction.orderUri != null)
-          savedAction.orderUri = `${savedAction.orderUri}${tx.txid}`
-      }
 
       if (quoteId == null && swapInfo.isDex === true) {
         quoteId = tx.txid
@@ -180,7 +169,7 @@ export async function makeSwapPluginQuote(
         signedTransaction.tokenId != null &&
         signedTransaction.parentNetworkFee != null &&
         signedTransaction.assetAction != null &&
-        savedAction != null
+        signedTransaction.savedAction != null
       ) {
         // Only tag the network fee if any of the following is true:
         // 1. Not a DEX transaction
@@ -200,7 +189,7 @@ export async function makeSwapPluginQuote(
             txid: signedTransaction.txid,
             tokenId: null,
             assetAction: { assetActionType },
-            savedAction
+            savedAction: signedTransaction.savedAction
           })
         }
       }

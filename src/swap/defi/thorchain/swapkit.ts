@@ -36,6 +36,7 @@ import {
 } from '../../../util/utils'
 import { EdgeSwapRequestPlugin } from '../../types'
 import { getEvmApprovalData } from '../defiUtils'
+import { MAINNET_CODE_TRANSCRIPTION } from './thorchain'
 import {
   AFFILIATE_FEE_BASIS_DEFAULT,
   EVM_CURRENCY_CODES,
@@ -43,8 +44,7 @@ import {
   EXPIRATION_MS,
   getGasLimit,
   INVALID_CURRENCY_CODES
-} from './common'
-import { MAINNET_CODE_TRANSCRIPTION } from './thorchain'
+} from './thorchainCommon'
 
 const pluginId = 'swapkit'
 const swapInfo: EdgeSwapInfo = {
