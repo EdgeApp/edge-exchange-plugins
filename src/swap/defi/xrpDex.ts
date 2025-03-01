@@ -21,6 +21,7 @@ import {
 } from '../../util/utils'
 import { EdgeSwapRequestPlugin, MakeTxParams } from '../types'
 import { getBuyQuote, getSellQuote } from './xrp/xrpDexHelpers'
+import { asXrpNetworkLocation } from './xrp/xrpDexTypes'
 
 const asInitOptions = asObject({
   appId: asOptional(asString, 'edge')
@@ -95,12 +96,25 @@ const fetchSwapQuoteInner = async (
   const rippleServers: string[] = RIPPLE_SERVERS_DEFAULT
   const volatilitySpread: number = VOLATILITY_SPREAD_DEFAULT
 
-  const fromIssuer = fromTokenId != null ? fromTokenId.split('-')[1] : undefined
-  const toIssuer = toTokenId != null ? toTokenId.split('-')[1] : undefined
-  const fromCurrency =
-    fromTokenId != null ? fromTokenId.split('-')[0] : fromCurrencyCode
-  const toCurrency =
-    toTokenId != null ? toTokenId.split('-')[0] : toCurrencyCode
+  let fromIssuer: string | undefined
+  let fromCurrency: string = fromWallet.currencyInfo.currencyCode
+  if (fromTokenId != null) {
+    const fromToken = fromWallet.currencyConfig.allTokens[fromTokenId]
+    const fromTokenNetworkLocation = asXrpNetworkLocation(
+      fromToken.networkLocation
+    )
+    fromIssuer = fromTokenNetworkLocation.issuer
+    fromCurrency = fromTokenNetworkLocation.currency
+  }
+
+  let toIssuer: string | undefined
+  let toCurrency: string = toWallet.currencyInfo.currencyCode
+  if (toTokenId != null) {
+    const toToken = toWallet.currencyConfig.allTokens[toTokenId]
+    const toTokenNetworkLocation = asXrpNetworkLocation(toToken.networkLocation)
+    toIssuer = toTokenNetworkLocation.issuer
+    toCurrency = toTokenNetworkLocation.currency
+  }
 
   // Grab addresses:
   const toAddress = await getAddress(toWallet)

@@ -1,3 +1,4 @@
+import { asObject, asString } from 'cleaners'
 import { Client, Wallet } from 'xrpl'
 
 /**
@@ -29,3 +30,8 @@ export interface BookOfferCurrency {
   currency: string
   issuer?: string
 }
+
+export const asXrpNetworkLocation = asObject({
+  currency: asString,
+  issuer: asString
+})
