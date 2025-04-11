@@ -21,6 +21,7 @@ import {
   EdgeSwapRequest,
   EdgeTransaction,
   EdgeTxActionSwap,
+  JsonObject,
   SwapBelowLimitError,
   SwapCurrencyError
 } from 'edge-core-js/types'
@@ -222,6 +223,8 @@ const asQuoteSwap = asObject({
   // outbound_delay_blocks: asNumber, // 114,
   // outbound_delay_seconds: asNumber, // 684,
   recommended_min_amount_in: asString, // "1440032",
+  recommended_gas_rate: asOptional(asString), // "4"
+  gas_rate_units: asOptional(asString), // "satsperbyte"
   router: asOptional(asString), // "0xD37BbE5744D730a1d98d8DC97c42F0Ca46aD7146",
   // slippage_bps: asNumber, // 92,
   // streaming_slippage_bps: asNumber, // 5,
@@ -273,6 +276,8 @@ interface CalcSwapResponse {
   thorAddress?: string
   router?: string
   memo: string
+  recommendedGasRate?: string
+  gasRateUnits?: string
 }
 
 interface ThorchainOpts {
@@ -541,7 +546,9 @@ export function makeThorchainBasedPlugin(
       maxFulfillmentSeconds,
       toNativeAmount,
       router,
-      thorAddress
+      thorAddress,
+      recommendedGasRate,
+      gasRateUnits
     } = calcResponse
     let { memo } = calcResponse
 
@@ -716,6 +723,54 @@ export function makeThorchainBasedPlugin(
       savedAction,
       otherParams: {
         outputSort: 'targets'
+      }
+    }
+
+    // Apply recommended gas rate if available
+    if (recommendedGasRate == null) {
+      log.warn(
+        `Recommended gas rate not available for ${fromWallet.currencyInfo.pluginId}`
+      )
+    } else {
+      let customNetworkFee: JsonObject | undefined
+
+      // Convert gas rate based on plugin and units
+      const pluginId = fromWallet.currencyInfo.pluginId
+      switch (pluginId) {
+        case 'bitcoin':
+        case 'bitcoincash':
+        case 'litecoin':
+        case 'dogecoin':
+        case 'dash':
+          if (gasRateUnits === 'satsperbyte') {
+            customNetworkFee = { satPerByte: recommendedGasRate }
+          }
+          break
+        case 'ethereum':
+        case 'ethereum-pos':
+        case 'optimism':
+        case 'arbitrum':
+        case 'base':
+        case 'avalanche':
+        case 'binancesmartchain':
+        case 'fantom':
+          if (gasRateUnits === 'gwei') {
+            customNetworkFee = { gasPrice: recommendedGasRate }
+          }
+          break
+        default:
+          log.warn(`Gas rate units not available for ${pluginId}`)
+      }
+
+      if (customNetworkFee != null) {
+        log(
+          `Using recommended network fee: ${JSON.stringify(customNetworkFee)}`
+        )
+        spendInfo.networkFeeOption = 'custom'
+        spendInfo.customNetworkFee = {
+          ...spendInfo.customNetworkFee,
+          ...customNetworkFee
+        }
       }
     }
 
@@ -914,6 +969,12 @@ const calcSwapFrom = async ({
     ? preMemo
     : preMemo.replace(':0/', `:${toThorAmountWithSpread}/`)
 
+  log(
+    `recommendedGasRate: ${
+      bestQuote.recommended_gas_rate ?? 'not provided'
+    }, gasRateUnits: ${bestQuote.gas_rate_units ?? 'not provided'}`
+  )
+
   return {
     // canBePartial,
     fromNativeAmount,
@@ -923,7 +984,9 @@ const calcSwapFrom = async ({
     toExchangeAmount,
     memo,
     router,
-    thorAddress
+    thorAddress,
+    recommendedGasRate: bestQuote.recommended_gas_rate,
+    gasRateUnits: bestQuote.gas_rate_units
   }
 }
 
@@ -1054,6 +1117,12 @@ const calcSwapTo = async ({
     ? preMemo
     : preMemo.replace(':0/', `:${requestedToThorAmount}/`)
 
+  log(
+    `recommendedGasRate: ${
+      bestQuote.recommended_gas_rate ?? 'not provided'
+    }, gasRateUnits: ${bestQuote.gas_rate_units ?? 'not provided'}`
+  )
+
   return {
     // canBePartial,
     fromNativeAmount,
@@ -1063,7 +1132,9 @@ const calcSwapTo = async ({
     maxFulfillmentSeconds,
     memo,
     router,
-    thorAddress
+    thorAddress,
+    recommendedGasRate: bestQuote.recommended_gas_rate,
+    gasRateUnits: bestQuote.gas_rate_units
   }
 }
 

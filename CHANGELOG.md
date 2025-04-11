@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- changed: Use recommended gas rate for thorchain/maya swaps
+
 ## 2.19.0 (2025-02-28)
 
 - changed: Dex `orderUris` no longer include hard-coded `txIds`, and instead include a '{{TXID}}' tag to be replaced by the caller
