@@ -63,8 +63,16 @@ const INVALID_CURRENCY_CODES: InvalidCurrencyCodes = {
   }
 }
 
-// Network names that don't match parent network currency code
-// See https://changenow.io/currencies for list of supported currencies
+/**
+ * Network names that don't match parent network currency code.
+ * See https://changenow.io/currencies for list of supported currencies.
+ *
+ * Use this command to list currencies supported:
+ *
+ * ```sh
+ * curl 'https://api.changenow.io/v2/exchange/currencies?active=true&isFiat=false'
+ * ```
+ */
 export const MAINNET_CODE_TRANSCRIPTION: CurrencyPluginIdSwapChainCodeMap = {
   algorand: 'algo',
   arbitrum: 'arbitrum',
@@ -103,6 +111,7 @@ export const MAINNET_CODE_TRANSCRIPTION: CurrencyPluginIdSwapChainCodeMap = {
   optimism: 'op',
   osmosis: 'osmo',
   piratechain: null,
+  pivx: 'pivx',
   polkadot: 'dot',
   polygon: 'matic',
   pulsechain: 'pulse',
