@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 2.20.0 (2025-04-14)
+
 - changed: Use recommended gas rate for thorchain/maya swaps
 
 ## 2.19.0 (2025-02-28)
