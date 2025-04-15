@@ -36,6 +36,10 @@ export const make0xGaslessPlugin: EdgeCorePluginFactory = opts => {
   return {
     swapInfo,
     fetchSwapQuote: async (swapRequest): Promise<EdgeSwapQuote> => {
+      if (swapRequest.quoteFor === 'to') {
+        throw new Error('To quotes not supported in Gasless v2 API')
+      }
+
       // The fromWallet and toWallet must be of the same because the swap
       // service only supports swaps of the same network and for the same
       // account/address.
@@ -71,36 +75,36 @@ export const make0xGaslessPlugin: EdgeCorePluginFactory = opts => {
         tokenId: swapRequest.fromTokenId
       })
 
-      // Amount request parameter/field name to use in the quote request
-      const amountField =
-        swapRequest.quoteFor === 'to' ? 'buyAmount' : 'sellAmount'
-
       // Get quote from ZeroXApi
       const chainId = api.getChainIdFromPluginId(
         swapRequest.fromWallet.currencyInfo.pluginId
       )
+
+      // Convert fee percentage to basis points (e.g., 0.01 -> 100 bps for 1%)
+      const swapFeeBps = Math.round(initOptions.feePercentage * 10000)
+
       const apiSwapQuote = await api.gaslessSwapQuote(chainId, {
-        [amountField]: swapNativeAmount,
-        acceptedTypes: 'metatransaction_v2',
+        sellAmount: swapNativeAmount, // v2 only supports sellAmount
         buyToken: toTokenAddress ?? NATIVE_TOKEN_ADDRESS,
         checkApproval: true,
-        feeRecipient: initOptions.feeReceiveAddress,
-        feeSellTokenPercentage: initOptions.feePercentage,
-        feeType: 'volume',
         sellToken: fromTokenAddress ?? NATIVE_TOKEN_ADDRESS,
-        takerAddress: fromWalletAddress
+        taker: fromWalletAddress,
+        swapFeeBps,
+        swapFeeRecipient: initOptions.feeReceiveAddress,
+        swapFeeToken: fromTokenAddress ?? NATIVE_TOKEN_ADDRESS,
+        tradeSurplusRecipient: initOptions.feeReceiveAddress
       })
 
-      if (!apiSwapQuote.liquidityAvailable)
+      if (!apiSwapQuote.liquidityAvailable) {
         throw new Error('No liquidity available')
+      }
 
-      // The plugin only supports gasless swaps, so if approval is required
-      // it must be gasless.
+      // Check if allowance is required and gasless approval is not available
       if (
-        // eslint-disable-next-line @typescript-eslint/prefer-optional-chain
-        apiSwapQuote.approval != null &&
-        apiSwapQuote.approval.isRequired &&
-        !apiSwapQuote.approval.isGaslessAvailable
+        // Allowance is required
+        apiSwapQuote.issues?.allowance != null &&
+        // Gasless approval is not available
+        apiSwapQuote.approval == null
       ) {
         throw new Error('Approval is required but gasless is not available')
       }
@@ -110,17 +114,7 @@ export const make0xGaslessPlugin: EdgeCorePluginFactory = opts => {
           opts?: EdgeSwapApproveOptions
         ): Promise<EdgeSwapResult> => {
           let approvalData: GaslessSwapSubmitRequest['approval']
-          if (
-            // eslint-disable-next-line @typescript-eslint/prefer-optional-chain
-            apiSwapQuote.approval != null &&
-            apiSwapQuote.approval.isRequired
-          ) {
-            // Assert that that approval is gasless, otherwise it would have
-            // been caught above, so this case should be unreachable.
-            if (!apiSwapQuote.approval.isGaslessAvailable) {
-              throw new Error('Unreachable non-gasless approval condition')
-            }
-
+          if (apiSwapQuote.approval != null) {
             const approvalTypeData = JSON.stringify(
               apiSwapQuote.approval.eip712
             )
