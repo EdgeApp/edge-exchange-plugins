@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- changed: Upgrade to v2 API for 0x Gasless swaps
+
 ## 2.20.0 (2025-04-14)
 
 - changed: Use recommended gas rate for thorchain/maya swaps

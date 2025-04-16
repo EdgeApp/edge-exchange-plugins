@@ -36,7 +36,7 @@ export const asErrorResponse = asJSON(
 )
 
 // -----------------------------------------------------------------------------
-// Gasless API
+// Gasless API v2
 // -----------------------------------------------------------------------------
 
 //
@@ -45,108 +45,74 @@ export const asErrorResponse = asJSON(
 
 export interface GaslessSwapQuoteRequest {
   /**
+   * The chain ID of the network.
+   */
+  chainId: number
+
+  /**
    * The contract address of the token being bought. Use
    * `0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee` for native token.
    */
   buyToken: string
 
   /**
-   * The contract address of token being sold. On Ethereum mainnet, it is
-   * restricted to the list of tokens [here](https://api.0x.org/tx-relay/v1/swap/supported-tokens)
-   * (Set `0x-chain-id` to `1`).
+   * The contract address of token being sold.
    */
   sellToken: string
 
   /**
-   * The amount of `buyToken` to buy. Can only be present if `sellAmount` is not
-   * present.
+   * The amount of `sellToken` to sell. In v2, buyAmount is deprecated in favor of
+   * purely sellAmount for more deterministic behavior.
    */
-  buyAmount?: string
-
-  /**
-   * The amount of `sellToken` to sell. Can only be present if `buyAmount` is not
-   * present.
-   */
-  sellAmount?: string
+  sellAmount: string
 
   /**
    * The address of the taker.
    */
-  takerAddress: string
+  taker: string
+
+  /**
+   * [optional] The maximum amount of slippage acceptable to the user in basis points.
+   * For example, setting `slippageBps` to 100 means 1% slippage allowed.
+   */
+  slippageBps?: number
+
+  /**
+   * [optional] The maximum amount of price impact acceptable to the user in basis points.
+   * For example, setting `priceImpactBps` to 100 means 1% price impact allowed.
+   */
+  priceImpactBps?: number
+
+  /**
+   * [optional] The integrator fee in basis points. For example, setting `swapFeeBps` to 10
+   * means 0.1% of the `swapFeeToken` would be charged as fee for the integrator.
+   */
+  swapFeeBps?: number
+
+  /**
+   * [optional] The address the integrator fee would be transferred to.
+   */
+  swapFeeRecipient?: string
+
+  /**
+   * [optional] The token to charge the fee in. If not specified, defaults to sellToken.
+   */
+  swapFeeToken?: string
+
+  /**
+   * [optional] The address that receives any trade surplus.
+   */
+  tradeSurplusRecipient?: string
 
   /**
    * [optional] Comma delimited string of the types of order the caller is
    * willing to receive.
-   *
-   * Currently, `metatransaction_v2` and `otc` are supported and allowed. More
-   * details about order types are covered in [/quote documentation](https://0x.org/docs/tx-relay-api/api-references/get-tx-relay-v1-swap-quote).
-   *
-   * This is useful if the caller only wants to receive types the caller
-   * specifies. If not provided, it means the caller accepts any types whose
-   * default value is currently set to `metatransaction_v2` and `otc`.
    */
-  acceptedTypes?: 'metatransaction_v2' | 'otc'
-
-  /**
-   * [optional] The maximum amount of slippage acceptable to the user; any
-   * slippage beyond that specified will cause the transaction to revert on
-   * chain. Default is 1% and minimal value allowed is 0.1%. The value of the
-   * field is on scale of 1. For example, setting `slippagePercentage` to set to
-   * `0.01` means 1% slippage allowed.
-   */
-  slippagePercentage?: string
-
-  /**
-   * [optional] The maximum amount of price impact acceptable to the user; Any
-   * price impact beyond that specified will cause the endpoint to return error
-   * if the endpoint is able to calculate the price impact. The value of the
-   * field is on scale of 1. For example, setting `priceImpactProtectionPercentage`
-   * to set to `0.01` means 1% price impact allowed.
-   *
-   * This is an opt-in feature, the default value of `1.0` will disable the
-   * feature. When it is set to 1.0 (100%) it means that every transaction is
-   * allowed to pass.
-   *
-   * Price impact calculation includes fees and could be unavailable. Read more
-   * about price impact at [0x documentation](https://docs.0x.org/0x-swap-api/advanced-topics/price-impact-protection).
-   */
-  priceImpactProtectionPercentage?: string
-
-  /**
-   * [optional] The type of integrator fee to charge. The allowed value is
-   * `volume`.
-   *
-   * Currently, the endpoint does not support integrator fees if the order type
-   * `otc` is chosen due to better pricing. Callers can opt-out of `otc` by
-   * explicitly passing in `acceptedTypes` query param without `otc`. `otc` order
-   * would, however, potentially improve the pricing the endpoint returned as
-   * there are more sources for liquidity.
-   */
-  feeType?: 'volume'
-
-  /**
-   * [optional] The address the integrator fee would be transferred to. This is
-   * the address you’d like to receive the fee. This must be present if `feeType`
-   * is provided.
-   */
-  feeRecipient?: string
-
-  /**
-   * [optional] If `feeType` is `volume`, then `feeSellTokenPercentage` must be
-   * provided. `feeSellTokenPercentage` is the percentage (on scale of 1) of
-   * `sellToken` integrator charges as fee. For example, setting it to `0.01`
-   * means 1% of the `sellToken` would be charged as fee for the integrator.
-   */
-  feeSellTokenPercentage?: number
+  acceptedTypes?: string
 
   /**
    * [optional] A boolean that indicates whether or not to check for approval and
-   * potentially utilizes gasless approval feature. Allowed values `true` /
-   * `false`. Defaults to `false` if not provided. On a performance note, setting
-   * it to `true` requires more processing and computation than setting it to
-   * `false`.
-   *
-   * More details about gasless approval feature can be found [here](https://docs.0x.org/0x-swap-api/advanced-topics/gasless-approval).
+   * potentially utilizes gasless approval feature.
    */
   checkApproval?: boolean
 }
@@ -176,39 +142,35 @@ interface GaslessSwapQuoteResponseLiquidity {
   // ---------------------------------------------------------------------------
 
   /**
-   * If `buyAmount` was specified in the request, this parameter provides the
-   * price of `buyToken`, denominated in `sellToken`, or vice-versa.
-   *
-   * Note: fees are baked in the price calculation.
+   * The block number used for the quote.
    */
-  price: string
+  blockNumber: string
 
   /**
-   * Similar to `price` but with fees removed in the price calculation. This is
-   * the price as if no fee is charged.
+   * The address of the buy token.
    */
-  grossPrice: string
+  buyToken: string
 
   /**
-   * The estimated change in the price of the specified asset that would be
-   * caused by the executed swap due to price impact.
-   *
-   * Note: If the API is not able to estimate price change, the field will be
-   * `null`. For `otc` order type, price impact is not available currently.
-   * More details about order types are covered in [/quote documentation](https://0x.org/docs/tx-relay-api/api-references/get-tx-relay-v1-swap-quote).
+   * The minimum amount of `buyToken` to receive after slippage.
    */
-  estimatedPriceImpact: string | null
+  minBuyAmount: string
+
+  /**
+   * The address of the sell token.
+   */
+  sellToken: string
+
+  /**
+   * The target contract address for the transaction.
+   */
+  target: string
 
   /**
    * Similar to `estimatedPriceImpact` but with fees removed. This is the
    * `estimatedPriceImpact` as if no fee is charged.
    */
-  grossEstimatedPriceImpact: string | null
-
-  /**
-   * The ERC20 token address of the token you want to receive in the quote.
-   */
-  buyTokenAddress: string
+  grossEstimatedPriceImpact?: string | null
 
   /**
    * The amount of `buyToken` to buy with fees baked in.
@@ -216,141 +178,105 @@ interface GaslessSwapQuoteResponseLiquidity {
   buyAmount: string
 
   /**
-   * Similar to `buyAmount` but with fees removed. This is the `buyAmount` as if
-   * no fee is charged.
-   */
-  grossBuyAmount: string
-
-  /**
-   * The ERC20 token address of the token you want to sell with the quote.
-   */
-  sellTokenAddress: string
-
-  /**
    * The amount of `sellToken` to sell with fees baked in.
    */
   sellAmount: string
 
   /**
-   * Similar to `sellAmount` but with fees removed. This is the `sellAmount` as
-   * if no fee is charged.
+   * Unique identifier for the quote.
    */
-  grossSellAmount: string
+  zid: string
 
   /**
-   * The target contract address for which the user needs to have an allowance
-   * in order to be able to complete the swap.
+   * Issues that may affect the swap.
    */
-  allowanceTarget: string
+  issues?: {
+    /**
+     * Allowance information if there's an issue with token approval.
+     */
+    allowance?: {
+      actual: string
+      spender: string
+    } | null
+
+    /**
+     * Balance information if there's an issue with token balance.
+     */
+    balance?: unknown | null
+
+    /**
+     * Whether the simulation is incomplete.
+     */
+    simulationIncomplete?: boolean
+
+    /**
+     * Invalid sources that were passed.
+     */
+    invalidSourcesPassed?: string[]
+  }
 
   /**
-   * The underlying sources for the liquidity. The format will be:
-   * [{ name: string; proportion: string }]
-   *
-   * An example: `[{"name": "Uniswap_V2", "proportion": "0.87"}, {"name": "Balancer", "proportion": "0.13"}]`
-   */
-  sources: Array<{ name: string; proportion: string }>
-
-  /**
-   * [optional] Fees that would be charged. It can optionally contain
-   * `integratorFee`, `zeroExFee`, and `gasFee`. See details about each fee
-   * type below.
+   * Fees that would be charged for the swap.
    */
   fees: {
     /**
-     * Related to `fees` param above.
-     *
-     * Integrator fee (in amount of `sellToken`) would be provided if `feeType`
-     * and the corresponding query params are provided in the request.
-     *
-     * - `feeType`: The type of the `integrator` fee. This is always the same as
-     *   the `feeType` in the request. It can only be `volume` currently.
-     * - `feeToken`: The ERC20 token address to charge fee. This is always the
-     *   same as `sellToken` in the request.
-     * - `feeAmount`: The amount of `feeToken` to be charged as integrator fee.
-     * - `billingType`: The method that integrator fee is transferred. It can
-     *   only be `on-chain` which means integrator fee can only be transferred
-     *   on-chain to `feeRecipient` query param provided.
-     *
-     * The endpoint currently does not support integrator fees if the order type
-     * `otc` is chosen due to better pricing. Callers can opt-out of `otc` by
-     * explicitly passing in `acceptedTypes` query param without `otc`. `otc`
-     * order would, however, potentially improve the pricing the endpoint
-     * returned as there are more sources for liquidity.
+     * Integrator fee information.
      */
-    integratorFee?: {
-      feeType: 'volume'
-      feeToken: string
-      feeAmount: string
-      billingType: 'on-chain'
-    }
+    integratorFee: {
+      amount: string
+      token: string
+      type: string
+    } | null
 
     /**
-     * Related to `fees` param above.
-     *
-     * Fee that 0x charges:
-     *
-     * - `feeType`: `volume` or `integrator_share` which varies per integrator.
-     *   `volume` means 0x would charge a certain percentage of the trade
-     *   independently. `integrator_share` means 0x would change a certain
-     *   percentage of what the integrator charges.
-     * - `feeToken`: The ERC20 token address to charge fee. The token could be
-     *   either `sellToken` or `buyToken`.
-     * - `feeAmount`: The amount of `feeToken` to be charged as 0x fee.
-     * - `billingType`: The method that 0x fee is transferred. It can be either
-     *   `on-chain`, `off-chain`, or `liquidity` which varies per integrator.
-     *   `on-chain` means the fee would be charged on-chain. `off-chain` means
-     *   the fee would be charged to the integrator via off-chain payment.
-     *   `liquidity` means the fee would be charged off-chain but not to the
-     *   integrator.
-     *
-     * Please reach out for more details on the `feeType` and `billingType`.
+     * 0x platform fee information.
      */
     zeroExFee: {
-      feeType: 'volume' | 'integrator_share'
-      feeToken: string
-      feeAmount: string
-      billingType: 'on-chain' | 'off-chain' | 'liquidity'
+      amount: string
+      token: string
+      type: string
     }
 
     /**
-     * Related to `fees`. See param above.
-     *
-     * Gas fee to compensate for the transaction submission performed by our
-     * relayers:
-     *
-     * - `feeType`: The value is always `gas`.
-     * - `feeToken`: The ERC20 token address to charge gas fee. The token could
-     *   be either `sellToken` or `buyToken`.
-     * - `feeAmount`: The amount of `feeToken` to be charged as gas fee.
-     * - `billingType`: The method that gas compensation is transferred. It can
-     *   be either `on-chain`, `off-chain`, or `liquidity` which has the same
-     *   meaning as described above in `zeroExFee` section.
-     *
-     * Please reach out for more details on the `billingType`.
+     * Gas fee information.
      */
     gasFee: {
-      feeType: 'gas'
-      feeToken: string
-      feeAmount: string
-      billingType: 'on-chain' | 'off-chain' | 'liquidity'
+      amount: string
+      token: string
+      type: string
     }
+  }
+
+  /**
+   * Routing information for the swap.
+   */
+  route: {
+    /**
+     * Fill information for the swap.
+     */
+    fills: Array<{
+      from: string
+      to: string
+      source: string
+      proportionBps: string
+    }>
+
+    /**
+     * Token information for the swap.
+     */
+    tokens: Array<{
+      address: string
+      symbol: string
+    }>
   }
 
   /**
    * This is the "trade" object which contains the necessary information to
    * process a trade.
    *
-   * - `type`: `metatransaction_v2` or `otc`
-   * - `hash`: The hash for the trade according to EIP-712. Note that if you
-   *   compute the hash from `eip712` field, it should match the value of this
-   *   field.
-   * - `eip712`: Necessary data for EIP-712.
-   *
-   * Note: Please don't assume particular shapes of `trade.eip712.types`,
-   * `trade.eip712.domain`, `trade.eip712.primaryType`, and
-   * `trade.eip712.message` as they will change based on the `type` field and
-   * we would add more types in the future.
+   * - `type`: Type of the trade (e.g., 'settler_metatransaction')
+   * - `hash`: The hash for the trade according to EIP-712
+   * - `eip712`: Necessary data for EIP-712
    */
   trade: {
     type: string
@@ -361,36 +287,16 @@ interface GaslessSwapQuoteResponseLiquidity {
   /**
    * This is the "approval" object which contains the necessary information to
    * process a gasless approval, if requested via `checkApproval` and is
-   * available. You will only be able to initiate a gasless approval for the
-   * sell token if the response has both `isRequired` and `isGaslessAvailable`
-   * set to `true`.
+   * available.
    *
-   * - `isRequired`: whether an approval is required for the trade
-   * - `isGaslessAvailable`: whether gasless approval is available for the sell
-   *   token
-   * - `type`: `permit` or `executeMetaTransaction::approve`
-   * - `hash`: The hash for the approval according to EIP-712. Note that if you
-   *   compute the hash from `eip712` field, it should match the value of this
-   *   field.
-   * - `eip712`: Necessary data for EIP-712.
-   *
-   * Note: Please don't assume particular shapes of `approval.eip712.types`,
-   * `approval.eip712.domain`, `approval.eip712.primaryType`, and
-   * `approval.eip712.message` as they will change based on the `type` field.
-   *
-   * See [here](https://docs.0x.org/0x-swap-api/advanced-topics/gasless-approval)
-   * for more information about gasless approvals.
+   * In v2, if approval is present, it means approval is required and gasless
+   * approval is available.
    */
-  approval?:
-    | { isRequired: false }
-    | { isRequired: true; isGaslessAvailable: false }
-    | {
-        isRequired: true
-        isGaslessAvailable: true
-        type: string
-        hash: string
-        eip712: any
-      }
+  approval?: {
+    type: string
+    hash: string
+    eip712: any
+  }
 }
 
 export const asGaslessSwapQuoteResponse = asJSON<GaslessSwapQuoteResponse>(
@@ -400,60 +306,78 @@ export const asGaslessSwapQuoteResponse = asJSON<GaslessSwapQuoteResponse>(
     }),
     asObject<GaslessSwapQuoteResponseLiquidity>({
       liquidityAvailable: asValue(true),
-      price: asString,
-      grossPrice: asString,
-      estimatedPriceImpact: asEither(asString, asNull),
-      grossEstimatedPriceImpact: asEither(asString, asNull),
-      buyTokenAddress: asString,
+      blockNumber: asString,
+      buyToken: asString,
+      minBuyAmount: asString,
+      sellToken: asString,
+      target: asString,
       buyAmount: asString,
-      grossBuyAmount: asString,
-      sellTokenAddress: asString,
       sellAmount: asString,
-      grossSellAmount: asString,
-      allowanceTarget: asString,
-      sources: asArray(asObject({ name: asString, proportion: asString })),
+      zid: asString,
+      grossEstimatedPriceImpact: asOptional(asEither(asString, asNull)),
 
       fees: asObject({
-        integratorFee: asOptional(
+        integratorFee: asEither(
+          asNull,
           asObject({
-            feeType: asValue('volume'),
-            feeToken: asString,
-            feeAmount: asString,
-            billingType: asValue('on-chain')
+            amount: asString,
+            token: asString,
+            type: asString
           })
         ),
         zeroExFee: asObject({
-          feeType: asValue('volume', 'integrator_share'),
-          feeToken: asString,
-          feeAmount: asString,
-          billingType: asValue('on-chain', 'off-chain', 'liquidity')
+          amount: asString,
+          token: asString,
+          type: asString
         }),
         gasFee: asObject({
-          feeType: asValue('gas'),
-          feeToken: asString,
-          feeAmount: asString,
-          billingType: asValue('on-chain', 'off-chain', 'liquidity')
+          amount: asString,
+          token: asString,
+          type: asString
         })
+      }),
+
+      issues: asOptional(
+        asObject({
+          allowance: asOptional(
+            asEither(
+              asNull,
+              asObject({
+                actual: asString,
+                spender: asString
+              })
+            )
+          ),
+          balance: asOptional(asEither(asNull, asUnknown)),
+          simulationIncomplete: asOptional(asValue(true, false)),
+          invalidSourcesPassed: asOptional(asArray(asString))
+        })
+      ),
+
+      route: asObject({
+        fills: asArray(
+          asObject({
+            from: asString,
+            to: asString,
+            source: asString,
+            proportionBps: asString
+          })
+        ),
+        tokens: asArray(
+          asObject({
+            address: asString,
+            symbol: asString
+          })
+        )
       }),
 
       trade: asObject({ type: asString, hash: asString, eip712: asUnknown }),
       approval: asOptional(
-        asEither(
-          asObject({
-            isRequired: asValue(false)
-          }),
-          asObject({
-            isRequired: asValue(true),
-            isGaslessAvailable: asValue(false)
-          }),
-          asObject({
-            isRequired: asValue(true),
-            isGaslessAvailable: asValue(true),
-            type: asString,
-            hash: asString,
-            eip712: asUnknown
-          })
-        )
+        asObject({
+          type: asString,
+          hash: asString,
+          eip712: asUnknown
+        })
       )
     })
   )
@@ -478,15 +402,27 @@ export interface SignatureStruct {
 }
 
 export interface GaslessSwapSubmitRequest {
+  /**
+   * The chain ID of the network.
+   */
+  chainId: number
+
+  /**
+   * Optional approval data for gasless approval.
+   */
   approval?: {
-    /** This is `approval.`type from the `/quote` endpoint */
+    /** This is `approval.type` from the `/quote` endpoint */
     type: string
     /** This is `approval.eip712` from the `/quote` endpoint */
     eip712: any
     signature: SignatureStruct
   }
+
+  /**
+   * Trade data for the swap.
+   */
   trade: {
-    /** This is `trade.`type from the `/quote` endpoint */
+    /** This is `trade.type` from the `/quote` endpoint */
     type: string
     /** This is `trade.eip712` from the `/quote` endpoint */
     eip712: any
@@ -495,14 +431,16 @@ export interface GaslessSwapSubmitRequest {
 }
 
 export interface GaslessSwapSubmitResponse {
-  type: 'metatransaction_v2' | 'otc'
+  type: string
   tradeHash: string
+  zid?: string
 }
 
 export const asGaslessSwapSubmitResponse = asJSON<GaslessSwapSubmitResponse>(
   asObject({
-    type: asValue('metatransaction_v2', 'otc'),
-    tradeHash: asString
+    type: asString,
+    tradeHash: asString,
+    zid: asOptional(asString)
   })
 )
 

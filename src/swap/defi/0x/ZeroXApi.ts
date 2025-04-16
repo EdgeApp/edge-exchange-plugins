@@ -16,6 +16,9 @@ import {
   SwapQuoteRequest
 } from './zeroXApiTypes'
 
+// In v2, all chains use the same endpoint
+const ZEROX_V2_BASE_URL = 'https://api.0x.org'
+
 /**
  * Represents the ZeroXApi class that interacts with the 0x API.
  */
@@ -55,44 +58,6 @@ export class ZeroXApi {
   }
 
   /**
-   * Get the 0x API endpoint based on the currency plugin ID. The endpoint is
-   * the appropriate 0x API server for a particular network (Ethereum, Polygon,
-   * etc).
-   *
-   * @param pluginId Currency plugin ID
-   * @returns The 0x API endpoint URL
-   * @throws Error if the pluginId is not supported.
-   */
-  getEndpointFromPluginId(pluginId: string): string {
-    switch (pluginId) {
-      case 'arbitrum':
-        return 'https://arbitrum.api.0x.org'
-      case 'avalanche':
-        return 'https://avalanche.api.0x.org'
-      case 'binancesmartchain':
-        return 'https://bsc.api.0x.org'
-      case 'base':
-        return 'https://base.api.0x.org'
-      case 'celo':
-        return 'https://celo.api.0x.org'
-      case 'ethereum':
-        return 'https://api.0x.org'
-      case 'fantom':
-        return 'https://fantom.api.0x.org'
-      case 'optimism':
-        return 'https://optimism.api.0x.org'
-      case 'polygon':
-        return 'https://polygon.api.0x.org'
-      case 'sepolia':
-        return 'https://sepolia.api.0x.org'
-      default:
-        throw new Error(
-          `ZeroXApi: Unsupported endpoint for currency plugin: '${pluginId}'`
-        )
-    }
-  }
-
-  /**
    * Retrieves a gasless swap quote from the API.
    *
    * @param {ChainId} chainId - The ID of the chain (see {@link getChainIdFromPluginId}).
@@ -103,21 +68,24 @@ export class ZeroXApi {
    */
   async gaslessSwapQuote(
     chainId: ChainId,
-    request: GaslessSwapQuoteRequest
+    request: Omit<GaslessSwapQuoteRequest, 'chainId'>
   ): Promise<GaslessSwapQuoteResponse> {
-    // Gasless API uses the Ethereum network
-    const endpoint = this.getEndpointFromPluginId('ethereum')
+    // Create a new request object with chainId included
+    const fullRequest: GaslessSwapQuoteRequest = {
+      ...request,
+      chainId
+    }
 
-    const queryParams = requestToParams(request)
+    const queryParams = requestToParams(fullRequest)
     const queryString = new URLSearchParams(queryParams).toString()
 
     const response = await this.io.fetch(
-      `${endpoint}/tx-relay/v1/swap/quote?${queryString}`,
+      `${ZEROX_V2_BASE_URL}/gasless/quote?${queryString}`,
       {
         headers: {
           'content-type': 'application/json',
           '0x-api-key': this.apiKey,
-          '0x-chain-id': chainId.toString()
+          '0x-version': 'v2'
         }
       }
     )
@@ -141,20 +109,23 @@ export class ZeroXApi {
    */
   async gaslessSwapSubmit(
     chainId: ChainId,
-    request: GaslessSwapSubmitRequest
+    request: Omit<GaslessSwapSubmitRequest, 'chainId'>
   ): Promise<GaslessSwapSubmitResponse> {
-    // Gasless API uses the Ethereum network
-    const endpoint = this.getEndpointFromPluginId('ethereum')
+    // Create a new request object with chainId included
+    const fullRequest: GaslessSwapSubmitRequest = {
+      ...request,
+      chainId
+    }
 
     const response = await this.io.fetch(
-      `${endpoint}/tx-relay/v1/swap/submit`,
+      `${ZEROX_V2_BASE_URL}/gasless/submit`,
       {
         method: 'POST',
-        body: JSON.stringify(request),
+        body: JSON.stringify(fullRequest),
         headers: {
           'content-type': 'application/json',
           '0x-api-key': this.apiKey,
-          '0x-chain-id': chainId.toString()
+          '0x-version': 'v2'
         }
       }
     )
@@ -169,21 +140,25 @@ export class ZeroXApi {
     return responseData
   }
 
+  /**
+   * Retrieves the status of a gasless swap from the API.
+   *
+   * @param chainId - The chain ID of the network.
+   * @param tradeHash - The trade hash returned from the submit endpoint.
+   * @returns A promise that resolves to the gasless swap status response.
+   */
   async gaslessSwapStatus(
     chainId: ChainId,
     tradeHash: string
   ): Promise<GaslessSwapStatusResponse> {
-    // Gasless API uses the Ethereum network
-    const endpoint = this.getEndpointFromPluginId('ethereum')
-
     const response = await this.io.fetch(
-      `${endpoint}/tx-relay/v1/swap/status/${tradeHash}`,
+      `${ZEROX_V2_BASE_URL}/gasless/status/${tradeHash}?chainId=${chainId}`,
       {
         method: 'GET',
         headers: {
           'content-type': 'application/json',
           '0x-api-key': this.apiKey,
-          '0x-chain-id': chainId.toString()
+          '0x-version': 'v2'
         }
       }
     )
