@@ -526,6 +526,7 @@ export type EdgeCurrencyPluginId =
   | 'optimism'
   | 'osmosis'
   | 'piratechain'
+  | 'pivx'
   | 'polkadot'
   | 'polygon'
   | 'pulsechain'
@@ -571,7 +572,9 @@ export type ChainCodeTickerMap = Map<
   Array<{ tokenCode: string; contractAddress: string | null }>
 >
 
-// A map of EdgeTokenId to a swap provider's chain/token code pair
+/**
+ * A map of EdgeCurrencyPluginId to a swap provider's chain/token code pair
+ */
 export type EdgeIdSwapIdMap = Map<
   EdgeCurrencyPluginId,
   Map<EdgeTokenId, { chainCode: string; tokenCode: string }>

@@ -133,6 +133,7 @@ const MAINNET_CODE_TRANSCRIPTION: CurrencyPluginIdSwapChainCodeMap = {
   optimism: 'OPTIMISM',
   osmosis: 'OSMO',
   piratechain: null,
+  pivx: 'PIVX',
   polkadot: 'DOT',
   polygon: 'MATIC',
   pulsechain: null,
