@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 2.21.0 (2025-04-16)
+
 - added: Add PIVX support to ChangeNow, Exolix, Godex, and LetsExchange centralized exchanges
 - changed: Upgrade to v2 API for 0x Gasless swaps
 
