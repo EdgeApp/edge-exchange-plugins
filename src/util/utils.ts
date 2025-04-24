@@ -212,7 +212,8 @@ export const hexToDecimal = (hex: string): string => {
 
 const pluginIdMemoTypes: { [pluginId: string]: EdgeMemoOption['type'] } = {
   ripple: 'number',
-  stellar: 'number'
+  stellar: 'number',
+  zano: 'hex'
 }
 export const memoType = (pluginId: string): EdgeMemoOption['type'] => {
   return pluginIdMemoTypes[pluginId] ?? 'text'

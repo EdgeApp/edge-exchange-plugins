@@ -97,6 +97,7 @@ export const MAINNET_CODE_TRANSCRIPTION: CurrencyPluginIdSwapChainCodeMap = {
   ufo: null,
   vertcoin: null,
   wax: null,
+  zano: null,
   zcash: 'shielded',
   zcoin: null,
   zksync: 'zksyncera'

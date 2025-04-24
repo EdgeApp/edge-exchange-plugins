@@ -126,6 +126,7 @@ const MAINNET_CODE_TRANSCRIPTION: CurrencyPluginIdSwapChainCodeMap = {
   ufo: null,
   vertcoin: null,
   wax: 'WAXP',
+  zano: null,
   zcash: 'ZEC',
   zcoin: null,
   zksync: null

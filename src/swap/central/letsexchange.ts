@@ -135,6 +135,7 @@ export const MAINNET_CODE_TRANSCRIPTION: CurrencyPluginIdSwapChainCodeMap = {
   ufo: null,
   vertcoin: null,
   wax: 'WAX',
+  zano: null, // 'ZANO' disabled until until it can be tested for integrated address/payment id
   zcash: 'ZEC',
   zcoin: 'FIRO',
   zksync: 'ZKSERA'
