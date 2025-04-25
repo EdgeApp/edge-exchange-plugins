@@ -350,7 +350,7 @@ export function makeLifiPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
     const providers = includedSteps.map(s => s.toolDetails.name)
     const providersStr = providers.join(' -> ')
     const metadataNotes = `DEX Providers: ${providersStr}`
-    const { approvalAddress, toAmount, toAmountMin } = estimate
+    const { approvalAddress, toAmount, toAmountMin, fromAmount } = estimate
 
     let preTx: EdgeTransaction | undefined
     let spendInfo: EdgeSpendInfo
@@ -363,12 +363,11 @@ export function makeLifiPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
         }
         const { data } = asTransactionRequestSolana(transactionRequestRaw)
 
-        const fromNativeAmount = estimate.fromAmount
         spendInfo = {
           tokenId: request.fromTokenId,
           spendTargets: [
             {
-              nativeAmount: fromNativeAmount,
+              nativeAmount: fromAmount,
               publicAddress: publicAddress
             }
           ],
@@ -390,7 +389,7 @@ export function makeLifiPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
             fromAsset: {
               pluginId: fromWallet.currencyInfo.pluginId,
               tokenId: fromTokenId,
-              nativeAmount: fromNativeAmount
+              nativeAmount: fromAmount
             },
             payoutAddress: toAddress,
             payoutWalletId: toWallet.id,
@@ -413,7 +412,7 @@ export function makeLifiPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
             nativeAmount
           })
 
-          const spendInfo: EdgeSpendInfo = {
+          const preTxSpendInfo: EdgeSpendInfo = {
             // Token approvals only spend the parent currency
             tokenId: null,
             spendTargets: [
@@ -444,15 +443,14 @@ export function makeLifiPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
               contractAddress: approvalAddress
             }
           }
-          preTx = await request.fromWallet.makeSpend(spendInfo)
+          preTx = await request.fromWallet.makeSpend(preTxSpendInfo)
         }
 
-        const fromNativeAmount = mul(transactionRequest.value, '1')
         spendInfo = {
           tokenId: request.fromTokenId,
           spendTargets: [
             {
-              nativeAmount: fromNativeAmount,
+              nativeAmount: fromAmount,
               publicAddress: approvalAddress
             }
           ],
@@ -478,7 +476,7 @@ export function makeLifiPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
             fromAsset: {
               pluginId: fromWallet.currencyInfo.pluginId,
               tokenId: fromTokenId,
-              nativeAmount: fromNativeAmount
+              nativeAmount: fromAmount
             },
             payoutAddress: toAddress,
             payoutWalletId: toWallet.id,
