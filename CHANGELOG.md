@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- added: Add ZANO network code to available centralized exchanges
+
 ## 2.21.1 (2025-04-25)
 
 - fixed: 0 amount in pending transactions from LI.FI swaps from tokens

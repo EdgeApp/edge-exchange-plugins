@@ -548,6 +548,7 @@ export type EdgeCurrencyPluginId =
   | 'wax'
   | 'zcash'
   | 'zcoin'
+  | 'zano'
   | 'zksync'
 
 export const toStringMap = (
