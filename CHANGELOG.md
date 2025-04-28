@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 2.22.1 (2025-04-28)
+
 - added: Add ZANO network code to available centralized exchanges
 
 ## 2.21.1 (2025-04-25)
