@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- added: `orderUri` for rango to display all orders for the wallet address
+
 ## 2.22.1 (2025-04-28)
 
 - added: Add ZANO network code to available centralized exchanges
