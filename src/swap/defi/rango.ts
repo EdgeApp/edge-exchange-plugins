@@ -46,6 +46,7 @@ const swapInfo: EdgeSwapInfo = {
   displayName: 'Rango Exchange',
   supportEmail: 'support@edge.app'
 }
+const orderUri = 'https://explorer.rango.exchange/search?query='
 
 const EXPIRATION_MS = 1000 * 60
 const EXCHANGE_INFO_UPDATE_FREQ_MS = 60000
@@ -419,6 +420,7 @@ export function makeRangoPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
           savedAction: {
             actionType: 'swap',
             swapInfo,
+            orderUri: `${orderUri}${toAddress}`,
             isEstimate: true,
             toAsset: {
               pluginId: toWallet.currencyInfo.pluginId,
@@ -510,6 +512,7 @@ export function makeRangoPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
           savedAction: {
             actionType: 'swap',
             swapInfo,
+            orderUri: `${orderUri}${toAddress}`,
             isEstimate: true,
             toAsset: {
               pluginId: toWallet.currencyInfo.pluginId,
