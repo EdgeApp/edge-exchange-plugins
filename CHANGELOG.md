@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- changed: Thorchain - Add XRP support
+- fixed: Thorchain - Support TCY swaps
+
 ## 2.23.0 (2025-05-13)
 
 - added: `orderUri` for rango to display all orders for the wallet address
