@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 2.23.1 (2025-05-21)
+
 - changed: Thorchain - Add XRP support
 - fixed: Thorchain - Support TCY swaps
 
