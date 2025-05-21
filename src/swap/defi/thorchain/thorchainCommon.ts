@@ -620,7 +620,7 @@ export function makeThorchainBasedPlugin(
         assets: [
           {
             amount: fromNativeAmount,
-            asset: 'THOR.RUNE',
+            asset: `THOR.${fromCurrencyCode}`,
             decimals: THOR_LIMIT_UNITS
           }
         ],
