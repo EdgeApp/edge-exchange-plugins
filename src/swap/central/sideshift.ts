@@ -311,8 +311,7 @@ const fetchSwapQuoteInner = async (
       }
     ],
     memos,
-    networkFeeOption:
-      request.fromCurrencyCode.toUpperCase() === 'BTC' ? 'high' : 'standard',
+    networkFeeOption: 'high',
     assetAction: {
       assetActionType: 'swap'
     },
