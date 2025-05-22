@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- changed: Use high network fee setting if recommended fee isn't provided
+
 ## 2.23.1 (2025-05-21)
 
 - changed: Thorchain - Add XRP support

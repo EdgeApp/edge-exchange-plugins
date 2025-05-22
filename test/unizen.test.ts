@@ -61,7 +61,7 @@ describe(`unizen makeSpendParams`, function () {
     )
 
     assert.deepEqual(spendParams, {
-      networkFeeOption: 'standard',
+      networkFeeOption: 'high',
       destinationAddress: 'cosmos13hwz3r7xa8eaj9ae9m64va4gaj3gktxqh5g27d',
       expirationDate: new Date('2024-12-19T22:48:52.000Z'),
       memos: [
