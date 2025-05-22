@@ -279,7 +279,7 @@ export function makeSwapuzPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
           }
         ],
         memos,
-        networkFeeOption: fromCurrencyCode === 'BTC' ? 'high' : 'standard',
+        networkFeeOption: 'high',
         assetAction: {
           assetActionType: 'swap'
         },

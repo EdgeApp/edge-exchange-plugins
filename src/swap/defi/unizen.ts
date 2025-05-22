@@ -80,7 +80,7 @@ const makeUtxoFees = (rate: string): SwapNetworkFees => {
 }
 const makeCosmosFees = (): SwapNetworkFees => {
   return {
-    networkFeeOption: 'standard'
+    networkFeeOption: 'high'
   }
 }
 
