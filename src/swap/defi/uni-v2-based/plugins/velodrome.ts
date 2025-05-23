@@ -34,7 +34,7 @@ const swapInfo: EdgeSwapInfo = {
 
 const EXPIRATION_MS = 1000 * 60
 const SLIPPAGE = '0.05'
-const OPTIMISM_RPC = 'https://rpc.ankr.com/optimism/'
+const OPTIMISM_RPC = 'https://optimism-rpc.publicnode.com/'
 const WETH_TOKEN_ADDRESS = '0x4200000000000000000000000000000000000006'
 const VELODROME_V1_ROUTER_ADDRESS = '0x9c12939390052919aF3155f41Bf4160Fd3666A6f'
 const VELODROME_V2_ROUTER_ADDRESS = '0xa062aE8A9c5e11aaA026fc2670B0D65cCc8B2858'
