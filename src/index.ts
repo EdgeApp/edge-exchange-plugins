@@ -11,6 +11,7 @@ import { makeSideshiftPlugin } from './swap/central/sideshift'
 import { makeSwapuzPlugin } from './swap/central/swapuz'
 import { make0xGaslessPlugin } from './swap/defi/0x/0xGasless'
 import { makeCosmosIbcPlugin } from './swap/defi/cosmosIbc'
+import { makeFantomSonicUpgradePlugin } from './swap/defi/fantomSonicUpgrade'
 import { makeLifiPlugin } from './swap/defi/lifi'
 import { makeRangoPlugin } from './swap/defi/rango'
 import { makeMayaProtocolPlugin } from './swap/defi/thorchain/mayaprotocol'
@@ -44,6 +45,7 @@ const plugins = {
   unizen: makeUnizenPlugin,
   velodrome: makeVelodromePlugin,
   xrpdex,
+  fantomsonicupgrade: makeFantomSonicUpgradePlugin,
   '0xgasless': make0xGaslessPlugin
 }
 
