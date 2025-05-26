@@ -332,8 +332,7 @@ export function makeGodexPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
         }
       ],
       memos,
-      networkFeeOption:
-        request.fromCurrencyCode.toUpperCase() === 'BTC' ? 'high' : 'standard',
+      networkFeeOption: 'high',
       assetAction: {
         assetActionType: 'swap'
       },

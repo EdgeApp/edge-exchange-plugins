@@ -491,7 +491,7 @@ export function makeRangoPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
         const networkFeeOption: EdgeSpendInfo['networkFeeOption'] =
           customNetworkFee.gasLimit != null || customNetworkFee.gasPrice != null
             ? 'custom'
-            : undefined
+            : 'high'
 
         const value = evmTransaction.txData.replace('0x', '')
         spendInfo = {

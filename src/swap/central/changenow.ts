@@ -336,8 +336,7 @@ export function makeChangeNowPlugin(
           }
         ],
         memos,
-        networkFeeOption:
-          request.fromCurrencyCode === 'BTC' ? 'high' : 'standard',
+        networkFeeOption: 'high',
         assetAction: {
           assetActionType: 'swap'
         },
@@ -414,8 +413,7 @@ export function makeChangeNowPlugin(
           }
         ],
         memos,
-        networkFeeOption:
-          request.fromCurrencyCode === 'BTC' ? 'high' : 'standard',
+        networkFeeOption: 'high',
         assetAction: {
           assetActionType: 'swap'
         },

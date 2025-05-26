@@ -364,6 +364,7 @@ export function makeSwapKitPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
                 publicAddress: sourceTokenContractAddress
               }
             ],
+            networkFeeOption: 'high',
             assetAction: {
               assetActionType: 'tokenApproval'
             },
@@ -408,6 +409,7 @@ export function makeSwapKitPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
           publicAddress
         }
       ],
+      networkFeeOption: 'high',
       assetAction: {
         assetActionType: 'swap'
       },

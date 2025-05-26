@@ -684,6 +684,7 @@ export function makeThorchainBasedPlugin(
             publicAddress: sourceTokenContractAddress
           }
         ],
+        networkFeeOption: 'high',
         assetAction: {
           assetActionType: 'tokenApproval'
         },
@@ -719,6 +720,7 @@ export function makeThorchainBasedPlugin(
           publicAddress
         }
       ],
+      networkFeeOption: 'high',
       assetAction: { assetActionType: 'swap' },
       savedAction,
       otherParams: {
