@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- added: Add Fantom to Sonic bridge plugin
 - changed: Use high network fee setting if recommended fee isn't provided
 
 ## 2.23.1 (2025-05-21)
