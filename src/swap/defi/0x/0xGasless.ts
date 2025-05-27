@@ -181,6 +181,12 @@ export const make0xGaslessPlugin: EdgeCorePluginFactory = opts => {
 
           const orderId: string = apiSwapStatus.transactions[0].hash
 
+          let orderUri: string | undefined
+          const { transactionExplorer } = swapRequest.fromWallet.currencyInfo
+          if (transactionExplorer.includes('%s')) {
+            orderUri = transactionExplorer.replace('%s', orderId)
+          }
+
           const savedAction: EdgeTxAction = {
             actionType: 'swap',
             canBePartial: false,
@@ -191,7 +197,7 @@ export const make0xGaslessPlugin: EdgeCorePluginFactory = opts => {
               nativeAmount: swapNativeAmount
             },
             orderId,
-            orderUri: `https://explorer.0xprotocol.org/trades/{{TXID}}`,
+            orderUri,
             // The payout address is the same as the fromWalletAddress because
             // the swap service only supports swaps of the same network and
             // account/address.
