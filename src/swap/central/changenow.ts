@@ -94,6 +94,7 @@ export const MAINNET_CODE_TRANSCRIPTION: CurrencyPluginIdSwapChainCodeMap = {
   digibyte: 'dgb',
   dogecoin: 'doge',
   eboost: null,
+  ecash: 'xec',
   eos: 'eos',
   ethereum: 'eth',
   ethereumclassic: 'etc',

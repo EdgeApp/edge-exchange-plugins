@@ -509,6 +509,7 @@ export type EdgeCurrencyPluginId =
   | 'digibyte'
   | 'dogecoin'
   | 'eboost'
+  | 'ecash'
   | 'eos'
   | 'ethereum'
   | 'ethereumclassic'
