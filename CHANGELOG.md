@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- added: Add eCash (XEC) support to ChangeNow, ChangeHero, Exolix, Godex, LetsExchange, SideShift, and SwapUz centralized exchanges
+
 ## 2.24.0 (2025-05-26)
 
 - added: Add Fantom to Sonic bridge plugin
