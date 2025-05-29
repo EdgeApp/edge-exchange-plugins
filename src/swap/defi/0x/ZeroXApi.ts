@@ -42,8 +42,12 @@ export class ZeroXApi {
     switch (pluginId) {
       case 'arbitrum':
         return ChainId.Arbitrum
+      case 'avalanche':
+        return ChainId.Avalanche
       case 'base':
         return ChainId.Base
+      case 'binancesmartchain':
+        return ChainId.BinanceSmartChain
       case 'ethereum':
         return ChainId.Ethereum
       case 'optimism':

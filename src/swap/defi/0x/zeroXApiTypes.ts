@@ -11,12 +11,19 @@ import {
   asValue
 } from 'cleaners'
 
+// https://0x.org/docs/developer-resources/supported-chains
 export enum ChainId {
-  Ethereum = 1,
-  Polygon = 137,
   Arbitrum = 42161,
+  Avalanche = 43114,
   Base = 8453,
-  Optimism = 10
+  // Blast = 81457
+  BinanceSmartChain = 56,
+  Ethereum = 1,
+  // Mantle = 5000,
+  // Mode = 34443,
+  Optimism = 10,
+  Polygon = 137
+  // Scroll = 534352
 }
 
 // -----------------------------------------------------------------------------
