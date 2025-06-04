@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- changed: (Thorchain/Maya) Ignore recommended EVM gas price
+
 ## 2.25.0 (2025-06-02)
 
 - added: Add eCash (XEC) support to ChangeNow, ChangeHero, Exolix, Godex, LetsExchange, SideShift, and SwapUz centralized exchanges
