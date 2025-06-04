@@ -31,6 +31,7 @@ const pluginId = 'fantomsonicupgrade'
 const swapInfo: EdgeSwapInfo = {
   pluginId,
   displayName: 'Fantom/Sonic Upgrade',
+  isDex: true,
   orderUri: undefined,
   supportEmail: 'support@edge.com'
 }
