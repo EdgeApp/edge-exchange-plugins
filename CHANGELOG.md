@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- changed: (Thorchain/Maya) Ignore recommended EVM gas price
+
 ## 2.25.1 (2025-06-06)
 
 - changed: Label Fantom/Sonic Upgrade plugin as a DEX

@@ -748,18 +748,12 @@ export function makeThorchainBasedPlugin(
             customNetworkFee = { satPerByte: recommendedGasRate }
           }
           break
-        case 'ethereum':
-        case 'ethereum-pos':
-        case 'optimism':
-        case 'arbitrum':
-        case 'base':
-        case 'avalanche':
-        case 'binancesmartchain':
-        case 'fantom':
-          if (gasRateUnits === 'gwei') {
-            customNetworkFee = { gasPrice: recommendedGasRate }
-          }
-          break
+        // The recommendation for EVM is bad
+        // case 'arbitrum':
+        // case 'avalanche':
+        // case 'base':
+        // case 'binancesmartchain':
+        // case 'ethereum':
         default:
           log.warn(`Gas rate units not available for ${pluginId}`)
       }
