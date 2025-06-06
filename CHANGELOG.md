@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 2.25.1 (2025-06-06)
+
 - changed: Label Fantom/Sonic Upgrade plugin as a DEX
 
 ## 2.25.0 (2025-06-02)
