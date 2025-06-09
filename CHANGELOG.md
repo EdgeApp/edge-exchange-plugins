@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 2.25.2 (2025-06-09)
+
 - changed: (Thorchain/Maya) Ignore recommended EVM gas price
 
 ## 2.25.1 (2025-06-06)
