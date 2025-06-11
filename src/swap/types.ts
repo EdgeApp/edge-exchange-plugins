@@ -9,6 +9,7 @@ import {
 import {
   EdgeAssetAction,
   EdgeCurrencyWallet,
+  EdgeTransaction,
   EdgeTxActionSwap
 } from 'edge-core-js'
 
@@ -46,6 +47,8 @@ export type MakeTxParams =
       toTokenId: string | null
       toNativeAmount: string
 
+      pendingTxs?: EdgeTransaction[]
+
       /**
        * UNIX time (seconds) to expire the DEX swap if it hasn't executed
        */
@@ -61,6 +64,7 @@ export type MakeTxParams =
       memo: string
       assetAction: EdgeAssetAction
       savedAction: EdgeTxActionSwap
+      pendingTxs?: EdgeTransaction[]
     }
 
 export const asRatesResponse = asObject({

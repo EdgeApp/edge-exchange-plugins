@@ -76,11 +76,15 @@ export async function makeSwapPluginQuote(
   let tx: EdgeTransaction
   if ('spendInfo' in order) {
     const { spendInfo } = order
-    tx = await fromWallet.makeSpend(spendInfo)
+    const spend =
+      preTx != null ? { ...spendInfo, pendingTxs: [preTx] } : spendInfo
+    tx = await fromWallet.makeSpend(spend)
   } else {
     const { makeTxParams } = order
     const { assetAction, savedAction } = makeTxParams
-    tx = await fromWallet.otherMethods.makeTx(makeTxParams)
+    const params =
+      preTx != null ? { ...makeTxParams, pendingTxs: [preTx] } : makeTxParams
+    tx = await fromWallet.otherMethods.makeTx(params)
     if (tx.tokenId == null) {
       tx.tokenId = request.fromTokenId
     }
