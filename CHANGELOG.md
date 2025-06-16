@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## 2.26.0 (2025-06-16)
+
+- changed: Use `pendingTxs` in muli-tx swaps which require a `preTx` for approval transactions.
+
 ## 2.25.2 (2025-06-09)
 
 - changed: (Thorchain/Maya) Ignore recommended EVM gas price
