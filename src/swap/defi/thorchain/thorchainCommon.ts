@@ -1,4 +1,4 @@
-import { add, gt, mul, round, sub } from 'biggystring'
+import { add, gt, lt, mul, round, sub } from 'biggystring'
 import {
   asArray,
   asBoolean,
@@ -162,7 +162,8 @@ export const asInboundAddresses = asArray(
     outbound_fee: asString,
     halted: asBoolean,
     pub_key: asString,
-    router: asOptional(asString)
+    router: asOptional(asString),
+    dust_threshold: asString
   })
 )
 
@@ -449,6 +450,28 @@ export function makeThorchainBasedPlugin(
       `volatilitySpreadStreamingFinal: ${volatilitySpreadStreamingFinal.toString()}`
     )
 
+    // Fetch `inbound_addresses` for dust thresholds
+    const dustThresholds: Record<string, string> = {}
+    try {
+      const inboundResponse = await fetchWaterfall(
+        fetchCors,
+        thornodeServersWithPath,
+        'thorchain/inbound_addresses',
+        thornodesFetchOptions
+      )
+      if (inboundResponse.ok) {
+        const inboundJson = await inboundResponse.json()
+        const inboundAddresses = asInboundAddresses(inboundJson)
+        for (const inbound of inboundAddresses) {
+          dustThresholds[inbound.chain] = inbound.dust_threshold
+        }
+      } else {
+        log.warn(`Failed to fetch inbound_addresses: ${inboundResponse.status}`)
+      }
+    } catch (e: any) {
+      log.warn('Error fetching inbound_addresses:', e?.message ?? e)
+    }
+
     // Get current pool
     const poolResponse = await fetchWaterfall(
       fetchCors,
@@ -551,6 +574,34 @@ export function makeThorchainBasedPlugin(
       gasRateUnits
     } = calcResponse
     let { memo } = calcResponse
+
+    // Enforce dust threshold when sending or receiving native mainnet coins
+    if (fromTokenId == null) {
+      const chainDust = dustThresholds[fromCurrencyCode]
+      if (chainDust != null && lt(fromNativeAmount, chainDust)) {
+        log(
+          `From ${fromCurrencyCode} below dust threshold (${fromNativeAmount} < ${chainDust})`
+        )
+        throw new SwapBelowLimitError(
+          swapInfo,
+          undefined,
+          quoteFor === 'max' ? 'from' : quoteFor
+        )
+      }
+    }
+    if (toTokenId == null) {
+      const chainDust = dustThresholds[toCurrencyCode]
+      if (chainDust != null && lt(toNativeAmount, chainDust)) {
+        log(
+          `To ${toCurrencyCode} below dust threshold (${toNativeAmount} < ${chainDust})`
+        )
+        throw new SwapBelowLimitError(
+          swapInfo,
+          undefined,
+          quoteFor === 'max' ? 'from' : quoteFor
+        )
+      }
+    }
 
     let ethNativeAmount = fromNativeAmount
     let publicAddress = thorAddress
