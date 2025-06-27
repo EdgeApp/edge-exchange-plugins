@@ -1,4 +1,4 @@
-import { add, gt, mul, round, sub } from 'biggystring'
+import { add, gt, lt, mul, round, sub } from 'biggystring'
 import {
   asArray,
   asBoolean,
@@ -53,6 +53,7 @@ export const EVM_SEND_GAS = '80000'
 export const EVM_TOKEN_SEND_GAS = '80000'
 export const THOR_LIMIT_UNITS = '100000000'
 export const AFFILIATE_FEE_BASIS_DEFAULT = '50'
+const NATIVE_IN_GWEI = '1000000000'
 const STREAMING_INTERVAL_DEFAULT = 10
 const STREAMING_QUANTITY_DEFAULT = 10
 const STREAMING_INTERVAL_NOSTREAM = 1
@@ -162,7 +163,8 @@ export const asInboundAddresses = asArray(
     outbound_fee: asString,
     halted: asBoolean,
     pub_key: asString,
-    router: asOptional(asString)
+    router: asOptional(asString),
+    dust_threshold: asString
   })
 )
 
@@ -449,6 +451,36 @@ export function makeThorchainBasedPlugin(
       `volatilitySpreadStreamingFinal: ${volatilitySpreadStreamingFinal.toString()}`
     )
 
+    // Fetch `inbound_addresses` for dust thresholds
+    const dustThresholds: Record<string, string> = {}
+    try {
+      // Remove Content-Type header for GET requests to avoid 501 errors
+      const getRequestOptions = { ...thornodesFetchOptions }
+      delete getRequestOptions['Content-Type']
+
+      const inboundResponse = await fetchWaterfall(
+        fetchCors,
+        thornodeServersWithPath,
+        'inbound_addresses',
+        thornodesFetchOptions // getRequestOptions
+      )
+      if (inboundResponse.ok) {
+        const inboundJson = await inboundResponse.json()
+        const inboundAddresses = asInboundAddresses(inboundJson)
+        for (const inbound of inboundAddresses) {
+          dustThresholds[inbound.chain] = mul(
+            inbound.dust_threshold,
+            // EVM currencies' dust thresholds are given in gwei
+            EVM_CURRENCY_CODES[inbound.chain] ? NATIVE_IN_GWEI : '1'
+          )
+        }
+      } else {
+        log.warn(`Failed to fetch inbound_addresses: ${inboundResponse.status}`)
+      }
+    } catch (e: any) {
+      log.warn('Error fetching inbound_addresses:', e?.message ?? e)
+    }
+
     // Get current pool
     const poolResponse = await fetchWaterfall(
       fetchCors,
@@ -492,6 +524,17 @@ export function makeThorchainBasedPlugin(
 
     let calcResponse: CalcSwapResponse
     if (quoteFor === 'from' || quoteFor === 'max') {
+      // Enforce dust threshold when sending native mainnet coins.
+      if (fromTokenId == null) {
+        const chainDust = dustThresholds[fromCurrencyCode]
+        if (chainDust != null && lt(nativeAmount, chainDust)) {
+          log(
+            `From ${fromCurrencyCode} below dust threshold (${nativeAmount} < ${chainDust})`
+          )
+          throw new SwapBelowLimitError(swapInfo, chainDust, 'from')
+        }
+      }
+
       calcResponse = await calcSwapFrom({
         swapInfo,
         log,
@@ -515,7 +558,30 @@ export function makeThorchainBasedPlugin(
         streamingInterval,
         streamingQuantity
       })
+
+      // Check dust thresholds once more to account for the quote that includes
+      // whatever slippage. We don't know what the limit should be in this case.
+      if (toTokenId == null) {
+        const chainDust = dustThresholds[toCurrencyCode]
+        if (chainDust != null && lt(calcResponse.toNativeAmount, chainDust)) {
+          log(
+            `Calculated quote to ${toCurrencyCode} below dust threshold (${calcResponse.toNativeAmount} < ${chainDust})`
+          )
+          throw new SwapBelowLimitError(swapInfo, undefined, 'from')
+        }
+      }
     } else {
+      // Enforce dust threshold when receiving native mainnet coins.
+      if (toTokenId == null) {
+        const chainDust = dustThresholds[toCurrencyCode]
+        if (chainDust != null && lt(nativeAmount, chainDust)) {
+          log(
+            `To ${toCurrencyCode} below dust threshold (${nativeAmount} < ${chainDust})`
+          )
+          throw new SwapBelowLimitError(swapInfo, chainDust, 'to')
+        }
+      }
+
       calcResponse = await calcSwapTo({
         swapInfo,
         log,
@@ -539,6 +605,18 @@ export function makeThorchainBasedPlugin(
         streamingInterval,
         streamingQuantity
       })
+
+      // Check dust thresholds once more to account for the quote that includes
+      // whatever slippage. We don't know what the limit should be in this case.
+      if (fromTokenId == null) {
+        const chainDust = dustThresholds[fromCurrencyCode]
+        if (chainDust != null && lt(calcResponse.fromNativeAmount, chainDust)) {
+          log(
+            `Calculated quote from ${fromCurrencyCode} below dust threshold (${calcResponse.fromNativeAmount} < ${chainDust})`
+          )
+          throw new SwapBelowLimitError(swapInfo, undefined, 'to')
+        }
+      }
     }
     const {
       // canBePartial,
