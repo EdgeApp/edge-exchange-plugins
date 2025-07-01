@@ -454,15 +454,11 @@ export function makeThorchainBasedPlugin(
     // Fetch `inbound_addresses` for dust thresholds
     const dustThresholds: Record<string, string> = {}
     try {
-      // Remove Content-Type header for GET requests to avoid 501 errors
-      const getRequestOptions = { ...thornodesFetchOptions }
-      delete getRequestOptions['Content-Type']
-
       const inboundResponse = await fetchWaterfall(
         fetchCors,
         thornodeServersWithPath,
         'inbound_addresses',
-        thornodesFetchOptions // getRequestOptions
+        thornodesFetchOptions
       )
       if (inboundResponse.ok) {
         const inboundJson = await inboundResponse.json()

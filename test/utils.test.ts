@@ -13,7 +13,7 @@ describe(`makeQueryParams`, function () {
     })
     assert.equal(
       queryString,
-      'stringKey=value1&numberKey=100&nullKey&boolKey=false'
+      'stringKey=value1&numberKey=100&nullKey&boolKey=false&amount=1'
     )
   })
 })
