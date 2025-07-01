@@ -42,6 +42,25 @@ export const asErrorResponse = asJSON(
   })
 )
 
+export interface SellAmountTooSmallError {
+  name: 'SELL_AMOUNT_TOO_SMALL'
+  message: string
+  data: {
+    zid: string
+    minSellAmount: string
+  }
+}
+export const asSellAmountTooSmallError = asJSON(
+  asObject<SellAmountTooSmallError>({
+    name: asValue('SELL_AMOUNT_TOO_SMALL'),
+    message: asString,
+    data: asObject({
+      zid: asString,
+      minSellAmount: asString
+    })
+  })
+)
+
 // -----------------------------------------------------------------------------
 // Gasless API v2
 // -----------------------------------------------------------------------------

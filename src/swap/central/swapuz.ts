@@ -178,6 +178,29 @@ export function makeSwapuzPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
         { headers }
       )
       if (!getRateResponse.ok) {
+        const json = await getRateResponse.json()
+        if (
+          json.message?.includes(
+            'Amount to exchange is below the possible min amount to exchange'
+          ) === true
+        ) {
+          // Extract the required minimum amount from the error message
+          const requiredMatch = json.message.match(/required ([0-9.]+)/)
+          if (requiredMatch?.[1] != null) {
+            const minAmount = requiredMatch[1]
+            const nativeMin = await fromWallet.denominationToNative(
+              minAmount,
+              fromCurrencyCode
+            )
+            throw new SwapBelowLimitError(swapInfo, nativeMin)
+          }
+          // Fallback if we can't extract the minimum amount
+          throw new SwapBelowLimitError(
+            swapInfo,
+            undefined,
+            request.quoteFor === 'to' ? 'to' : 'from'
+          )
+        }
         throw new Error(
           `Swapuz call returned error code ${getRateResponse.status}`
         )

@@ -1,5 +1,5 @@
 import { asMaybe } from 'cleaners'
-import { EdgeIo } from 'edge-core-js'
+import { EdgeIo, EdgeSwapInfo, SwapBelowLimitError } from 'edge-core-js'
 import { FetchResponse } from 'serverlet'
 
 import {
@@ -7,6 +7,7 @@ import {
   asGaslessSwapQuoteResponse,
   asGaslessSwapStatusResponse,
   asGaslessSwapSubmitResponse,
+  asSellAmountTooSmallError,
   ChainId,
   GaslessSwapQuoteRequest,
   GaslessSwapQuoteResponse,
@@ -71,6 +72,7 @@ export class ZeroXApi {
    * the gasless swap quote response.
    */
   async gaslessSwapQuote(
+    swapInfo: EdgeSwapInfo,
     chainId: ChainId,
     request: Omit<GaslessSwapQuoteRequest, 'chainId'>
   ): Promise<GaslessSwapQuoteResponse> {
@@ -95,7 +97,7 @@ export class ZeroXApi {
     )
 
     if (!response.ok) {
-      await handledErrorResponse(response)
+      await handledErrorResponse(response, swapInfo)
     }
 
     const responseText = await response.text()
@@ -178,8 +180,24 @@ export class ZeroXApi {
   }
 }
 
-async function handledErrorResponse(response: FetchResponse): Promise<void> {
+async function handledErrorResponse(
+  response: FetchResponse,
+  swapInfo?: EdgeSwapInfo
+): Promise<void> {
   const responseText = await response.text()
+
+  // Look for SwapBelowLimitError
+  if (swapInfo != null) {
+    const sellAmountTooSmallError = asMaybe(asSellAmountTooSmallError)(
+      responseText
+    )
+    if (sellAmountTooSmallError != null) {
+      const { minSellAmount } = sellAmountTooSmallError.data
+      throw new SwapBelowLimitError(swapInfo, minSellAmount)
+    }
+  }
+
+  // Try to parse as a standard error response
   const errorResponse = asMaybe(asErrorResponse)(responseText)
 
   // If error response cleaner failed, then throw the raw response text
