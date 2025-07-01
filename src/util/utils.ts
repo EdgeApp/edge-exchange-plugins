@@ -1,4 +1,4 @@
-import { add } from 'biggystring'
+import { add, max } from 'biggystring'
 import {
   EdgeCurrencyWallet,
   EdgeFetchFunction,
@@ -158,6 +158,11 @@ export const prettyLogObject = (val: any): void =>
   console.log(JSON.stringify(val, null, 2))
 
 export const makeQueryParams = (params: QueryParams): string => {
+  // Sometimes we can round below 1 and pass a 0 amount.
+  // Make sure we always request quotes with a nonzero amount, so that we can
+  // grab the real minimum. The minimum will always be well above 1.
+  params.amount = max(params.amount?.toString() ?? '1', '1')
+
   return Object.keys(params)
     .map(key => {
       const value = params[key]
