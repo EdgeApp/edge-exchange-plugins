@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- fixed: Fix incorrect error messages (generic `Error` or `SwapCurrencyError`) for cases that should be `SwapBelowLimitError`
+
 ## 2.26.0 (2025-06-16)
 
 - changed: Use `pendingTxs` in muli-tx swaps which require a `preTx` for approval transactions.

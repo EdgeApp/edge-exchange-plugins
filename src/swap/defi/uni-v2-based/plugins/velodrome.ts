@@ -127,22 +127,15 @@ export function makeVelodromePlugin(
       amountToSwap: string
       expectedAmountOut: string
     }> => {
-      try {
-        const amounts = await getSwapAmounts(
-          config.router,
-          request,
-          swapInfo,
-          config.path,
-          isWrappingSwap
-        )
-        return { ...config, ...amounts }
-      } catch (e) {
-        return {
-          ...config,
-          amountToSwap: '0',
-          expectedAmountOut: '0'
-        }
-      }
+      const amounts = await getSwapAmounts(
+        config.router,
+        request,
+        swapInfo,
+        config.path,
+        isWrappingSwap
+      )
+      // Attach the associated config to this amounts result for reference later
+      return { ...config, ...amounts }
     }
 
     const amounts = await Promise.all(
@@ -153,9 +146,6 @@ export function makeVelodromePlugin(
     )[0]
 
     const { amountToSwap, expectedAmountOut, router, path } = best
-    if (expectedAmountOut === '0') {
-      throw new SwapCurrencyError(swapInfo, request)
-    }
 
     // Generate swap transactions
     const toAddress = (await toWallet.getReceiveAddress({ tokenId: null }))
