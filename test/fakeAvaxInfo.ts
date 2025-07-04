@@ -17,6 +17,8 @@ export const avaxCurrencyInfo: EdgeCurrencyInfo = {
   // Basic currency information:
   currencyCode: 'AVAX',
   displayName: 'Avalanche',
+  chainDisplayName: 'Avalanche',
+  assetDisplayName: 'AVAX',
   pluginId: 'avalanche',
   walletType: 'wallet:avalanche',
   memoType: 'hex',

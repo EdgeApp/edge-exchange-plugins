@@ -17,6 +17,8 @@ export const arrrCurrencyInfo: EdgeCurrencyInfo = {
   // Basic currency information:
   currencyCode: 'ARRR',
   displayName: 'Pirate Chain',
+  chainDisplayName: 'Pirate Chain',
+  assetDisplayName: 'ARRR',
   pluginId: 'piratechain',
   requiredConfirmations: 10,
   walletType: 'wallet:piratechain',

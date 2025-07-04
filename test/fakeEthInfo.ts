@@ -18,6 +18,8 @@ export const ethCurrencyInfo: EdgeCurrencyInfo = {
   // Basic currency information:
   currencyCode: 'ETH',
   displayName: 'Ethereum',
+  chainDisplayName: 'Ethereum',
+  assetDisplayName: 'ETH',
   pluginId: 'ethereum',
   walletType: 'wallet:ethereum',
   memoType: 'hex',

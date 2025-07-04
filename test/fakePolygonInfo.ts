@@ -18,6 +18,8 @@ export const polygonCurrencyInfo: EdgeCurrencyInfo = {
   // Basic currency information:
   currencyCode: 'MATIC',
   displayName: 'Polygon',
+  chainDisplayName: 'Polygon',
+  assetDisplayName: 'MATIC',
   pluginId: 'polygon', // matching mnemonic here
   walletType: 'wallet:polygon',
   memoType: 'hex',

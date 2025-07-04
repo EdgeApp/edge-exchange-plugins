@@ -17,6 +17,8 @@ export const bchCurrencyInfo: EdgeCurrencyInfo = {
   walletType: 'wallet:bitcoincash',
   currencyCode: 'BCH',
   displayName: 'Bitcoin Cash',
+  chainDisplayName: 'Bitcoin Cash',
+  assetDisplayName: 'BCH',
   denominations: [
     { name: 'BCH', multiplier: '100000000', symbol: '₿' },
     { name: 'mBCH', multiplier: '100000', symbol: 'm₿' },

@@ -17,6 +17,8 @@ export const btcCurrencyInfo: EdgeCurrencyInfo = {
   walletType: 'wallet:bitcoin',
   currencyCode: 'BTC',
   displayName: 'Bitcoin',
+  chainDisplayName: 'Bitcoin',
+  assetDisplayName: 'BTC',
   denominations: [
     { name: 'BTC', multiplier: '100000000', symbol: '₿' },
     { name: 'mBTC', multiplier: '100000', symbol: 'm₿' },
