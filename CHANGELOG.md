@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 2.27.0 (2025-07-04)
+
 - changed: Enforce Thorchain dust thresholds
 - fixed: Fix incorrect error messages (generic `Error` or `SwapCurrencyError`) for cases that should be `SwapBelowLimitError`
 
