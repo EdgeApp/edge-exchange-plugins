@@ -1214,7 +1214,10 @@ const getQuote = async (
     try {
       if (!response.ok) {
         const text = await response.text()
-        if (text.includes('swap too small')) {
+        if (
+          text.includes('swap too small') ||
+          text.includes('not enough asset to pay for fees')
+        ) {
           // Get another quote just to retrieve the min amount.
           const amount: string = mul(String(queryParams.amount), '10')
           const newQueryParams = {

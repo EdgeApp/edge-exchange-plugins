@@ -121,7 +121,7 @@ async function checkQuoteError(
 ): Promise<void> {
   const { fromWallet } = request
 
-  if (quoteErrorMessage === 'Amount too low') {
+  if (quoteErrorMessage.includes('Amount too low')) {
     const nativeMin = await fromWallet.denominationToNative(
       rate.min,
       request.fromCurrencyCode

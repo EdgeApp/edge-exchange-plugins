@@ -1,5 +1,10 @@
-import { mul, round, sub } from 'biggystring'
-import { EdgeSwapInfo, EdgeSwapRequest, SwapCurrencyError } from 'edge-core-js'
+import { eq, mul, round, sub } from 'biggystring'
+import {
+  EdgeSwapInfo,
+  EdgeSwapRequest,
+  SwapBelowLimitError,
+  SwapCurrencyError
+} from 'edge-core-js'
 import { BigNumber, Contract, ethers, PopulatedTransaction } from 'ethers'
 
 import { InOutTokenAddresses } from '../defiUtils'
@@ -17,12 +22,16 @@ export const getSwapAmounts = async (
   isWrappingSwap: boolean
 ): Promise<{ amountToSwap: string; expectedAmountOut: string }> => {
   const { nativeAmount, quoteFor } = request
+
+  // ---------------------------------------------------------------------------
+  // 1. Try the user-requested amount
+  // ---------------------------------------------------------------------------
   const [amountToSwap, expectedAmountOut] = (isWrappingSwap
     ? [nativeAmount, nativeAmount]
     : quoteFor === 'to'
-    ? await router.getAmountsIn(nativeAmount, path)
+    ? await router.getAmountsIn(nativeAmount, path).catch(() => ['0', '0'])
     : quoteFor === 'from'
-    ? await router.getAmountsOut(nativeAmount, path)
+    ? await router.getAmountsOut(nativeAmount, path).catch(() => ['0', '0'])
     : []
   ).map(String)
 
@@ -32,7 +41,38 @@ export const getSwapAmounts = async (
     amountToSwap === '0' ||
     expectedAmountOut === '0'
   ) {
-    throw new SwapCurrencyError(swapInfo, request)
+    // ---------------------------------------------------------------------------
+    // 2. Fallback: check a reasonable viable swap and possibly throw below min
+    // ---------------------------------------------------------------------------
+    const { currencyInfo } =
+      quoteFor === 'from' ? request.fromWallet : request.toWallet
+    const tokenId =
+      quoteFor === 'from' ? request.fromTokenId : request.toTokenId
+    const token =
+      tokenId == null
+        ? undefined
+        : quoteFor === 'from'
+        ? request.fromWallet.currencyConfig.allTokens[tokenId]
+        : request.toWallet.currencyConfig.allTokens[tokenId]
+    const { denominations } = token == null ? currencyInfo : token
+    const { multiplier } = denominations[0]
+    const testAmountOut = (quoteFor === 'to'
+      ? await router.getAmountsIn(multiplier, path).catch(() => ['0', '0'])
+      : await router
+          .getAmountsOut(multiplier, path)
+          .catch(() => ['0', '0']))[1].toString()
+
+    // If the test's output amount also failed, the route is unsupported.
+    if (eq(testAmountOut, '0')) {
+      throw new SwapCurrencyError(swapInfo, request)
+    }
+
+    // Otherwise, amount is below protocol minimum.
+    throw new SwapBelowLimitError(
+      swapInfo,
+      undefined,
+      quoteFor === 'to' ? 'to' : 'from'
+    )
   }
 
   return { amountToSwap, expectedAmountOut }

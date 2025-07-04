@@ -15,6 +15,7 @@ import {
   EdgeSwapQuote,
   EdgeSwapRequest,
   EdgeTransaction,
+  SwapBelowLimitError,
   SwapCurrencyError
 } from 'edge-core-js/types'
 
@@ -336,6 +337,10 @@ export function makeLifiPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
 
     if (!quoteResponse.ok) {
       const responseText = await quoteResponse.text()
+
+      if (responseText.includes('AMOUNT_TOO_LOW'))
+        throw new SwapBelowLimitError(swapInfo, undefined, 'from')
+
       throw new Error(`Lifi could not fetch v1/quote: ${responseText}`)
     }
 

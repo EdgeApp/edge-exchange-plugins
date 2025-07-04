@@ -360,17 +360,23 @@ export function makeRangoPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
     const { route, tx } = swap
 
     if (swap.resultType !== 'OK') {
-      if (swap.resultType === 'INPUT_LIMIT_ISSUE') {
+      if (
+        swap.resultType === 'INPUT_LIMIT_ISSUE' ||
+        (swap.error?.includes('Your input amount might be too low!') ?? false)
+      ) {
         const amountRestriction = swap.route?.amountRestriction
+        const fromTo = request.quoteFor === 'to' ? 'to' : 'from'
+
         if (amountRestriction == null) {
-          throw new Error('Rango limit error without values')
+          // Assume null amountRestrictions means below limit
+          throw new SwapBelowLimitError(swapInfo, undefined, fromTo)
         }
         const { min, max } = amountRestriction
 
         if (gte(nativeAmount, max)) {
-          throw new SwapAboveLimitError(swapInfo, max)
+          throw new SwapAboveLimitError(swapInfo, max, fromTo)
         } else if (lte(nativeAmount, min)) {
-          throw new SwapBelowLimitError(swapInfo, min)
+          throw new SwapBelowLimitError(swapInfo, min, fromTo)
         }
       }
       throw new Error(

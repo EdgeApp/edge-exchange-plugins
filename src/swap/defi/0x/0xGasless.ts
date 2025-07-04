@@ -83,7 +83,7 @@ export const make0xGaslessPlugin: EdgeCorePluginFactory = opts => {
       // Convert fee percentage to basis points (e.g., 0.01 -> 100 bps for 1%)
       const swapFeeBps = Math.round(initOptions.feePercentage * 10000)
 
-      const apiSwapQuote = await api.gaslessSwapQuote(chainId, {
+      const apiSwapQuote = await api.gaslessSwapQuote(swapInfo, chainId, {
         sellAmount: swapNativeAmount, // v2 only supports sellAmount
         buyToken: toTokenAddress ?? NATIVE_TOKEN_ADDRESS,
         checkApproval: true,
