@@ -81,6 +81,7 @@ export const MAINNET_CODE_TRANSCRIPTION: CurrencyPluginIdSwapChainCodeMap = {
   fio: null,
   groestlcoin: null,
   hedera: 'hedera',
+  hyperevm: 'hypeevm',
   liberland: null,
   litecoin: 'litecoin',
   monero: 'monero',
@@ -114,6 +115,7 @@ export const MAINNET_CODE_TRANSCRIPTION: CurrencyPluginIdSwapChainCodeMap = {
 }
 
 // See https://changehero.io/currencies for list of supported currencies
+// Or `curl -X POST 'https://api.changehero.io/v2' -H 'api-key: <your-api-key>' -H 'Content-Type: application/json' -d '{"jsonrpc":"2.0","id":"one","method":"getCurrenciesFull","params":{}}'`
 const INVALID_CURRENCY_CODES: InvalidCurrencyCodes = {
   from: {},
   to: {
@@ -191,6 +193,7 @@ export function makeChangeHeroPlugin(
     const response = await fetchCors(uri, { method: 'POST', body, headers })
 
     if (!response.ok) {
+      console.log('ChangeHero response:', await response.text())
       throw new Error(`ChangeHero returned error code ${response.status}`)
     }
     return await response.json()

@@ -75,6 +75,20 @@ const addressTypeMap: StringMap = {
 }
 
 // See https://exolix.com/currencies for list of supported currencies
+// Or `curl -X GET "https://exolix.com/api/v2/currencies?size=100&page=1"`
+// Use the following script to get all currencies:
+/*
+n=1; 
+while true; do
+  response=$(curl -s -X GET "https://exolix.com/api/v2/currencies?size=100&page=$n");
+  if echo "$response" | grep -q '"data":\[\]'; then 
+    echo "Empty data array found on page $n, stopping.";
+    break;
+  fi;
+  echo "$response" | jq .; 
+  ((n++));
+done
+*/
 const MAINNET_CODE_TRANSCRIPTION: CurrencyPluginIdSwapChainCodeMap = {
   algorand: 'ALGO',
   arbitrum: 'ARBITRUM',
@@ -108,6 +122,7 @@ const MAINNET_CODE_TRANSCRIPTION: CurrencyPluginIdSwapChainCodeMap = {
   fio: null,
   groestlcoin: null,
   hedera: 'HBAR',
+  hyperevm: 'HYPE',
   liberland: null,
   litecoin: 'LTC',
   monero: 'XMR',

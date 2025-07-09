@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- added: Support for hyperevm to ChangeHero, Exolix, LetsExchange.
+- added: Support for hyperevm to Li.FI.
+- fixed: Fixed support for Metis on LI.FI.
+
 ## 2.27.0 (2025-07-04)
 
 - changed: Enforce Thorchain dust thresholds
