@@ -3,6 +3,7 @@
 ## Unreleased
 
 - added: Support for hyperevm to ChangeHero, Exolix, LetsExchange.
+- added: Support for hyperevm to Li.FI.
 
 ## 2.27.0 (2025-07-04)
 

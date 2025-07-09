@@ -108,6 +108,7 @@ const MAINNET_CODE_TRANSCRIPTION: StringMap = {
   fuse: 'FUS',
   gnosis: 'DAI',
   harmony: 'ONE',
+  hyperevm: 'HYP',
   metis: 'METIS',
   moonbeam: 'MOO',
   moonriver: 'MOR',
