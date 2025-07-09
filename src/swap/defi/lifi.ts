@@ -109,7 +109,7 @@ const MAINNET_CODE_TRANSCRIPTION: StringMap = {
   gnosis: 'DAI',
   harmony: 'ONE',
   hyperevm: 'HYP',
-  metis: 'METIS',
+  metis: 'MAM',
   moonbeam: 'MOO',
   moonriver: 'MOR',
   okexchain: 'OKT',

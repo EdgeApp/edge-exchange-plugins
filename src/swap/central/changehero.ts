@@ -193,7 +193,7 @@ export function makeChangeHeroPlugin(
     const response = await fetchCors(uri, { method: 'POST', body, headers })
 
     if (!response.ok) {
-      console.log('ChangeHero response:', await response.text())
+      log.warn('ChangeHero response:', await response.text())
       throw new Error(`ChangeHero returned error code ${response.status}`)
     }
     return await response.json()
