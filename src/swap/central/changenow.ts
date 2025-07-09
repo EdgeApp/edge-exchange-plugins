@@ -106,6 +106,7 @@ export const MAINNET_CODE_TRANSCRIPTION: CurrencyPluginIdSwapChainCodeMap = {
   fio: 'fio',
   groestlcoin: null,
   hedera: 'hbar',
+  hyperevm: null,
   liberland: null,
   litecoin: 'ltc',
   monero: 'xmr',

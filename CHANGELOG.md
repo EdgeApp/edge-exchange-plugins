@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- added: Support for hyperevm to ChangeHero, Exolix, LetsExchange.
+
 ## 2.27.0 (2025-07-04)
 
 - changed: Enforce Thorchain dust thresholds
