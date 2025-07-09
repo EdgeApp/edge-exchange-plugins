@@ -77,6 +77,7 @@ const INVALID_CURRENCY_CODES: InvalidCurrencyCodes = {
 }
 
 // See https://letsexchange.io/exchange-pairs for list of supported currencies
+// Or `curl -X GET 'https://api.letsexchange.io/api/v2/coins' -H 'Authorization: Bearer <your-api-key>' | jq .`
 export const MAINNET_CODE_TRANSCRIPTION: CurrencyPluginIdSwapChainCodeMap = {
   algorand: 'ALGO',
   arbitrum: 'ARBITRUM',
@@ -110,6 +111,7 @@ export const MAINNET_CODE_TRANSCRIPTION: CurrencyPluginIdSwapChainCodeMap = {
   fio: 'FIO',
   groestlcoin: 'GRS',
   hedera: 'HBAR',
+  hyperevm: 'HYPE',
   liberland: null,
   litecoin: 'LTC',
   monero: 'XMR',
@@ -150,7 +152,8 @@ export const SPECIAL_MAINNET_CASES: EdgeIdSwapIdMap = new Map([
   ],
   ['ethereum', new Map([[null, { chainCode: 'ETH', tokenCode: 'ETH' }]])],
   ['rsk', new Map([[null, { chainCode: 'RBTC', tokenCode: 'RBTC' }]])],
-  ['tron', new Map([[null, { chainCode: 'TRX', tokenCode: 'TRX' }]])]
+  ['tron', new Map([[null, { chainCode: 'TRX', tokenCode: 'TRX' }]])],
+  ['hyperevm', new Map([[null, { chainCode: 'HYPEEVM', tokenCode: 'HYPE' }]])]
 ])
 
 // Provider data

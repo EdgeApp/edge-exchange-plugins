@@ -525,6 +525,7 @@ export type EdgeCurrencyPluginId =
   | 'fio'
   | 'groestlcoin'
   | 'hedera'
+  | 'hyperevm'
   | 'liberland'
   | 'litecoin'
   | 'monero'
