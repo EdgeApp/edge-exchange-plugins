@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- changed: Remove Thorchain minimum amounts from the thrown `SwapBelowLimit` errors
+
 ## 2.27.0 (2025-07-04)
 
 - changed: Enforce Thorchain dust thresholds

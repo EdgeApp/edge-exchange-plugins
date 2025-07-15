@@ -1255,12 +1255,14 @@ const getBestQuote = async (
     if (bestError == null) {
       throw new Error('Could not get quote')
     } else {
-      const minExchangeAmount = div18(bestError.minThorAmount, THOR_LIMIT_UNITS)
-      const minNativeAmount = await fromWallet.denominationToNative(
-        minExchangeAmount,
-        fromCurrencyCode
-      )
-      throw new SwapBelowLimitError(swapInfo, minNativeAmount, 'from')
+      // TODO: These amounts given by the API are not correct. The true minimum
+      // tends to be lower than reported.
+      // const minExchangeAmount = div18(bestError.minThorAmount, THOR_LIMIT_UNITS)
+      // const minNativeAmount = await fromWallet.denominationToNative(
+      //   minExchangeAmount,
+      //   fromCurrencyCode
+      // )
+      throw new SwapBelowLimitError(swapInfo, undefined, 'from')
     }
   }
   return bestQuote
