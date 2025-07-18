@@ -2,43 +2,7 @@
 
 ## Unreleased
 
-## 2.35.0 (2025-10-03)
-
-- added: (Rango) Support for Axelar, Celo, Cosmos, Osmosis, and Thorchain
-- changed: (Rango) Find minimum swap using native amounts with exponential+binary search
-
-## 2.34.0 (2025-09-18)
-
-- added: (LI.FI) Add SUI blockchain support for swaps via Aftermath and Bluefin7k DEXs
-- changed: Include `orderUri` on Bridgeless swaps
-- fixed: Fix `bridgeless` Zano burn asset params
-
-## 2.33.0 (2025-09-09)
-
-- added: Add Bridgeless plugin
-
-## 2.32.0 (2025-08-25)
-
-- added: Fantom/Sonic Upgrade: throw `SwapAddressError` when from/to wallet addresses differ so the GUI can auto-select or split a FTM wallet
-
-## 2.31.0 (2025-08-04)
-
-- changed: Configure ESBuild to assume es2015 support
-- changed: Require the environment to support es2015 & `async` functions.
-
-## 2.30.0 (2025-08-01)
-
-- added: (Changenow/LetsExchange/Sideshift) Sonic support
-
-## 2.29.1 (2025-07-28)
-
-- fixed: Remove HyperEVM mapping to HYPE on HyperLiquid on Exolix.
-
-## 2.29.0 (2025-07-21)
-
-- added: Support for hyperevm to ChangeHero, Exolix, LetsExchange.
-- added: Support for hyperevm to Li.FI.
-- fixed: Fixed support for Metis on LI.FI.
+- added: (Maya) Zcash support
 
 ## 2.28.0 (2025-07-17)
 

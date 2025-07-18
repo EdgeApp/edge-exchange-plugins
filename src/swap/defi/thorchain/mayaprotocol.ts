@@ -29,7 +29,8 @@ export const MAINNET_CODE_TRANSCRIPTION: { [cc: string]: string } = {
   dash: 'DASH',
   ethereum: 'ETH',
   litecoin: 'LTC',
-  thorchainrune: 'THOR'
+  thorchainrune: 'THOR',
+  zcash: 'ZEC'
 }
 
 export const makeMayaProtocolPlugin = (
@@ -41,6 +42,13 @@ export const makeMayaProtocolPlugin = (
     THORNODE_SERVERS_DEFAULT,
     infoServer,
     orderUri,
-    swapInfo
+    swapInfo,
+    // Allow receiving ZEC on Maya (override default block in common layer):
+    invalidCurrencyCodes: {
+      from: {
+        optimism: ['VELO']
+      },
+      to: {}
+    }
   })
 }

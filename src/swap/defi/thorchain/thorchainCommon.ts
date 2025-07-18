@@ -293,6 +293,7 @@ interface ThorchainOpts {
   orderUri: string
   swapInfo: EdgeSwapInfo
   thornodesFetchOptions?: Record<string, string>
+  invalidCurrencyCodes?: InvalidCurrencyCodes
 }
 
 export function makeThorchainBasedPlugin(
@@ -312,7 +313,8 @@ export function makeThorchainBasedPlugin(
     infoServer,
     orderUri,
     swapInfo,
-    thornodesFetchOptions = {}
+    thornodesFetchOptions = {},
+    invalidCurrencyCodes
   } = thorchainOpts
 
   const fetchSwapQuoteInner = async (
@@ -348,10 +350,21 @@ export function makeThorchainBasedPlugin(
     let streamingInterval: number = STREAMING_INTERVAL_DEFAULT
     let streamingQuantity: number = STREAMING_QUANTITY_DEFAULT
 
-    checkInvalidCodes(INVALID_CURRENCY_CODES, request, swapInfo)
+    checkInvalidCodes(
+      invalidCurrencyCodes ?? INVALID_CURRENCY_CODES,
+      request,
+      swapInfo
+    )
 
     // Grab addresses:
-    const toAddress = await getAddress(toWallet)
+    // For Zcash receives, prefer a transparent address as MAYA generally
+    // requires t-addresses for inbound/outbound routing.
+    const toAddress = await getAddress(
+      toWallet,
+      toWallet.currencyInfo.pluginId === 'zcash'
+        ? 'transparentAddress'
+        : undefined
+    )
 
     const fromMainnetCode =
       MAINNET_CODE_TRANSCRIPTION[fromWallet.currencyInfo.pluginId]
