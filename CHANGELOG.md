@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 2.28.0 (2025-07-17)
+
 - changed: Remove Thorchain minimum amounts from the thrown `SwapBelowLimit` errors
 
 ## 2.27.0 (2025-07-04)
