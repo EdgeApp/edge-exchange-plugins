@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 2.29.0 (2025-07-21)
+
 - added: Support for hyperevm to ChangeHero, Exolix, LetsExchange.
 - added: Support for hyperevm to Li.FI.
 - fixed: Fixed support for Metis on LI.FI.
