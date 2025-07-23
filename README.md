@@ -176,5 +176,3 @@ https://github.com/edx/edx-platform/wiki/How-to-Rebase-a-Pull-Request
 - Accompanying PR submitted to `edge-react-gui` that includes (but is not limited to) the following:
     - Small 64x64 pixel square logos with a white background
     - 600x210 pixel horizontal logo for your exchange, with **no** empty space around the logo (we will add this programatically within the app
-
-
