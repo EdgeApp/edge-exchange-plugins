@@ -2,7 +2,6 @@
 
 [![Version](https://img.shields.io/npm/v/edge-exchange-plugins.svg)](https://www.npmjs.com/package/edge-exchange-plugins)
 [![License](https://img.shields.io/npm/l/edge-exchange-plugins.svg)](https://github.com/EdgeApp/edge-exchange-plugins/blob/master/LICENSE)
-[![Build Status](https://img.shields.io/github/actions/workflow/status/EdgeApp/edge-exchange-plugins/ci.yml?branch=master)](https://github.com/EdgeApp/edge-exchange-plugins/actions)
 
 This library exports a collection of exchange-rate & swap plugins for use with [`edge-core-js`](https://github.com/EdgeApp/edge-core-js).
 
