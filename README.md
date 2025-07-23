@@ -119,9 +119,7 @@ This library includes the following exchange and swap plugins:
 - **Velodrome** - Optimism DEX
 - **Unizen** - Multi-chain DeFi platform
 
-### Other
-- **Transfer** - Direct transfer functionality
-- **XRP DEX** - XRP decentralized exchange information
+### and more...
 
 ## Development
 
