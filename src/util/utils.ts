@@ -1,4 +1,4 @@
-import { add, max } from 'biggystring'
+import { add, div, gt, lt, max, mul, round, sub } from 'biggystring'
 import {
   EdgeCurrencyWallet,
   EdgeFetchFunction,
@@ -222,4 +222,98 @@ const pluginIdMemoTypes: { [pluginId: string]: EdgeMemoOption['type'] } = {
 }
 export const memoType = (pluginId: string): EdgeMemoOption['type'] => {
   return pluginIdMemoTypes[pluginId] ?? 'text'
+}
+
+/**
+ * Binary search to find the minimum swap amount that succeeds
+ * Starts with a USD amount and converts to native amount using exchange rates
+ */
+export async function findMinimumSwapAmount({
+  wallet,
+  tokenId,
+  exchangeRate = '0',
+  startingUsdAmount = '300',
+  maxIterations = 5,
+  log = console.log,
+  quoteTester
+}: {
+  wallet: EdgeCurrencyWallet
+  tokenId: string | null
+  exchangeRate?: string
+  startingUsdAmount?: string
+  maxIterations?: number
+  log?: Function
+  /** Returns true if quote succeeds */
+  quoteTester: (nativeAmount: string) => Promise<boolean>
+}): Promise<string | undefined> {
+  if (exchangeRate === '0') {
+    log('Exchange rate is 0, cannot search for minimum')
+    return undefined
+  }
+
+  // Get currency info and multiplier based on tokenId
+  const { currencyInfo } = wallet
+  let currencyCode: string
+  let multiplier: string
+
+  if (tokenId == null) {
+    // Native currency case
+    currencyCode = currencyInfo.currencyCode
+    multiplier = currencyInfo.denominations[0].multiplier
+  } else {
+    // Token case
+    const token = wallet.currencyConfig.allTokens[tokenId]
+    if (token == null) {
+      throw new Error(`Token with tokenId "${tokenId}" not found`)
+    }
+    currencyCode = token.currencyCode
+    multiplier = token.denominations[0].multiplier
+  }
+
+  // Convert starting USD amount to exchange amount
+  const startingExchangeAmount = div(startingUsdAmount, exchangeRate, 20)
+  log(
+    `Starting with ${startingUsdAmount} USD = ${startingExchangeAmount} ${currencyCode}`
+  )
+
+  // Convert denomination amount to native amount using multiplier
+  const startingNativeAmount = round(mul(startingExchangeAmount, multiplier), 0)
+  log(`Starting native amount: ${startingNativeAmount}`)
+
+  // Test if the starting amount works
+  if (!(await quoteTester(startingNativeAmount))) {
+    log(
+      `Starting amount ${startingUsdAmount} USD doesn't work, may need higher limit`
+    )
+    return undefined
+  }
+
+  // Binary search between 1 and startingNativeAmount
+  let low = '1'
+  let high = startingNativeAmount
+  let lastWorkingAmount: string | undefined
+
+  for (let i = 0; i < maxIterations && gt(high, low); i++) {
+    const mid = round(div(mul(add(low, high), '1'), '2'), 0)
+    log(`Iteration ${i + 1}: Testing ${mid}`)
+
+    if (await quoteTester(mid).catch(() => false)) {
+      log(`${mid} works`)
+      lastWorkingAmount = mid
+      high = mid
+    } else {
+      log(`${mid} doesn't work`)
+      low = mid
+    }
+
+    // Stop if we're getting very close
+    const diff = div(mul(sub(high, low), '100'), high) // percentage difference
+    if (lt(diff, '1')) {
+      // Less than 1% difference
+      log(`Converged with ${diff}% difference`)
+      break
+    }
+  }
+
+  return lastWorkingAmount
 }

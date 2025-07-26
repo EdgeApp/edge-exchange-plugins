@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- added: Support for Celo & Tron on Rango
+
 ## 2.29.0 (2025-07-21)
 
 - added: Support for hyperevm to ChangeHero, Exolix, LetsExchange.
