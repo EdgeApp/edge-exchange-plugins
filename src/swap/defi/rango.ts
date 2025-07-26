@@ -7,6 +7,7 @@ import {
   asObject,
   asOptional,
   asString,
+  asUnknown,
   asValue
 } from 'cleaners'
 import {
@@ -58,8 +59,8 @@ const MAINNET_CODE_TRANSCRIPTION: StringMap = {
   base: 'BASE',
   binancesmartchain: 'BSC',
   // bitcoin: 'BTC',
-  // celo: 'CELO',
-  // cosmoshub: 'COSMOS',
+  celo: 'CELO',
+  cosmoshub: 'COSMOS',
   // dash: 'DASH',
   // dogecoin: 'DOGE',
   ethereum: 'ETH',
@@ -71,11 +72,11 @@ const MAINNET_CODE_TRANSCRIPTION: StringMap = {
   // moonriver: 'MOONRIVER',
   // okexchain: 'OKC',
   optimism: 'OPTIMISM',
-  // osmosis: 'OSMOSIS',
+  osmosis: 'OSMOSIS',
   polygon: 'POLYGON',
-  // thorchainrune: 'THOR',
+  thorchainrune: 'THOR',
   // solana: 'SOLANA',
-  // tron: 'TRON',
+  tron: 'TRON', // Currently only centralized exchanges are supported
   zksync: 'ZKSYNC',
   solana: 'SOLANA'
 }
@@ -191,11 +192,70 @@ const asSolanaTransaction = asObject({
   serializedMessage: asEither(asArray(asNumber), asNull)
 })
 
+const asCosmosTransaction = asObject({
+  type: asValue('COSMOS'),
+  fromWalletAddress: asEither(asString, asNull),
+  blockChain: asEither(asString, asNull),
+  data: asOptional(
+    asObject({
+      chainId: asString,
+      account_number: asEither(asNumber, asString),
+      sequence: asEither(asNumber, asString),
+      msgs: asArray(asUnknown),
+      protoMsgs: asOptional(asArray(asUnknown)),
+      memo: asOptional(asString),
+      fee: asObject({
+        gas: asString,
+        amount: asArray(
+          asObject({
+            denom: asString,
+            amount: asString
+          })
+        )
+      }),
+      signType: asOptional(asString),
+      rpcUrl: asOptional(asString)
+    })
+  ),
+  rawTransfer: asEither(asString, asNull),
+  expectedOutput: asOptional(asString)
+})
+
+const asTronPayload = asObject({
+  owner_address: asString,
+  call_value: asNumber,
+  contract_address: asString,
+  fee_limit: asNumber,
+  function_selector: asString,
+  parameter: asString,
+  chainType: asEither(asString, asNull)
+})
+
+const asTronTransaction = asObject({
+  type: asValue('TRON'),
+  raw_data: asOptional(asUnknown),
+  approve_raw_data: asOptional(asUnknown),
+  raw_data_hex: asEither(asString, asNull),
+  approve_raw_data_hex: asEither(asString, asNull),
+  __payload__: asOptional(asTronPayload),
+  approve_payload: asOptional(asTronPayload),
+  txID: asEither(asString, asNull),
+  approveTxID: asEither(asString, asNull),
+  visible: asOptional(asUnknown),
+  approveVisible: asOptional(asUnknown)
+})
+
 const asSwapResponse = asObject({
   resultType: asRoutingResultType,
   route: asEither(asSwapSimulationResult, asNull),
   error: asEither(asString, asNull),
-  tx: asEither(asEvmTransaction, asSolanaTransaction, asNull)
+  tx: asEither(
+    asEvmTransaction,
+    asSolanaTransaction,
+    asCosmosTransaction,
+    asTronTransaction,
+    asNull
+  )
 })
 
 type ExchangeInfo = ReturnType<typeof asExchangeInfo>
@@ -288,7 +348,8 @@ export function makeRangoPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
         )
 
         if (exchangeInfoResponse.ok === true) {
-          exchangeInfo = asExchangeInfo(await exchangeInfoResponse.json())
+          const json = await exchangeInfoResponse.json()
+          exchangeInfo = asExchangeInfo(json)
           exchangeInfoLastUpdate = now
         } else {
           // Error is ok. We just use defaults
@@ -321,16 +382,44 @@ export function makeRangoPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
       referrer = { referrerAddress, referrerFee }
     }
 
+    // For Cosmos chains, Rango expects token symbol for native tokens, not blockchain name
+    const isCosmosChain = (code: string): boolean =>
+      ['COSMOS', 'OSMOSIS', 'THOR'].includes(code)
+
+    const createAssetString = (
+      mainnetCode: string,
+      contractAddress: string,
+      currencyCode: string
+    ): string => {
+      if (isCosmosChain(mainnetCode)) {
+        // For Cosmos chains, Rango expects BLOCKCHAIN.SYMBOL format
+        if (contractAddress === PARENT_TOKEN_CONTRACT_ADDRESS) {
+          // Native tokens: BLOCKCHAIN.SYMBOL (e.g., COSMOS.ATOM, OSMOSIS.OSMO)
+          return `${mainnetCode}.${currencyCode}`
+        } else {
+          // Contract tokens: BLOCKCHAIN.SYMBOL--address (e.g., OSMOSIS.ATOM--ibc/123...)
+          return `${mainnetCode}.${currencyCode}--${contractAddress}`
+        }
+      }
+      // For all other chains, use the standard blockchain/blockchain--address format
+      return assetToString({
+        blockchain: mainnetCode,
+        address: contractAddress
+      })
+    }
+
     const swapParameters = {
       apiKey: rangoApiKey,
-      from: assetToString({
-        blockchain: fromMainnetCode,
-        address: fromContractAddress
-      }),
-      to: assetToString({
-        blockchain: toMainnetCode,
-        address: toContractAddress
-      }),
+      from: createAssetString(
+        fromMainnetCode,
+        fromContractAddress,
+        request.fromCurrencyCode
+      ),
+      to: createAssetString(
+        toMainnetCode,
+        toContractAddress,
+        request.toCurrencyCode
+      ),
       fromAddress: fromAddress,
       toAddress: toAddress,
       amount: nativeAmount,
@@ -340,6 +429,7 @@ export function makeRangoPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
       ...(referrer != null ? referrer : undefined)
     }
 
+    // https://api.rango.exchange/basic/swap?from=OSMOSIS.OSMO&to=OSMOSIS.ATOM--ibc%2F27394fb092d2eccd56123c74f36e4c1f926001ceada9ca97ea622b25f41e5eb2&amount=1000000&slippage=8&fromAddress=osmo1unf2rcytjxfpz8x8ar63h4qeftadptg5t0nqcl&toAddress=osmo1unf2rcytjxfpz8x8ar63h4qeftadptg5t0nqcl&disableEstimate=true&apiKey=c6381a79-2817-4602-83bf-6a641a409e32
     const params = makeQueryParams(swapParameters)
 
     const swapResponse = await fetchWaterfall(
@@ -356,7 +446,8 @@ export function makeRangoPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
       throw new Error(`Rango could not fetch quote: ${responseText}`)
     }
 
-    const swap = asSwapResponse(await swapResponse.json())
+    const swapResponseJson = await swapResponse.json()
+    const swap = asSwapResponse(swapResponseJson)
     const { route, tx } = swap
 
     if (swap.resultType !== 'OK') {
@@ -425,6 +516,151 @@ export function makeRangoPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
           },
           savedAction: {
             actionType: 'swap',
+            swapInfo,
+            orderUri: `${orderUri}${toAddress}`,
+            isEstimate: true,
+            toAsset: {
+              pluginId: toWallet.currencyInfo.pluginId,
+              tokenId: toTokenId,
+              nativeAmount: route.outputAmount
+            },
+            fromAsset: {
+              pluginId: fromWallet.currencyInfo.pluginId,
+              tokenId: fromTokenId,
+              nativeAmount: nativeAmount
+            },
+            payoutAddress: toAddress,
+            payoutWalletId: toWallet.id,
+            refundAddress: fromAddress
+          }
+        }
+
+        break
+      }
+
+      case 'COSMOS': {
+        const cosmosTransaction = asCosmosTransaction(tx)
+        if (cosmosTransaction.data == null) {
+          throw new SwapCurrencyError(swapInfo, request)
+        }
+
+        // According to Rango API docs, cosmos transaction data contains the full cosmos tx structure
+        spendInfo = {
+          tokenId: request.fromTokenId,
+          spendTargets: [
+            {
+              nativeAmount,
+              publicAddress: toAddress
+            }
+          ],
+          otherParams: {
+            makeTxParams: {
+              type: 'MakeTxDexSwap',
+              fromTokenId: request.fromTokenId,
+              fromNativeAmount: nativeAmount,
+              toTokenId: request.toTokenId,
+              toNativeAmount: route.outputAmount,
+              swapData: {
+                isEstimate: true,
+                // Use the complete cosmos transaction data from Rango API
+                orderId: JSON.stringify(cosmosTransaction.data),
+                orderUri: `${orderUri}${toAddress}`,
+                plugin: {
+                  pluginId: swapInfo.pluginId,
+                  displayName: swapInfo.displayName
+                },
+                payoutAddress: toAddress,
+                payoutWalletId: toWallet.id,
+                refundAddress: fromAddress
+              }
+            }
+          },
+          memos: [],
+          networkFeeOption: 'high',
+          assetAction: {
+            assetActionType: 'swap'
+          },
+          savedAction: {
+            actionType: 'swap',
+            swapInfo,
+            orderUri: `${orderUri}${toAddress}`,
+            isEstimate: true,
+            toAsset: {
+              pluginId: toWallet.currencyInfo.pluginId,
+              tokenId: toTokenId,
+              nativeAmount: route.outputAmount
+            },
+            fromAsset: {
+              pluginId: fromWallet.currencyInfo.pluginId,
+              tokenId: fromTokenId,
+              nativeAmount: nativeAmount
+            },
+            payoutAddress: toAddress,
+            payoutWalletId: toWallet.id,
+            refundAddress: fromAddress
+          }
+        }
+
+        break
+      }
+
+      case 'TRON': {
+        const tronTransaction = asTronTransaction(tx)
+        if (tronTransaction.__payload__ == null) {
+          throw new SwapCurrencyError(swapInfo, request)
+        }
+
+        const payload = tronTransaction.__payload__
+
+        // Check if there's an approval transaction needed
+        let preTx: EdgeTransaction | undefined
+        if (tronTransaction.approve_payload != null) {
+          const approvePayload = tronTransaction.approve_payload
+          const approvalSpendInfo = {
+            tokenId: null,
+            spendTargets: [
+              {
+                nativeAmount: '0',
+                publicAddress: fromContractAddress,
+                otherParams: {
+                  data: approvePayload.parameter
+                }
+              }
+            ],
+            assetAction: {
+              assetActionType: 'tokenApproval'
+            } as const,
+            savedAction: {
+              actionType: 'tokenApproval' as const,
+              tokenApproved: {
+                pluginId: fromWallet.currencyInfo.pluginId,
+                tokenId: fromTokenId,
+                nativeAmount
+              },
+              tokenContractAddress: fromContractAddress,
+              contractAddress: fromContractAddress
+            }
+          }
+          preTx = await request.fromWallet.makeSpend(approvalSpendInfo)
+        }
+
+        spendInfo = {
+          tokenId: request.fromTokenId,
+          spendTargets: [
+            {
+              nativeAmount,
+              publicAddress: toAddress,
+              otherParams: {
+                data: payload.parameter
+              }
+            }
+          ],
+          networkFeeOption: 'high',
+          assetAction: {
+            assetActionType: 'swap'
+          } as const,
+          savedAction: {
+            actionType: 'swap' as const,
             swapInfo,
             orderUri: `${orderUri}${toAddress}`,
             isEstimate: true,
