@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- added: (Rango) Support for Axelar, Celo, Cosmos, Osmosis, Thorchain, and Tron
+- changed: (Rango) Find minimum swap using native amounts with exponential+binary search
+
 ## 2.33.0 (2025-09-09)
 
 - added: Add Bridgeless plugin
