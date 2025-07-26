@@ -7,6 +7,7 @@ import {
   asObject,
   asOptional,
   asString,
+  asUnknown,
   asValue
 } from 'cleaners'
 import {
@@ -31,13 +32,15 @@ import {
 import {
   convertRequest,
   fetchInfo,
+  fetchRates,
   fetchWaterfall,
+  findMinimumSwapAmount,
   getAddress,
   hexToDecimal,
   makeQueryParams,
   promiseWithTimeout
 } from '../../util/utils'
-import { EdgeSwapRequestPlugin, StringMap } from '../types'
+import { asRatesResponse, EdgeSwapRequestPlugin, StringMap } from '../types'
 import { WEI_MULTIPLIER } from './defiUtils'
 
 const swapInfo: EdgeSwapInfo = {
@@ -53,13 +56,13 @@ const EXCHANGE_INFO_UPDATE_FREQ_MS = 60000
 
 const MAINNET_CODE_TRANSCRIPTION: StringMap = {
   arbitrum: 'ARBITRUM',
-  // axelar: 'AXELAR',
+  axelar: 'AXELAR',
   avalanche: 'AVAX_CCHAIN',
   base: 'BASE',
   binancesmartchain: 'BSC',
-  // bitcoin: 'BTC',
-  // celo: 'CELO',
-  // cosmoshub: 'COSMOS',
+  bitcoin: 'BTC',
+  celo: 'CELO',
+  cosmoshub: 'COSMOS',
   // dash: 'DASH',
   // dogecoin: 'DOGE',
   ethereum: 'ETH',
@@ -71,11 +74,11 @@ const MAINNET_CODE_TRANSCRIPTION: StringMap = {
   // moonriver: 'MOONRIVER',
   // okexchain: 'OKC',
   optimism: 'OPTIMISM',
-  // osmosis: 'OSMOSIS',
+  osmosis: 'OSMOSIS',
   polygon: 'POLYGON',
-  // thorchainrune: 'THOR',
+  thorchainrune: 'THOR',
   // solana: 'SOLANA',
-  // tron: 'TRON',
+  tron: 'TRON', // Enabled, but currently only centralized bridges available, so won't return a quote.
   zksync: 'ZKSYNC',
   solana: 'SOLANA'
 }
@@ -89,6 +92,28 @@ const DEFAULT_SLIPPAGE = '5.0'
 interface Asset {
   blockchain: string
   address: string
+}
+
+const createAssetString = (
+  mainnetCode: string,
+  contractAddress: string,
+  currencyCode: string
+): string => {
+  if (['COSMOS', 'OSMOSIS', 'THOR', 'AXELAR'].includes(mainnetCode)) {
+    // For Cosmos chains, Rango expects BLOCKCHAIN.SYMBOL format
+    if (contractAddress === PARENT_TOKEN_CONTRACT_ADDRESS) {
+      // Native tokens: BLOCKCHAIN.SYMBOL (e.g., COSMOS.ATOM, OSMOSIS.OSMO)
+      return `${mainnetCode}.${currencyCode}`
+    } else {
+      // Contract tokens: BLOCKCHAIN.SYMBOL--address (e.g., OSMOSIS.ATOM--ibc/123...)
+      return `${mainnetCode}.${currencyCode}--${contractAddress}`
+    }
+  }
+  // For all other chains, use the standard blockchain/blockchain--address format
+  return assetToString({
+    blockchain: mainnetCode,
+    address: contractAddress
+  })
 }
 
 export function assetToString(asset: Asset): string {
@@ -191,11 +216,75 @@ const asSolanaTransaction = asObject({
   serializedMessage: asEither(asArray(asNumber), asNull)
 })
 
+const asCosmosTransaction = asObject({
+  type: asValue('COSMOS'),
+  fromWalletAddress: asEither(asString, asNull),
+  blockChain: asEither(asString, asNull),
+  data: asOptional(
+    asObject({
+      chainId: asString,
+      account_number: asEither(asNumber, asString),
+      sequence: asEither(asNumber, asString),
+      msgs: asArray(asUnknown),
+      protoMsgs: asOptional(asArray(asUnknown)),
+      memo: asOptional(asString),
+      fee: asObject({
+        gas: asString,
+        amount: asArray(
+          asObject({
+            denom: asString,
+            amount: asString
+          })
+        )
+      }),
+      signType: asOptional(asString),
+      rpcUrl: asOptional(asString)
+    })
+  ),
+  rawTransfer: asEither(asString, asNull),
+  expectedOutput: asOptional(asString)
+})
+
+const asTronPayload = asObject({
+  owner_address: asString,
+  call_value: asNumber,
+  contract_address: asString,
+  fee_limit: asNumber,
+  function_selector: asString,
+  parameter: asString,
+  chainType: asEither(asString, asNull)
+})
+
+const asTronTransaction = asObject({
+  type: asValue('TRON'),
+  raw_data: asOptional(asUnknown),
+  approve_raw_data: asOptional(asUnknown),
+  raw_data_hex: asEither(asString, asNull),
+  approve_raw_data_hex: asEither(asString, asNull),
+  __payload__: asOptional(asTronPayload),
+  approve_payload: asOptional(asTronPayload),
+  txID: asEither(asString, asNull),
+  approveTxID: asEither(asString, asNull),
+  visible: asOptional(asUnknown),
+  approveVisible: asOptional(asUnknown)
+})
+
 const asSwapResponse = asObject({
   resultType: asRoutingResultType,
   route: asEither(asSwapSimulationResult, asNull),
   error: asEither(asString, asNull),
-  tx: asEither(asEvmTransaction, asSolanaTransaction, asNull)
+  tx: asEither(
+    asEvmTransaction,
+    asSolanaTransaction,
+    asCosmosTransaction,
+    asTronTransaction,
+    asNull
+  ),
+  // Common tracking fields that might be in the response
+  requestId: asOptional(asString),
+  id: asOptional(asString),
+  uuid: asOptional(asString),
+  transactionId: asOptional(asString)
 })
 
 type ExchangeInfo = ReturnType<typeof asExchangeInfo>
@@ -288,7 +377,8 @@ export function makeRangoPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
         )
 
         if (exchangeInfoResponse.ok === true) {
-          exchangeInfo = asExchangeInfo(await exchangeInfoResponse.json())
+          const json = await exchangeInfoResponse.json()
+          exchangeInfo = asExchangeInfo(json)
           exchangeInfoLastUpdate = now
         } else {
           // Error is ok. We just use defaults
@@ -318,21 +408,23 @@ export function makeRangoPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
       referrerFee != null &&
       referrerFee !== ''
     ) {
-      referrer = { referrerAddress, referrerFee }
+      referrer = { referrerAddress: referrerAddress.toLowerCase(), referrerFee }
     }
 
     const swapParameters = {
       apiKey: rangoApiKey,
-      from: assetToString({
-        blockchain: fromMainnetCode,
-        address: fromContractAddress
-      }),
-      to: assetToString({
-        blockchain: toMainnetCode,
-        address: toContractAddress
-      }),
-      fromAddress: fromAddress,
-      toAddress: toAddress,
+      from: createAssetString(
+        fromMainnetCode,
+        fromContractAddress,
+        request.fromCurrencyCode
+      ),
+      to: createAssetString(
+        toMainnetCode,
+        toContractAddress,
+        request.toCurrencyCode
+      ),
+      fromAddress,
+      toAddress,
       amount: nativeAmount,
       disableEstimate: true,
       avoidNativeFee: true,
@@ -356,11 +448,15 @@ export function makeRangoPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
       throw new Error(`Rango could not fetch quote: ${responseText}`)
     }
 
-    const swap = asSwapResponse(await swapResponse.json())
+    const swapResponseJson = await swapResponse.json()
+    log(`Rango swap response:`, swapResponseJson)
+    const swap = asSwapResponse(swapResponseJson)
     const { route, tx } = swap
 
     if (swap.resultType !== 'OK') {
+      // Try to handle failed result
       if (
+        swap.resultType === 'NO_ROUTE' || // TODO: https://api-docs.rango.exchange/reference/getbestroutes - Integrate "diagnosisMessages" instead?
         swap.resultType === 'INPUT_LIMIT_ISSUE' ||
         (swap.error?.includes('Your input amount might be too low!') ?? false)
       ) {
@@ -368,6 +464,101 @@ export function makeRangoPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
         const fromTo = request.quoteFor === 'to' ? 'to' : 'from'
 
         if (amountRestriction == null) {
+          // Try to find the actual minimum using binary search
+          log(
+            `Amount appears too low (${
+              swap.error ?? 'unknown error'
+            }), attempting binary search for minimum`
+          )
+
+          // For Rango, we're always searching for minimum 'from' amount since it only supports 'from' quotes
+          const searchWallet = fromWallet
+          const searchTokenId = request.fromTokenId
+
+          // Get currency code for exchange rate lookup
+          let searchCurrencyCode: string
+          if (searchTokenId == null) {
+            // Native currency
+            searchCurrencyCode = searchWallet.currencyInfo.currencyCode
+          } else {
+            // Token
+            const token = searchWallet.currencyConfig.allTokens[searchTokenId]
+            if (token == null) {
+              throw new Error(`Token with tokenId "${searchTokenId}" not found`)
+            }
+            searchCurrencyCode = token.currencyCode
+          }
+
+          // Fetch exchange rate for the from currency
+          const currencyPair = `${searchCurrencyCode}_iso:USD`
+          const ratesResponse = await fetchRates(
+            fetchCors,
+            'v2/exchangeRates',
+            {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                data: [{ currency_pair: currencyPair }]
+              })
+            }
+          )
+
+          if (ratesResponse.ok) {
+            const ratesJson = await ratesResponse.json()
+            const rates = asRatesResponse(ratesJson)
+            const exchangeRate = rates.data?.[0]?.exchangeRate
+
+            if (exchangeRate != null) {
+              log(
+                `Found exchange rate: 1 ${searchCurrencyCode} = $${exchangeRate} USD`
+              )
+
+              // Create a quote tester function that varies the from amount
+              const quoteTester = async (
+                testNativeAmount: string
+              ): Promise<boolean> => {
+                try {
+                  const testSwapParameters = {
+                    ...swapParameters,
+                    amount: testNativeAmount
+                  }
+                  const testParams = makeQueryParams(testSwapParameters)
+                  const testResponse = await fetchWaterfall(
+                    fetchCors,
+                    rangoServers,
+                    `basic/swap?${testParams}`,
+                    { headers }
+                  )
+
+                  if (testResponse.ok) {
+                    const testJson = await testResponse.json()
+                    const testSwap = asSwapResponse(testJson)
+                    return testSwap.resultType === 'OK'
+                  }
+                  return false
+                } catch (e) {
+                  return false
+                }
+              }
+
+              // Find minimum using binary search
+              const foundMinimum:
+                | string
+                | undefined = await findMinimumSwapAmount({
+                wallet: searchWallet,
+                tokenId: searchTokenId,
+                exchangeRate,
+                quoteTester,
+                log: log.warn
+              })
+
+              if (foundMinimum != null) {
+                log(`Found minimum swap amount: ${foundMinimum}`)
+                throw new SwapBelowLimitError(swapInfo, foundMinimum, fromTo)
+              }
+            }
+          }
+
           // Assume null amountRestrictions means below limit
           throw new SwapBelowLimitError(swapInfo, undefined, fromTo)
         }
@@ -380,7 +571,9 @@ export function makeRangoPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
         }
       }
       throw new Error(
-        `Rango could not proceed with the exchange. : ${swap.resultType}`
+        `Rango could not proceed with the exchange: ${swap.resultType} ${
+          swap.error ?? ''
+        }`
       )
     }
 
@@ -425,6 +618,149 @@ export function makeRangoPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
           },
           savedAction: {
             actionType: 'swap',
+            swapInfo,
+            orderUri: `${orderUri}${toAddress}`,
+            isEstimate: true,
+            toAsset: {
+              pluginId: toWallet.currencyInfo.pluginId,
+              tokenId: toTokenId,
+              nativeAmount: route.outputAmount
+            },
+            fromAsset: {
+              pluginId: fromWallet.currencyInfo.pluginId,
+              tokenId: fromTokenId,
+              nativeAmount: nativeAmount
+            },
+            payoutAddress: toAddress,
+            payoutWalletId: toWallet.id,
+            refundAddress: fromAddress
+          }
+        }
+
+        break
+      }
+
+      case 'COSMOS': {
+        const cosmosTransaction = asCosmosTransaction(tx)
+        log(`COSMOS transaction:`, cosmosTransaction)
+        if (cosmosTransaction.data == null) {
+          throw new SwapCurrencyError(swapInfo, request)
+        }
+
+        // Use requestId/id/uuid/transactionId for tracking if available
+        const trackingId =
+          swap.requestId ?? swap.id ?? swap.uuid ?? swap.transactionId ?? ''
+        const trackingUri =
+          trackingId !== ''
+            ? `${orderUri}${trackingId}`
+            : `${orderUri}${toAddress}`
+        log(`Rango tracking: id=${trackingId}, uri=${trackingUri}`)
+
+        // Create the saved action for the swap
+        const savedAction = {
+          actionType: 'swap' as const,
+          swapInfo,
+          orderUri: trackingUri,
+          isEstimate: true,
+          toAsset: {
+            pluginId: toWallet.currencyInfo.pluginId,
+            tokenId: toTokenId,
+            nativeAmount: route.outputAmount
+          },
+          fromAsset: {
+            pluginId: fromWallet.currencyInfo.pluginId,
+            tokenId: fromTokenId,
+            nativeAmount: nativeAmount
+          },
+          payoutAddress: toAddress,
+          payoutWalletId: toWallet.id,
+          refundAddress: fromAddress
+        }
+
+        // Create makeTxParams for COSMOS swap
+        const makeTxParams = {
+          type: 'MakeTxDexSwap' as const,
+          assetAction: { assetActionType: 'swap' as const },
+          savedAction,
+          fromTokenId: request.fromTokenId,
+          fromNativeAmount: nativeAmount,
+          toTokenId: request.toTokenId,
+          toNativeAmount: route.outputAmount,
+          txData: JSON.stringify(cosmosTransaction.data)
+        }
+
+        const providersStr = providers?.join(' -> ')
+        const metadataNotes = `DEX Providers: ${providersStr}`
+
+        // Return SwapOrder with makeTxParams directly (not spendInfo)
+        return {
+          expirationDate: new Date(Date.now() + EXPIRATION_MS),
+          fromNativeAmount: nativeAmount,
+          metadataNotes,
+          minReceiveAmount: route.outputAmountMin,
+          preTx,
+          request,
+          makeTxParams,
+          swapInfo
+        }
+      }
+
+      case 'TRON': {
+        const tronTransaction = asTronTransaction(tx)
+        if (tronTransaction.__payload__ == null) {
+          throw new SwapCurrencyError(swapInfo, request)
+        }
+
+        const payload = tronTransaction.__payload__
+
+        // Check if there's an approval transaction needed
+        if (tronTransaction.approve_payload != null) {
+          const approvePayload = tronTransaction.approve_payload
+          const approvalSpendInfo = {
+            tokenId: null,
+            spendTargets: [
+              {
+                nativeAmount: '0',
+                publicAddress: fromContractAddress,
+                otherParams: {
+                  data: approvePayload.parameter
+                }
+              }
+            ],
+            assetAction: {
+              assetActionType: 'tokenApproval'
+            } as const,
+            savedAction: {
+              actionType: 'tokenApproval' as const,
+              tokenApproved: {
+                pluginId: fromWallet.currencyInfo.pluginId,
+                tokenId: fromTokenId,
+                nativeAmount
+              },
+              tokenContractAddress: fromContractAddress,
+              contractAddress: fromContractAddress
+            }
+          }
+          preTx = await request.fromWallet.makeSpend(approvalSpendInfo)
+        }
+
+        spendInfo = {
+          tokenId: request.fromTokenId,
+          spendTargets: [
+            {
+              nativeAmount,
+              publicAddress: toAddress,
+              otherParams: {
+                data: payload.parameter
+              }
+            }
+          ],
+          networkFeeOption: 'high',
+          assetAction: {
+            assetActionType: 'swap'
+          } as const,
+          savedAction: {
+            actionType: 'swap' as const,
             swapInfo,
             orderUri: `${orderUri}${toAddress}`,
             isEstimate: true,
@@ -577,7 +913,8 @@ export function makeRangoPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
         }
       }
       const swapOrder = await fetchSwapQuoteInner(newRequest)
-      return await makeSwapPluginQuote(swapOrder)
+      const quote = await makeSwapPluginQuote(swapOrder)
+      return quote
     }
   }
   return out

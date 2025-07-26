@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- added: Support for Celo & Tron on Rango
+
 ## 2.33.0 (2025-09-09)
 
 - added: Add Bridgeless plugin
