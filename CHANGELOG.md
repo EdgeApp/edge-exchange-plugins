@@ -2,7 +2,9 @@
 
 ## Unreleased
 
+- added: (Rango) Support for Axelar, Celo, Cosmos, Osmosis, Thorchain, and Tron
 - added: (LI.FI) Add SUI blockchain support for swaps via Aftermath and Bluefin7k DEXs
+- changed: (Rango) Find minimum swap using native amounts with exponential+binary search
 - changed: Include `orderUri` on Bridgeless swaps
 - fixed: Fix `bridgeless` Zano burn asset params
 
