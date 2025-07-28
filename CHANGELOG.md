@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 2.29.1 (2025-07-28)
+
 - fixed: Remove HyperEVM mapping to HYPE on HyperLiquid on Exolix.
 
 ## 2.29.0 (2025-07-21)
