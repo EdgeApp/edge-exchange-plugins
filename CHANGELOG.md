@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- fixed: Remove HyperEVM mapping to HYPE on HyperLiquid on Exolix.
+
 ## 2.29.0 (2025-07-21)
 
 - added: Support for hyperevm to ChangeHero, Exolix, LetsExchange.
