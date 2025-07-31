@@ -11,10 +11,13 @@ import {
   EdgeCorePluginOptions,
   EdgeMemo,
   EdgeSpendInfo,
+  EdgeSwapApproveOptions,
   EdgeSwapInfo,
   EdgeSwapPlugin,
   EdgeSwapQuote,
   EdgeSwapRequest,
+  EdgeTransaction,
+  JsonObject,
   SwapAboveLimitError,
   SwapBelowLimitError,
   SwapCurrencyError
@@ -29,7 +32,7 @@ import {
   getChainAndTokenCodes,
   getMaxSwappable,
   InvalidCurrencyCodes,
-  makeSwapPluginQuote,
+  makeTwoPhaseSwapQuote,
   SwapOrder
 } from '../../util/swapHelpers'
 import { convertRequest, getAddress, memoType } from '../../util/utils'
@@ -53,8 +56,6 @@ const asInitOptions = asObject({
 const orderUri = 'https://letsexchange.io/?transactionId='
 const uri = 'https://api.letsexchange.io/api/v1/'
 
-const expirationMs = 1000 * 60
-
 const asQuoteInfo = asObject({
   transaction_id: asString,
   deposit_amount: asString,
@@ -67,7 +68,13 @@ const asQuoteInfo = asObject({
 const asInfoReply = asObject({
   min_amount: asNumberString,
   max_amount: asNumberString,
-  amount: asNumberString
+  amount: asNumberString,
+  fee: asNumberString,
+  rate: asNumberString,
+  profit: asNumberString,
+  withdrawal_fee: asNumberString,
+  rate_id: asString,
+  rate_id_expired_at: asNumberString
 })
 const INVALID_CURRENCY_CODES: InvalidCurrencyCodes = {
   from: {},
@@ -160,6 +167,23 @@ export const SPECIAL_MAINNET_CASES: EdgeIdSwapIdMap = new Map([
 let chainCodeTickerMap: ChainCodeTickerMap = new Map()
 let lastUpdated = 0
 const EXPIRATION = 1000 * 60 * 60 // 1 hour
+
+// Interface for storing data between quote and approval phases
+interface LetsExchangeQuoteData {
+  rate_id: string
+  rate_id_expired_at: string
+  fromAmount: string
+  toAmount: string
+  fromMainnetCode: string
+  toMainnetCode: string
+  fromCurrencyCode: string
+  toCurrencyCode: string
+  quoteFor: 'from' | 'to' | 'max'
+  reverseQuote: boolean
+  fromAddress: string
+  toAddress: string
+  promoCode?: string
+}
 
 export function makeLetsExchangePlugin(
   opts: EdgeCorePluginOptions
@@ -264,19 +288,24 @@ export function makeLetsExchangePlugin(
       SPECIAL_MAINNET_CASES
     )
 
-    // Swap the currencies if we need a reverse quote:
+    // Build params for info endpoint
     const quoteParams = {
       from: fromCurrencyCode,
       to: toCurrencyCode,
       network_from: fromMainnetCode,
       network_to: toMainnetCode,
-      amount: quoteAmount
+      amount: quoteAmount,
+      float: false,
+      affiliate_id: initOptions.affiliateId,
+      promocode: opts.promoCode ?? ''
     }
 
     log('quoteParams:', quoteParams)
 
     // Calculate the amounts:
-    let fromAmount, toAmount, endpoint
+    let fromAmount: string = ''
+    let toAmount: string = ''
+    let endpoint: string
     if (request.quoteFor === 'from') {
       fromAmount = quoteAmount
       endpoint = 'info'
@@ -284,6 +313,8 @@ export function makeLetsExchangePlugin(
       toAmount = quoteAmount
       endpoint = 'info-revert'
     }
+
+    // ONLY call the info endpoint - no transaction creation
     const response = await call(uri + endpoint, request, {
       params: quoteParams
     })
@@ -328,60 +359,55 @@ export function makeLetsExchangePlugin(
       }
     }
 
-    const { promoCode } = opts
-    endpoint = reverseQuote ? 'transaction-revert' : 'transaction'
-    const sendReply = await call(uri + endpoint, request, {
-      params: {
-        deposit_amount: reverseQuote ? undefined : fromAmount,
-        withdrawal_amount: reverseQuote ? toAmount : undefined,
-        coin_from: request.fromCurrencyCode,
-        coin_to: request.toCurrencyCode,
-        network_from: fromMainnetCode,
-        network_to: toMainnetCode,
-        withdrawal: toAddress,
-        return: fromAddress,
-        return_extra_id: null,
-        withdrawal_extra_id: null,
-        affiliate_id: initOptions.affiliateId,
-        promocode: promoCode != null ? promoCode : '',
-        type: 'edge',
-        float: false,
-        isEstimate: false
-      }
-    })
+    // Calculate amounts from the info response
+    let calculatedFromAmount: string
+    let calculatedToAmount: string
 
-    log('sendReply', sendReply)
-    const quoteInfo = asQuoteInfo(sendReply)
+    if (request.quoteFor === 'from') {
+      calculatedFromAmount = fromAmount
+      calculatedToAmount = reply.amount
+    } else {
+      // For reverse quotes, the amount field contains the from amount
+      calculatedFromAmount = reply.amount
+      calculatedToAmount = toAmount
+    }
 
     const fromNativeAmount = await request.fromWallet.denominationToNative(
-      quoteInfo.deposit_amount,
+      calculatedFromAmount,
       request.fromCurrencyCode
     )
     const toNativeAmount = await request.toWallet.denominationToNative(
-      quoteInfo.withdrawal_amount,
+      calculatedToAmount,
       request.toCurrencyCode
     )
 
-    const memos: EdgeMemo[] =
-      quoteInfo.deposit_extra_id == null
-        ? []
-        : [
-            {
-              type: memoType(request.fromWallet.currencyInfo.pluginId),
-              value: quoteInfo.deposit_extra_id
-            }
-          ]
+    // Store all data needed for transaction creation in approval phase
+    const pluginData: LetsExchangeQuoteData = {
+      rate_id: reply.rate_id,
+      rate_id_expired_at: reply.rate_id_expired_at,
+      fromAmount: calculatedFromAmount,
+      toAmount: calculatedToAmount,
+      fromMainnetCode,
+      toMainnetCode,
+      fromCurrencyCode: request.fromCurrencyCode,
+      toCurrencyCode: request.toCurrencyCode,
+      quoteFor: request.quoteFor,
+      reverseQuote,
+      fromAddress,
+      toAddress,
+      promoCode: opts.promoCode
+    }
 
-    // Make the transaction:
+    // Create a placeholder spendInfo for fee calculation
     const spendInfo: EdgeSpendInfo = {
       tokenId: request.fromTokenId,
       spendTargets: [
         {
           nativeAmount: fromNativeAmount,
-          publicAddress: quoteInfo.deposit
+          publicAddress: 'placeholder-will-be-replaced-on-approval'
         }
       ],
-      memos,
+      memos: [],
       networkFeeOption: 'high',
       assetAction: {
         assetActionType: 'swap'
@@ -389,9 +415,9 @@ export function makeLetsExchangePlugin(
       savedAction: {
         actionType: 'swap',
         swapInfo,
-        orderId: quoteInfo.transaction_id,
-        orderUri: orderUri + quoteInfo.transaction_id,
-        isEstimate: false,
+        orderId: `placeholder-${reply.rate_id}`,
+        orderUri: `${orderUri}placeholder`,
+        isEstimate: true,
         toAsset: {
           pluginId: request.toWallet.currencyInfo.pluginId,
           tokenId: request.toTokenId,
@@ -408,18 +434,126 @@ export function makeLetsExchangePlugin(
       }
     }
 
-    log('spendInfo', spendInfo)
+    log('Quote created with rate_id:', reply.rate_id)
 
     return {
       request,
       spendInfo,
       swapInfo,
       fromNativeAmount,
-      expirationDate: new Date(Date.now() + expirationMs)
+      pluginData: pluginData as JsonObject,
+      expirationDate: new Date(parseInt(reply.rate_id_expired_at))
     }
   }
 
-  const out: EdgeSwapPlugin = {
+  // Create real transaction when user approves the quote
+  const createSwapTransaction = async (
+    quote: EdgeSwapQuote,
+    request: EdgeSwapRequest,
+    opts?: EdgeSwapApproveOptions
+  ): Promise<EdgeTransaction> => {
+    // Type guard to ensure we have the right request type
+    const swapRequest = convertRequest(request)
+    const data = quote.pluginData as LetsExchangeQuoteData | undefined
+
+    if (data == null) {
+      throw new Error('Missing quote data for transaction creation')
+    }
+
+    // Check if rate is still valid
+    if (Date.now() > parseInt(data.rate_id_expired_at)) {
+      throw new Error('Quote has expired')
+    }
+
+    // Create the real transaction now
+    const endpoint = data.reverseQuote ? 'transaction-revert' : 'transaction'
+    const sendReply = await call(uri + endpoint, swapRequest, {
+      params: {
+        deposit_amount: data.reverseQuote ? undefined : data.fromAmount,
+        withdrawal_amount: data.reverseQuote ? data.toAmount : undefined,
+        coin_from: data.fromCurrencyCode,
+        coin_to: data.toCurrencyCode,
+        network_from: data.fromMainnetCode,
+        network_to: data.toMainnetCode,
+        withdrawal: data.toAddress,
+        return: data.fromAddress,
+        return_extra_id: null,
+        withdrawal_extra_id: null,
+        affiliate_id: initOptions.affiliateId,
+        promocode: data.promoCode ?? '',
+        type: 'edge',
+        float: false,
+        isEstimate: false,
+        rate_id: data.rate_id
+      }
+    })
+
+    log('Transaction created:', sendReply)
+    const quoteInfo = asQuoteInfo(sendReply)
+
+    const fromNativeAmount = await swapRequest.fromWallet.denominationToNative(
+      quoteInfo.deposit_amount,
+      swapRequest.fromCurrencyCode
+    )
+    const toNativeAmount = await swapRequest.toWallet.denominationToNative(
+      quoteInfo.withdrawal_amount,
+      swapRequest.toCurrencyCode
+    )
+
+    const memos: EdgeMemo[] =
+      quoteInfo.deposit_extra_id == null
+        ? []
+        : [
+            {
+              type: memoType(swapRequest.fromWallet.currencyInfo.pluginId),
+              value: quoteInfo.deposit_extra_id
+            }
+          ]
+
+    // Create the real transaction
+    const spendInfo: EdgeSpendInfo = {
+      tokenId: swapRequest.fromTokenId,
+      spendTargets: [
+        {
+          nativeAmount: fromNativeAmount,
+          publicAddress: quoteInfo.deposit
+        }
+      ],
+      memos,
+      networkFeeOption: 'high',
+      assetAction: {
+        assetActionType: 'swap'
+      },
+      savedAction: {
+        actionType: 'swap',
+        swapInfo,
+        orderId: quoteInfo.transaction_id,
+        orderUri: `${orderUri}${quoteInfo.transaction_id}`,
+        isEstimate: false,
+        toAsset: {
+          pluginId: swapRequest.toWallet.currencyInfo.pluginId,
+          tokenId: swapRequest.toTokenId,
+          nativeAmount: toNativeAmount
+        },
+        fromAsset: {
+          pluginId: swapRequest.fromWallet.currencyInfo.pluginId,
+          tokenId: swapRequest.fromTokenId,
+          nativeAmount: fromNativeAmount
+        },
+        payoutAddress: data.toAddress,
+        payoutWalletId: swapRequest.toWallet.id,
+        refundAddress: data.fromAddress
+      }
+    }
+
+    // Create and return the transaction
+    const tx = await swapRequest.fromWallet.makeSpend(spendInfo)
+    return tx
+  }
+
+  const plugin: EdgeSwapPlugin & {
+    createSwapTransaction: typeof createSwapTransaction
+  } = {
     swapInfo,
 
     async fetchSwapQuote(
@@ -445,9 +579,13 @@ export function makeLetsExchangePlugin(
         opts
       )
       const swapOrder = await fetchSwapQuoteInner(newRequest, opts)
-      return await makeSwapPluginQuote(swapOrder)
-    }
+      return await makeTwoPhaseSwapQuote(swapOrder, plugin)
+    },
+
+    createSwapTransaction
   }
+
+  const out: EdgeSwapPlugin = plugin
 
   return out
 }

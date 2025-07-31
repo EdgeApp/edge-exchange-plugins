@@ -5,12 +5,14 @@ import {
   EdgeSpendInfo,
   EdgeSwapApproveOptions,
   EdgeSwapInfo,
+  EdgeSwapPlugin,
   EdgeSwapQuote,
   EdgeSwapRequest,
   EdgeSwapResult,
   EdgeToken,
   EdgeTokenId,
   EdgeTransaction,
+  EdgeTxActionSwap,
   JsonObject,
   SwapCurrencyError
 } from 'edge-core-js/types'
@@ -52,6 +54,7 @@ export type SwapOrder = SwapOrderInner & {
   maxFulfillmentSeconds?: number
   metadataNotes?: string
   minReceiveAmount?: string
+  pluginData?: JsonObject
   preTx?: EdgeTransaction
   request: EdgeSwapRequestPlugin
   swapInfo: EdgeSwapInfo
@@ -67,6 +70,7 @@ export async function makeSwapPluginQuote(
     maxFulfillmentSeconds,
     metadataNotes,
     minReceiveAmount,
+    pluginData,
     preTx,
     request,
     swapInfo
@@ -138,6 +142,7 @@ export async function makeSwapPluginQuote(
       tokenId: null
     },
     pluginId: swapInfo.pluginId,
+    pluginData,
     request,
     swapInfo,
     toNativeAmount,
@@ -205,6 +210,181 @@ export async function makeSwapPluginQuote(
       }
     },
 
+    async close() {}
+  }
+  return out
+}
+
+/**
+ * Helper function for plugins that support two-phase swaps.
+ * Creates a quote that defers transaction creation until approval.
+ *
+ * @param order The swap order with placeholder transaction data
+ * @param plugin The swap plugin instance with createSwapTransaction method
+ * @returns A quote that will create the real transaction on approval
+ */
+export async function makeTwoPhaseSwapQuote(
+  order: SwapOrder,
+  plugin: EdgeSwapPlugin & {
+    createSwapTransaction: NonNullable<EdgeSwapPlugin['createSwapTransaction']>
+  }
+): Promise<EdgeSwapQuote> {
+  const {
+    canBePartial,
+    expirationDate,
+    fromNativeAmount,
+    maxFulfillmentSeconds,
+    metadataNotes,
+    minReceiveAmount,
+    pluginData,
+    preTx,
+    request,
+    swapInfo
+  } = order
+  const { fromWallet, toWallet } = request
+
+  // For two-phase swaps, we need a minimal transaction for fee calculation
+  let tx: EdgeTransaction
+  if ('spendInfo' in order) {
+    const { spendInfo } = order
+    const spend =
+      preTx != null ? { ...spendInfo, pendingTxs: [preTx] } : spendInfo
+    tx = await fromWallet.makeSpend(spend)
+  } else {
+    const { makeTxParams } = order
+    const params =
+      preTx != null ? { ...makeTxParams, pendingTxs: [preTx] } : makeTxParams
+    tx = await fromWallet.otherMethods.makeTx(params)
+  }
+
+  let nativeAmount =
+    tx.parentNetworkFee != null ? tx.parentNetworkFee : tx.networkFee
+
+  if (preTx != null)
+    nativeAmount = add(
+      nativeAmount,
+      preTx.parentNetworkFee != null ? preTx.parentNetworkFee : preTx.networkFee
+    )
+
+  const action = tx.savedAction
+  if (action?.actionType !== 'swap') throw new Error(`Invalid swap action type`)
+
+  const toNativeAmount = action?.toAsset.nativeAmount
+  const isEstimate = action?.isEstimate ?? false
+
+  if (fromNativeAmount == null || toNativeAmount == null) {
+    throw new Error(
+      `Invalid makeTwoPhaseSwapQuote args from ${swapInfo.pluginId}`
+    )
+  }
+
+  const out: EdgeSwapQuote = {
+    canBePartial,
+    expirationDate,
+    fromNativeAmount,
+    isEstimate,
+    maxFulfillmentSeconds,
+    minReceiveAmount,
+    networkFee: {
+      currencyCode: fromWallet.currencyInfo.currencyCode,
+      nativeAmount,
+      tokenId: null
+    },
+    pluginId: swapInfo.pluginId,
+    pluginData,
+    request,
+    swapInfo,
+    toNativeAmount,
+    async approve(opts?: EdgeSwapApproveOptions): Promise<EdgeSwapResult> {
+      // Create the real transaction using the plugin's method
+      const realTx = await plugin.createSwapTransaction(out, request, opts)
+
+      // Handle pre-transaction if needed
+      if (preTx != null) {
+        const signedTransaction = await fromWallet.signTx(preTx)
+        const broadcastedTransaction = await fromWallet.broadcastTx(
+          signedTransaction
+        )
+        await fromWallet.saveTx(broadcastedTransaction)
+      }
+
+      // Apply metadata
+      realTx.metadata = { ...(opts?.metadata ?? {}), ...realTx.metadata }
+      if (metadataNotes != null) {
+        realTx.metadata.notes =
+          metadataNotes +
+          (realTx.metadata.notes != null ? `\n\n${realTx.metadata.notes}` : '')
+      }
+
+      // Sign and broadcast the real transaction
+      const signedTransaction = await fromWallet.signTx(realTx)
+      const broadcastedTransaction = await fromWallet.broadcastTx(
+        signedTransaction
+      )
+
+      let quoteId = (realTx.savedAction as EdgeTxActionSwap)?.orderId
+      if (quoteId == null && swapInfo.isDex === true) {
+        quoteId = realTx.txid
+      }
+
+      await fromWallet.saveTx(signedTransaction)
+
+      // Handle fee tracking for token transactions
+      if (
+        signedTransaction.tokenId != null &&
+        signedTransaction.parentNetworkFee != null &&
+        signedTransaction.assetAction != null &&
+        signedTransaction.savedAction != null
+      ) {
+        const isNotSameWallet = request.fromWallet.id !== request.toWallet.id
+        const isDex = swapInfo.isDex === true
+
+        if (!isDex || isNotSameWallet) {
+          const { currencyInfo } = fromWallet
+          const exchangeAmount = sub(
+            '0',
+            signedTransaction.parentNetworkFee ?? '0'
+          )
+
+          const feeAction: EdgeAssetActionType = 'swapNetworkFee'
+          const feeActionInfo = {
+            pluginId: swapInfo.pluginId,
+            displayName: swapInfo.displayName,
+            orderUri: (signedTransaction.savedAction as EdgeTxActionSwap)
+              .orderUri
+          }
+
+          await fromWallet.saveTxAction({
+            txid: signedTransaction.txid,
+            tokenId: null,
+            assetAction: { assetActionType: feeAction },
+            savedAction: {
+              actionType: feeAction,
+              swapInfo: feeActionInfo,
+              isEstimate: signedTransaction.savedAction.isEstimate,
+              toAsset: {
+                pluginId: currencyInfo.pluginId,
+                tokenId: null,
+                nativeAmount: exchangeAmount
+              },
+              fromAsset: {
+                pluginId: currencyInfo.pluginId,
+                tokenId: null,
+                nativeAmount: exchangeAmount
+              },
+              payoutAddress: toWallet.receiveAddress?.publicAddress
+            }
+          })
+        }
+      }
+
+      return {
+        transaction: broadcastedTransaction,
+        orderId: quoteId,
+        destinationAddress: realTx.savedAction?.payoutAddress,
+        expirationDate
+      }
+    },
     async close() {}
   }
   return out
