@@ -145,6 +145,7 @@ const MAINNET_CODE_TRANSCRIPTION: CurrencyPluginIdSwapChainCodeMap = {
   rsk: 'RSK',
   smartcash: null,
   solana: 'SOL',
+  sonic: null,
   stellar: 'XLM',
   sui: 'SUI',
   telos: 'TLOS',
