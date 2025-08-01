@@ -542,6 +542,7 @@ export type EdgeCurrencyPluginId =
   | 'rsk'
   | 'smartcash'
   | 'solana'
+  | 'sonic'
   | 'stellar'
   | 'sui'
   | 'telos'
