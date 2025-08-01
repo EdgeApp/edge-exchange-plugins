@@ -89,6 +89,7 @@ export const MAINNET_CODE_TRANSCRIPTION: CurrencyPluginIdSwapChainCodeMap = {
   rsk: 'rootstock',
   smartcash: null,
   solana: 'solana',
+  sonic: 'sonic',
   stellar: 'stellar',
   sui: 'sui',
   telos: null,

@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- added: (Changenow/LetsExchange/Sideshift) Sonic support
+
 ## 2.29.1 (2025-07-28)
 
 - fixed: Remove HyperEVM mapping to HYPE on HyperLiquid on Exolix.
