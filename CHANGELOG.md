@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 2.30.0 (2025-08-01)
+
 - added: (Changenow/LetsExchange/Sideshift) Sonic support
 
 ## 2.29.1 (2025-07-28)
