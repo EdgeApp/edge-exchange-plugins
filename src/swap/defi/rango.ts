@@ -77,7 +77,8 @@ const MAINNET_CODE_TRANSCRIPTION: StringMap = {
   // solana: 'SOLANA',
   // tron: 'TRON',
   zksync: 'ZKSYNC',
-  solana: 'SOLANA'
+  solana: 'SOLANA',
+  sonic: 'SONIC'
 }
 
 const RANGO_SERVERS_DEFAULT = ['https://api.rango.exchange']
