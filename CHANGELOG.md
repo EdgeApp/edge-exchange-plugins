@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+## 2.31.0 (2025-08-04)
+
+- changed: Configure ESBuild to assume es2015 support
 - changed: Require the environment to support es2015 & `async` functions.
 
 ## 2.30.0 (2025-08-01)
