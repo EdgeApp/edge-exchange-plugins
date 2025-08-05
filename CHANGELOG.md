@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- changed: Require the environment to support es2015 & `async` functions.
+
 ## 2.30.0 (2025-08-01)
 
 - added: (Changenow/LetsExchange/Sideshift) Sonic support
