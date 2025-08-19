@@ -2,6 +2,19 @@
 
 ## Unreleased
 
+## 2.31.0 (2025-08-04)
+
+- changed: Configure ESBuild to assume es2015 support
+- changed: Require the environment to support es2015 & `async` functions.
+
+## 2.30.0 (2025-08-01)
+
+- added: (Changenow/LetsExchange/Sideshift) Sonic support
+
+## 2.29.1 (2025-07-28)
+
+- fixed: Remove HyperEVM mapping to HYPE on HyperLiquid on Exolix.
+
 ## 2.29.0 (2025-07-21)
 
 - added: Support for hyperevm to ChangeHero, Exolix, LetsExchange.
