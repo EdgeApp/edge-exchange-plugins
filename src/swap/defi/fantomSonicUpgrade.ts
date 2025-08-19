@@ -7,6 +7,7 @@ import {
   EdgeSwapQuote,
   EdgeSwapRequest,
   SwapAboveLimitError,
+  SwapAddressError,
   SwapBelowLimitError,
   SwapCurrencyError
 } from 'edge-core-js/types'
@@ -56,7 +57,7 @@ export function makeFantomSonicUpgradePlugin(
     const toAddress = await getAddress(request.toWallet)
 
     if (fromAddress !== toAddress) {
-      throw new Error('From and to addresses must be the same')
+      throw new SwapAddressError(swapInfo, { reason: 'mustMatch' })
     }
 
     const providers = rpcs.map(rpc => new ethers.providers.JsonRpcProvider(rpc))
