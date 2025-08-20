@@ -8,12 +8,54 @@ This guide walks through adding a new exchange plugin to edge-exchange-plugins. 
 
 ## Prerequisites
 
+### Option 1: Debug Server (Recommended for Development)
+
 1. Clone edge-exchange-plugins and edge-react-gui as peers:
 
    ```bash
    git clone git@github.com:EdgeApp/edge-exchange-plugins.git
    git clone git@github.com:EdgeApp/edge-react-gui.git
    ```
+
+2. Set up debug mode in edge-react-gui:
+
+   ```json
+   // edge-react-gui/env.json
+   {
+     "DEBUG_EXCHANGE": true
+   }
+   ```
+
+3. Start the development server:
+   ```bash
+   cd edge-exchange-plugins
+   yarn
+   yarn start  # Runs webpack dev server on localhost:8083
+   ```
+
+This approach uses a local webpack server that hot-reloads your changes, making development faster and easier.
+
+### Option 2: Direct Linking (For Production Testing)
+
+1. Clone edge-exchange-plugins and edge-react-gui as peers (same as above)
+
+2. Build edge-exchange-plugins:
+
+   ```bash
+   cd edge-exchange-plugins
+   yarn
+   yarn prepare
+   ```
+
+3. Link to edge-react-gui:
+   ```bash
+   cd ../edge-react-gui
+   yarn updot edge-exchange-plugins
+   yarn prepare
+   yarn prepare.ios  # For iOS development
+   ```
+
+This approach builds and links the plugins directly into edge-react-gui, which is closer to production behavior but requires rebuilding after each change.
 
 2. Build edge-exchange-plugins:
 
@@ -194,10 +236,10 @@ async function throttledFetch() {
 1. **Enable your plugin only** in Exchange Settings
 2. **Check logs** for API responses and errors
 3. **Use test wallets** with small amounts
-4. **Run local webpack server** for hot reloading:
-   ```bash
-   yarn start  # In edge-exchange-plugins
-   ```
+4. **Use debug server** for faster development:
+   - Set `DEBUG_EXCHANGE: true` in edge-react-gui's env.json
+   - Run `yarn start` in edge-exchange-plugins
+   - Changes will hot-reload without rebuilding
 
 ## Support
 
