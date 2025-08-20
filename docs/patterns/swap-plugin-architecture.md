@@ -56,6 +56,207 @@ export const swapInfo: EdgeSwapInfo = {
 - Special plugin for same-currency transfers between wallets
 - No actual swap, just moves funds
 
+## Plugin Expectations and Requirements
+
+### Chain Support Mapping
+
+Plugins must properly map Edge currency codes to exchange-specific codes:
+
+```typescript
+// Map Edge pluginId to your exchange's chain identifiers
+const CHAIN_ID_MAP: Record<string, string> = {
+  bitcoin: "btc",
+  ethereum: "eth",
+  binancesmartchain: "bsc",
+  // Add all supported chains
+};
+
+// For EVM chains, get chain ID from currency info
+const chainId = fromWallet.currencyInfo.defaultSettings?.otherSettings?.chainId;
+```
+
+### Accessing Request Parameters
+
+The `EdgeSwapRequest` provides all necessary information:
+
+```typescript
+interface EdgeSwapRequest {
+  fromWallet: EdgeCurrencyWallet; // Source wallet
+  toWallet: EdgeCurrencyWallet; // Destination wallet
+  fromTokenId: string | null; // Token contract or null for native
+  toTokenId: string | null; // Token contract or null for native
+  nativeAmount: string; // Amount in smallest unit
+  quoteFor: "from" | "to" | "max"; // Quote direction
+}
+
+// Access plugin IDs
+const fromPluginId = request.fromWallet.currencyInfo.pluginId;
+const toPluginId = request.toWallet.currencyInfo.pluginId;
+
+// Get EVM chain ID
+const evmChainId =
+  request.fromWallet.currencyInfo.defaultSettings?.otherSettings?.chainId;
+
+// Convert tokenId to contract address
+const contractAddress = request.fromTokenId; // tokenId IS the contract address for EVM
+```
+
+### Transaction Fee Estimation
+
+**Critical**: Plugins must create actual transactions to get accurate fee estimates:
+
+```typescript
+// For DEX plugins - create the actual swap transaction
+const swapTx = await makeSwapTransaction(params);
+const networkFee = swapTx.networkFee;
+
+// For centralized exchanges - estimate deposit transaction
+const depositAddress = await getDepositAddress();
+const spendInfo: EdgeSpendInfo = {
+  tokenId: request.fromTokenId,
+  spendTargets: [
+    {
+      nativeAmount: request.nativeAmount,
+      publicAddress: depositAddress,
+    },
+  ],
+};
+const tx = await request.fromWallet.makeSpend(spendInfo);
+const networkFee = tx.networkFee;
+
+// Return fee in the quote
+return {
+  ...quote,
+  networkFee: {
+    currencyCode: fromWallet.currencyInfo.currencyCode,
+    nativeAmount: networkFee,
+  },
+};
+```
+
+### Destination Tags and Memos
+
+Handle destination tags/memos for chains that require them:
+
+```typescript
+// Check if destination requires memo
+const { publicAddress, tag } = await getAddress(request.toWallet);
+
+// For XRP, XLM, etc.
+if (tag != null) {
+  spendInfo.spendTargets[0].uniqueIdentifier = tag;
+}
+
+// For Cosmos-based chains
+if (memo != null) {
+  spendInfo.memo = memo;
+}
+
+// Include in quote approval info
+quote.approveInfo = {
+  ...approveInfo,
+  customFee: {
+    nativeAmount: networkFee,
+  },
+};
+```
+
+### Quote Types: Fixed vs Variable
+
+Specify quote behavior clearly:
+
+```typescript
+interface EdgeSwapQuote {
+  isEstimate: boolean; // true for variable rates, false for fixed
+  expirationDate?: Date; // Required for fixed quotes
+
+  // For fixed quotes
+  guaranteedAmount?: string; // The guaranteed output amount
+
+  // For variable quotes
+  minReceiveAmount?: string; // Minimum possible output
+  maxReceiveAmount?: string; // Maximum possible output
+}
+
+// Fixed quote example
+return {
+  ...quote,
+  isEstimate: false,
+  expirationDate: new Date(Date.now() + 600 * 1000), // 10 minutes
+  toNativeAmount: guaranteedAmount,
+};
+
+// Variable quote example
+return {
+  ...quote,
+  isEstimate: true,
+  toNativeAmount: estimatedAmount,
+  minReceiveAmount: minAmount,
+};
+```
+
+### Reverse Quotes
+
+Support both forward and reverse quotes:
+
+```typescript
+async function fetchSwapQuote(
+  request: EdgeSwapRequest
+): Promise<EdgeSwapQuote> {
+  const { quoteFor } = request;
+
+  switch (quoteFor) {
+    case "from":
+      // User specified source amount, calculate destination
+      return fetchForwardQuote(request);
+
+    case "to":
+      // User specified destination amount, calculate source
+      return fetchReverseQuote(request);
+
+    case "max":
+      // Use maximum available balance
+      const maxAmount = await getMaxSwappable(request);
+      return fetchQuoteWithAmount(request, maxAmount);
+  }
+}
+```
+
+### Error Handling Requirements
+
+Provide specific, actionable error messages:
+
+```typescript
+// Currency not supported
+throw new SwapCurrencyError(swapInfo, fromCode, toCode);
+
+// Amount validation
+if (lt(amount, minimum)) {
+  throw new SwapBelowLimitError(swapInfo, minimum, fromCode);
+}
+if (gt(amount, maximum)) {
+  throw new SwapAboveLimitError(swapInfo, maximum, fromCode);
+}
+
+// Network or API errors
+try {
+  const response = await fetch(url);
+} catch (error) {
+  console.error(`${pluginId} network error:`, error);
+  // Include request ID if available for support
+  throw new Error(`Network error: ${error.message}. Request ID: ${requestId}`);
+}
+
+// Insufficient liquidity
+if (response.error === "INSUFFICIENT_LIQUIDITY") {
+  throw new InsufficientLiquidityError(swapInfo, {
+    fromCode,
+    toCode,
+    amount,
+  });
+}
+```
+
 ## Common Patterns
 
 ### Currency Code Validation
@@ -190,3 +391,9 @@ describe("SwapPlugin", () => {
 4. **Handle rate limiting** with appropriate delays
 5. **Log errors with context** for debugging
 6. **Test with mainnet and testnet** currency codes
+7. **Create actual transactions** for accurate fee estimation
+8. **Handle destination tags/memos** for chains that require them
+9. **Specify quote type** (fixed vs variable) clearly
+10. **Support all quote directions** (from, to, max)
+11. **Map chains correctly** using pluginId and chain IDs
+12. **Provide specific error messages** with support context
