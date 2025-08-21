@@ -89,8 +89,8 @@ The `EdgeSwapRequest` provides all necessary information:
 interface EdgeSwapRequest {
   fromWallet: EdgeCurrencyWallet; // Source wallet with currencyInfo and currencyConfig
   toWallet: EdgeCurrencyWallet; // Destination wallet
-  fromTokenId: EdgeTokenId | null; // Token identifier or null for native/mainnet token
-  toTokenId: EdgeTokenId | null; // Token identifier or null for native/mainnet token
+  fromTokenId: EdgeTokenId | null; // Token identifier or null for native currency
+  toTokenId: EdgeTokenId | null; // Token identifier or null for native currency
   nativeAmount: string; // Amount in smallest unit (satoshis, wei, etc.)
   quoteFor: "from" | "to" | "max"; // Quote direction
 }
@@ -105,12 +105,13 @@ const fromPluginId = fromCurrencyInfo.pluginId; // e.g. 'ethereum', 'bitcoin'
 const toPluginId = request.toWallet.currencyInfo.pluginId;
 
 // Token handling
-const fromTokenId = request.fromTokenId; // null for mainnet token (ETH, BTC, etc.)
-const toTokenId = request.toTokenId; // string for tokens (contract address on EVM)
+const fromTokenId = request.fromTokenId; // null for native/mainnet currency (ETH, BTC, etc.)
+const toTokenId = request.toTokenId; // string identifier for tokens
 
-// For EVM chains, tokenId is the contract address
-if (fromTokenId != null && fromPluginId === "ethereum") {
-  const contractAddress = fromTokenId; // This IS the contract address
+// For chains with tokens, tokenId identifies the specific token
+if (fromTokenId != null) {
+  // This is a token swap, not the native currency
+  // The tokenId format depends on the chain (contract address, asset ID, etc.)
 }
 
 // Get currency codes
