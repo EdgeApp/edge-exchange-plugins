@@ -60,19 +60,25 @@ export const swapInfo: EdgeSwapInfo = {
 
 ### Chain Support Mapping
 
-Plugins must properly map Edge currency codes to exchange-specific codes:
+Plugins must properly map Edge pluginIds to exchange-specific identifiers:
 
 ```typescript
 // Map Edge pluginId to your exchange's chain identifiers
-const CHAIN_ID_MAP: Record<string, string> = {
+const PLUGIN_ID_MAP: Record<string, string> = {
   bitcoin: "btc",
   ethereum: "eth",
   binancesmartchain: "bsc",
+  avalanche: "avax",
   // Add all supported chains
 };
 
-// For EVM chains, get chain ID from currency info
-const chainId = fromWallet.currencyInfo.defaultSettings?.otherSettings?.chainId;
+// The pluginId uniquely identifies the network
+const fromPluginId = request.fromWallet.currencyInfo.pluginId; // e.g. 'ethereum'
+const toPluginId = request.toWallet.currencyInfo.pluginId; // e.g. 'bitcoin'
+
+// Map to your exchange's format
+const fromChain = PLUGIN_ID_MAP[fromPluginId];
+const toChain = PLUGIN_ID_MAP[toPluginId];
 ```
 
 ### Accessing Request Parameters
@@ -81,24 +87,35 @@ The `EdgeSwapRequest` provides all necessary information:
 
 ```typescript
 interface EdgeSwapRequest {
-  fromWallet: EdgeCurrencyWallet; // Source wallet
+  fromWallet: EdgeCurrencyWallet; // Source wallet with currencyInfo and currencyConfig
   toWallet: EdgeCurrencyWallet; // Destination wallet
-  fromTokenId: string | null; // Token contract or null for native
-  toTokenId: string | null; // Token contract or null for native
-  nativeAmount: string; // Amount in smallest unit
+  fromTokenId: EdgeTokenId | null; // Token identifier or null for native/mainnet token
+  toTokenId: EdgeTokenId | null; // Token identifier or null for native/mainnet token
+  nativeAmount: string; // Amount in smallest unit (satoshis, wei, etc.)
   quoteFor: "from" | "to" | "max"; // Quote direction
 }
 
-// Access plugin IDs
-const fromPluginId = request.fromWallet.currencyInfo.pluginId;
+// Access wallet information
+const fromWallet = request.fromWallet;
+const fromCurrencyInfo = fromWallet.currencyInfo; // EdgeCurrencyInfo
+const fromCurrencyConfig = fromWallet.currencyConfig; // EdgeCurrencyConfig
+
+// Plugin IDs uniquely identify the network
+const fromPluginId = fromCurrencyInfo.pluginId; // e.g. 'ethereum', 'bitcoin'
 const toPluginId = request.toWallet.currencyInfo.pluginId;
 
-// Get EVM chain ID
-const evmChainId =
-  request.fromWallet.currencyInfo.defaultSettings?.otherSettings?.chainId;
+// Token handling
+const fromTokenId = request.fromTokenId; // null for mainnet token (ETH, BTC, etc.)
+const toTokenId = request.toTokenId; // string for tokens (contract address on EVM)
 
-// Convert tokenId to contract address
-const contractAddress = request.fromTokenId; // tokenId IS the contract address for EVM
+// For EVM chains, tokenId is the contract address
+if (fromTokenId != null && fromPluginId === "ethereum") {
+  const contractAddress = fromTokenId; // This IS the contract address
+}
+
+// Get currency codes
+const fromCurrencyCode = request.fromCurrencyCode; // e.g. 'ETH', 'USDC'
+const toCurrencyCode = request.toCurrencyCode;
 ```
 
 ### Transaction Fee Estimation
