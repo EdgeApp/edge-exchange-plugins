@@ -4,38 +4,97 @@
 
 ## Overview
 
-Edge exchange plugins follow a consistent architecture pattern for implementing swap providers. This document describes the standard patterns used across all swap plugins.
+Edge exchange plugins follow a consistent architecture pattern for implementing swap providers. This document describes the standard patterns used across all swap plugins and how they integrate with edge-core-js.
 
-## Plugin Structure
+## Plugin System Fundamentals
 
-### Basic Plugin Factory Pattern
+### How Plugins Attach to Core
+
+Edge plugins are registered with edge-core-js through a plugin map that gets passed during context creation:
 
 ```typescript
-export function makeSwapPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
+// In src/index.ts - the main entry point
+import { make0xGaslessPlugin } from "./swap/defi/0x/0xGasless";
+import { makeChangeNowPlugin } from "./swap/central/changenow";
+import { makeThorchainPlugin } from "./swap/defi/thorchain/thorchain";
+
+const plugins = {
+  // Plugin ID maps to factory function
+  "0xgasless": make0xGaslessPlugin,
+  changenow: makeChangeNowPlugin,
+  thorchain: makeThorchainPlugin,
+  // ... more plugins
+};
+
+// When edge-core-js initializes, it calls these factory functions
+// with EdgeCorePluginOptions to create the actual plugin instances
+```
+
+### Plugin Factory Pattern
+
+Every swap plugin exports a factory function that creates the plugin instance:
+
+```typescript
+// Factory function signature - always follows this pattern
+export function makeMyExchangePlugin(
+  opts: EdgeCorePluginOptions
+): EdgeSwapPlugin {
+  // EdgeCorePluginOptions provides:
+  // - initOptions: API keys and config from the app
+  // - io: Network, crypto, and storage functions
+  // - log: Scoped logging for this plugin
+  // - pluginDisklet: Plugin-specific storage
+
+  // Validate init options (API keys, etc.)
   const initOptions = asInitOptions(opts.initOptions);
 
+  // Return the EdgeSwapPlugin interface
   return {
-    swapInfo,
+    swapInfo, // Static metadata about this plugin
 
-    async fetchSwapQuote(request: EdgeSwapRequest): Promise<EdgeSwapQuote> {
+    // Required: Main quote fetching method
+    async fetchSwapQuote(
+      request: EdgeSwapRequest,
+      userSettings: JsonObject | undefined,
+      opts: { infoPayload: JsonObject; promoCode?: string }
+    ): Promise<EdgeSwapQuote> {
       // Implementation
     },
+
+    // Optional: Check if plugin needs activation
+    checkSettings: (userSettings: JsonObject) => EdgeSwapPluginStatus,
   };
 }
+
+// Init options validation using cleaners
+const asInitOptions = asObject({
+  apiKey: asString,
+  affiliateId: asOptional(asString),
+});
 ```
 
 ### SwapInfo Object
 
-Every plugin must export a `swapInfo` object:
+Every plugin must export a `swapInfo` object that identifies the plugin:
 
 ```typescript
 export const swapInfo: EdgeSwapInfo = {
-  pluginId: "changenow",
-  isDex: false, // true for DEX plugins
-  displayName: "ChangeNOW",
+  pluginId: "changenow", // Unique identifier matching src/index.ts
+  isDex: false, // true for DEX, false/undefined for CEX
+  displayName: "ChangeNOW", // User-facing name
   supportEmail: "support@changenow.io",
 };
 ```
+
+The `pluginId` in `swapInfo` must match the key used in `src/index.ts` for proper registration.
+
+### Plugin Lifecycle
+
+1. **Registration**: Plugin factory functions are exported from `src/index.ts`
+2. **Initialization**: Edge-core-js calls factory functions with `EdgeCorePluginOptions`
+3. **Configuration**: Plugins receive API keys via `initOptions` and runtime settings via `userSettings`
+4. **Quote Requests**: Core calls `fetchSwapQuote` when users request swaps
+5. **Quote Execution**: Returned quotes include an `approve()` method for execution
 
 ## Plugin Categories
 
@@ -114,9 +173,27 @@ if (fromTokenId != null) {
   // The tokenId format depends on the chain (contract address, asset ID, etc.)
 }
 
-// Get currency codes
-const fromCurrencyCode = request.fromCurrencyCode; // e.g. 'ETH', 'USDC'
-const toCurrencyCode = request.toCurrencyCode;
+// Get currency codes from the wallets
+// Note: EdgeSwapRequest doesn't have fromCurrencyCode/toCurrencyCode directly
+const fromCurrencyCode = getCurrencyCode(
+  request.fromWallet,
+  request.fromTokenId
+);
+const toCurrencyCode = getCurrencyCode(request.toWallet, request.toTokenId);
+
+// Helper to get currency code from wallet and tokenId
+function getCurrencyCode(
+  wallet: EdgeCurrencyWallet,
+  tokenId: EdgeTokenId
+): string {
+  if (tokenId == null) {
+    // Native currency
+    return wallet.currencyInfo.currencyCode;
+  }
+  // Token - look it up in the wallet's token map
+  const token = wallet.currencyConfig.allTokens[tokenId];
+  return token?.currencyCode ?? "UNKNOWN";
+}
 ```
 
 ### Transaction Fee Estimation
@@ -126,7 +203,7 @@ const toCurrencyCode = request.toCurrencyCode;
 ```typescript
 // For DEX plugins - create the actual swap transaction
 const swapTx = await makeSwapTransaction(params);
-const networkFee = swapTx.networkFee;
+const networkFee = swapTx.networkFees[0]; // networkFees is an array of EdgeTxAmount
 
 // For centralized exchanges - estimate deposit transaction
 const depositAddress = await getDepositAddress();
@@ -140,34 +217,21 @@ const spendInfo: EdgeSpendInfo = {
   ],
 };
 const tx = await request.fromWallet.makeSpend(spendInfo);
-const networkFee = tx.networkFee;
+const networkFee = tx.networkFees[0]; // networkFees is an array of EdgeTxAmount
 
 // Return fee in the quote
 return {
   ...quote,
   networkFee: {
-    currencyCode: fromWallet.currencyInfo.currencyCode,
-    nativeAmount: networkFee,
+    tokenId: networkFee.tokenId,
+    nativeAmount: networkFee.nativeAmount,
+    currencyCode: getCurrencyCode(fromWallet, networkFee.tokenId), // deprecated but still required
   },
 };
-```
 
-### Destination Tags and Memos
-
-Handle destination tags/memos for chains that require them:
-
-```typescript
-// Check if destination requires memo
-const { publicAddress, tag } = await getAddress(request.toWallet);
-
-// For XRP, XLM, etc.
-if (tag != null) {
-  spendInfo.spendTargets[0].uniqueIdentifier = tag;
-}
-
-// For Cosmos-based chains
+// For chains with memo support
 if (memo != null) {
-  spendInfo.memo = memo;
+  spendInfo.memos = [{ type: "text", value: memo }];
 }
 
 // Include in quote approval info
@@ -184,16 +248,16 @@ quote.approveInfo = {
 Specify quote behavior clearly:
 
 ```typescript
+// EdgeSwapQuote properties for quote types
 interface EdgeSwapQuote {
   isEstimate: boolean; // true for variable rates, false for fixed
-  expirationDate?: Date; // Required for fixed quotes
+  expirationDate?: Date; // When this quote expires
+  canBePartial?: boolean; // Can fulfill partially
+  maxFulfillmentSeconds?: number; // Max time to complete
+  minReceiveAmount?: string; // Worst-case receive amount
 
-  // For fixed quotes
-  guaranteedAmount?: string; // The guaranteed output amount
-
-  // For variable quotes
-  minReceiveAmount?: string; // Minimum possible output
-  maxReceiveAmount?: string; // Maximum possible output
+  fromNativeAmount: string; // Input amount
+  toNativeAmount: string; // Output amount (estimated or guaranteed)
 }
 
 // Fixed quote example
