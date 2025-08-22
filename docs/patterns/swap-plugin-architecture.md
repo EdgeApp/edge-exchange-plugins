@@ -306,81 +306,103 @@ async function fetchSwapQuote(
 
 ### Error Handling Requirements
 
-Provide specific, actionable error messages:
+Always throw errors based on API response with proper priority:
 
 ```typescript
-// Currency not supported
-throw new SwapCurrencyError(swapInfo, fromCode, toCode);
+// Priority order for error handling
+function validateApiResponse(
+  apiResponse: any,
+  request: EdgeSwapRequest,
+  swapInfo: EdgeSwapInfo
+): void {
+  // 1. Region restrictions (highest priority)
+  if (apiResponse.geoRestricted || apiResponse.regionError) {
+    throw new SwapPermissionError(swapInfo, "geoRestriction");
+  }
 
-// Amount validation
-if (lt(amount, minimum)) {
-  throw new SwapBelowLimitError(swapInfo, minimum, fromCode);
-}
-if (gt(amount, maximum)) {
-  throw new SwapAboveLimitError(swapInfo, maximum, fromCode);
+  // 2. Asset support
+  if (!apiResponse.pairSupported || apiResponse.assetError) {
+    throw new SwapCurrencyError(swapInfo, request);
+  }
+
+  // 3. Amount limits (use API values, not hardcoded)
+  if (apiResponse.amountTooLow) {
+    throw new SwapBelowLimitError(
+      swapInfo,
+      apiResponse.minAmount, // From API
+      apiResponse.limitSide // 'from' or 'to'
+    );
+  }
+
+  if (apiResponse.amountTooHigh) {
+    throw new SwapAboveLimitError(
+      swapInfo,
+      apiResponse.maxAmount, // From API
+      apiResponse.limitSide
+    );
+  }
+
+  // 4. Other errors (liquidity, network issues, etc.)
+  if (apiResponse.insufficientLiquidity) {
+    throw new InsufficientFundsError(swapInfo, request);
+  }
 }
 
-// Network or API errors
+// Network errors
 try {
   const response = await fetch(url);
 } catch (error) {
   console.error(`${pluginId} network error:`, error);
-  // Include request ID if available for support
-  throw new Error(`Network error: ${error.message}. Request ID: ${requestId}`);
-}
-
-// Insufficient liquidity
-if (response.error === "INSUFFICIENT_LIQUIDITY") {
-  throw new InsufficientLiquidityError(swapInfo, {
-    fromCode,
-    toCode,
-    amount,
-  });
+  throw error;
 }
 ```
 
 ## Common Patterns
 
-### Currency Code Validation
+### Asset Validation
 
 ```typescript
-// Check supported currencies
-const isFromCurrencySupported = checkInvalidCodes(
-  fromCodes,
-  InvalidCurrencyCodes
-);
-const isToCurrencySupported = checkInvalidCodes(toCodes, InvalidCurrencyCodes);
+// Map pluginId/tokenId to exchange symbols
+const fromSymbol = mapToExchangeSymbol(request.fromWallet, request.fromTokenId);
+const toSymbol = mapToExchangeSymbol(request.toWallet, request.toTokenId);
 
-if (!isFromCurrencySupported || !isToCurrencySupported) {
-  throw new SwapCurrencyError(
-    swapInfo,
-    request.fromCurrencyCode,
-    request.toCurrencyCode
-  );
+// Let the API validate supported assets
+const apiResponse = await fetchQuote(fromSymbol, toSymbol, amount);
+
+// Validate based on API response
+if (!apiResponse.assetSupported) {
+  throw new SwapCurrencyError(swapInfo, request);
 }
 ```
 
 ### Quote Request Pattern
 
 ```typescript
-async function fetchSwapQuote(request: EdgeSwapRequest): Promise<EdgeSwapQuote> {
-  // 1. Validate currencies
-  checkInvalidCodes(...)
+async function fetchSwapQuote(
+  request: EdgeSwapRequest
+): Promise<EdgeSwapQuote> {
+  // 1. Map Edge identifiers to exchange symbols
+  const fromSymbol = mapToExchangeSymbol(
+    request.fromWallet,
+    request.fromTokenId
+  );
+  const toSymbol = mapToExchangeSymbol(request.toWallet, request.toTokenId);
 
-  // 2. Convert request to internal format
-  const convertedRequest = await convertRequest(request)
+  // 2. Convert request to exchange API format
+  const convertedRequest = await convertRequest(request, fromSymbol, toSymbol);
 
-  // 3. Fetch quote from API
-  const apiQuote = await fetchQuoteFromApi(convertedRequest)
+  // 3. Fetch quote from API (includes validation data)
+  const apiQuote = await fetchQuoteFromApi(convertedRequest);
 
-  // 4. Validate limits
-  if (lt(amount, min)) throw new SwapBelowLimitError(swapInfo, min)
-  if (gt(amount, max)) throw new SwapAboveLimitError(swapInfo, max)
+  // 4. Validate based on API response with proper priority
+  validateApiResponse(apiQuote, request, swapInfo);
 
   // 5. Create and return EdgeSwapQuote
   return makeSwapPluginQuote({
-    // Quote details
-  })
+    request,
+    swapInfo,
+    // Quote details from API
+  });
 }
 ```
 

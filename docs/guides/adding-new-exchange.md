@@ -111,10 +111,8 @@ async fetchSwapQuote(request: EdgeSwapRequest): Promise<EdgeSwapQuote> {
   const quote = await fetchQuoteFromApi(apiRequest)
 
   // 4. Validate based on API response (not hardcoded values)
-  // The API should return supported assets, limits, and region restrictions
-  if (quote.error) {
-    handleApiError(quote.error, request)
-  }
+  // Throw errors in priority order based on API response
+  validateQuoteResponse(quote, request, swapInfo)
 
   // 5. Return EdgeSwapQuote
   return makeSwapPluginQuote({
@@ -227,6 +225,45 @@ const EVM_CHAIN_ID_TO_PLUGIN: Record<string, string> = {
   "43114": "avalanche", // Avalanche C-Chain
   // Add other EVM chains as needed
 };
+```
+
+### Error Handling
+
+Always throw errors based on API response, with proper priority:
+
+```typescript
+function validateQuoteResponse(
+  quote: ApiQuoteResponse,
+  request: EdgeSwapRequest,
+  swapInfo: EdgeSwapInfo
+): void {
+  // Priority 1: Region restrictions
+  if (quote.regionRestricted) {
+    throw new SwapPermissionError(swapInfo, "geoRestriction");
+  }
+
+  // Priority 2: Asset support
+  if (!quote.fromAssetSupported || !quote.toAssetSupported) {
+    throw new SwapCurrencyError(swapInfo, request);
+  }
+
+  // Priority 3: Amount limits (from API, not hardcoded)
+  if (quote.belowMinimum) {
+    throw new SwapBelowLimitError(
+      swapInfo,
+      quote.minAmount, // Use API's minimum
+      quote.limitAsset // 'from' or 'to'
+    );
+  }
+
+  if (quote.aboveMaximum) {
+    throw new SwapAboveLimitError(
+      swapInfo,
+      quote.maxAmount, // Use API's maximum
+      quote.limitAsset
+    );
+  }
+}
 ```
 
 ### Rate Limiting
