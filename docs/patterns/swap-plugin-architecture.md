@@ -119,7 +119,7 @@ The `pluginId` in `swapInfo` must match the key used in `src/index.ts` for prope
 
 ### API-Driven Validation Principle
 
-**Critical**: All validation must come from your exchange's API response, not hardcoded values:
+**Critical**: All validation must come from your exchange's API response, not hardcoded values. Each exchange has its own API format:
 
 ```typescript
 // ❌ BAD - Hardcoded validation
@@ -127,19 +127,30 @@ const MIN_BTC = "0.001";
 const MAX_BTC = "10";
 if (lt(amount, MIN_BTC)) throw new SwapBelowLimitError(swapInfo, MIN_BTC);
 
-// ✅ GOOD - API-driven validation
-const apiResponse = await fetchQuote(request);
-if (apiResponse.belowMinimum) {
-  throw new SwapBelowLimitError(swapInfo, apiResponse.minAmount);
+// ✅ GOOD - Real example from ChangeNow plugin
+const marketRangeResponse = await fetch(`/market-info/range/${fromTo}`);
+const { minAmount, maxAmount } = await marketRangeResponse.json();
+
+if (lt(amount, minAmount)) {
+  const minNative = await denominationToNative(minAmount);
+  throw new SwapBelowLimitError(swapInfo, minNative);
+}
+
+// ✅ GOOD - Real example from SideShift plugin
+const quoteResponse = await fetch("/quotes", { body: quoteRequest });
+if (quoteResponse.error?.message) {
+  if (/below-min/i.test(quoteResponse.error.message)) {
+    throw new SwapBelowLimitError(swapInfo, quoteResponse.min);
+  }
 }
 ```
 
-Your exchange API should return:
+Your exchange API should provide:
 
-- Supported asset pairs (not hardcoded lists)
-- Current min/max limits for the specific pair
-- Region restrictions for the user's location
-- Available liquidity and rates
+- Supported asset pairs dynamically (not hardcoded lists)
+- Current min/max limits for each specific pair
+- Region restrictions or geo-blocking status
+- Available liquidity and current rates
 
 ## Plugin Expectations and Requirements
 
@@ -323,42 +334,66 @@ async function fetchSwapQuote(
 Always throw errors based on API response with proper priority:
 
 ```typescript
-// Priority order for error handling
-function validateApiResponse(
-  apiResponse: any,
-  request: EdgeSwapRequest,
-  swapInfo: EdgeSwapInfo
+// Each exchange has unique API response formats
+// Here are real examples from actual plugins:
+
+// Example: SideShift checks error message strings
+async function handleSideshiftError(
+  response: { error?: { message: string } },
+  swapInfo: EdgeSwapInfo,
+  request: EdgeSwapRequest
 ): void {
+  const errorMsg = response.error?.message || "";
+
   // 1. Region restrictions (highest priority)
-  if (apiResponse.geoRestricted || apiResponse.regionError) {
+  if (/country-blocked/i.test(errorMsg)) {
     throw new SwapPermissionError(swapInfo, "geoRestriction");
   }
 
   // 2. Asset support
-  if (!apiResponse.pairSupported || apiResponse.assetError) {
+  if (/pair-not-active/i.test(errorMsg)) {
     throw new SwapCurrencyError(swapInfo, request);
   }
 
-  // 3. Amount limits (use API values, not hardcoded)
-  if (apiResponse.amountTooLow) {
-    throw new SwapBelowLimitError(
-      swapInfo,
-      apiResponse.minAmount, // From API
-      apiResponse.limitSide // 'from' or 'to'
-    );
+  // 3. Amount limits
+  if (/below-min/i.test(errorMsg)) {
+    // SideShift includes min in error response
+    throw new SwapBelowLimitError(swapInfo, response.min);
+  }
+}
+
+// Example: ChangeNow uses separate API calls for limits
+async function handleChangeNowQuote(
+  exchangeResponse: any,
+  swapInfo: EdgeSwapInfo,
+  request: EdgeSwapRequest
+): void {
+  // Check general errors
+  if (exchangeResponse.error != null) {
+    throw new SwapCurrencyError(swapInfo, request);
   }
 
-  if (apiResponse.amountTooHigh) {
-    throw new SwapAboveLimitError(
-      swapInfo,
-      apiResponse.maxAmount, // From API
-      apiResponse.limitSide
-    );
+  // Separate API call for min/max limits
+  const marketRange = await fetchMarketRange(pair);
+  if (lt(amount, marketRange.minAmount)) {
+    const minNative = await denominationToNative(marketRange.minAmount);
+    throw new SwapBelowLimitError(swapInfo, minNative);
+  }
+}
+
+// Example: LetsExchange uses HTTP status codes
+async function handleLetsExchangeResponse(
+  response: Response,
+  swapInfo: EdgeSwapInfo,
+  request: EdgeSwapRequest
+): void {
+  // HTTP 422 = validation error (unsupported pair or amount)
+  if (response.status === 422) {
+    throw new SwapCurrencyError(swapInfo, request);
   }
 
-  // 4. Other errors (liquidity, network issues, etc.)
-  if (apiResponse.insufficientLiquidity) {
-    throw new InsufficientFundsError(swapInfo, request);
+  if (!response.ok) {
+    throw new Error(`LetsExchange error ${response.status}`);
   }
 }
 
@@ -370,6 +405,23 @@ try {
   throw error;
 }
 ```
+
+## Important: Exchange API Diversity
+
+**Every exchange has a unique API response format.** There is no standard structure for error messages, limits, or validation responses. When implementing a new plugin:
+
+1. **Study your exchange's actual API responses** - Don't assume any standard format
+2. **Map exchange-specific responses to Edge error types** - Each exchange requires custom error parsing
+3. **Test with real API calls** - Verify error handling with actual API responses
+4. **Document exchange-specific quirks** - Help future maintainers understand the API's behavior
+
+Examples of API diversity:
+
+- **SideShift**: Returns errors in `error.message` field with descriptive strings
+- **ChangeNow**: Uses separate endpoints for quotes vs min/max limits
+- **LetsExchange**: Relies on HTTP status codes (422 for validation errors)
+- **Godex**: Has its own unique error codes and response structure
+- **Exolix**: Different field names and error formats entirely
 
 ## Common Patterns
 

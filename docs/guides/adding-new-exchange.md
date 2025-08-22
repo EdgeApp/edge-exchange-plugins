@@ -153,11 +153,11 @@ const plugins = {
 
 1. Disable other exchanges in Settings > Exchange Settings
 2. Test swaps with your plugin enabled
-3. Verify error handling for:
-   - Unsupported assets (pluginId/tokenId combinations)
-   - Below/above limits from API
-   - Region restrictions
-   - Network errors
+3. Verify error handling based on YOUR exchange's specific API:
+   - How does your API indicate unsupported pairs?
+   - What format does your API use for min/max limits?
+   - How does your API handle region restrictions (if any)?
+   - Test actual network failures and timeout scenarios
 
 ### Test Coverage
 
