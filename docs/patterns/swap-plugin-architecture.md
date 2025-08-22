@@ -117,6 +117,32 @@ The `pluginId` in `swapInfo` must match the key used in `src/index.ts` for prope
 
 ## Plugin Expectations and Requirements
 
+### API-Driven Validation Principle
+
+**Critical**: All validation must come from your exchange's API response, not hardcoded values:
+
+```typescript
+// ❌ BAD - Hardcoded validation
+const MIN_BTC = "0.001";
+const MAX_BTC = "10";
+if (lt(amount, MIN_BTC)) throw new SwapBelowLimitError(swapInfo, MIN_BTC);
+
+// ✅ GOOD - API-driven validation
+const apiResponse = await fetchQuote(request);
+if (apiResponse.belowMinimum) {
+  throw new SwapBelowLimitError(swapInfo, apiResponse.minAmount);
+}
+```
+
+Your exchange API should return:
+
+- Supported asset pairs (not hardcoded lists)
+- Current min/max limits for the specific pair
+- Region restrictions for the user's location
+- Available liquidity and rates
+
+## Plugin Expectations and Requirements
+
 ### Chain Support Mapping
 
 Plugins must properly map Edge pluginIds to exchange-specific identifiers:
@@ -489,15 +515,16 @@ describe("SwapPlugin", () => {
 
 ## Best Practices
 
-1. **Always validate currency codes** before making API calls
-2. **Use biggystring** for all numeric comparisons
-3. **Include detailed metadata** in quotes (order ID, etc.)
-4. **Handle rate limiting** with appropriate delays
-5. **Log errors with context** for debugging
-6. **Test with mainnet and testnet** currency codes
-7. **Create actual transactions** for accurate fee estimation
-8. **Handle destination tags/memos** for chains that require them
-9. **Specify quote type** (fixed vs variable) clearly
-10. **Support all quote directions** (from, to, max)
-11. **Map chains correctly** using pluginId and chain IDs
-12. **Provide specific error messages** with support context
+1. **Use API for all validation** - Never hardcode limits, supported assets, or restrictions
+2. **Map pluginId/tokenId to symbols** - Always translate Edge identifiers to exchange symbols
+3. **Use biggystring** for all numeric comparisons
+4. **Include detailed metadata** in quotes (order ID, etc.)
+5. **Handle rate limiting** with appropriate delays
+6. **Log errors with context** for debugging
+7. **Test with mainnet and testnet** assets
+8. **Create actual transactions** for accurate fee estimation
+9. **Handle destination tags/memos** for chains that require them
+10. **Specify quote type** (fixed vs variable) clearly
+11. **Support all quote directions** (from, to, max)
+12. **Follow error priority** - Region → Asset support → Limits
+13. **Provide specific error messages** with support context
