@@ -199,26 +199,19 @@ if (fromTokenId != null) {
   // The tokenId format depends on the chain (contract address, asset ID, etc.)
 }
 
-// Get currency codes from the wallets
-// Note: EdgeSwapRequest doesn't have fromCurrencyCode/toCurrencyCode directly
-const fromCurrencyCode = getCurrencyCode(
-  request.fromWallet,
-  request.fromTokenId
-);
-const toCurrencyCode = getCurrencyCode(request.toWallet, request.toTokenId);
+// Map Edge identifiers to exchange symbols
+const fromSymbol = getExchangeSymbol(request.fromWallet, request.fromTokenId);
+const toSymbol = getExchangeSymbol(request.toWallet, request.toTokenId);
 
-// Helper to get currency code from wallet and tokenId
-function getCurrencyCode(
+// Helper to map wallet/tokenId to exchange symbol
+function getExchangeSymbol(
   wallet: EdgeCurrencyWallet,
   tokenId: EdgeTokenId
 ): string {
-  if (tokenId == null) {
-    // Native currency
-    return wallet.currencyInfo.currencyCode;
-  }
-  // Token - look it up in the wallet's token map
-  const token = wallet.currencyConfig.allTokens[tokenId];
-  return token?.currencyCode ?? "UNKNOWN";
+  const pluginId = wallet.currencyInfo.pluginId;
+
+  // Your exchange-specific mapping logic
+  return mapToExchangeSymbol(pluginId, tokenId);
 }
 ```
 
@@ -251,14 +244,9 @@ return {
   networkFee: {
     tokenId: networkFee.tokenId,
     nativeAmount: networkFee.nativeAmount,
-    currencyCode: getCurrencyCode(fromWallet, networkFee.tokenId), // deprecated but still required
+    currencyCode: "", // deprecated field, but still required by type
   },
 };
-
-// For chains with memo support
-if (memo != null) {
-  spendInfo.memos = [{ type: "text", value: memo }];
-}
 
 // Include in quote approval info
 quote.approveInfo = {

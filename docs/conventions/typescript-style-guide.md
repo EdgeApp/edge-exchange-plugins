@@ -61,9 +61,10 @@ if (Number(amount) > Number(maxAmount)) throw new SwapAboveLimitError();
 
 ```typescript
 // ✅ Good
-throw new SwapCurrencyError(swapInfo, fromCurrencyCode, toCurrencyCode);
-throw new SwapAboveLimitError(swapInfo, max);
-throw new SwapBelowLimitError(swapInfo, min);
+throw new SwapCurrencyError(swapInfo, request);
+throw new SwapAboveLimitError(swapInfo, max, "from");
+throw new SwapBelowLimitError(swapInfo, min, "to");
+throw new SwapPermissionError(swapInfo, "geoRestriction");
 
 // ❌ Bad
 throw new Error("Invalid currency");
