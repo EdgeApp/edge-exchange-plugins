@@ -57,22 +57,6 @@ This approach uses a local webpack server that hot-reloads your changes, making 
 
 This approach builds and links the plugins directly into edge-react-gui, which is closer to production behavior but requires rebuilding after each change.
 
-2. Build edge-exchange-plugins:
-
-   ```bash
-   cd edge-exchange-plugins
-   yarn
-   yarn prepare
-   ```
-
-3. Link to edge-react-gui:
-   ```bash
-   cd ../edge-react-gui
-   yarn updot edge-exchange-plugins
-   yarn prepare
-   yarn prepare.ios  # For iOS development
-   ```
-
 ## Implementation Steps
 
 ### 1. Choose Plugin Type
@@ -116,25 +100,27 @@ Your plugin must implement `fetchSwapQuote`:
 
 ```typescript
 async fetchSwapQuote(request: EdgeSwapRequest): Promise<EdgeSwapQuote> {
-  // 1. Validate supported currencies
-  const { fromCurrencyCode, toCurrencyCode } = request
+  // 1. Map Edge pluginId/tokenId to your exchange's symbols
+  const fromSymbol = mapToExchangeSymbol(request.fromWallet, request.fromTokenId)
+  const toSymbol = mapToExchangeSymbol(request.toWallet, request.toTokenId)
 
   // 2. Convert Edge request to your API format
-  const apiRequest = await convertRequest(request)
+  const apiRequest = await convertRequest(request, fromSymbol, toSymbol)
 
-  // 3. Call your exchange API
+  // 3. Call your exchange API for validation and quote
   const quote = await fetchQuoteFromApi(apiRequest)
 
-  // 4. Validate limits
-  if (lt(quote.fromAmount, MIN_AMOUNT)) {
-    throw new SwapBelowLimitError(swapInfo, MIN_AMOUNT)
+  // 4. Validate based on API response (not hardcoded values)
+  // The API should return supported assets, limits, and region restrictions
+  if (quote.error) {
+    handleApiError(quote.error, request)
   }
 
   // 5. Return EdgeSwapQuote
   return makeSwapPluginQuote({
     request,
     swapInfo,
-    // Your quote details
+    // Your quote details from API
   })
 }
 ```
@@ -170,8 +156,9 @@ const plugins = {
 1. Disable other exchanges in Settings > Exchange Settings
 2. Test swaps with your plugin enabled
 3. Verify error handling for:
-   - Unsupported currencies
-   - Below/above limits
+   - Unsupported assets (pluginId/tokenId combinations)
+   - Below/above limits from API
+   - Region restrictions
    - Network errors
 
 ### Test Coverage
@@ -199,14 +186,46 @@ Before submitting a PR:
 
 ## Common Patterns
 
-### Currency Code Mapping
+### PluginId/TokenId to Symbol Mapping
 
-If your API uses different currency codes:
+Map Edge's pluginId and tokenId to your exchange's symbols:
 
 ```typescript
-const currencyMap: StringMap = {
-  USDT: "USDT20", // Your API code
-  BTC: "BTC",
+// Map Edge pluginId to your exchange's chain identifiers
+const CHAIN_MAP: Record<string, string> = {
+  bitcoin: "btc",
+  ethereum: "eth",
+  binancesmartchain: "bsc",
+  avalanche: "avax",
+  // Add all supported chains
+};
+
+// Helper to convert Edge wallet/tokenId to exchange symbol
+function mapToExchangeSymbol(
+  wallet: EdgeCurrencyWallet,
+  tokenId: EdgeTokenId
+): string {
+  const pluginId = wallet.currencyInfo.pluginId;
+  const chainSymbol = CHAIN_MAP[pluginId];
+
+  if (tokenId == null) {
+    // Native currency
+    return chainSymbol;
+  }
+
+  // For tokens, you may need additional mapping
+  // based on your exchange's token symbol format
+  const token = wallet.currencyConfig.allTokens[tokenId];
+  return mapTokenToSymbol(chainSymbol, token);
+}
+
+// For exchanges that use EVM chain IDs
+const EVM_CHAIN_ID_TO_PLUGIN: Record<string, string> = {
+  "1": "ethereum", // Ethereum Mainnet
+  "56": "binancesmartchain", // BSC
+  "137": "polygon", // Polygon
+  "43114": "avalanche", // Avalanche C-Chain
+  // Add other EVM chains as needed
 };
 ```
 
