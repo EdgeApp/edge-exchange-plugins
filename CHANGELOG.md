@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 2.32.0 (2025-08-25)
+
 - added: Fantom/Sonic Upgrade: throw `SwapAddressError` when from/to wallet addresses differ so the GUI can auto-select or split a FTM wallet
 
 ## 2.31.0 (2025-08-04)
