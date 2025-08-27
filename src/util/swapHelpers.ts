@@ -81,21 +81,35 @@ export async function makeSwapPluginQuote(
     tx = await fromWallet.makeSpend(spend)
   } else {
     const { makeTxParams } = order
-    const { assetAction, savedAction } = makeTxParams
-    const params =
-      preTx != null ? { ...makeTxParams, pendingTxs: [preTx] } : makeTxParams
-    tx = await fromWallet.otherMethods.makeTx(params)
+
+    // Handle the new MakeTx type for SUI
+    if (makeTxParams.type === 'MakeTx') {
+      tx = await fromWallet.otherMethods.makeTx(
+        makeTxParams.unsignedTx,
+        makeTxParams.metadata
+      )
+    } else {
+      const params =
+        preTx != null ? { ...makeTxParams, pendingTxs: [preTx] } : makeTxParams
+      tx = await fromWallet.otherMethods.makeTx(params)
+    }
+
     if (tx.tokenId == null) {
       tx.tokenId = request.fromTokenId
     }
     if (tx.currencyCode == null) {
       tx.currencyCode = request.fromCurrencyCode
     }
-    if (tx.savedAction == null) {
-      tx.savedAction = savedAction
-    }
-    if (tx.assetAction == null) {
-      tx.assetAction = assetAction
+
+    // Handle assetAction and savedAction based on type
+    if (makeTxParams.type !== 'MakeTx') {
+      const { assetAction, savedAction } = makeTxParams
+      if (tx.savedAction == null) {
+        tx.savedAction = savedAction
+      }
+      if (tx.assetAction == null) {
+        tx.assetAction = assetAction
+      }
     }
   }
   const action = tx.savedAction
@@ -264,7 +278,7 @@ export const customFeeCache = {
   setFees: (uid: string, customNetworkFee?: JsonObject): void => {
     for (const id of Object.keys(customFeeCacheMap)) {
       if (Date.now() > customFeeCacheMap[id].timestamp + 30000) {
-        delete customFeeCacheMap[id] // eslint-disable-line
+        delete customFeeCacheMap[id]; // eslint-disable-line
       }
     }
     customFeeCacheMap[uid] = { customNetworkFee, timestamp: Date.now() }
