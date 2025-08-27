@@ -85,11 +85,17 @@ export async function makeSwapPluginQuote(
     // Handle the new MakeTx type for SUI
     if (makeTxParams.type === 'MakeTx') {
       tx = await fromWallet.otherMethods.makeTx(makeTxParams)
-      if (tx.savedAction == null) {
-        tx.savedAction = makeTxParams.metadata?.savedAction
+      if (
+        tx.savedAction == null &&
+        makeTxParams.metadata?.savedAction != null
+      ) {
+        tx.savedAction = makeTxParams.metadata.savedAction
       }
-      if (tx.assetAction == null) {
-        tx.assetAction = makeTxParams.metadata?.assetAction
+      if (
+        tx.assetAction == null &&
+        makeTxParams.metadata?.assetAction != null
+      ) {
+        tx.assetAction = makeTxParams.metadata.assetAction
       }
     } else {
       const { assetAction, savedAction } = makeTxParams
@@ -103,7 +109,6 @@ export async function makeSwapPluginQuote(
         tx.assetAction = assetAction
       }
     }
-
     if (tx.tokenId == null) {
       tx.tokenId = request.fromTokenId
     }
@@ -277,7 +282,7 @@ export const customFeeCache = {
   setFees: (uid: string, customNetworkFee?: JsonObject): void => {
     for (const id of Object.keys(customFeeCacheMap)) {
       if (Date.now() > customFeeCacheMap[id].timestamp + 30000) {
-        delete customFeeCacheMap[id] // eslint-disable-line
+        delete customFeeCacheMap[id]; // eslint-disable-line
       }
     }
     customFeeCacheMap[uid] = { customNetworkFee, timestamp: Date.now() }
