@@ -81,21 +81,34 @@ export async function makeSwapPluginQuote(
     tx = await fromWallet.makeSpend(spend)
   } else {
     const { makeTxParams } = order
-    const { assetAction, savedAction } = makeTxParams
-    const params =
-      preTx != null ? { ...makeTxParams, pendingTxs: [preTx] } : makeTxParams
-    tx = await fromWallet.otherMethods.makeTx(params)
+
+    // Handle the new MakeTx type for SUI
+    if (makeTxParams.type === 'MakeTx') {
+      tx = await fromWallet.otherMethods.makeTx(makeTxParams)
+      if (tx.savedAction == null) {
+        tx.savedAction = makeTxParams.metadata?.savedAction
+      }
+      if (tx.assetAction == null) {
+        tx.assetAction = makeTxParams.metadata?.assetAction
+      }
+    } else {
+      const { assetAction, savedAction } = makeTxParams
+      const params =
+        preTx != null ? { ...makeTxParams, pendingTxs: [preTx] } : makeTxParams
+      tx = await fromWallet.otherMethods.makeTx(params)
+      if (tx.savedAction == null) {
+        tx.savedAction = savedAction
+      }
+      if (tx.assetAction == null) {
+        tx.assetAction = assetAction
+      }
+    }
+
     if (tx.tokenId == null) {
       tx.tokenId = request.fromTokenId
     }
     if (tx.currencyCode == null) {
       tx.currencyCode = request.fromCurrencyCode
-    }
-    if (tx.savedAction == null) {
-      tx.savedAction = savedAction
-    }
-    if (tx.assetAction == null) {
-      tx.assetAction = assetAction
     }
   }
   const action = tx.savedAction

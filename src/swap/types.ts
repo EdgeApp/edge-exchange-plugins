@@ -9,8 +9,12 @@ import {
 import {
   EdgeAssetAction,
   EdgeCurrencyWallet,
+  EdgeMemo,
+  EdgeMetadata,
   EdgeTransaction,
-  EdgeTxActionSwap
+  EdgeTxAction,
+  EdgeTxActionSwap,
+  EdgeTxSwap
 } from 'edge-core-js'
 
 export interface EdgeSwapRequestPlugin {
@@ -66,6 +70,19 @@ export type MakeTxParams =
       savedAction: EdgeTxActionSwap
       pendingTxs?: EdgeTransaction[]
     }
+  | {
+      type: 'MakeTx'
+      unsignedTx: Uint8Array
+      metadata?: MakeTxMetadata
+    }
+
+export interface MakeTxMetadata {
+  assetAction?: EdgeAssetAction
+  savedAction?: EdgeTxAction
+  metadata?: EdgeMetadata
+  swapData?: EdgeTxSwap
+  memos?: EdgeMemo[]
+}
 
 export const asRatesResponse = asObject({
   data: asArray(
