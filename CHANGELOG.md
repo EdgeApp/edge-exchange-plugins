@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 2.33.0 (2025-09-09)
+
 - added: Add Bridgeless plugin
 
 ## 2.32.0 (2025-08-25)
