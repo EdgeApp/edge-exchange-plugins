@@ -40,11 +40,11 @@ const swapInfo: EdgeSwapInfo = {
   pluginId,
   displayName: 'Bridgeless',
   isDex: true,
-  orderUri: undefined,
   supportEmail: 'support@edge.com'
 }
 
 const BASE_URL = 'https://rpc-api.node0.mainnet.bridgeless.com'
+const ORDER_URL = 'https://tss1.mainnet.bridgeless.com'
 
 const EDGE_PLUGINID_CHAINID_MAP: Record<string, string> = {
   bitcoin: '0',
@@ -237,11 +237,18 @@ export function makeBridgelessPlugin(
       }
     }
 
+    // chainId/txid/outputIndex
+    // output index is 0 for both Bitcoin (output of actual deposit) and Zano (index of serviceEntries with deposit instructions)
+    // txid must be 0x prefixed
+    const orderId = `${fromChainId}/0x{{TXID}}/0`
+
     const assetAction: EdgeAssetAction = {
       assetActionType: 'swap'
     }
     const savedAction: EdgeTxActionSwap = {
       actionType: 'swap',
+      orderId,
+      orderUri: `${ORDER_URL}/check/${orderId}`,
       swapInfo,
       isEstimate: false,
       toAsset: {
