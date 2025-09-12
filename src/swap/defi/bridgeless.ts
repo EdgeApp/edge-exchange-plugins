@@ -290,8 +290,6 @@ export function makeBridgelessPlugin(
       }
       case 'zano': {
         const bodyData = {
-          service_id: 'B',
-          instruction: 'BI',
           dst_add: toAddress,
           dst_net_id: toChainId,
           uniform_padding: '    '
@@ -309,10 +307,8 @@ export function makeBridgelessPlugin(
             {
               body: bodyHex,
               flags: 0,
-              instruction: 'K',
-              security:
-                'd8f6e37f28a632c06b0b3466db1b9d2d1b36a580ee35edfd971dc1423bc412a5',
-              service_id: 'C'
+              instruction: 'BI',
+              service_id: 'B'
             }
           ]
         }
