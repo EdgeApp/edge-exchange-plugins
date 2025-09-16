@@ -15,10 +15,12 @@ import {
   EdgeCurrencyWallet,
   EdgeFetchFunction,
   EdgeSpendInfo,
+  EdgeSwapApproveOptions,
   EdgeSwapInfo,
   EdgeSwapPlugin,
   EdgeSwapQuote,
   EdgeSwapRequest,
+  EdgeSwapResult,
   EdgeToken,
   EdgeTokenId,
   EdgeTxActionSwap,
@@ -45,6 +47,7 @@ const swapInfo: EdgeSwapInfo = {
 
 const BASE_URL = 'https://rpc-api.node0.mainnet.bridgeless.com'
 const ORDER_URL = 'https://tss1.mainnet.bridgeless.com'
+const AUTO_BOT_URL = 'https://autobot-wusa1.edge.app'
 
 const EDGE_PLUGINID_CHAINID_MAP: Record<string, string> = {
   bitcoin: '0',
@@ -353,7 +356,50 @@ export function makeBridgelessPlugin(
 
       const newRequest = await getMaxSwappable(fetchSwapQuoteInner, request)
       const swapOrder = await fetchSwapQuoteInner(newRequest)
-      return await makeSwapPluginQuote(swapOrder)
+
+      const swapPluginQuote = await makeSwapPluginQuote(swapOrder)
+
+      // We'll save the swap result to avoid broadcasting the same transaction multiple times in case the autobot fetch fails
+      let swapResult: EdgeSwapResult | undefined
+      const out = {
+        ...swapPluginQuote,
+        async approve(_opts?: EdgeSwapApproveOptions): Promise<EdgeSwapResult> {
+          if (swapResult == null) {
+            swapResult = await swapPluginQuote.approve(_opts)
+          }
+          const { txid } = swapResult.transaction
+
+          if (
+            swapResult.transaction.savedAction?.actionType === 'swap' &&
+            swapResult.transaction.savedAction.orderId != null
+          ) {
+            swapResult.transaction.savedAction.orderId = swapResult.transaction.savedAction.orderId.replace(
+              '{{TXID}}',
+              txid
+            )
+
+            const [
+              chainId,
+              ,
+              txNonce
+            ] = swapResult.transaction.savedAction.orderId.split('/')
+
+            const res = await opts.io.fetch(`${AUTO_BOT_URL}/api/bridgeless`, {
+              method: 'PUT',
+              headers: {
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify({ chainId, txHash: txid, txNonce })
+            })
+            if (!res.ok) {
+              throw new Error('Failed to send txid to bridgeless submitter')
+            }
+          }
+          return swapResult
+        }
+      }
+
+      return out
     }
   }
 
