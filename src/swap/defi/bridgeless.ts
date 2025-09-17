@@ -277,6 +277,7 @@ export function makeBridgelessPlugin(
 
         const spendInfo: EdgeSpendInfo = {
           otherParams: {
+            outputSort: 'targets',
             memoIndex: 1
           },
           tokenId: request.fromTokenId,
