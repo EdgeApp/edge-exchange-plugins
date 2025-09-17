@@ -506,6 +506,7 @@ export const consify = (val: any): void =>
   console.log(JSON.stringify(val, null, 2))
 
 export type EdgeCurrencyPluginId =
+  | 'abstract'
   | 'algorand'
   | 'arbitrum'
   | 'avalanche'
@@ -518,6 +519,7 @@ export type EdgeCurrencyPluginId =
   | 'bitcoingold'
   | 'bitcoinsv'
   | 'bobevm'
+  | 'botanix'
   | 'cardano'
   | 'celo'
   | 'coreum'
@@ -566,9 +568,9 @@ export type EdgeCurrencyPluginId =
   | 'ufo'
   | 'vertcoin'
   | 'wax'
+  | 'zano'
   | 'zcash'
   | 'zcoin'
-  | 'zano'
   | 'zksync'
 
 export const toStringMap = (
@@ -582,9 +584,8 @@ export const toStringMap = (
   return out
 }
 
-export type CurrencyPluginIdSwapChainCodeMap = Record<
-  EdgeCurrencyPluginId,
-  string | null
+export type CurrencyPluginIdSwapChainCodeMap = Partial<
+  Record<EdgeCurrencyPluginId, string>
 >
 
 // Map of swap provider's chain codes and the tokens they support
@@ -603,14 +604,14 @@ export type EdgeIdSwapIdMap = Map<
 
 const createEdgeIdToSwapIdMap = async (
   wallet: EdgeCurrencyWallet,
-  chainCode: string | null,
+  chainCode: string | undefined,
   tickerSet: Array<{ tokenCode: string; contractAddress: string | null }>,
   defaultSwapChainCodeTokenCodeMap: EdgeIdSwapIdMap = new Map()
 ): Promise<EdgeIdSwapIdMap> => {
   const out: EdgeIdSwapIdMap = new Map(
     defaultSwapChainCodeTokenCodeMap.entries()
   )
-  if (chainCode === null) return out
+  if (chainCode == null) return out
 
   const edgePluginId = wallet.currencyInfo.pluginId as EdgeCurrencyPluginId
   const tokenIdMap =
