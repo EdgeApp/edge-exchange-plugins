@@ -18,6 +18,7 @@ import {
   SwapBelowLimitError,
   SwapCurrencyError
 } from 'edge-core-js/types'
+import { base64 } from 'rfc4648'
 
 import { div18 } from '../../util/biggystringplus'
 import {
@@ -36,7 +37,12 @@ import {
   makeQueryParams,
   promiseWithTimeout
 } from '../../util/utils'
-import { asNumberString, EdgeSwapRequestPlugin, StringMap } from '../types'
+import {
+  asNumberString,
+  EdgeSwapRequestPlugin,
+  MakeTxParams,
+  StringMap
+} from '../types'
 import { getEvmApprovalData, WEI_MULTIPLIER } from './defiUtils'
 
 const pluginId = 'lifi'
@@ -70,6 +76,11 @@ const getParentTokenContractAddress = (pluginId: string): string => {
     // chainType SVM
     case 'solana': {
       return '11111111111111111111111111111111'
+    }
+
+    // chainType SUI
+    case 'sui': {
+      return '0x0000000000000000000000000000000000000000000000000000000000000002::sui::SUI'
     }
 
     // chainType EVM
@@ -117,6 +128,7 @@ const MAINNET_CODE_TRANSCRIPTION: StringMap = {
   polygon: 'POL',
   rsk: 'RSK',
   solana: 'SOL',
+  sui: 'SUI',
   velas: 'VEL',
   zksync: 'ERA'
 }
@@ -180,6 +192,10 @@ const asTransactionRequest = asObject({
 })
 
 const asTransactionRequestSolana = asObject({
+  data: asString
+})
+
+const asTransactionRequestSui = asObject({
   data: asString
 })
 
@@ -405,6 +421,53 @@ export function makeLifiPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
 
         break
       }
+      case 'sui': {
+        // SUI uses pre-built transactions via makeTx
+        const { data } = asTransactionRequestSui(transactionRequestRaw)
+
+        // Convert base64 to Uint8Array for makeTx
+        const unsignedTx = base64.parse(data)
+
+        // Create makeTxParams using the new MakeTx type
+        const makeTxParams: MakeTxParams = {
+          type: 'MakeTx',
+          unsignedTx,
+          metadata: {
+            assetAction: {
+              assetActionType: 'swap'
+            },
+            savedAction: {
+              actionType: 'swap',
+              swapInfo,
+              isEstimate: true,
+              toAsset: {
+                pluginId: toWallet.currencyInfo.pluginId,
+                tokenId: toTokenId,
+                nativeAmount: toAmount
+              },
+              fromAsset: {
+                pluginId: fromWallet.currencyInfo.pluginId,
+                tokenId: fromTokenId,
+                nativeAmount: fromAmount
+              },
+              payoutAddress: toAddress,
+              payoutWalletId: toWallet.id,
+              refundAddress: fromAddress
+            }
+          }
+        }
+
+        // Return SwapOrder with makeTxParams for SUI
+        return {
+          expirationDate: new Date(Date.now() + EXPIRATION_MS),
+          fromNativeAmount: nativeAmount,
+          metadataNotes,
+          minReceiveAmount: toAmountMin,
+          makeTxParams,
+          request,
+          swapInfo
+        }
+      }
       default: {
         const transactionRequest = asTransactionRequest(transactionRequestRaw)
         const { data, gasLimit, gasPrice } = transactionRequest
@@ -515,7 +578,11 @@ export function makeLifiPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
         if (request.fromTokenId != null) {
           const maxAmount =
             request.fromWallet.balanceMap.get(request.fromTokenId) ?? '0'
-          newRequest = { ...request, nativeAmount: maxAmount, quoteFor: 'from' }
+          newRequest = {
+            ...request,
+            nativeAmount: maxAmount,
+            quoteFor: 'from'
+          }
         } else {
           newRequest = await getMaxSwappable(
             async r => await fetchSwapQuoteInner(r),
