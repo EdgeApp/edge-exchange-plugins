@@ -15,10 +15,12 @@ import {
   EdgeCurrencyWallet,
   EdgeFetchFunction,
   EdgeSpendInfo,
+  EdgeSwapApproveOptions,
   EdgeSwapInfo,
   EdgeSwapPlugin,
   EdgeSwapQuote,
   EdgeSwapRequest,
+  EdgeSwapResult,
   EdgeToken,
   EdgeTokenId,
   EdgeTxActionSwap,
@@ -40,11 +42,12 @@ const swapInfo: EdgeSwapInfo = {
   pluginId,
   displayName: 'Bridgeless',
   isDex: true,
-  orderUri: undefined,
   supportEmail: 'support@edge.com'
 }
 
 const BASE_URL = 'https://rpc-api.node0.mainnet.bridgeless.com'
+const ORDER_URL = 'https://tss1.mainnet.bridgeless.com'
+const AUTO_BOT_URL = 'https://autobot-wusa1.edge.app'
 
 const EDGE_PLUGINID_CHAINID_MAP: Record<string, string> = {
   bitcoin: '0',
@@ -237,11 +240,18 @@ export function makeBridgelessPlugin(
       }
     }
 
+    // chainId/txid/outputIndex
+    // output index is 0 for both Bitcoin (output of actual deposit) and Zano (index of serviceEntries with deposit instructions)
+    // txid must be 0x prefixed
+    const orderId = `${fromChainId}/0x{{TXID}}/0`
+
     const assetAction: EdgeAssetAction = {
       assetActionType: 'swap'
     }
     const savedAction: EdgeTxActionSwap = {
       actionType: 'swap',
+      orderId,
+      orderUri: `${ORDER_URL}/check/${orderId}`,
       swapInfo,
       isEstimate: false,
       toAsset: {
@@ -267,6 +277,7 @@ export function makeBridgelessPlugin(
 
         const spendInfo: EdgeSpendInfo = {
           otherParams: {
+            outputSort: 'targets',
             memoIndex: 1
           },
           tokenId: request.fromTokenId,
@@ -290,8 +301,6 @@ export function makeBridgelessPlugin(
       }
       case 'zano': {
         const bodyData = {
-          service_id: 'B',
-          instruction: 'BI',
           dst_add: toAddress,
           dst_net_id: toChainId,
           uniform_padding: '    '
@@ -309,10 +318,8 @@ export function makeBridgelessPlugin(
             {
               body: bodyHex,
               flags: 0,
-              instruction: 'K',
-              security:
-                'd8f6e37f28a632c06b0b3466db1b9d2d1b36a580ee35edfd971dc1423bc412a5',
-              service_id: 'C'
+              instruction: 'BI',
+              service_id: 'B'
             }
           ]
         }
@@ -350,7 +357,50 @@ export function makeBridgelessPlugin(
 
       const newRequest = await getMaxSwappable(fetchSwapQuoteInner, request)
       const swapOrder = await fetchSwapQuoteInner(newRequest)
-      return await makeSwapPluginQuote(swapOrder)
+
+      const swapPluginQuote = await makeSwapPluginQuote(swapOrder)
+
+      // We'll save the swap result to avoid broadcasting the same transaction multiple times in case the autobot fetch fails
+      let swapResult: EdgeSwapResult | undefined
+      const out = {
+        ...swapPluginQuote,
+        async approve(_opts?: EdgeSwapApproveOptions): Promise<EdgeSwapResult> {
+          if (swapResult == null) {
+            swapResult = await swapPluginQuote.approve(_opts)
+          }
+          const { txid } = swapResult.transaction
+
+          if (
+            swapResult.transaction.savedAction?.actionType === 'swap' &&
+            swapResult.transaction.savedAction.orderId != null
+          ) {
+            swapResult.transaction.savedAction.orderId = swapResult.transaction.savedAction.orderId.replace(
+              '{{TXID}}',
+              txid
+            )
+
+            const [
+              chainId,
+              ,
+              txNonce
+            ] = swapResult.transaction.savedAction.orderId.split('/')
+
+            const res = await opts.io.fetch(`${AUTO_BOT_URL}/api/bridgeless`, {
+              method: 'PUT',
+              headers: {
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify({ chainId, txHash: txid, txNonce })
+            })
+            if (!res.ok) {
+              throw new Error('Failed to send txid to bridgeless submitter')
+            }
+          }
+          return swapResult
+        }
+      }
+
+      return out
     }
   }
 
