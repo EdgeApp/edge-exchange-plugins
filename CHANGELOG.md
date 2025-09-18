@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 2.34.0 (2025-09-18)
+
 - added: (LI.FI) Add SUI blockchain support for swaps via Aftermath and Bluefin7k DEXs
 - changed: Include `orderUri` on Bridgeless swaps
 - fixed: Fix `bridgeless` Zano burn asset params
