@@ -83,7 +83,7 @@ const MAINNET_CODE_TRANSCRIPTION: StringMap = {
   polygon: 'POLYGON',
   solana: 'SOLANA',
   thorchainrune: 'THOR',
-  tron: 'TRON', // Enabled, but currently only centralized bridges available, so won't return a quote.
+  // tron: 'TRON', // Currently only centralized bridges available, so won't return a quote.
   zksync: 'ZKSYNC'
 }
 
@@ -717,6 +717,7 @@ export function makeRangoPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
         }
       }
 
+      // Untested and disabled at this time.
       case 'TRON': {
         const tronTransaction = asTronTransaction(tx)
         if (tronTransaction.__payload__ == null) {
