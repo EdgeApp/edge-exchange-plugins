@@ -65,7 +65,7 @@ const MAINNET_CODE_TRANSCRIPTION: StringMap = {
   avalanche: 'AVAX_CCHAIN',
   base: 'BASE',
   binancesmartchain: 'BSC',
-  // bitcoin: 'BTC',
+  bitcoin: 'BTC', // Pending "from" support. Enabled only to allow "to" swaps.
   celo: 'CELO', // May not have any valid single step routes at this time
   cosmoshub: 'COSMOS',
   // dash: 'DASH',
@@ -83,7 +83,7 @@ const MAINNET_CODE_TRANSCRIPTION: StringMap = {
   polygon: 'POLYGON',
   solana: 'SOLANA',
   thorchainrune: 'THOR',
-  tron: 'TRON', // Enabled, but currently only centralized bridges available, so won't return a quote.
+  // tron: 'TRON', // Currently only centralized bridges available, so won't return a quote.
   zksync: 'ZKSYNC'
 }
 
@@ -717,6 +717,7 @@ export function makeRangoPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
         }
       }
 
+      // Untested and disabled at this time.
       case 'TRON': {
         const tronTransaction = asTronTransaction(tx)
         if (tronTransaction.__payload__ == null) {
