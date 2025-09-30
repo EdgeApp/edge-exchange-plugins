@@ -254,6 +254,20 @@ const asTronTransaction = asObject({
   // approveVisible: asOptional(asUnknown) // Unused
 })
 
+const asUtxoTransaction = asObject({
+  // Rango may return type like 'TRANSFER' (schema is not strictly documented)
+  type: asString,
+  // Common address fields observed across providers
+  toAddress: asOptional(asString),
+  recipientAddress: asOptional(asString),
+  inboundAddress: asOptional(asString),
+  destination: asOptional(asString),
+  // Memo can be ascii or hex depending on provider
+  memo: asOptional(asString),
+  memoHex: asOptional(asString),
+  opReturn: asOptional(asString)
+})
+
 const asSwapResponse = asObject({
   resultType: asRoutingResultType,
   route: asEither(asSwapSimulationResult, asNull),
@@ -263,6 +277,7 @@ const asSwapResponse = asObject({
     asSolanaTransaction,
     asCosmosTransaction,
     asTronTransaction,
+    asUtxoTransaction,
     asNull
   ),
   // Common tracking fields that might be in the response
@@ -396,6 +411,7 @@ export function makeRangoPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
       referrer = { referrerAddress: referrerAddress.toLowerCase(), referrerFee }
     }
 
+    const isFromUtxo = ['BTC', 'LTC', 'DASH', 'DOGE'].includes(fromMainnetCode)
     const swapParameters = {
       apiKey: rangoApiKey,
       from: createAssetString(
@@ -412,7 +428,8 @@ export function makeRangoPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
       toAddress,
       amount: nativeAmount,
       disableEstimate: true,
-      avoidNativeFee: true,
+      // For UTXO flows, allow native fee usage (ThorChain requires on-chain fee)
+      avoidNativeFee: !isFromUtxo,
       slippage: DEFAULT_SLIPPAGE,
       ...(referrer != null ? referrer : undefined)
     }
@@ -715,6 +732,67 @@ export function makeRangoPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
           makeTxParams,
           swapInfo
         }
+      }
+
+      // Handle UTXO-style transfers (BTC/LTC/DASH/DOGE)
+      case 'TRANSFER': {
+        const utxoTx = asUtxoTransaction(tx)
+
+        // Choose the best available destination field
+        const depositAddress =
+          utxoTx.recipientAddress ??
+          utxoTx.toAddress ??
+          utxoTx.inboundAddress ??
+          utxoTx.destination
+        if (depositAddress == null) {
+          throw new SwapCurrencyError(swapInfo, request)
+        }
+
+        // Memo can be ascii or hex
+        const memos: EdgeSpendInfo['memos'] = []
+        if (utxoTx.memoHex != null && utxoTx.memoHex !== '') {
+          memos.push({ type: 'hex', value: utxoTx.memoHex })
+        } else if (utxoTx.opReturn != null && utxoTx.opReturn !== '') {
+          memos.push({ type: 'hex', value: utxoTx.opReturn })
+        } else if (utxoTx.memo != null && utxoTx.memo !== '') {
+          memos.push({ type: 'text', value: utxoTx.memo })
+        }
+
+        spendInfo = {
+          tokenId: request.fromTokenId,
+          spendTargets: [
+            {
+              nativeAmount,
+              publicAddress: depositAddress
+            }
+          ],
+          memos,
+          networkFeeOption: 'high',
+          assetAction: {
+            assetActionType: 'swap'
+          },
+          savedAction: {
+            actionType: 'swap',
+            swapInfo,
+            orderUri: `${orderUri}${toAddress}`,
+            isEstimate: true,
+            toAsset: {
+              pluginId: toWallet.currencyInfo.pluginId,
+              tokenId: toTokenId,
+              nativeAmount: route.outputAmount
+            },
+            fromAsset: {
+              pluginId: fromWallet.currencyInfo.pluginId,
+              tokenId: fromTokenId,
+              nativeAmount: nativeAmount
+            },
+            payoutAddress: toAddress,
+            payoutWalletId: toWallet.id,
+            refundAddress: fromAddress
+          }
+        }
+
+        break
       }
 
       // Untested and disabled at this time.
