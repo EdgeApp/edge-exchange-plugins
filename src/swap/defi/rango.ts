@@ -233,7 +233,7 @@ const asCosmosTransaction = asObject({
 const asTronPayload = asObject({
   // owner_address: asString, // Unused
   // call_value: asNumber, // Unused
-  // contract_address: asString, // Unused
+  contract_address: asOptional(asString),
   // fee_limit: asNumber, // Unused
   // function_selector: asString, // Unused
   parameter: asString
@@ -829,7 +829,7 @@ export function makeRangoPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
                 nativeAmount
               },
               tokenContractAddress: fromContractAddress,
-              contractAddress: fromContractAddress
+              contractAddress: payload.contract_address ?? fromContractAddress
             }
           }
           preTx = await request.fromWallet.makeSpend(approvalSpendInfo)
