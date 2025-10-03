@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 2.35.0 (2025-10-03)
+
 - added: (Rango) Support for Axelar, Celo, Cosmos, Osmosis, and Thorchain
 - changed: (Rango) Find minimum swap using native amounts with exponential+binary search
 
