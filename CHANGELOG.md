@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- added: (Thorchain) Support for XRP
+
 ## 2.35.0 (2025-10-03)
 
 - added: (Rango) Support for Axelar, Celo, Cosmos, Osmosis, and Thorchain

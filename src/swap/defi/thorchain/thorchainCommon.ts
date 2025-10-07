@@ -146,6 +146,7 @@ export const EVM_CURRENCY_CODES: { [cc: string]: boolean } = {
   ETH: true,
   FTM: true,
   LTC: false,
+  TRON: false,
   THOR: false
 }
 
