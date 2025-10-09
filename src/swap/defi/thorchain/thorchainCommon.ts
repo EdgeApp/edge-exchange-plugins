@@ -146,7 +146,27 @@ export const EVM_CURRENCY_CODES: { [cc: string]: boolean } = {
   ETH: true,
   FTM: true,
   LTC: false,
-  THOR: false
+  THOR: false,
+  XRP: false
+}
+
+/** Thorchain has weird heuristics for some currencies */
+const NATIVE_TO_THOR_MULTIPLIER: { [cc: string]: string } = {
+  ARB: NATIVE_IN_GWEI,
+  AVAX: NATIVE_IN_GWEI,
+  BASE: NATIVE_IN_GWEI,
+  BCH: '1',
+  BNB: '1',
+  BSC: NATIVE_IN_GWEI,
+  BTC: '1',
+  DASH: '1',
+  DOGE: '1',
+  ETC: NATIVE_IN_GWEI,
+  ETH: NATIVE_IN_GWEI,
+  FTM: NATIVE_IN_GWEI,
+  LTC: '1',
+  THOR: '1',
+  XRP: '0.01'
 }
 
 export const asInitOptions = asObject({
@@ -464,10 +484,11 @@ export function makeThorchainBasedPlugin(
         const inboundJson = await inboundResponse.json()
         const inboundAddresses = asInboundAddresses(inboundJson)
         for (const inbound of inboundAddresses) {
+          const nativeToThorMultiplier =
+            NATIVE_TO_THOR_MULTIPLIER[inbound.chain] ?? '1'
           dustThresholds[inbound.chain] = mul(
             inbound.dust_threshold,
-            // EVM currencies' dust thresholds are given in gwei
-            EVM_CURRENCY_CODES[inbound.chain] ? NATIVE_IN_GWEI : '1'
+            nativeToThorMultiplier
           )
         }
       } else {
