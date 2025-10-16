@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- fixed: (Thorchain) Native unit multiplier for XRP
+
 ## 2.35.1 (2025-10-16)
 
 - changed: Bridgeless minimum to 10000 sats
