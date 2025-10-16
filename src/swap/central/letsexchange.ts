@@ -335,8 +335,8 @@ export function makeLetsExchangePlugin(
       params: {
         deposit_amount: reverseQuote ? undefined : fromAmount,
         withdrawal_amount: reverseQuote ? toAmount : undefined,
-        coin_from: request.fromCurrencyCode,
-        coin_to: request.toCurrencyCode,
+        coin_from: fromCurrencyCode,
+        coin_to: toCurrencyCode,
         network_from: fromMainnetCode,
         network_to: toMainnetCode,
         withdrawal: toAddress,
