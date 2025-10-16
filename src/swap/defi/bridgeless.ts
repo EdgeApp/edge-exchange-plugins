@@ -217,9 +217,9 @@ export function makeBridgelessPlugin(
       toAmount = floor(mul(request.nativeAmount, sub('1', commission)), 0)
     }
 
-    // This will be provided by the /tokens endpoint in the future. For BTC/WBTC, we'lll enforce a limit of 500000 satoshis. This limit exists both ways.
+    // This will be provided by the /tokens endpoint in the future. For BTC/WBTC, we'lll enforce a limit of 10000 satoshis. This limit exists both ways.
     // If endpoint returns a 0 that means no limit
-    const minAmount = '500000'
+    const minAmount = '10000'
     const direction = request.quoteFor === 'to' ? 'to' : 'from'
     if (lt(direction === 'to' ? toAmount : fromAmount, minAmount.toString())) {
       throw new SwapBelowLimitError(swapInfo, minAmount.toString(), direction)
