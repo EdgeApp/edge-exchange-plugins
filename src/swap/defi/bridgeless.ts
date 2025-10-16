@@ -59,6 +59,7 @@ const asTokenInfo = asObject({
   decimals: asString,
   chain_id: asString,
   token_id: asString,
+  commission_rate: asString,
   is_wrapped: asBoolean
 })
 type TokenInfo = ReturnType<typeof asTokenInfo>
@@ -71,8 +72,7 @@ const asToken = asObject({
   //   uri: 'https://avatars.githubusercontent.com/u/44211915?s=200&v=4',
   //   dex_name: ''
   // },
-  info: asArray(asTokenInfo),
-  commission_rate: asString //  '0.01'
+  info: asArray(asTokenInfo)
 })
 type Token = ReturnType<typeof asToken>
 
@@ -153,6 +153,7 @@ export function makeBridgelessPlugin(
 
     let bridgelessToken: Token | undefined
     let pageKey: string | undefined
+    let fromTokenInfo: TokenInfo | undefined
     while (true) {
       const pageKeyStr = pageKey == null ? '' : `?pagination.key=${pageKey}`
       const raw = await fetchBridgeless(fetch, `/tokens${pageKeyStr}`)
@@ -160,7 +161,7 @@ export function makeBridgelessPlugin(
 
       // Find a token object where both from and to infos are present
       for (const token of response.tokens) {
-        let fromTokenInfo: TokenInfo | undefined
+        let fromTokenInfoForToken: TokenInfo | undefined
         let toTokenInfo: TokenInfo | undefined
         for (const info of token.info) {
           try {
@@ -172,7 +173,7 @@ export function makeBridgelessPlugin(
                 ] &&
               tokenId === request.fromTokenId
             ) {
-              fromTokenInfo = info
+              fromTokenInfoForToken = info
             }
             if (
               info.chain_id ===
@@ -187,7 +188,8 @@ export function makeBridgelessPlugin(
             // ignore tokens that fail validation
           }
         }
-        if (fromTokenInfo != null && toTokenInfo != null) {
+        if (fromTokenInfoForToken != null && toTokenInfo != null) {
+          fromTokenInfo = fromTokenInfoForToken
           bridgelessToken = token
           break
         }
@@ -202,7 +204,11 @@ export function makeBridgelessPlugin(
       throw new SwapCurrencyError(swapInfo, request)
     }
 
-    const commission = bridgelessToken.commission_rate
+    if (fromTokenInfo == null) {
+      throw new SwapCurrencyError(swapInfo, request)
+    }
+
+    const commission = fromTokenInfo.commission_rate
     if (commission == null) {
       throw new SwapCurrencyError(swapInfo, request)
     }
@@ -217,9 +223,9 @@ export function makeBridgelessPlugin(
       toAmount = floor(mul(request.nativeAmount, sub('1', commission)), 0)
     }
 
-    // This will be provided by the /tokens endpoint in the future. For BTC/WBTC, we'lll enforce a limit of 500000 satoshis. This limit exists both ways.
+    // This will be provided by the /tokens endpoint in the future. For BTC/WBTC, we'lll enforce a limit of 10000 satoshis. This limit exists both ways.
     // If endpoint returns a 0 that means no limit
-    const minAmount = '500000'
+    const minAmount = '10000'
     const direction = request.quoteFor === 'to' ? 'to' : 'from'
     if (lt(direction === 'to' ? toAmount : fromAmount, minAmount.toString())) {
       throw new SwapBelowLimitError(swapInfo, minAmount.toString(), direction)
