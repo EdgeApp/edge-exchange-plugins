@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- added: (Thorchain) Support for Tron
+
 - fixed: (Thorchain) Native unit multiplier for XRP
 
 ## 2.35.1 (2025-10-16)

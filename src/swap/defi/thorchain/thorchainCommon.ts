@@ -147,6 +147,7 @@ export const EVM_CURRENCY_CODES: { [cc: string]: boolean } = {
   FTM: true,
   LTC: false,
   THOR: false,
+  TRON: false,
   XRP: false
 }
 
@@ -166,6 +167,7 @@ const NATIVE_TO_THOR_MULTIPLIER: { [cc: string]: string } = {
   FTM: NATIVE_IN_GWEI,
   LTC: '1',
   THOR: '1',
+  TRON: '1',
   XRP: '0.01'
 }
 
