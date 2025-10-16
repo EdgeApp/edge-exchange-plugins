@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- changed: Bridgeless minimum to 10000 sats
+- fixed: Bridgeless API breaking change for `commission_rate`
+
 ## 2.35.0 (2025-10-03)
 
 - added: (Rango) Support for Axelar, Celo, Cosmos, Osmosis, and Thorchain
