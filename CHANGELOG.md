@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 2.35.1 (2025-10-16)
+
 - changed: Bridgeless minimum to 10000 sats
 - fixed: Bridgeless API breaking change for `commission_rate`
 
