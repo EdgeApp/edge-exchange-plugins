@@ -335,8 +335,8 @@ export function makeLetsExchangePlugin(
       params: {
         deposit_amount: reverseQuote ? undefined : fromAmount,
         withdrawal_amount: reverseQuote ? toAmount : undefined,
-        coin_from: request.fromCurrencyCode,
-        coin_to: request.toCurrencyCode,
+        coin_from: fromCurrencyCode,
+        coin_to: toCurrencyCode,
         network_from: fromMainnetCode,
         network_to: toMainnetCode,
         withdrawal: toAddress,
@@ -354,14 +354,16 @@ export function makeLetsExchangePlugin(
     log('sendReply', sendReply)
     const quoteInfo = asQuoteInfo(sendReply)
 
-    const fromNativeAmount = await request.fromWallet.denominationToNative(
+    const rawFromNativeAmount = await request.fromWallet.denominationToNative(
       quoteInfo.deposit_amount,
       request.fromCurrencyCode
     )
-    const toNativeAmount = await request.toWallet.denominationToNative(
+    const rawToNativeAmount = await request.toWallet.denominationToNative(
       quoteInfo.withdrawal_amount,
       request.toCurrencyCode
     )
+    const fromNativeAmount = rawFromNativeAmount.split('.')[0]
+    const toNativeAmount = rawToNativeAmount.split('.')[0]
 
     const memos: EdgeMemo[] =
       quoteInfo.deposit_extra_id == null
