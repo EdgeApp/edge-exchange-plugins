@@ -475,9 +475,8 @@ export function makeLifiPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
         const gasPriceGwei = div18(gasPriceDecimal, WEI_MULTIPLIER)
 
         if (sendingToken) {
-          const approvalData = await getEvmApprovalData({
+          const approvalData = getEvmApprovalData({
             contractAddress: approvalAddress,
-            assetAddress: fromContractAddress,
             nativeAmount
           })
 
@@ -490,10 +489,7 @@ export function makeLifiPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
                 publicAddress: fromContractAddress
               }
             ],
-            memos:
-              approvalData != null
-                ? [{ type: 'hex', value: approvalData }]
-                : undefined,
+            memos: [{ type: 'hex', value: approvalData }],
             networkFeeOption: 'custom',
             customNetworkFee: {
               gasPrice: gasPriceGwei

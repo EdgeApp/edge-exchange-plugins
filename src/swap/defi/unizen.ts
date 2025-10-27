@@ -238,13 +238,10 @@ export function makeUnizenPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
     let preTx: EdgeTransaction | undefined
     const approvalNeeded = asMaybe(asInsufficientAllowance)(quote)
     if (approvalNeeded != null) {
-      const approvalData = await getEvmApprovalData({
+      const approvalData = getEvmApprovalData({
         contractAddress: spendParams.destinationAddress,
-        assetAddress: fromContractAddress,
         nativeAmount: request.nativeAmount
       })
-      if (approvalData == null)
-        throw new Error('Failed to create approval data')
 
       const spendInfo: EdgeSpendInfo = {
         tokenId: null,

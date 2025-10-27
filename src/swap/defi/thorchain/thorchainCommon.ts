@@ -651,7 +651,7 @@ export function makeThorchainBasedPlugin(
 
     let ethNativeAmount = fromNativeAmount
     let publicAddress = thorAddress
-    let approvalData
+    let preTx: EdgeTransaction | undefined
     let memoType: EdgeMemo['type']
 
     const savedAction: EdgeTxActionSwap = {
@@ -695,11 +695,41 @@ export function makeThorchainBasedPlugin(
         ethNativeAmount = '0'
 
         // Check if token approval is required and return necessary data field
-        approvalData = await getEvmApprovalData({
+        const approvalData = getEvmApprovalData({
           contractAddress: router,
-          assetAddress: sourceTokenContractAddress,
           nativeAmount: fromNativeAmount
         })
+        const spendInfo: EdgeSpendInfo = {
+          // Token approvals only spend the parent currency
+          tokenId: null,
+          memos: [
+            {
+              type: 'hex',
+              value: approvalData
+            }
+          ],
+          spendTargets: [
+            {
+              nativeAmount: '0',
+              publicAddress: sourceTokenContractAddress
+            }
+          ],
+          networkFeeOption: 'high',
+          assetAction: {
+            assetActionType: 'tokenApproval'
+          },
+          savedAction: {
+            actionType: 'tokenApproval',
+            tokenApproved: {
+              pluginId: fromWallet.currencyInfo.pluginId,
+              tokenId: fromTokenId,
+              nativeAmount
+            },
+            tokenContractAddress: sourceTokenContractAddress ?? '',
+            contractAddress: router ?? ''
+          }
+        }
+        preTx = await request.fromWallet.makeSpend(spendInfo)
       }
 
       // Need to use ethers.js to craft a proper tx that calls Thorchain contract, then extract the data payload
@@ -762,41 +792,6 @@ export function makeThorchainBasedPlugin(
         // Cannot yet do tokens on utxo chains
         throw new SwapCurrencyError(swapInfo, request)
       }
-    }
-
-    let preTx: EdgeTransaction | undefined
-    if (approvalData != null) {
-      const spendInfo: EdgeSpendInfo = {
-        // Token approvals only spend the parent currency
-        tokenId: null,
-        memos: [
-          {
-            type: 'hex',
-            value: approvalData
-          }
-        ],
-        spendTargets: [
-          {
-            nativeAmount: '0',
-            publicAddress: sourceTokenContractAddress
-          }
-        ],
-        networkFeeOption: 'high',
-        assetAction: {
-          assetActionType: 'tokenApproval'
-        },
-        savedAction: {
-          actionType: 'tokenApproval',
-          tokenApproved: {
-            pluginId: fromWallet.currencyInfo.pluginId,
-            tokenId: fromTokenId,
-            nativeAmount
-          },
-          tokenContractAddress: sourceTokenContractAddress ?? '',
-          contractAddress: router ?? ''
-        }
-      }
-      preTx = await request.fromWallet.makeSpend(spendInfo)
     }
 
     if (publicAddress == null) {

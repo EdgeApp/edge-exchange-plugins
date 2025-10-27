@@ -75,28 +75,19 @@ const getEvmCheckSumAddress = (assetAddress: string): string => {
   return ethers.utils.getAddress(assetAddress.toLowerCase())
 }
 
-export const getEvmApprovalData = async (params: {
+export const getEvmApprovalData = ({
+  contractAddress,
+  nativeAmount
+}: {
   contractAddress: string
-  assetAddress: string
   nativeAmount: string
-}): Promise<string | undefined> => {
-  const { contractAddress, assetAddress, nativeAmount } = params
-  const contract = new ethers.Contract(
-    assetAddress,
-    erc20Abi,
-    ethers.providers.getDefaultProvider()
-  )
-
-  const bnNativeAmount = ethers.BigNumber.from(nativeAmount)
-  const approveTx = await contract.populateTransaction.approve(
+}): string => {
+  const iface = new ethers.utils.Interface(erc20Abi)
+  const data = iface.encodeFunctionData('approve', [
     contractAddress,
-    bnNativeAmount,
-    {
-      gasLimit: '500000',
-      gasPrice: '20'
-    }
-  )
-  return approveTx.data != null ? approveTx.data.replace(/^0x/, '') : undefined
+    nativeAmount
+  ])
+  return data
 }
 
 export const getDepositWithExpiryData = async (params: {
