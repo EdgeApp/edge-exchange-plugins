@@ -226,7 +226,7 @@ export function makeVelodromePlugin(
     })
 
     let spendInfo = edgeSpendInfos[0]
-    let preTx: EdgeTransaction | undefined
+    const preTxs: EdgeTransaction[] = []
     if (edgeSpendInfos.length > 1) {
       spendInfo = edgeSpendInfos[1]
       const approvalSpendInfo: EdgeSpendInfo = {
@@ -246,7 +246,8 @@ export function makeVelodromePlugin(
         }
       }
 
-      preTx = await request.fromWallet.makeSpend(approvalSpendInfo)
+      const preTx = await request.fromWallet.makeSpend(approvalSpendInfo)
+      preTxs.push(preTx)
     }
 
     spendInfo = {
@@ -281,7 +282,7 @@ export function makeVelodromePlugin(
       swapInfo,
       fromNativeAmount: amountToSwap,
       expirationDate,
-      preTx
+      preTxs
     }
   }
 

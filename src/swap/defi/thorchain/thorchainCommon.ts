@@ -651,7 +651,7 @@ export function makeThorchainBasedPlugin(
 
     let ethNativeAmount = fromNativeAmount
     let publicAddress = thorAddress
-    let preTx: EdgeTransaction | undefined
+    const preTxs: EdgeTransaction[] = []
     let memoType: EdgeMemo['type']
 
     const savedAction: EdgeTxActionSwap = {
@@ -729,7 +729,8 @@ export function makeThorchainBasedPlugin(
             contractAddress: router ?? ''
           }
         }
-        preTx = await request.fromWallet.makeSpend(spendInfo)
+        const preTx = await request.fromWallet.makeSpend(spendInfo)
+        preTxs.push(preTx)
       }
 
       // Need to use ethers.js to craft a proper tx that calls Thorchain contract, then extract the data payload
@@ -885,7 +886,7 @@ export function makeThorchainBasedPlugin(
       swapInfo,
       fromNativeAmount,
       expirationDate: new Date(Date.now() + EXPIRATION_MS),
-      preTx
+      preTxs
     }
   }
 

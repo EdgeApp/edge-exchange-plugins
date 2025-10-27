@@ -331,7 +331,7 @@ export function makeSwapKitPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
     let memo = ''
 
     const publicAddress = targetAddress
-    let preTx: EdgeTransaction | undefined
+    const preTxs: EdgeTransaction[] = []
 
     const evmTransaction = asMaybe(asEvmCleaner)(thorSwap.tx)
     const cosmosTransaction = asMaybe(asCosmosCleaner)(thorSwap.tx)
@@ -376,7 +376,8 @@ export function makeSwapKitPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
             contractAddress: dexContractAddress
           }
         }
-        preTx = await request.fromWallet.makeSpend(spendInfo)
+        const preTx = await request.fromWallet.makeSpend(spendInfo)
+        preTxs.push(preTx)
       }
       memo = evmTransaction.data.replace(/^0x/, '')
     } else if (cosmosTransaction != null) {
@@ -461,7 +462,7 @@ export function makeSwapKitPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
       swapInfo,
       fromNativeAmount: nativeAmount,
       expirationDate: new Date(expirationMs),
-      preTx,
+      preTxs,
       metadataNotes: notes
     }
   }

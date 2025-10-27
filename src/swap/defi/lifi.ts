@@ -374,7 +374,7 @@ export function makeLifiPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
     const metadataNotes = `DEX Providers: ${providersStr}`
     const { approvalAddress, toAmount, toAmountMin, fromAmount } = estimate
 
-    let preTx: EdgeTransaction | undefined
+    const preTxs: EdgeTransaction[] = []
     let spendInfo: EdgeSpendInfo
     switch (fromWallet.currencyInfo.pluginId) {
       case 'solana': {
@@ -508,7 +508,8 @@ export function makeLifiPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
               contractAddress: approvalAddress
             }
           }
-          preTx = await request.fromWallet.makeSpend(preTxSpendInfo)
+          const preTx = await request.fromWallet.makeSpend(preTxSpendInfo)
+          preTxs.push(preTx)
         }
 
         spendInfo = {
@@ -556,7 +557,7 @@ export function makeLifiPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
       fromNativeAmount: nativeAmount,
       metadataNotes,
       minReceiveAmount: toAmountMin,
-      preTx,
+      preTxs,
       request,
       spendInfo,
       swapInfo

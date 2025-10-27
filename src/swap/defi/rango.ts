@@ -570,7 +570,7 @@ export function makeRangoPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
 
     const providers = route.path.map(p => p.swapper.title)
 
-    let preTx: EdgeTransaction | undefined
+    const preTxs: EdgeTransaction[] = []
     let spendInfo: EdgeSpendInfo
 
     switch (tx.type) {
@@ -685,7 +685,7 @@ export function makeRangoPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
           fromNativeAmount: nativeAmount,
           metadataNotes,
           minReceiveAmount: route.outputAmountMin,
-          preTx,
+          preTxs,
           request,
           makeTxParams,
           swapInfo
@@ -724,7 +724,8 @@ export function makeRangoPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
               contractAddress: approveTo
             }
           }
-          preTx = await request.fromWallet.makeSpend(spendInfo)
+          const preTx = await request.fromWallet.makeSpend(spendInfo)
+          preTxs.push(preTx)
         }
         const customNetworkFee = {
           gasLimit:
@@ -791,7 +792,7 @@ export function makeRangoPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
       fromNativeAmount: nativeAmount,
       metadataNotes,
       minReceiveAmount: route.outputAmountMin,
-      preTx,
+      preTxs,
       request,
       spendInfo,
       swapInfo

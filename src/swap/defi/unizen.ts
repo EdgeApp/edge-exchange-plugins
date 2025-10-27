@@ -235,7 +235,7 @@ export function makeUnizenPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
     log('unizen spendInfo', JSON.stringify(spendInfo))
 
     // create approval transaction, if needed
-    let preTx: EdgeTransaction | undefined
+    const preTxs: EdgeTransaction[] = []
     const approvalNeeded = asMaybe(asInsufficientAllowance)(quote)
     if (approvalNeeded != null) {
       const approvalData = getEvmApprovalData({
@@ -268,17 +268,18 @@ export function makeUnizenPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
           contractAddress: spendParams.destinationAddress
         }
       }
-      preTx = await request.fromWallet.makeSpend(spendInfo)
+      const preTx = await request.fromWallet.makeSpend(spendInfo)
+      preTxs.push(preTx)
     }
 
-    log('unizen preTx', JSON.stringify(preTx ?? {}))
+    log('unizen preTxs', JSON.stringify(preTxs))
 
     const out: SwapOrder = {
       expirationDate: spendParams.expirationDate,
       fromNativeAmount: request.nativeAmount,
       metadataNotes: spendParams.metadataNotes,
       minReceiveAmount: spendParams.minReceiveAmount,
-      preTx,
+      preTxs,
       request,
       spendInfo,
       swapInfo
