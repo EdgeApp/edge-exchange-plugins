@@ -31,7 +31,7 @@ import {
 import { convertRequest, getAddress } from '../../util/utils'
 import { EdgeSwapRequestPlugin, StringMap } from '../types'
 import { getTokenAddress } from './0x/util'
-import { getEvmApprovalData, WEI_MULTIPLIER } from './defiUtils'
+import { createEvmApprovalEdgeTransactions, WEI_MULTIPLIER } from './defiUtils'
 
 const pluginId = 'unizen'
 const swapInfo: EdgeSwapInfo = {
@@ -238,38 +238,15 @@ export function makeUnizenPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
     const preTxs: EdgeTransaction[] = []
     const approvalNeeded = asMaybe(asInsufficientAllowance)(quote)
     if (approvalNeeded != null) {
-      const approvalData = getEvmApprovalData({
-        contractAddress: spendParams.destinationAddress,
-        nativeAmount: request.nativeAmount
-      })
-
-      const spendInfo: EdgeSpendInfo = {
-        tokenId: null,
-        memos: [{ type: 'hex', value: approvalData }],
-        spendTargets: [
-          {
-            nativeAmount: '0',
-            publicAddress: fromContractAddress
-          }
-        ],
+      const approvalTxs = await createEvmApprovalEdgeTransactions({
+        request,
+        approvalAmount: request.nativeAmount,
+        tokenContractAddress: fromContractAddress,
+        recipientAddress: spendParams.destinationAddress,
         networkFeeOption: spendParams.networkFeeOption,
-        customNetworkFee: spendParams.customNetworkFee,
-        assetAction: {
-          assetActionType: 'tokenApproval'
-        },
-        savedAction: {
-          actionType: 'tokenApproval',
-          tokenApproved: {
-            pluginId: request.fromWallet.currencyInfo.pluginId,
-            tokenId: request.fromTokenId,
-            nativeAmount: request.nativeAmount
-          },
-          tokenContractAddress: fromContractAddress,
-          contractAddress: spendParams.destinationAddress
-        }
-      }
-      const preTx = await request.fromWallet.makeSpend(spendInfo)
-      preTxs.push(preTx)
+        customNetworkFee: spendParams.customNetworkFee
+      })
+      preTxs.push(...approvalTxs)
     }
 
     log('unizen preTxs', JSON.stringify(preTxs))

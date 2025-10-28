@@ -46,7 +46,7 @@ import {
   MakeTxParams,
   StringMap
 } from '../types'
-import { WEI_MULTIPLIER } from './defiUtils'
+import { createEvmApprovalEdgeTransactions, WEI_MULTIPLIER } from './defiUtils'
 
 const swapInfo: EdgeSwapInfo = {
   pluginId: 'rango',
@@ -699,33 +699,13 @@ export function makeRangoPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
         }
         const { approveData, approveTo } = evmTransaction
         if (approveData != null && approveTo != null) {
-          const approvalData = approveData.replace('0x', '')
-
-          spendInfo = {
-            tokenId: null,
-            memos: [{ type: 'hex', value: approvalData }],
-            spendTargets: [
-              {
-                nativeAmount: '0',
-                publicAddress: fromContractAddress
-              }
-            ],
-            assetAction: {
-              assetActionType: 'tokenApproval'
-            },
-            savedAction: {
-              actionType: 'tokenApproval',
-              tokenApproved: {
-                pluginId: fromWallet.currencyInfo.pluginId,
-                tokenId: fromTokenId,
-                nativeAmount
-              },
-              tokenContractAddress: fromContractAddress,
-              contractAddress: approveTo
-            }
-          }
-          const preTx = await request.fromWallet.makeSpend(spendInfo)
-          preTxs.push(preTx)
+          const approvalTxs = await createEvmApprovalEdgeTransactions({
+            request,
+            approvalAmount: nativeAmount,
+            tokenContractAddress: fromContractAddress,
+            recipientAddress: approveTo
+          })
+          preTxs.push(...approvalTxs)
         }
         const customNetworkFee = {
           gasLimit:
