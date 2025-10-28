@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- added: (Letsexchange) Zano and HBAR support
+
 ## 2.36.0 (2025-10-16)
 
 - added: (Thorchain) Support for Tron
