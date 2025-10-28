@@ -72,7 +72,8 @@ const asInfoReply = asObject({
 const INVALID_CURRENCY_CODES: InvalidCurrencyCodes = {
   from: {},
   to: {
-    zcash: ['ZEC']
+    zcash: ['ZEC'],
+    hedera: 'allCodes'
   }
 }
 
@@ -139,7 +140,7 @@ export const MAINNET_CODE_TRANSCRIPTION: CurrencyPluginIdSwapChainCodeMap = {
   ufo: null,
   vertcoin: null,
   wax: 'WAX',
-  zano: null, // 'ZANO' disabled until until it can be tested for integrated address/payment id
+  zano: 'ZANO',
   zcash: 'ZEC',
   zcoin: 'FIRO',
   zksync: 'ZKSERA'
@@ -161,6 +162,11 @@ export const SPECIAL_MAINNET_CASES: EdgeIdSwapIdMap = new Map([
 let chainCodeTickerMap: ChainCodeTickerMap = new Map()
 let lastUpdated = 0
 const EXPIRATION = 1000 * 60 * 60 // 1 hour
+
+// Hedera accounts are considered activated when the address is a numeric account ID
+// format: 0.0.<digits>
+const isHederaActivatedAddress = (address: string): boolean =>
+  /^0\.0\.\d+$/.test(address)
 
 export function makeLetsExchangePlugin(
   opts: EdgeCorePluginOptions
@@ -239,6 +245,13 @@ export function makeLetsExchangePlugin(
       getAddress(request.fromWallet),
       getAddress(request.toWallet)
     ])
+
+    // HBAR support: only allow as a from-asset for activated wallets
+    if (request.fromWallet.currencyInfo.pluginId === 'hedera') {
+      if (!isHederaActivatedAddress(fromAddress)) {
+        throw new SwapCurrencyError(swapInfo, request)
+      }
+    }
 
     // Convert the native amount to a denomination:
     const quoteAmount =
