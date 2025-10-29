@@ -1,5 +1,5 @@
 import { base16, base58 } from '@scure/base'
-import { add, floor, lt, mul, sub } from 'biggystring'
+import { add, ceil, lt, mul, sub } from 'biggystring'
 import {
   asArray,
   asBoolean,
@@ -60,6 +60,7 @@ const asTokenInfo = asObject({
   chain_id: asString,
   token_id: asString,
   commission_rate: asString,
+  min_withdrawal_amount: asString,
   is_wrapped: asBoolean
 })
 type TokenInfo = ReturnType<typeof asTokenInfo>
@@ -154,6 +155,7 @@ export function makeBridgelessPlugin(
     let bridgelessToken: Token | undefined
     let pageKey: string | undefined
     let fromTokenInfo: TokenInfo | undefined
+    let toTokenInfo: TokenInfo | undefined
     while (true) {
       const pageKeyStr = pageKey == null ? '' : `?pagination.key=${pageKey}`
       const raw = await fetchBridgeless(fetch, `/tokens${pageKeyStr}`)
@@ -162,7 +164,7 @@ export function makeBridgelessPlugin(
       // Find a token object where both from and to infos are present
       for (const token of response.tokens) {
         let fromTokenInfoForToken: TokenInfo | undefined
-        let toTokenInfo: TokenInfo | undefined
+        let toTokenInfoForToken: TokenInfo | undefined
         for (const info of token.info) {
           try {
             const tokenId = await getTokenId(request.fromWallet, info.address)
@@ -182,14 +184,15 @@ export function makeBridgelessPlugin(
                 ] &&
               tokenId === request.toTokenId
             ) {
-              toTokenInfo = info
+              toTokenInfoForToken = info
             }
           } catch (e) {
             // ignore tokens that fail validation
           }
         }
-        if (fromTokenInfoForToken != null && toTokenInfo != null) {
+        if (fromTokenInfoForToken != null && toTokenInfoForToken != null) {
           fromTokenInfo = fromTokenInfoForToken
+          toTokenInfo = toTokenInfoForToken
           bridgelessToken = token
           break
         }
@@ -200,35 +203,48 @@ export function makeBridgelessPlugin(
       }
       pageKey = response.pagination.next_key
     }
-    if (bridgelessToken == null) {
+    if (
+      bridgelessToken == null ||
+      fromTokenInfo == null ||
+      toTokenInfo == null
+    ) {
       throw new SwapCurrencyError(swapInfo, request)
     }
 
-    if (fromTokenInfo == null) {
-      throw new SwapCurrencyError(swapInfo, request)
-    }
-
-    const commission = fromTokenInfo.commission_rate
-    if (commission == null) {
-      throw new SwapCurrencyError(swapInfo, request)
-    }
-
+    // The minimum amount is enforced by the amount of toToken received
     let fromAmount: string
     let toAmount: string
     if (request.quoteFor === 'to') {
-      fromAmount = floor(mul(request.nativeAmount, add('1', commission)), 0)
+      fromAmount = ceil(
+        mul(request.nativeAmount, add('1', toTokenInfo.commission_rate)),
+        0
+      )
       toAmount = request.nativeAmount
+
+      if (lt(toAmount, toTokenInfo.min_withdrawal_amount)) {
+        throw new SwapBelowLimitError(
+          swapInfo,
+          toTokenInfo.min_withdrawal_amount,
+          'to'
+        )
+      }
     } else {
       fromAmount = request.nativeAmount
-      toAmount = floor(mul(request.nativeAmount, sub('1', commission)), 0)
-    }
+      toAmount = ceil(
+        mul(request.nativeAmount, sub('1', toTokenInfo.commission_rate)),
+        0
+      )
 
-    // This will be provided by the /tokens endpoint in the future. For BTC/WBTC, we'lll enforce a limit of 10000 satoshis. This limit exists both ways.
-    // If endpoint returns a 0 that means no limit
-    const minAmount = '10000'
-    const direction = request.quoteFor === 'to' ? 'to' : 'from'
-    if (lt(direction === 'to' ? toAmount : fromAmount, minAmount.toString())) {
-      throw new SwapBelowLimitError(swapInfo, minAmount.toString(), direction)
+      const minFromAmount = ceil(
+        mul(
+          toTokenInfo.min_withdrawal_amount,
+          add('1', toTokenInfo.commission_rate)
+        ),
+        0
+      )
+      if (lt(toAmount, toTokenInfo.min_withdrawal_amount)) {
+        throw new SwapBelowLimitError(swapInfo, minFromAmount, 'from')
+      }
     }
 
     let receiver: string | undefined
