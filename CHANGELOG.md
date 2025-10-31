@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- added: (Letsexchange) Zano and HBAR support
 - changed: Updated Bridgeless to use minimum swap amount provided by API
 
 ## 2.36.0 (2025-10-16)
