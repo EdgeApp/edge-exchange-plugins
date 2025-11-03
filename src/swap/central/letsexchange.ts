@@ -189,10 +189,13 @@ export function makeLetsExchangePlugin(
     const body = JSON.stringify(data.params)
     const response = await fetchCors(url, { method: 'POST', body, headers })
     if (!response.ok) {
+      const message = await response.text()
       if (response.status === 422) {
         throw new SwapCurrencyError(swapInfo, request)
       }
-      throw new Error(`letsexchange returned error code ${response.status}`)
+      throw new Error(
+        `letsexchange returned error code ${response.status}: ${message}`
+      )
     }
     return await response.json()
   }
