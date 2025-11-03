@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- changed: (Letsexchange) Disable ZEC swaps completely
+- changed: (Letsexchange) Fix HBAR support (only disallow "to" wallets that are not activated)
+
 ## 2.37.0 (2025-10-31)
 
 - added: (Letsexchange) Zano and HBAR support
