@@ -71,10 +71,7 @@ const asInfoReply = asObject({
 })
 const INVALID_CURRENCY_CODES: InvalidCurrencyCodes = {
   from: {},
-  to: {
-    zcash: ['ZEC'],
-    hedera: 'allCodes'
-  }
+  to: { zcash: ['ZEC'] }
 }
 
 // See https://letsexchange.io/exchange-pairs for list of supported currencies
@@ -249,9 +246,10 @@ export function makeLetsExchangePlugin(
       getAddress(request.toWallet)
     ])
 
-    // HBAR support: only allow as a from-asset for activated wallets
-    if (request.fromWallet.currencyInfo.pluginId === 'hedera') {
-      if (!isHederaActivatedAddress(fromAddress)) {
+    // HBAR support: Disable if the "to" wallet is not yet activated, pending
+    // support from LetsExchange.
+    if (request.toWallet.currencyInfo.pluginId === 'hedera') {
+      if (!isHederaActivatedAddress(toAddress)) {
         throw new SwapCurrencyError(swapInfo, request)
       }
     }
