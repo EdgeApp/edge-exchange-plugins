@@ -4,6 +4,7 @@
 
 - added: Add additional `approve` transaction for tokens that require allowances to be 0 before updating, like USDT on Ethereum
 - changed: Support multiple pre transactions
+- changed: Enable Zcash swaps on LetsExchange and ChangeNow using transparent addresses
 
 ## 2.38.0 (2025-11-03)
 
