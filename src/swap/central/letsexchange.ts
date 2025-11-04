@@ -33,7 +33,7 @@ import {
   SwapOrder
 } from '../../util/swapHelpers'
 import { convertRequest, getAddress, memoType } from '../../util/utils'
-import { asNumberString, EdgeSwapRequestPlugin } from '../types'
+import { asNumberString, EdgeSwapRequestPlugin, StringMap } from '../types'
 import { asOptionalBlank } from './changenow'
 
 const pluginId = 'letsexchange'
@@ -70,8 +70,12 @@ const asInfoReply = asObject({
   amount: asNumberString
 })
 const INVALID_CURRENCY_CODES: InvalidCurrencyCodes = {
-  from: { zcash: ['ZEC'] },
-  to: { zcash: ['ZEC'] }
+  from: {},
+  to: {}
+}
+
+const addressTypeMap: StringMap = {
+  zcash: 'transparentAddress'
 }
 
 // See https://letsexchange.io/exchange-pairs for list of supported currencies
@@ -242,8 +246,14 @@ export function makeLetsExchangePlugin(
 
     // Grab addresses:
     const [fromAddress, toAddress] = await Promise.all([
-      getAddress(request.fromWallet),
-      getAddress(request.toWallet)
+      getAddress(
+        request.fromWallet,
+        addressTypeMap[request.fromWallet.currencyInfo.pluginId]
+      ),
+      getAddress(
+        request.toWallet,
+        addressTypeMap[request.toWallet.currencyInfo.pluginId]
+      )
     ])
 
     // HBAR support: Disable if the "to" wallet is not yet activated, pending
