@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- added: Add additional `approve` transaction for tokens that require allowances to be 0 before updating, like USDT on Ethereum
+- changed: Support multiple pre transactions
+
 ## 2.38.0 (2025-11-03)
 
 - changed: (Letsexchange) Disable ZEC swaps completely

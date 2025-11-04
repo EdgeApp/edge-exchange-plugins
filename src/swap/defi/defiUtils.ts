@@ -1,7 +1,13 @@
 import { asMaybe, asObject, asString } from 'cleaners'
-import { EdgeCurrencyConfig, EdgeToken } from 'edge-core-js/types'
+import {
+  EdgeCurrencyConfig,
+  EdgeSpendInfo,
+  EdgeToken,
+  EdgeTransaction
+} from 'edge-core-js/types'
 import { ethers } from 'ethers'
 
+import { EdgeSwapRequestPlugin } from '../types'
 import abi from './abi/THORCHAIN_SWAP_ABI'
 import erc20Abi from './abi/UNISWAP_V2_ERC20_ABI'
 
@@ -75,28 +81,90 @@ const getEvmCheckSumAddress = (assetAddress: string): string => {
   return ethers.utils.getAddress(assetAddress.toLowerCase())
 }
 
-export const getEvmApprovalData = async (params: {
+export const getEvmApprovalData = ({
+  contractAddress,
+  nativeAmount
+}: {
   contractAddress: string
-  assetAddress: string
   nativeAmount: string
-}): Promise<string | undefined> => {
-  const { contractAddress, assetAddress, nativeAmount } = params
-  const contract = new ethers.Contract(
-    assetAddress,
-    erc20Abi,
-    ethers.providers.getDefaultProvider()
-  )
-
-  const bnNativeAmount = ethers.BigNumber.from(nativeAmount)
-  const approveTx = await contract.populateTransaction.approve(
+}): string => {
+  const iface = new ethers.utils.Interface(erc20Abi)
+  const data = iface.encodeFunctionData('approve', [
     contractAddress,
-    bnNativeAmount,
-    {
-      gasLimit: '500000',
-      gasPrice: '20'
+    nativeAmount
+  ])
+  return data
+}
+
+const NON_STANDARD_APPROVAL_TOKENS: { [pluginId: string]: string[] } = {
+  ethereum: ['dac17f958d2ee523a2206206994597c13d831ec7' /* USDT */]
+}
+
+export const createEvmApprovalEdgeTransactions = async ({
+  request,
+  approvalAmount,
+  tokenContractAddress,
+  recipientAddress,
+  networkFeeOption,
+  customNetworkFee
+}: {
+  request: EdgeSwapRequestPlugin
+  approvalAmount: string
+  tokenContractAddress: string
+  recipientAddress: string
+  networkFeeOption?: EdgeSpendInfo['networkFeeOption']
+  customNetworkFee?: EdgeSpendInfo['customNetworkFee']
+}): Promise<EdgeTransaction[]> => {
+  const out: EdgeTransaction[] = []
+
+  const createApprovalTx = async (amount: string): Promise<EdgeTransaction> => {
+    const approvalData = getEvmApprovalData({
+      contractAddress: tokenContractAddress,
+      nativeAmount: amount
+    })
+    const spendInfo: EdgeSpendInfo = {
+      tokenId: null,
+      memos: [{ type: 'hex', value: approvalData.replace(/^0x/, '') }],
+      spendTargets: [
+        {
+          nativeAmount: '0',
+          publicAddress: tokenContractAddress
+        }
+      ],
+      networkFeeOption,
+      customNetworkFee,
+      assetAction: {
+        assetActionType: 'tokenApproval'
+      },
+      savedAction: {
+        actionType: 'tokenApproval',
+        tokenApproved: {
+          pluginId: request.fromWallet.currencyInfo.pluginId,
+          tokenId: request.fromTokenId,
+          nativeAmount: amount
+        },
+        tokenContractAddress: tokenContractAddress,
+        contractAddress: recipientAddress
+      }
     }
-  )
-  return approveTx.data != null ? approveTx.data.replace(/^0x/, '') : undefined
+    return await request.fromWallet.makeSpend(spendInfo)
+  }
+
+  // If the token requires resetting allowance to 0, create a pre-tx to do so
+  if (
+    request.fromTokenId != null &&
+    NON_STANDARD_APPROVAL_TOKENS[
+      request.fromWallet.currencyInfo.pluginId
+    ].includes(request.fromTokenId)
+  ) {
+    const preTx = await createApprovalTx('0')
+    out.push(preTx)
+  }
+
+  const preTx = await createApprovalTx(approvalAmount)
+  out.push(preTx)
+
+  return out
 }
 
 export const getDepositWithExpiryData = async (params: {

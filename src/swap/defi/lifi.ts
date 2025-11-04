@@ -43,7 +43,7 @@ import {
   MakeTxParams,
   StringMap
 } from '../types'
-import { getEvmApprovalData, WEI_MULTIPLIER } from './defiUtils'
+import { createEvmApprovalEdgeTransactions, WEI_MULTIPLIER } from './defiUtils'
 
 const pluginId = 'lifi'
 const swapInfo: EdgeSwapInfo = {
@@ -374,7 +374,7 @@ export function makeLifiPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
     const metadataNotes = `DEX Providers: ${providersStr}`
     const { approvalAddress, toAmount, toAmountMin, fromAmount } = estimate
 
-    let preTx: EdgeTransaction | undefined
+    const preTxs: EdgeTransaction[] = []
     let spendInfo: EdgeSpendInfo
     switch (fromWallet.currencyInfo.pluginId) {
       case 'solana': {
@@ -475,44 +475,17 @@ export function makeLifiPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
         const gasPriceGwei = div18(gasPriceDecimal, WEI_MULTIPLIER)
 
         if (sendingToken) {
-          const approvalData = await getEvmApprovalData({
-            contractAddress: approvalAddress,
-            assetAddress: fromContractAddress,
-            nativeAmount
-          })
-
-          const preTxSpendInfo: EdgeSpendInfo = {
-            // Token approvals only spend the parent currency
-            tokenId: null,
-            spendTargets: [
-              {
-                nativeAmount: '0',
-                publicAddress: fromContractAddress
-              }
-            ],
-            memos:
-              approvalData != null
-                ? [{ type: 'hex', value: approvalData }]
-                : undefined,
+          const approvalTxs = await createEvmApprovalEdgeTransactions({
+            request,
+            approvalAmount: fromAmount,
+            tokenContractAddress: fromContractAddress,
+            recipientAddress: approvalAddress,
             networkFeeOption: 'custom',
             customNetworkFee: {
               gasPrice: gasPriceGwei
-            },
-            assetAction: {
-              assetActionType: 'tokenApproval'
-            },
-            savedAction: {
-              actionType: 'tokenApproval',
-              tokenApproved: {
-                pluginId: fromWallet.currencyInfo.pluginId,
-                tokenId: fromTokenId,
-                nativeAmount
-              },
-              tokenContractAddress: fromContractAddress,
-              contractAddress: approvalAddress
             }
-          }
-          preTx = await request.fromWallet.makeSpend(preTxSpendInfo)
+          })
+          preTxs.push(...approvalTxs)
         }
 
         spendInfo = {
@@ -560,7 +533,7 @@ export function makeLifiPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
       fromNativeAmount: nativeAmount,
       metadataNotes,
       minReceiveAmount: toAmountMin,
-      preTx,
+      preTxs,
       request,
       spendInfo,
       swapInfo

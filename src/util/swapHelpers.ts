@@ -52,7 +52,7 @@ export type SwapOrder = SwapOrderInner & {
   maxFulfillmentSeconds?: number
   metadataNotes?: string
   minReceiveAmount?: string
-  preTx?: EdgeTransaction
+  preTxs?: EdgeTransaction[]
   request: EdgeSwapRequestPlugin
   swapInfo: EdgeSwapInfo
 }
@@ -67,7 +67,7 @@ export async function makeSwapPluginQuote(
     maxFulfillmentSeconds,
     metadataNotes,
     minReceiveAmount,
-    preTx,
+    preTxs = [],
     request,
     swapInfo
   } = order
@@ -77,7 +77,7 @@ export async function makeSwapPluginQuote(
   if ('spendInfo' in order) {
     const { spendInfo } = order
     const spend =
-      preTx != null ? { ...spendInfo, pendingTxs: [preTx] } : spendInfo
+      preTxs.length > 0 ? { ...spendInfo, pendingTxs: preTxs } : spendInfo
     tx = await fromWallet.makeSpend(spend)
   } else {
     const { makeTxParams } = order
@@ -100,7 +100,9 @@ export async function makeSwapPluginQuote(
     } else {
       const { assetAction, savedAction } = makeTxParams
       const params =
-        preTx != null ? { ...makeTxParams, pendingTxs: [preTx] } : makeTxParams
+        preTxs.length > 0
+          ? { ...makeTxParams, pendingTxs: preTxs }
+          : makeTxParams
       tx = await fromWallet.otherMethods.makeTx(params)
       if (tx.savedAction == null) {
         tx.savedAction = savedAction
@@ -137,11 +139,12 @@ export async function makeSwapPluginQuote(
   let nativeAmount =
     tx.parentNetworkFee != null ? tx.parentNetworkFee : tx.networkFee
 
-  if (preTx != null)
+  for (const preTx of preTxs) {
     nativeAmount = add(
       nativeAmount,
       preTx.parentNetworkFee != null ? preTx.parentNetworkFee : preTx.networkFee
     )
+  }
 
   const out: EdgeSwapQuote = {
     canBePartial,
@@ -160,7 +163,7 @@ export async function makeSwapPluginQuote(
     swapInfo,
     toNativeAmount,
     async approve(opts?: EdgeSwapApproveOptions): Promise<EdgeSwapResult> {
-      if (preTx != null) {
+      for (const preTx of preTxs) {
         const signedTransaction = await fromWallet.signTx(preTx)
         const broadcastedTransaction = await fromWallet.broadcastTx(
           signedTransaction
@@ -252,11 +255,10 @@ export const getMaxSwappable = async <T extends any[]>(
   let maxAmount = await fromWallet.getMaxSpendable(swapOrder.spendInfo)
 
   // Subtract fee from pretx
-  if (
-    swapOrder.preTx != null &&
-    fromCurrencyCode === fromWallet.currencyInfo.currencyCode
-  ) {
-    maxAmount = sub(maxAmount, swapOrder.preTx.networkFee)
+  if (fromCurrencyCode === fromWallet.currencyInfo.currencyCode) {
+    for (const preTx of swapOrder.preTxs ?? []) {
+      maxAmount = sub(maxAmount, preTx.networkFee)
+    }
   }
 
   // Update and return the request object
