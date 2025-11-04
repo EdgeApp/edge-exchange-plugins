@@ -119,7 +119,7 @@ export const createEvmApprovalEdgeTransactions = async ({
 
   const createApprovalTx = async (amount: string): Promise<EdgeTransaction> => {
     const approvalData = getEvmApprovalData({
-      contractAddress: tokenContractAddress,
+      contractAddress: recipientAddress,
       nativeAmount: amount
     })
     const spendInfo: EdgeSpendInfo = {
@@ -155,7 +155,7 @@ export const createEvmApprovalEdgeTransactions = async ({
     request.fromTokenId != null &&
     NON_STANDARD_APPROVAL_TOKENS[
       request.fromWallet.currencyInfo.pluginId
-    ].includes(request.fromTokenId)
+    ]?.includes(request.fromTokenId)
   ) {
     const preTx = await createApprovalTx('0')
     out.push(preTx)
