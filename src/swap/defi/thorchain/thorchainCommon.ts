@@ -1,4 +1,4 @@
-import { add, gt, lt, mul, round, sub } from 'biggystring'
+import { add, div, gt, lt, mul, round, sub } from 'biggystring'
 import {
   asArray,
   asBoolean,
@@ -318,6 +318,7 @@ interface ThorchainOpts {
   orderUri: string
   swapInfo: EdgeSwapInfo
   thornodesFetchOptions?: Record<string, string>
+  invalidCurrencyCodes?: InvalidCurrencyCodes
 }
 
 export function makeThorchainBasedPlugin(
@@ -337,7 +338,8 @@ export function makeThorchainBasedPlugin(
     infoServer,
     orderUri,
     swapInfo,
-    thornodesFetchOptions = {}
+    thornodesFetchOptions = {},
+    invalidCurrencyCodes
   } = thorchainOpts
 
   const fetchSwapQuoteInner = async (
@@ -373,10 +375,21 @@ export function makeThorchainBasedPlugin(
     let streamingInterval: number = STREAMING_INTERVAL_DEFAULT
     let streamingQuantity: number = STREAMING_QUANTITY_DEFAULT
 
-    checkInvalidCodes(INVALID_CURRENCY_CODES, request, swapInfo)
+    checkInvalidCodes(
+      invalidCurrencyCodes ?? INVALID_CURRENCY_CODES,
+      request,
+      swapInfo
+    )
 
     // Grab addresses:
-    const toAddress = await getAddress(toWallet)
+    // For Zcash receives, prefer a transparent address as MAYA generally
+    // requires t-addresses for inbound/outbound routing.
+    const toAddress = await getAddress(
+      toWallet,
+      toWallet.currencyInfo.pluginId === 'zcash'
+        ? 'transparentAddress'
+        : undefined
+    )
 
     const fromMainnetCode =
       MAINNET_CODE_TRANSCRIPTION[fromWallet.currencyInfo.pluginId]
@@ -654,7 +667,7 @@ export function makeThorchainBasedPlugin(
 
     let ethNativeAmount = fromNativeAmount
     let publicAddress = thorAddress
-    const preTxs: EdgeTransaction[] = []
+    const pendingApprovalTxs: EdgeTransaction[] = []
     let memoType: EdgeMemo['type']
 
     const savedAction: EdgeTxActionSwap = {
@@ -704,7 +717,7 @@ export function makeThorchainBasedPlugin(
           recipientAddress: router,
           networkFeeOption: 'high'
         })
-        preTxs.push(...approvalTxs)
+        pendingApprovalTxs.push(...approvalTxs)
       }
 
       // Need to use ethers.js to craft a proper tx that calls Thorchain contract, then extract the data payload
@@ -767,6 +780,46 @@ export function makeThorchainBasedPlugin(
         // Cannot yet do tokens on utxo chains
         throw new SwapCurrencyError(swapInfo, request)
       }
+
+      // Special-case ZEC: If inbound is transparent and memo is non-empty,
+      // build a ZIP-321 URI to satisfy Maya's requirements without OP_RETURN.
+      if (
+        fromWallet.currencyInfo.pluginId === 'zcash' &&
+        thorAddress != null &&
+        (thorAddress.startsWith('t1') || thorAddress.startsWith('t3')) &&
+        memo !== ''
+      ) {
+        // Build ZIP-321: first output to transparent inbound with amount,
+        // second zero-amount shielded memo to self unified address.
+        const selfUnified = await getAddress(fromWallet, 'unifiedAddress')
+        // Convert native to decimal using local multiplier to avoid deprecated API
+        const zecMultiplier =
+          fromWallet.currencyInfo.denominations[0]?.multiplier ?? '100000000'
+        const amountZec = div(fromNativeAmount, zecMultiplier)
+
+        const toHex = (s: string): string =>
+          Array.from(s, c =>
+            c.charCodeAt(0).toString(16).padStart(2, '0')
+          ).join('')
+        const memoHex = toHex(memo)
+
+        // zcash:?address=A1&amount=amt1&address=A2&amount=0&memo=hex
+        const zip321Uri =
+          `zcash:?address=${encodeURIComponent(thorAddress)}` +
+          `&amount=${encodeURIComponent(amountZec)}` +
+          `&address=${encodeURIComponent(selfUnified)}` +
+          `&amount=0&memo=${memoHex}`
+
+        // Clear memo so proposeTransfer path won't use it if fallback happens
+        memo = ''
+
+        // Override publicAddress to transparent inbound explicitly
+        publicAddress = thorAddress
+
+        // Attach to spendInfo via otherParams when we build it below
+        // by capturing zip321Uri in closure scope
+        ;(request as any).__zip321Uri = zip321Uri
+      }
     }
 
     if (publicAddress == null) {
@@ -791,8 +844,15 @@ export function makeThorchainBasedPlugin(
       assetAction: { assetActionType: 'swap' },
       savedAction,
       otherParams: {
-        outputSort: 'targets'
+        outputSort: 'targets',
+        // Pass ZIP-321 if present for ZEC:
+        zip321Uri: (request as any).__zip321Uri
       }
+    }
+    if (pendingApprovalTxs.length > 0) {
+      // Pass pre-approval txs through spendInfo so makeSwapPluginQuote
+      // will include them as pending transactions.
+      ;(spendInfo as any).pendingTxs = pendingApprovalTxs
     }
 
     // Apply recommended gas rate if available
@@ -859,8 +919,8 @@ export function makeThorchainBasedPlugin(
       spendInfo,
       swapInfo,
       fromNativeAmount,
-      expirationDate: new Date(Date.now() + EXPIRATION_MS),
-      preTxs
+      expirationDate: new Date(Date.now() + EXPIRATION_MS)
+      // preTx handled via spendInfo.pendingTxs
     }
   }
 
