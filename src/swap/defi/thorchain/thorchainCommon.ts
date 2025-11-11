@@ -1,4 +1,4 @@
-import { add, div, gt, lt, mul, round, sub } from 'biggystring'
+import { add, gt, lt, mul, round, sub } from 'biggystring'
 import {
   asArray,
   asBoolean,
@@ -189,7 +189,14 @@ export const asInboundAddresses = asArray(
     halted: asBoolean,
     pub_key: asString,
     router: asOptional(asString),
-    dust_threshold: asString
+    dust_threshold: asString,
+    shielded_memo_config: asOptional(
+      asObject({
+        enabled: asBoolean,
+        uivk: asString,
+        unified_address: asString
+      })
+    )
   })
 )
 
@@ -492,6 +499,7 @@ export function makeThorchainBasedPlugin(
     // Fetch `inbound_addresses` for dust thresholds
     const dustThresholds: Record<string, string> = {}
     try {
+      const shieldedMemoUnifiedAddressByChain: Record<string, string> = {}
       const inboundResponse = await fetchWaterfall(
         fetchCors,
         thornodeServersWithPath,
@@ -508,10 +516,19 @@ export function makeThorchainBasedPlugin(
             inbound.dust_threshold,
             nativeToThorMultiplier
           )
+          // Capture Maya's shielded memo receiver if provided:
+          if (inbound.shielded_memo_config?.enabled === true) {
+            const ua = inbound.shielded_memo_config.unified_address
+            if (ua != null && ua !== '') {
+              shieldedMemoUnifiedAddressByChain[inbound.chain] = ua
+            }
+          }
         }
       } else {
         log.warn(`Failed to fetch inbound_addresses: ${inboundResponse.status}`)
       }
+      // Expose for later usage in this closure via request object:
+      ;(request as any).__shieldedMemoUnifiedAddressByChain = shieldedMemoUnifiedAddressByChain
     } catch (e: any) {
       log.warn('Error fetching inbound_addresses:', e?.message ?? e)
     }
@@ -790,12 +807,20 @@ export function makeThorchainBasedPlugin(
         memo !== ''
       ) {
         // Build ZIP-321: first output to transparent inbound with amount,
-        // second zero-amount shielded memo to self unified address.
-        const selfUnified = await getAddress(fromWallet, 'unifiedAddress')
-        // Convert native to decimal using local multiplier to avoid deprecated API
-        const zecMultiplier =
-          fromWallet.currencyInfo.denominations[0]?.multiplier ?? '100000000'
-        const amountZec = div(fromNativeAmount, zecMultiplier)
+        // second zero-amount shielded memo MUST go to Maya's shielded receiver.
+        // If not provided, fail this route (no fallback to self).
+        const shieldedMemoUnifiedAddressByChain: Record<string, string> =
+          (request as any).__shieldedMemoUnifiedAddressByChain ?? {}
+        const memoRecipient =
+          shieldedMemoUnifiedAddressByChain[fromCurrencyCode]
+        if (memoRecipient == null || memoRecipient === '') {
+          throw new SwapCurrencyError(swapInfo, request)
+        }
+        // Convert native to a decimal string per ZIP-321 spec
+        const amountZec = await fromWallet.nativeToDenomination(
+          fromNativeAmount,
+          fromCurrencyCode
+        )
 
         const toHex = (s: string): string =>
           Array.from(s, c =>
@@ -803,12 +828,31 @@ export function makeThorchainBasedPlugin(
           ).join('')
         const memoHex = toHex(memo)
 
+        // Debug logging for Maya ZEC ZIP-321 construction
+        log.warn(
+          '[MAYA ZEC] zip321 components ' +
+            JSON.stringify({
+              chain: fromCurrencyCode,
+              inbound_address: thorAddress,
+              memo_ascii: memo,
+              memo_hex: memoHex,
+              memo_recipient: memoRecipient,
+              amount_native: fromNativeAmount,
+              multiplier_used:
+                fromWallet.currencyInfo.denominations[0]?.multiplier ??
+                '100000000',
+              amount_decimal: amountZec
+            })
+        )
+
         // zcash:?address=A1&amount=amt1&address=A2&amount=0&memo=hex
         const zip321Uri =
-          `zcash:?address=${encodeURIComponent(thorAddress)}` +
+          `zcash:?address=${encodeURIComponent(thorAddress)}` + // output 1: transparent vault
           `&amount=${encodeURIComponent(amountZec)}` +
-          `&address=${encodeURIComponent(selfUnified)}` +
+          `&address=${encodeURIComponent(memoRecipient)}` + // output 3: zero-value memo note
           `&amount=0&memo=${memoHex}`
+
+        log.warn('[MAYA ZEC] zip321Uri ' + zip321Uri)
 
         // Clear memo so proposeTransfer path won't use it if fallback happens
         memo = ''

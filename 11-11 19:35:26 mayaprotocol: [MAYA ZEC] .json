@@ -1,0 +1,54 @@
+11-11 19:35:26 mayaprotocol: [MAYA ZEC] zip321 components {"chain":"ZEC","inbound_address":"t1gvJknrQCGyr1GMxvQRSiD9YdoXiNJLPYt","memo_ascii":"=:b:bc1qwek2srv7zfqg9y9xzsekzg4zk69x92gd27ymcp:0/1/1:ej:75","memo_hex":"3d3a623a6263317177656b32737276377a667167397939787a73656b7a67347a6b363978393267643237796d63703a302f312f313a656a3a3735","memo_recipient":"u1fcwchlpy2u0t9hdl8wcku8dmvrhwz6lk0jwj2z56ylxhacpn9jnx5sgftx8kv7s97ay37gclcm495panxkz0pyq5479s7vnr90a03sdppp4mupw6vmesh7sf2ym99f4gjl9utaw4eyup53vn7hthu7shms0ct79876xtjk7r8qg4p582","amount_native":"2811000","multiplier_used":"100000000","amount_decimal":"0.02811"}
+console.js:654 11-11 19:35:26 mayaprotocol: [MAYA ZEC] zip321Uri zcash:?address=t1gvJknrQCGyr1GMxvQRSiD9YdoXiNJLPYt&amount=0.02811&address=u1fcwchlpy2u0t9hdl8wcku8dmvrhwz6lk0jwj2z56ylxhacpn9jnx5sgftx8kv7s97ay37gclcm495panxkz0pyq5479s7vnr90a03sdppp4mupw6vmesh7sf2ym99f4gjl9utaw4eyup53vn7hthu7shms0ct79876xtjk7r8qg4p582&amount=0&memo=3d3a623a6263317177656b32737276377a667167397939787a73656b7a67347a6b363978393267643237796d63703a302f312f313a656a3a3735
+console.js:654 11-11 19:35:26 zcash-98: [ZEC propose] using zip321Uri=true
+console.js:654 11-11 19:35:26 zcash-98: [ZEC propose] zip321Uri zcash:?address=t1gvJknrQCGyr1GMxvQRSiD9YdoXiNJLPYt&amount=0.02811&address=u1fcwchlpy2u0t9hdl8wcku8dmvrhwz6lk0jwj2z56ylxhacpn9jnx5sgftx8kv7s97ay37gclcm495panxkz0pyq5479s7vnr90a03sdppp4mupw6vmesh7sf2ym99f4gjl9utaw4eyup53vn7hthu7shms0ct79876xtjk7r8qg4p582&amount=0&memo=3d3a623a6263317177656b32737276377a667167397939787a73656b7a67347a6b363978393267643237796d63703a302f312f313a656a3a3735
+console.js:654 11-11 19:35:26 zcash-98: [ZEC propose] proposal result {
+  "proposalBase64": "CAEQAxjTkL8BIqwBCjh6Y2FzaDp0MWd2SmtuclFDR3lyMUdNeHZRUlNpRDlZZG9YaU5KTFBZdD9hbW91bnQ9MC4wMjgxMRICEAEYyZC/ASIqCigKIInFfHWyvXc3lDfuxK3PjIaORmNknFVwl6y3WTPzfkNZEAMgwMF8Ii0KKwogzhj3zdEFJ4Nsd3lR+ZpLGE47r1o9UbPPdZwlZs6hBfAQAxgBIPiEkgMqDAoHCKiI4gIQAxCYdQ==",
+  "transactionCount": 1,
+  "totalFee": "15000"
+}
+console.js:654 11-11 19:35:26 edge-core: mayaprotocol gave swap quote: {
+  "canBePartial": false,
+  "expirationDate": "2025-11-11T19:36:26.824Z",
+  "fromNativeAmount": "2811000",
+  "isEstimate": true,
+  "maxFulfillmentSeconds": 75,
+  "networkFee": {
+    "currencyCode": "ZEC",
+    "nativeAmount": "15000",
+    "tokenId": null
+  },
+  "pluginId": "mayaprotocol",
+  "request": {
+    "fromTokenId": null,
+    "nativeAmount": "2811000",
+    "quoteFor": "from",
+    "toTokenId": null,
+    "fromCurrencyCode": "ZEC",
+    "toCurrencyCode": "BTC",
+    "__shieldedMemoUnifiedAddressByChain": {
+      "ZEC": "u1fcwchlpy2u0t9hdl8wcku8dmvrhwz6lk0jwj2z56ylxhacpn9jnx5sgftx8kv7s97ay37gclcm495panxkz0pyq5479s7vnr90a03sdppp4mupw6vmesh7sf2ym99f4gjl9utaw4eyup53vn7hthu7shms0ct79876xtjk7r8qg4p582"
+    },
+    "__zip321Uri": "zcash:?address=t1gvJknrQCGyr1GMxvQRSiD9YdoXiNJLPYt&amount=0.02811&address=u1fcwchlpy2u0t9hdl8wcku8dmvrhwz6lk0jwj2z56ylxhacpn9jnx5sgftx8kv7s97ay37gclcm495panxkz0pyq5479s7vnr90a03sdppp4mupw6vmesh7sf2ym99f4gjl9utaw4eyup53vn7hthu7shms0ct79876xtjk7r8qg4p582&amount=0&memo=3d3a623a6263317177656b32737276377a667167397939787a73656b7a67347a6b363978393267643237796d63703a302f312f313a656a3a3735"
+  },
+  "swapInfo": {
+    "pluginId": "mayaprotocol",
+    "isDex": true,
+    "displayName": "Maya Protocol",
+    "supportEmail": "support@edge.app"
+  },
+  "toNativeAmount": "12384"
+}
+console.js:654 11-11 19:35:38 zcash-98: SUCCESS broadcastTx
+{
+  "txid": "9d42eb9c92c49dbe676452018bdd7d4fe012f8833a5952f283a2c27b0f6f7c4c",
+  "spendTargets": [
+    {
+      "currencyCode": "ZEC",
+      "nativeAmount": "2811000",
+      "publicAddress": "t1gvJknrQCGyr1GMxvQRSiD9YdoXiNJLPYt"
+    }
+  ],
+  "signedTx": "",
+  "otherParams": {}
+}
