@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- fixed: Updated `getMaxSwappable` to handle `makeTx` flows with no `spendInfos`
+
 ## 2.39.0 (2025-11-04)
 
 - added: Add additional `approve` transaction for tokens that require allowances to be 0 before updating, like USDT on Ethereum
