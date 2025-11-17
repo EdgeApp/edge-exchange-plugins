@@ -265,7 +265,7 @@ export function makeBridgelessPlugin(
     // chainId/txid/outputIndex
     // output index is 0 for both Bitcoin (output of actual deposit) and Zano (index of serviceEntries with deposit instructions)
     // txid must be 0x prefixed
-    const orderId = `${fromChainId}/0x{{TXID}}/0`
+    const orderId = `${fromChainId}/{{TXID}}/0`
 
     const assetAction: EdgeAssetAction = {
       assetActionType: 'swap'
@@ -396,10 +396,15 @@ export function makeBridgelessPlugin(
             swapResult.transaction.savedAction?.actionType === 'swap' &&
             swapResult.transaction.savedAction.orderId != null
           ) {
+            const txHash = txid.startsWith('0x') ? txid : `0x${txid}`
             swapResult.transaction.savedAction.orderId = swapResult.transaction.savedAction.orderId.replace(
               '{{TXID}}',
-              txid
+              txHash
             )
+            // Refresh orderUri to include the resolved txid
+            if (swapResult.transaction.savedAction.orderId != null) {
+              swapResult.transaction.savedAction.orderUri = `${ORDER_URL}/check/${swapResult.transaction.savedAction.orderId}`
+            }
 
             const [
               chainId,
@@ -412,7 +417,7 @@ export function makeBridgelessPlugin(
               headers: {
                 'Content-Type': 'application/json'
               },
-              body: JSON.stringify({ chainId, txHash: txid, txNonce })
+              body: JSON.stringify({ chainId, txHash, txNonce })
             })
             if (!res.ok) {
               throw new Error('Failed to send txid to bridgeless submitter')
