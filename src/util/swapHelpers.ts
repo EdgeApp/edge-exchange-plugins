@@ -246,24 +246,36 @@ export const getMaxSwappable = async <T extends any[]>(
   requestCopy.nativeAmount = balance
   requestCopy.quoteFor = 'from'
   const swapOrder = await fetchSwap(requestCopy, ...args)
-  if (!('spendInfo' in swapOrder)) {
-    return request
-  }
+  const hasSpendInfo = 'spendInfo' in swapOrder
 
-  // Then use getMaxSpendable with the partner's address
-  delete swapOrder.spendInfo.spendTargets[0].nativeAmount
-  let maxAmount = await fromWallet.getMaxSpendable(swapOrder.spendInfo)
+  // If the partner flow provides a spendInfo, compute getMaxSpendable. Otherwise,
+  // fall back to using the full balance (minus any preTx fees if applicable).
+  if (hasSpendInfo) {
+    // Then use getMaxSpendable with the partner's address
+    delete swapOrder.spendInfo.spendTargets[0].nativeAmount
+    let maxAmount = await fromWallet.getMaxSpendable(swapOrder.spendInfo)
 
-  // Subtract fee from pretx
-  if (fromCurrencyCode === fromWallet.currencyInfo.currencyCode) {
-    for (const preTx of swapOrder.preTxs ?? []) {
-      maxAmount = sub(maxAmount, preTx.networkFee)
+    // Subtract fee from pretx
+    if (fromCurrencyCode === fromWallet.currencyInfo.currencyCode) {
+      for (const preTx of swapOrder.preTxs ?? []) {
+        maxAmount = sub(maxAmount, preTx.networkFee)
+      }
     }
-  }
 
-  // Update and return the request object
-  requestCopy.nativeAmount = maxAmount
-  return requestCopy
+    // Update and return the request object
+    requestCopy.nativeAmount = maxAmount
+    return requestCopy
+  } else {
+    // Fallback: Use full balance for makeTx paths
+    let maxAmount = balance
+    if (fromCurrencyCode === fromWallet.currencyInfo.currencyCode) {
+      for (const preTx of swapOrder.preTxs ?? []) {
+        maxAmount = sub(maxAmount, preTx.networkFee)
+      }
+    }
+    requestCopy.nativeAmount = maxAmount
+    return requestCopy
+  }
 }
 
 // Store custom fees so a request can use consistent fees when calling makeSpend multiple times
