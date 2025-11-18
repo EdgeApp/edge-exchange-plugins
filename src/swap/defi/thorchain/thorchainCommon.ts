@@ -126,10 +126,7 @@ export const PER_ASSET_SPREAD_DEFAULT: AssetSpread[] = [
   }
 ]
 
-// Temporary hack: allow building a ZEC test transaction when Maya is down.
-// This bypasses quote fetching for ZEC so we can exercise the ZIP-321 path.
 const MAYA_ZEC_TEST_MODE = true
-const MAYA_TEST_VAULT_TADDR = 't1WdDwJxcUnjnfMGi1bBKDv6qu6Rrgf3oCG'
 
 export const INVALID_CURRENCY_CODES: InvalidCurrencyCodes = {
   from: {
@@ -519,7 +516,7 @@ export function makeThorchainBasedPlugin(
             NATIVE_TO_THOR_MULTIPLIER[inbound.chain] ?? '1'
           dustThresholds[inbound.chain] = mul(
             inbound.dust_threshold,
-            '0' // nativeToThorMultiplier
+            MAYA_ZEC_TEST_MODE ? '0' : nativeToThorMultiplier
           )
           // Capture Maya's shielded memo receiver if provided:
           if (inbound.shielded_memo_config?.enabled === true) {
@@ -820,21 +817,24 @@ export function makeThorchainBasedPlugin(
 
         // Temporary test override: route memo to a controlled UA to verify SDK memo handling
         // and route value to our own transparent address to avoid loss of funds.
+        // rjqa3 "My Zcash"
         const TEST_RECEIVER_UA =
-          'u12fj0956jytraqw7krjr0r6j9hmk26hwpn427agqtcnvjmarsqrsxw722fe575yr7tgmclulmxpa4dm4dpscv9ys7j0thp3yh8t7n837aufdkt58dfkn8lxj2tgmhwavx4mrgvk67lrlhdcm4nkhhp92y4xv0rv4hmlysrlez2vv6zh4vt508h87fdqcxd076spd7lfrcd87zseydnn6'
-        const TEST_VAULT_TADDR = 't1PSidcNk3JVbxZjsLBi6yC3zaiWq93i7Dg'
+          'u1yfw75kwuc8glpk24hdsrg784twkuhwa8e97wwcw0ahk6fr6zkk54uhtj6cwqndas42vtlg2x3ktgpmax922ww0h3t2v3jr7egsmxtspmkaf3qr0psmxd9gugw2jtusl6gkt5ju33s79qhvckcypjcud3ccjenz2m9nnfth4q4mmgxfs3y32p0a4cx548eqxchfkxsg6twpwggkkdxw4'
+        const TEST_VAULT_TADDR = 't1WYUcGCZ8kuWLJgxGUnEVhAiCTVFh5sLcX'
         // const TEST_RECEIVER_UA =
         //   'u1zexm0nc9zq5ftx764guexuymlz0x3wajap28dc52nz0t7ajhfrdgz7zktvkkkp8wd9ts4k2k9jzdeuwvt2t372pre9q9z37dyxa6avmdnpat9vqr83g5nm49y9fh72ys0fnz2dtj00vr4ghvu8n0kp5actrpn3kdkkr80au45gjaa8sx2xvxqx9k0eusfk8ze0g7k9su7zc9schpmxa'
         // const TEST_VAULT_TADDR = 't1WdDwJxcUnjnfMGi1bBKDv6qu6Rrgf3oCG'
-        const TEST_MODE = false
-        if (TEST_MODE) memoRecipient = TEST_RECEIVER_UA
+
+        if (MAYA_ZEC_TEST_MODE) memoRecipient = TEST_RECEIVER_UA
 
         if (memoRecipient == null || memoRecipient === '') {
           throw new SwapCurrencyError(swapInfo, request)
         }
 
         // Route the value to the test vault transparent address when testing:
-        const valueRecipient = TEST_MODE ? TEST_VAULT_TADDR : thorAddress
+        const valueRecipient = MAYA_ZEC_TEST_MODE
+          ? TEST_VAULT_TADDR
+          : thorAddress
         // Convert native to a decimal string per ZIP-321 spec
         const amountZec = await fromWallet.nativeToDenomination(
           fromNativeAmount,
@@ -867,17 +867,47 @@ export function makeThorchainBasedPlugin(
           .replace(/\//g, '_')
           .replace(/=+$/g, '')
 
+        const toHex = (s: string): string =>
+          Array.from(s, c =>
+            c.charCodeAt(0).toString(16).padStart(2, '0')
+          ).join('')
+        const memoHex = toHex(memo)
+
         // Use 1 zatoshi to ensure the SDK does not drop the memo payment during proposal.
         const memoAmountZec = '0.00000001'
-        const zip321Uri =
-          `zcash:?address=${encodeURIComponent(valueRecipient)}` + // payment 0
-          `&amount=${encodeURIComponent(amountZec)}` +
-          `&address.1=${encodeURIComponent(memoRecipient)}` + // payment 1
-          `&memo.1=${memoBase64Url}` +
-          `&amount.1=${memoAmountZec}`
 
-        log.warn('[MAYA ZEC] zip321Uri ' + zip321Uri)
-        log.warn('[MAYA ZEC] memo.1 (base64url) ' + memoBase64Url)
+        // const zip321Uri = // $4
+        //   `zcash:?address=${encodeURIComponent(valueRecipient)}` + // payment 0
+        //   `&amount=${encodeURIComponent(amountZec)}` +
+        //   `&address=${encodeURIComponent(memoRecipient)}` + // payment 1
+        //   `&memo=${memoBase64Url}` +
+        //   `&amount=${memoAmountZec}`
+        // failed:
+        // 11-18 00:31:15 zcash-98 (sender): Synchronizer error: txOutputs tx=172eb1ac935002031f15baa9a9878735e1c38363446724635ff218f2cb5ac88f outs=[["pool": "transaparent", "isChange": false, "hasMemo": false, "index": 0, "recipient": "t1WYUcGCZ8kuWLJgxGUnEVhAiCTVFh5sLcX", "value": "652400"], ["pool": "orchard", "index": 0, "recipient": "internal:1", "isChange": true, "value": "14743543", "hasMemo": true]]
+
+        // const zip321Uri = // $6
+        //   `zcash:?address=${encodeURIComponent(thorAddress)}` + // output 1: transparent vault
+        //   `&amount=${encodeURIComponent(amountZec)}` +
+        //   `&address=${encodeURIComponent(memoRecipient)}` + // output 3: zero-value memo note
+        //   `&amount=${memoAmountZec}&memo=${memoHex}`
+        // failed:
+        // 11-18 00:41:49 zcash-98: Synchronizer error: txOutputs tx=5d8019daa1b518771f7e97e7918f06627cad4399c26f2e511214dee22f33883f outs=[["hasMemo": false, "pool": "transaparent", "value": "994200", "isChange": false, "recipient": "t1WYUcGCZ8kuWLJgxGUnEVhAiCTVFh5sLcX", "index": 0], ["index": 0, "hasMemo": true, "pool": "orchard", "isChange": true, "value": "4252700", "recipient": "internal:1"]]
+
+        // ACTUALLY DEBUGGING ACCOUNTBASED:
+        // const zip321Uri = // $5
+        //   `zcash:?address=${encodeURIComponent(thorAddress)}` + // output 1: transparent vault
+        //   `&amount=${encodeURIComponent(amountZec)}` +
+        //   `&address=${encodeURIComponent(memoRecipient)}` + // output 3: zero-value memo note
+        //   `&memo=${memoHex}&amount=${memoAmountZec}`
+        // 11-18 00:47:12 zcash-98: Synchronizer error: txOutputs tx=0e4c1542544376b493031921b0e2eaf60b743903974eccee7d1372945649b1b3 outs=[["value": "825700", "hasMemo": false, "isChange": false, "index": 0, "recipient": "t1WYUcGCZ8kuWLJgxGUnEVhAiCTVFh5sLcX", "pool": "transaparent"], ["isChange": true, "pool": "orchard", "value": "1839000", "index": 3, "hasMemo": true, "recipient": "internal:1"]]
+        const zip321Uri = // bigger memo tx
+          `zcash:?address.1=${encodeURIComponent(thorAddress)}` + // output 1: transparent vault
+          `&amount.1=${encodeURIComponent(amountZec)}` +
+          `&address.2=${encodeURIComponent(memoRecipient)}` + // output 3: zero-value memo note
+          `&memo.2=${memoHex}&amount.2=1`
+
+        log.warn('[MAYA zcash] zip321Uri ' + zip321Uri)
+        log.warn('[MAYA zcash] memo.1 ' + memoHex)
 
         // Clear memo so proposeTransfer path won't use it if fallback happens
         memo = ''
@@ -1341,25 +1371,25 @@ const getBestQuote = async (
 ): Promise<QuoteSwap> => {
   // If Maya is down, short-circuit for ZEC to a stubbed "quote" so we can
   // proceed to construct and send the test ZIP-321 transaction.
-  if (MAYA_ZEC_TEST_MODE && fromWallet.currencyInfo.pluginId === 'zcash') {
-    const nowSec = Math.floor(Date.now() / 1000)
-    const stub: QuoteSwap = {
-      expected_amount_out: '0',
-      expected_amount_out_streaming: undefined,
-      expiry: nowSec + 600,
-      inbound_address: MAYA_TEST_VAULT_TADDR,
-      // Any non-empty memo is fine; the ZEC path will embed it into ZIP-321.
-      memo: 'EDGE-ZIP321-TEST',
-      recommended_min_amount_in: '0',
-      recommended_gas_rate: undefined,
-      gas_rate_units: undefined,
-      router: undefined,
-      streaming_swap_blocks: 1,
-      total_swap_seconds: 60
-    }
-    console.warn('[MAYA ZEC] Using stubbed quote due to test mode / Maya down')
-    return stub
-  }
+  // if (MAYA_ZEC_TEST_MODE && fromWallet.currencyInfo.pluginId === 'zcash') {
+  //   const nowSec = Math.floor(Date.now() / 1000)
+  //   const stub: QuoteSwap = {
+  //     expected_amount_out: '0',
+  //     expected_amount_out_streaming: undefined,
+  //     expiry: nowSec + 600,
+  //     inbound_address: MAYA_TEST_VAULT_TADDR,
+  //     // Any non-empty memo is fine; the ZEC path will embed it into ZIP-321.
+  //     memo: 'EDGE-ZIP321-TEST',
+  //     recommended_min_amount_in: '0',
+  //     recommended_gas_rate: undefined,
+  //     gas_rate_units: undefined,
+  //     router: undefined,
+  //     streaming_swap_blocks: 1,
+  //     total_swap_seconds: 60
+  //   }
+  //   console.warn('[MAYA ZEC] Using stubbed quote due to test mode / Maya down')
+  //   return stub
+  // }
 
   const quotes = await Promise.all(
     params.map(
