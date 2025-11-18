@@ -1,6 +1,7 @@
-import { add, sub } from 'biggystring'
+import { add, div, mul, sub } from 'biggystring'
 import {
   EdgeAssetActionType,
+  EdgeCurrencyInfo,
   EdgeCurrencyWallet,
   EdgeSpendInfo,
   EdgeSwapApproveOptions,
@@ -10,6 +11,7 @@ import {
   EdgeSwapResult,
   EdgeToken,
   EdgeTokenId,
+  EdgeTokenMap,
   EdgeTransaction,
   JsonObject,
   SwapCurrencyError
@@ -709,4 +711,63 @@ export const getChainAndTokenCodes = async (
     toCurrencyCode: toCodes.tokenCode,
     toMainnetCode: toCodes.chainCode
   }
+}
+
+export const nativeToDenomination = (
+  wallet: EdgeCurrencyWallet,
+  nativeAmount: string,
+  tokenId: EdgeTokenId
+): string => {
+  const { currencyInfo } = wallet
+  const { currencyConfig } = wallet
+  const { allTokens } = currencyConfig
+  const multiplier = getCurrencyMultiplier(currencyInfo, allTokens, tokenId)
+  return div(nativeAmount, multiplier, multiplier.length)
+}
+
+export const getCurrencyMultiplier = (
+  currencyInfo: EdgeCurrencyInfo,
+  allTokens: EdgeTokenMap,
+  tokenId: EdgeTokenId
+): string => {
+  if (tokenId == null) {
+    return currencyInfo.denominations[0].multiplier
+  }
+
+  const token = allTokens[tokenId]
+  return token.denominations[0].multiplier
+}
+
+export const getContractAddresses = (
+  request: EdgeSwapRequest
+): { fromContractAddress: string; toContractAddress: string } => {
+  let fromContractAddress = null
+  let toContractAddress = null
+  if (request.fromTokenId != null) {
+    fromContractAddress =
+      request.fromWallet.currencyConfig.allTokens[request.fromTokenId]
+        .networkLocation?.contractAddress
+  }
+  if (request.toTokenId != null) {
+    toContractAddress =
+      request.toWallet.currencyConfig.allTokens[request.toTokenId]
+        .networkLocation?.contractAddress
+  }
+  return {
+    fromContractAddress,
+    toContractAddress
+  }
+}
+
+export const denominationToNative = (
+  wallet: EdgeCurrencyWallet,
+  denominatedAmount: string,
+  tokenId: EdgeTokenId
+): string => {
+  const multiplier = getCurrencyMultiplier(
+    wallet.currencyInfo,
+    wallet.currencyConfig.allTokens,
+    tokenId
+  )
+  return mul(denominatedAmount, multiplier)
 }
