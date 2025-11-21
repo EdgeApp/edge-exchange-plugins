@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- fixed: (bridgeless) Revert txId normalization
+
 ## 2.39.1 (2025-11-18)
 
 - fixed: Updated `getMaxSwappable` to handle `makeTx` flows with no `spendInfos`
