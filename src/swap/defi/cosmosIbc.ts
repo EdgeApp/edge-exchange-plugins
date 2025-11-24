@@ -64,6 +64,7 @@ export function makeCosmosIbcPlugin(
         payoutAddress: toAddress,
         plugin: { ...swapInfo },
         payoutCurrencyCode: request.toCurrencyCode,
+        payoutTokenId: request.toTokenId,
         payoutNativeAmount: request.nativeAmount,
         payoutWalletId: request.toWallet.id
       },
@@ -104,6 +105,7 @@ export function makeCosmosIbcPlugin(
       if (
         request.fromWallet.currencyInfo.pluginId ===
           request.toWallet.currencyInfo.pluginId ||
+        // keep currencyCode comparison because this plugin is to transfer assets between chains
         request.fromCurrencyCode !== request.toCurrencyCode
       ) {
         throw new SwapCurrencyError(swapInfo, request)

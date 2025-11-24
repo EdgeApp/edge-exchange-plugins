@@ -22,7 +22,7 @@ import {
 } from 'edge-core-js/types'
 
 import {
-  checkInvalidCodes,
+  checkInvalidTokenIds,
   getMaxSwappable,
   makeSwapPluginQuote,
   SwapOrder
@@ -43,7 +43,7 @@ import {
   EXCHANGE_INFO_UPDATE_FREQ_MS,
   EXPIRATION_MS,
   getGasLimit,
-  INVALID_CURRENCY_CODES
+  INVALID_TOKEN_IDS
 } from './thorchainCommon'
 
 const pluginId = 'swapkit'
@@ -182,7 +182,7 @@ export function makeSwapKitPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
     // Do not support transfer between same assets
     if (
       fromWallet.currencyInfo.pluginId === toWallet.currencyInfo.pluginId &&
-      request.fromCurrencyCode === request.toCurrencyCode
+      request.fromTokenId === request.toTokenId
     ) {
       throw new SwapCurrencyError(swapInfo, request)
     }
@@ -192,7 +192,7 @@ export function makeSwapKitPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
     let daVolatilitySpread: number = DA_VOLATILITY_SPREAD_DEFAULT
     const thorswapServers: string[] = THORSWAP_DEFAULT_SERVERS
 
-    checkInvalidCodes(INVALID_CURRENCY_CODES, request, swapInfo)
+    checkInvalidTokenIds(INVALID_TOKEN_IDS, request, swapInfo)
 
     // Grab addresses:
     const fromAddress = await getAddress(fromWallet)
@@ -248,9 +248,9 @@ export function makeSwapKitPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
       throw new SwapCurrencyError(swapInfo, request)
     }
 
-    const sellAmount = await fromWallet.nativeToDenomination(
+    const sellAmount = await fromWallet.convertNativeToDenominated(
       nativeAmount,
-      fromCurrencyCode
+      fromTokenId
     )
 
     const quoteParams: ThorSwapQuoteParams = {
@@ -322,7 +322,7 @@ export function makeSwapKitPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
     const { expectedBuyAmount, providers, targetAddress, expiration } = thorSwap
 
     const toNativeAmount = toFixed(
-      await toWallet.denominationToNative(expectedBuyAmount, toCurrencyCode),
+      await toWallet.convertDenominatedToNative(expectedBuyAmount, toTokenId),
       0,
       0
     )

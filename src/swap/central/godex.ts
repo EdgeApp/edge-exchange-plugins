@@ -22,12 +22,12 @@ import {
 } from 'edge-core-js/types'
 
 import {
-  checkInvalidCodes,
+  checkInvalidTokenIds,
   checkWhitelistedMainnetCodes,
   CurrencyPluginIdSwapChainCodeMap,
   getCodesWithTranscription,
   getMaxSwappable,
-  InvalidCurrencyCodes,
+  InvalidTokenIds,
   makeSwapPluginQuote,
   SwapOrder
 } from '../../util/swapHelpers'
@@ -82,14 +82,20 @@ const asQuoteInfo = asObject({
   return_extra_id: asEither(asString, asNull)
 })
 
-const INVALID_CURRENCY_CODES: InvalidCurrencyCodes = {
+const INVALID_TOKEN_IDS: InvalidTokenIds = {
   from: {
     digibyte: 'allCodes',
-    polygon: ['USDC', 'USDC.e']
+    polygon: [
+      '3c499c542cef5e3811e1192ce70d8cc03d5c3359' /* USDC */,
+      '2791bca1f2de4661ed88a30c99a7a9449aa84174' /* USDC.e */
+    ]
   },
   to: {
-    polygon: ['USDC', 'USDC.e'],
-    zcash: ['ZEC'] // Godex doesn't support sending to unified addresses
+    polygon: [
+      '3c499c542cef5e3811e1192ce70d8cc03d5c3359' /* USDC */,
+      '2791bca1f2de4661ed88a30c99a7a9449aa84174' /* USDC.e */
+    ],
+    zcash: [null] // Godex doesn't support sending to unified addresses
   }
 }
 
@@ -208,13 +214,13 @@ export function makeGodexPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
     // Convert the native amount to a denomination:
     const quoteAmount =
       request.quoteFor === 'from'
-        ? await request.fromWallet.nativeToDenomination(
+        ? await request.fromWallet.convertNativeToDenominated(
             request.nativeAmount,
-            request.fromCurrencyCode
+            request.fromTokenId
           )
-        : await request.toWallet.nativeToDenomination(
+        : await request.toWallet.convertNativeToDenominated(
             request.nativeAmount,
-            request.toCurrencyCode
+            request.toTokenId
           )
 
     // Swap the currencies if we need a reverse quote:
@@ -243,13 +249,13 @@ export function makeGodexPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
     // min_amount returned could be for a different network than the user is requesting.
     // Check the minimum:
     const nativeMin = reverseQuote
-      ? await request.toWallet.denominationToNative(
+      ? await request.toWallet.convertDenominatedToNative(
           reply.min_amount,
-          request.toCurrencyCode
+          request.toTokenId
         )
-      : await request.fromWallet.denominationToNative(
+      : await request.fromWallet.convertDenominatedToNative(
           reply.min_amount,
-          request.fromCurrencyCode
+          request.fromTokenId
         )
 
     if (lt(request.nativeAmount, nativeMin)) {
@@ -298,16 +304,16 @@ export function makeGodexPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
     log('sendReply' + JSON.stringify(sendReply, null, 2))
     const quoteInfo = asQuoteInfo(sendReply)
     const fromNativeAmount = floor(
-      await request.fromWallet.denominationToNative(
+      await request.fromWallet.convertDenominatedToNative(
         quoteInfo.deposit_amount,
-        request.fromCurrencyCode
+        request.fromTokenId
       ),
       0
     )
     const toNativeAmount = floor(
-      await request.toWallet.denominationToNative(
+      await request.toWallet.convertDenominatedToNative(
         quoteInfo.withdrawal_amount,
-        request.toCurrencyCode
+        request.toTokenId
       ),
       0
     )
@@ -380,7 +386,7 @@ export function makeGodexPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
       opts: { promoCode?: string }
     ): Promise<EdgeSwapQuote> {
       const request = convertRequest(req)
-      checkInvalidCodes(INVALID_CURRENCY_CODES, request, swapInfo)
+      checkInvalidTokenIds(INVALID_TOKEN_IDS, request, swapInfo)
       checkWhitelistedMainnetCodes(
         MAINNET_CODE_TRANSCRIPTION,
         request,

@@ -22,13 +22,13 @@ import {
 
 import { div18 } from '../../util/biggystringplus'
 import {
-  checkInvalidCodes,
+  checkInvalidTokenIds,
   checkWhitelistedMainnetCodes,
   CurrencyPluginIdSwapChainCodeMap,
   ensureInFuture,
   getCodesWithTranscription,
   getMaxSwappable,
-  InvalidCurrencyCodes,
+  InvalidTokenIds,
   isLikeKind,
   makeSwapPluginQuote,
   SwapOrder
@@ -52,16 +52,22 @@ const asInitOptions = asObject({
 const orderUri = 'https://swapuz.com/order/'
 const uri = 'https://api.swapuz.com/api/home/v1/'
 
-const INVALID_CURRENCY_CODES: InvalidCurrencyCodes = {
+const INVALID_TOKEN_IDS: InvalidTokenIds = {
   from: {
-    ethereum: ['MATH'],
-    optimism: ['VELO'],
-    polygon: ['USDC', 'USDC.e']
+    ethereum: ['08d967bb0134f2d07f7cfb6e246680c53927dd30' /* MATH */],
+    optimism: ['9560e827af36c94d2ac33a39bce1fe78631088db' /* VELO */],
+    polygon: [
+      '3c499c542cef5e3811e1192ce70d8cc03d5c3359' /* USDC */,
+      '2791bca1f2de4661ed88a30c99a7a9449aa84174' /* USDC.e */
+    ]
   },
   to: {
-    ethereum: ['MATH'],
-    polygon: ['USDC', 'USDC.e'],
-    zcash: ['ZEC'],
+    ethereum: ['08d967bb0134f2d07f7cfb6e246680c53927dd30' /* MATH */],
+    polygon: [
+      '3c499c542cef5e3811e1192ce70d8cc03d5c3359' /* USDC */,
+      '2791bca1f2de4661ed88a30c99a7a9449aa84174' /* USDC.e */
+    ],
+    zcash: [null],
     zksync: 'allCodes'
   }
 }
@@ -150,7 +156,7 @@ export function makeSwapuzPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
   ): Promise<SwapOrder> => {
     const { fromWallet, toWallet } = request
 
-    checkInvalidCodes(INVALID_CURRENCY_CODES, request, swapInfo)
+    checkInvalidTokenIds(INVALID_TOKEN_IDS, request, swapInfo)
     checkWhitelistedMainnetCodes(MAINNET_CODE_TRANSCRIPTION, request, swapInfo)
 
     // Grab addresses:
@@ -169,9 +175,9 @@ export function makeSwapuzPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
     const getQuote = async (mode: 'fix' | 'float'): Promise<SwapOrder> => {
       const { nativeAmount } = request
 
-      const largeDenomAmount = await fromWallet.nativeToDenomination(
+      const largeDenomAmount = await fromWallet.convertNativeToDenominated(
         nativeAmount,
-        fromCurrencyCode
+        request.fromTokenId
       )
 
       const getRateResponse = await fetchCors(
@@ -190,9 +196,9 @@ export function makeSwapuzPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
           const requiredMatch = json.message.match(/required ([0-9.]+)/)
           if (requiredMatch?.[1] != null) {
             const minAmount = requiredMatch[1]
-            const nativeMin = await fromWallet.denominationToNative(
+            const nativeMin = await fromWallet.convertDenominatedToNative(
               minAmount,
-              fromCurrencyCode
+              request.fromTokenId
             )
             throw new SwapBelowLimitError(swapInfo, nativeMin)
           }
@@ -216,9 +222,9 @@ export function makeSwapuzPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
       const { minAmount } = getRateJson.result
 
       if (gt(minAmount.toString(), largeDenomAmount)) {
-        const nativeMinAmount = await fromWallet.denominationToNative(
+        const nativeMinAmount = await fromWallet.convertDenominatedToNative(
           minAmount.toString(),
-          fromCurrencyCode
+          request.fromTokenId
         )
         throw new SwapBelowLimitError(swapInfo, nativeMinAmount)
       }
@@ -248,9 +254,9 @@ export function makeSwapuzPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
         const textArray = text.split(' ')
         if (textArray[7] === 'maxAmount' && !isNaN(parseFloat(textArray[12]))) {
           const nativeMaxAmount = floor(
-            await fromWallet.denominationToNative(
+            await fromWallet.convertDenominatedToNative(
               textArray[12],
-              fromCurrencyCode
+              request.fromTokenId
             ),
             0
           )
@@ -279,9 +285,9 @@ export function makeSwapuzPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
       } = createOrderJson.result
 
       const toNativeAmount = floor(
-        await toWallet.denominationToNative(
+        await toWallet.convertDenominatedToNative(
           amountResult.toString(),
-          toCurrencyCode
+          request.toTokenId
         ),
         0
       )
@@ -381,9 +387,9 @@ export function makeSwapuzPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
         // Must make a copy of the request because this is a shared object
         // reused between requests to other exchange plugins
         const requestToHack = { ...requestTop }
-        const requestToExchangeAmount = await toWallet.nativeToDenomination(
+        const requestToExchangeAmount = await toWallet.convertNativeToDenominated(
           nativeAmount,
-          toCurrencyCode
+          requestTop.toTokenId
         )
         let fromQuoteNativeAmount = nativeAmount
         let retries = 5
@@ -402,9 +408,9 @@ export function makeSwapuzPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
             swapOrder.spendInfo.savedAction?.toAsset.nativeAmount
           if (destNativeAmount == null) break
 
-          const toExchangeAmount = await toWallet.nativeToDenomination(
+          const toExchangeAmount = await toWallet.convertNativeToDenominated(
             destNativeAmount,
-            toCurrencyCode
+            requestTop.toTokenId
           )
           if (gte(toExchangeAmount, requestToExchangeAmount)) {
             return await makeSwapPluginQuote(swapOrder)
