@@ -23,12 +23,12 @@ import {
 
 import {
   ChainCodeTickerMap,
-  checkInvalidCodes,
+  checkInvalidTokenIds,
   checkWhitelistedMainnetCodes,
   CurrencyPluginIdSwapChainCodeMap,
   getChainAndTokenCodes,
   getMaxSwappable,
-  InvalidCurrencyCodes,
+  InvalidTokenIds,
   makeSwapPluginQuote,
   SwapOrder
 } from '../../util/swapHelpers'
@@ -123,10 +123,10 @@ export const MAINNET_CODE_TRANSCRIPTION: CurrencyPluginIdSwapChainCodeMap = {
 
 // See https://changehero.io/currencies for list of supported currencies
 // Or `curl -X POST 'https://api.changehero.io/v2' -H 'api-key: <your-api-key>' -H 'Content-Type: application/json' -d '{"jsonrpc":"2.0","id":"one","method":"getCurrenciesFull","params":{}}'`
-const INVALID_CURRENCY_CODES: InvalidCurrencyCodes = {
+const INVALID_TOKEN_IDS: InvalidTokenIds = {
   from: {},
   to: {
-    zcash: ['ZEC'] // ChangeHero doesn't support sending to shielded addresses
+    zcash: [null] // ChangeHero doesn't support sending to shielded addresses
   }
 }
 
@@ -441,7 +441,7 @@ export function makeChangeHeroPlugin(
       // Fetch and persist chaincode/tokencode maps from provider
       await fetchSupportedAssets()
 
-      checkInvalidCodes(INVALID_CURRENCY_CODES, request, swapInfo)
+      checkInvalidTokenIds(INVALID_TOKEN_IDS, request, swapInfo)
       checkWhitelistedMainnetCodes(
         MAINNET_CODE_TRANSCRIPTION,
         request,

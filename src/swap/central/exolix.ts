@@ -24,12 +24,12 @@ import {
 
 import { div18 } from '../../util/biggystringplus'
 import {
-  checkInvalidCodes,
+  checkInvalidTokenIds,
   checkWhitelistedMainnetCodes,
   CurrencyPluginIdSwapChainCodeMap,
   getCodesWithTranscription,
   getMaxSwappable,
-  InvalidCurrencyCodes,
+  InvalidTokenIds,
   makeSwapPluginQuote,
   SwapOrder
 } from '../../util/swapHelpers'
@@ -62,12 +62,18 @@ const asInitOptions = asObject({
 })
 
 const MAX_USD_VALUE = '70000'
-const INVALID_CURRENCY_CODES: InvalidCurrencyCodes = {
+const INVALID_TOKEN_IDS: InvalidTokenIds = {
   from: {
-    polygon: ['USDC', 'USDC.e']
+    polygon: [
+      '3c499c542cef5e3811e1192ce70d8cc03d5c3359' /* USDC */,
+      '2791bca1f2de4661ed88a30c99a7a9449aa84174' /* USDC.e */
+    ]
   },
   to: {
-    polygon: ['USDC', 'USDC.e']
+    polygon: [
+      '3c499c542cef5e3811e1192ce70d8cc03d5c3359' /* USDC */,
+      '2791bca1f2de4661ed88a30c99a7a9449aa84174' /* USDC.e */
+    ]
   }
 }
 
@@ -407,7 +413,7 @@ export function makeExolixPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
     ): Promise<EdgeSwapQuote> {
       const request = convertRequest(req)
 
-      checkInvalidCodes(INVALID_CURRENCY_CODES, request, swapInfo)
+      checkInvalidTokenIds(INVALID_TOKEN_IDS, request, swapInfo)
       checkWhitelistedMainnetCodes(
         MAINNET_CODE_TRANSCRIPTION,
         request,

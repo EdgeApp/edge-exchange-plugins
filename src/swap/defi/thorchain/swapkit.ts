@@ -22,7 +22,7 @@ import {
 } from 'edge-core-js/types'
 
 import {
-  checkInvalidCodes,
+  checkInvalidTokenIds,
   getMaxSwappable,
   makeSwapPluginQuote,
   SwapOrder
@@ -45,7 +45,7 @@ import {
   EXCHANGE_INFO_UPDATE_FREQ_MS,
   EXPIRATION_MS,
   getGasLimit,
-  INVALID_CURRENCY_CODES
+  INVALID_TOKEN_IDS
 } from './thorchainCommon'
 
 const pluginId = 'swapkit'
@@ -194,7 +194,7 @@ export function makeSwapKitPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
     let daVolatilitySpread: number = DA_VOLATILITY_SPREAD_DEFAULT
     const thorswapServers: string[] = THORSWAP_DEFAULT_SERVERS
 
-    checkInvalidCodes(INVALID_CURRENCY_CODES, request, swapInfo)
+    checkInvalidTokenIds(INVALID_TOKEN_IDS, request, swapInfo)
 
     // Grab addresses:
     const fromAddress = await getAddress(fromWallet)

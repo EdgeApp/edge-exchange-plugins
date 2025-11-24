@@ -26,14 +26,14 @@ import {
 
 import {
   ChainCodeTickerMap,
-  checkInvalidCodes,
+  checkInvalidTokenIds,
   checkWhitelistedMainnetCodes,
   CurrencyPluginIdSwapChainCodeMap,
   EdgeIdSwapIdMap,
   ensureInFuture,
   getChainAndTokenCodes,
   getMaxSwappable,
-  InvalidCurrencyCodes,
+  InvalidTokenIds,
   makeSwapPluginQuote,
   SwapOrder
 } from '../../util/swapHelpers'
@@ -62,7 +62,7 @@ const asInitOptions = asObject({
 const orderUri = 'https://changenow.io/exchange/txs/'
 const uri = 'https://api.changenow.io/v2/'
 
-const INVALID_CURRENCY_CODES: InvalidCurrencyCodes = {
+const INVALID_TOKEN_IDS: InvalidTokenIds = {
   from: {},
   to: {}
 }
@@ -506,7 +506,7 @@ export function makeChangeNowPlugin(
       // Fetch and persist chaincode/tokencode maps from provider
       await fetchSupportedAssets()
 
-      checkInvalidCodes(INVALID_CURRENCY_CODES, request, swapInfo)
+      checkInvalidTokenIds(INVALID_TOKEN_IDS, request, swapInfo)
       checkWhitelistedMainnetCodes(
         MAINNET_CODE_TRANSCRIPTION,
         request,
