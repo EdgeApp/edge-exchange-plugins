@@ -22,13 +22,13 @@ import {
 
 import {
   ChainCodeTickerMap,
-  checkInvalidCodes,
+  checkInvalidTokenIds,
   checkWhitelistedMainnetCodes,
   CurrencyPluginIdSwapChainCodeMap,
   EdgeIdSwapIdMap,
   getChainAndTokenCodes,
   getMaxSwappable,
-  InvalidCurrencyCodes,
+  InvalidTokenIds,
   makeSwapPluginQuote,
   SwapOrder
 } from '../../util/swapHelpers'
@@ -69,7 +69,7 @@ const asInfoReply = asObject({
   max_amount: asNumberString,
   amount: asNumberString
 })
-const INVALID_CURRENCY_CODES: InvalidCurrencyCodes = {
+const INVALID_TOKEN_IDS: InvalidTokenIds = {
   from: {},
   to: {}
 }
@@ -459,7 +459,7 @@ export function makeLetsExchangePlugin(
       // Fetch and persist chaincode/tokencode maps from provider
       await fetchSupportedAssets()
 
-      checkInvalidCodes(INVALID_CURRENCY_CODES, request, swapInfo)
+      checkInvalidTokenIds(INVALID_TOKEN_IDS, request, swapInfo)
       checkWhitelistedMainnetCodes(
         MAINNET_CODE_TRANSCRIPTION,
         request,

@@ -339,21 +339,21 @@ const getPluginIds = (
   toPluginId: request.toWallet.currencyInfo.pluginId
 })
 
-export interface InvalidCurrencyCodes {
-  from: { [pluginId: string]: 'allCodes' | 'allTokens' | string[] }
-  to: { [pluginId: string]: 'allCodes' | 'allTokens' | string[] }
+export interface InvalidTokenIds {
+  from: { [pluginId: string]: 'allCodes' | 'allTokens' | EdgeTokenId[] }
+  to: { [pluginId: string]: 'allCodes' | 'allTokens' | EdgeTokenId[] }
 }
 
-const defaultInvalidCodes: InvalidCurrencyCodes = {
-  from: { ethereum: ['REP'] },
-  to: { ethereum: ['REP'] }
+const defaultInvalidCodes: InvalidTokenIds = {
+  from: { ethereum: ['1985365e9f78359a9b6ad760e32412f4a445e862' /* REP */] },
+  to: { ethereum: ['1985365e9f78359a9b6ad760e32412f4a445e862' /* REP */] }
 }
 
 /**
  * Throws if either currency code has been disabled by the plugin
  */
-export function checkInvalidCodes(
-  invalidCodes: InvalidCurrencyCodes,
+export function checkInvalidTokenIds(
+  invalidCodes: InvalidTokenIds,
   request: EdgeSwapRequestPlugin,
   swapInfo: EdgeSwapInfo
 ): void {
@@ -371,7 +371,7 @@ export function checkInvalidCodes(
     request.fromCurrencyCode === request.toCurrencyCode
 
   function check(
-    codeMap: InvalidCurrencyCodes,
+    codeMap: InvalidTokenIds,
     direction: 'from' | 'to',
     pluginId: string,
     main: string,

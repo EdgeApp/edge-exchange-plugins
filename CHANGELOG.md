@@ -3,6 +3,7 @@
 ## Unreleased
 
 - changed: Use tokenId aware conversion tools on wallets
+- changed: Use tokenIds in invalid currency objects
 
 ## 2.39.1 (2025-11-18)
 

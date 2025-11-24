@@ -29,9 +29,9 @@ import {
 
 import { div18 } from '../../../util/biggystringplus'
 import {
-  checkInvalidCodes,
+  checkInvalidTokenIds,
   getMaxSwappable,
-  InvalidCurrencyCodes,
+  InvalidTokenIds,
   isLikeKind,
   makeSwapPluginQuote,
   SwapOrder
@@ -127,12 +127,12 @@ export const PER_ASSET_SPREAD_DEFAULT: AssetSpread[] = [
   }
 ]
 
-export const INVALID_CURRENCY_CODES: InvalidCurrencyCodes = {
+export const INVALID_TOKEN_IDS: InvalidTokenIds = {
   from: {
-    optimism: ['VELO']
+    optimism: ['9560e827af36c94d2ac33a39bce1fe78631088db' /* VELO */]
   },
   to: {
-    zcash: ['ZEC']
+    zcash: [null]
   }
 }
 
@@ -376,7 +376,7 @@ export function makeThorchainBasedPlugin(
     let streamingInterval: number = STREAMING_INTERVAL_DEFAULT
     let streamingQuantity: number = STREAMING_QUANTITY_DEFAULT
 
-    checkInvalidCodes(INVALID_CURRENCY_CODES, request, swapInfo)
+    checkInvalidTokenIds(INVALID_TOKEN_IDS, request, swapInfo)
 
     // Grab addresses:
     const toAddress = await getAddress(toWallet)
