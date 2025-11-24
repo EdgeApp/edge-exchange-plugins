@@ -32,7 +32,13 @@ import {
   makeSwapPluginQuote,
   SwapOrder
 } from '../../util/swapHelpers'
-import { convertRequest, getAddress, memoType } from '../../util/utils'
+import {
+  convertRequest,
+  denominationToNative,
+  getAddress,
+  memoType,
+  nativeToDenomination
+} from '../../util/utils'
 import { asNumberString, EdgeSwapRequestPlugin, StringMap } from '../types'
 import { asOptionalBlank } from './changenow'
 
@@ -267,13 +273,15 @@ export function makeLetsExchangePlugin(
     // Convert the native amount to a denomination:
     const quoteAmount =
       request.quoteFor === 'from'
-        ? await request.fromWallet.nativeToDenomination(
+        ? nativeToDenomination(
+            request.fromWallet,
             request.nativeAmount,
-            request.fromCurrencyCode
+            request.fromTokenId
           )
-        : await request.toWallet.nativeToDenomination(
+        : nativeToDenomination(
+            request.toWallet,
             request.nativeAmount,
-            request.toCurrencyCode
+            request.toTokenId
           )
 
     const {
@@ -316,13 +324,15 @@ export function makeLetsExchangePlugin(
 
     // Check the min/max:
     const nativeMin = reverseQuote
-      ? await request.toWallet.denominationToNative(
+      ? denominationToNative(
+          request.toWallet,
           reply.min_amount,
-          request.toCurrencyCode
+          request.toTokenId
         )
-      : await request.fromWallet.denominationToNative(
+      : denominationToNative(
+          request.fromWallet,
           reply.min_amount,
-          request.fromCurrencyCode
+          request.fromTokenId
         )
 
     if (lt(request.nativeAmount, nativeMin)) {
@@ -334,13 +344,15 @@ export function makeLetsExchangePlugin(
     }
 
     const nativeMax = reverseQuote
-      ? await request.toWallet.denominationToNative(
+      ? denominationToNative(
+          request.toWallet,
           reply.max_amount,
-          request.toCurrencyCode
+          request.toTokenId
         )
-      : await request.fromWallet.denominationToNative(
+      : denominationToNative(
+          request.fromWallet,
           reply.max_amount,
-          request.fromCurrencyCode
+          request.fromTokenId
         )
 
     if (gt(nativeMax, '0')) {
@@ -378,13 +390,15 @@ export function makeLetsExchangePlugin(
     log('sendReply', sendReply)
     const quoteInfo = asQuoteInfo(sendReply)
 
-    const rawFromNativeAmount = await request.fromWallet.denominationToNative(
+    const rawFromNativeAmount = denominationToNative(
+      request.fromWallet,
       quoteInfo.deposit_amount,
-      request.fromCurrencyCode
+      request.fromTokenId
     )
-    const rawToNativeAmount = await request.toWallet.denominationToNative(
+    const rawToNativeAmount = denominationToNative(
+      request.toWallet,
       quoteInfo.withdrawal_amount,
-      request.toCurrencyCode
+      request.toTokenId
     )
     const fromNativeAmount = rawFromNativeAmount.split('.')[0]
     const toNativeAmount = rawToNativeAmount.split('.')[0]

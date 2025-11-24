@@ -20,6 +20,7 @@ import {
   EdgeSwapPlugin,
   EdgeSwapQuote,
   EdgeSwapRequest,
+  EdgeTokenId,
   EdgeTransaction,
   EdgeTxActionSwap,
   JsonObject,
@@ -38,10 +39,12 @@ import {
 } from '../../../util/swapHelpers'
 import {
   convertRequest,
+  denominationToNative,
   fetchInfo,
   fetchWaterfall,
   getAddress,
   makeQueryParams,
+  nativeToDenomination,
   promiseWithTimeout,
   QueryParams
 } from '../../../util/utils'
@@ -283,8 +286,10 @@ interface CalcSwapParams {
   thornodesFetchOptions: Record<string, string>
   fromWallet: EdgeCurrencyWallet
   fromCurrencyCode: string
+  fromTokenId: EdgeTokenId
   toWallet: EdgeCurrencyWallet
   toCurrencyCode: string
+  toTokenId: EdgeTokenId
   toAddress: string
   isEstimate: boolean
   nativeAmount: string
@@ -585,8 +590,10 @@ export function makeThorchainBasedPlugin(
         thornodesFetchOptions,
         fromWallet,
         fromCurrencyCode,
+        fromTokenId,
         toWallet,
         toCurrencyCode,
+        toTokenId,
         toAddress,
         isEstimate,
         nativeAmount,
@@ -632,8 +639,10 @@ export function makeThorchainBasedPlugin(
         thornodesFetchOptions,
         fromWallet,
         fromCurrencyCode,
+        fromTokenId,
         toWallet,
         toCurrencyCode,
+        toTokenId,
         toAddress,
         isEstimate,
         nativeAmount,
@@ -1022,8 +1031,10 @@ const calcSwapFrom = async ({
   thornodesFetchOptions,
   fromWallet,
   fromCurrencyCode,
+  fromTokenId,
   toWallet,
   toCurrencyCode,
+  toTokenId,
   toAddress,
   isEstimate,
   nativeAmount,
@@ -1041,9 +1052,10 @@ const calcSwapFrom = async ({
   const fromNativeAmount = quoteFor === 'max' ? '1000000000' : nativeAmount
 
   // Get exchange rate from source to destination asset
-  const fromExchangeAmount = await fromWallet.nativeToDenomination(
+  const fromExchangeAmount = nativeToDenomination(
+    fromWallet,
     fromNativeAmount,
-    fromCurrencyCode
+    fromTokenId
   )
 
   log(`fromExchangeAmount: ${fromExchangeAmount}`)
@@ -1108,9 +1120,10 @@ const calcSwapFrom = async ({
   const toExchangeAmount = div18(toThorAmountWithSpread, THOR_LIMIT_UNITS)
   log(`toExchangeAmount: ${toExchangeAmount}`)
 
-  const toNativeAmountFloat = await toWallet.denominationToNative(
+  const toNativeAmountFloat = denominationToNative(
+    toWallet,
     toExchangeAmount,
-    toCurrencyCode
+    toTokenId
   )
   const toNativeAmount = round(toNativeAmountFloat, 0)
   log(`toNativeAmount: ${toNativeAmount}`)
@@ -1148,8 +1161,10 @@ const calcSwapTo = async ({
   thornodesFetchOptions,
   fromWallet,
   fromCurrencyCode,
+  fromTokenId,
   toWallet,
   toCurrencyCode,
+  toTokenId,
   toAddress,
   nativeAmount,
   isEstimate,
@@ -1165,9 +1180,10 @@ const calcSwapTo = async ({
   const toNativeAmount = nativeAmount
 
   // Get exchange rate from source to destination asset
-  const toExchangeAmount = await toWallet.nativeToDenomination(
+  const toExchangeAmount = nativeToDenomination(
+    toWallet,
     nativeAmount,
-    toCurrencyCode
+    toTokenId
   )
 
   const requestedToThorAmount = mul(toExchangeAmount, THOR_LIMIT_UNITS)
@@ -1256,9 +1272,10 @@ const calcSwapTo = async ({
   const fromExchangeAmount = div18(fromThorAmountWithSpread, THOR_LIMIT_UNITS)
   log(`fromExchangeAmount: ${fromExchangeAmount}`)
 
-  const fromNativeAmountFloat = await fromWallet.denominationToNative(
+  const fromNativeAmountFloat = denominationToNative(
+    fromWallet,
     fromExchangeAmount,
-    fromCurrencyCode
+    fromTokenId
   )
   const fromNativeAmount = round(fromNativeAmountFloat, 0)
   log(`fromNativeAmount: ${fromNativeAmount}`)

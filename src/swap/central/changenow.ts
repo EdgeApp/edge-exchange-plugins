@@ -37,7 +37,13 @@ import {
   makeSwapPluginQuote,
   SwapOrder
 } from '../../util/swapHelpers'
-import { convertRequest, getAddress, memoType } from '../../util/utils'
+import {
+  convertRequest,
+  denominationToNative,
+  getAddress,
+  memoType,
+  nativeToDenomination
+} from '../../util/utils'
 import { EdgeSwapRequestPlugin, StringMap } from '../types'
 
 const pluginId = 'changenow'
@@ -282,9 +288,10 @@ export function makeChangeNowPlugin(
     async function swapSell(
       flow: 'fixed-rate' | 'standard'
     ): Promise<SwapOrder> {
-      const largeDenomAmount = await request.fromWallet.nativeToDenomination(
+      const largeDenomAmount = nativeToDenomination(
+        request.fromWallet,
         nativeAmount,
-        request.fromCurrencyCode
+        request.fromTokenId
       )
 
       // Get min and max
@@ -300,17 +307,19 @@ export function makeChangeNowPlugin(
       const { minAmount, maxAmount } = asMarketRange(marketRangeResponseJson)
 
       if (lt(largeDenomAmount, minAmount.toString())) {
-        const minNativeAmount = await request.fromWallet.denominationToNative(
+        const minNativeAmount = denominationToNative(
+          request.fromWallet,
           minAmount.toString(),
-          request.fromCurrencyCode
+          request.fromTokenId
         )
         throw new SwapBelowLimitError(swapInfo, minNativeAmount)
       }
 
       if (maxAmount != null && gt(largeDenomAmount, maxAmount.toString())) {
-        const maxNativeAmount = await request.fromWallet.denominationToNative(
+        const maxNativeAmount = denominationToNative(
+          request.fromWallet,
           maxAmount.toString(),
-          request.fromCurrencyCode
+          request.fromTokenId
         )
         throw new SwapAboveLimitError(swapInfo, maxNativeAmount)
       }
@@ -323,9 +332,10 @@ export function makeChangeNowPlugin(
         validUntil
       } = await createOrder(flow, true, largeDenomAmount)
 
-      const toNativeAmount = await request.toWallet.denominationToNative(
+      const toNativeAmount = denominationToNative(
+        request.toWallet,
         toAmount.toString(),
-        request.toCurrencyCode
+        request.toTokenId
       )
 
       const memos: EdgeMemo[] =
@@ -387,9 +397,10 @@ export function makeChangeNowPlugin(
 
     async function swapBuy(flow: 'fixed-rate'): Promise<SwapOrder> {
       // Skip min/max check when requesting a purchase amount
-      const largeDenomAmount = await request.toWallet.nativeToDenomination(
+      const largeDenomAmount = nativeToDenomination(
+        request.toWallet,
         nativeAmount,
-        request.toCurrencyCode
+        request.toTokenId
       )
 
       const {
@@ -400,9 +411,10 @@ export function makeChangeNowPlugin(
         validUntil
       } = await createOrder(flow, false, largeDenomAmount)
 
-      const fromNativeAmount = await request.fromWallet.denominationToNative(
+      const fromNativeAmount = denominationToNative(
+        request.fromWallet,
         fromAmount.toString(),
-        request.fromCurrencyCode
+        request.fromTokenId
       )
 
       const memos: EdgeMemo[] =

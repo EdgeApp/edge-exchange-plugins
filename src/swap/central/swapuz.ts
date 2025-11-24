@@ -33,7 +33,13 @@ import {
   makeSwapPluginQuote,
   SwapOrder
 } from '../../util/swapHelpers'
-import { convertRequest, getAddress, memoType } from '../../util/utils'
+import {
+  convertRequest,
+  denominationToNative,
+  getAddress,
+  memoType,
+  nativeToDenomination
+} from '../../util/utils'
 import { EdgeSwapRequestPlugin } from '../types'
 
 const pluginId = 'swapuz'
@@ -169,9 +175,10 @@ export function makeSwapuzPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
     const getQuote = async (mode: 'fix' | 'float'): Promise<SwapOrder> => {
       const { nativeAmount } = request
 
-      const largeDenomAmount = await fromWallet.nativeToDenomination(
+      const largeDenomAmount = nativeToDenomination(
+        fromWallet,
         nativeAmount,
-        fromCurrencyCode
+        request.fromTokenId
       )
 
       const getRateResponse = await fetchCors(
@@ -190,9 +197,10 @@ export function makeSwapuzPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
           const requiredMatch = json.message.match(/required ([0-9.]+)/)
           if (requiredMatch?.[1] != null) {
             const minAmount = requiredMatch[1]
-            const nativeMin = await fromWallet.denominationToNative(
+            const nativeMin = denominationToNative(
+              fromWallet,
               minAmount,
-              fromCurrencyCode
+              request.fromTokenId
             )
             throw new SwapBelowLimitError(swapInfo, nativeMin)
           }
@@ -216,9 +224,10 @@ export function makeSwapuzPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
       const { minAmount } = getRateJson.result
 
       if (gt(minAmount.toString(), largeDenomAmount)) {
-        const nativeMinAmount = await fromWallet.denominationToNative(
+        const nativeMinAmount = denominationToNative(
+          fromWallet,
           minAmount.toString(),
-          fromCurrencyCode
+          request.fromTokenId
         )
         throw new SwapBelowLimitError(swapInfo, nativeMinAmount)
       }
@@ -248,9 +257,10 @@ export function makeSwapuzPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
         const textArray = text.split(' ')
         if (textArray[7] === 'maxAmount' && !isNaN(parseFloat(textArray[12]))) {
           const nativeMaxAmount = floor(
-            await fromWallet.denominationToNative(
+            denominationToNative(
+              fromWallet,
               textArray[12],
-              fromCurrencyCode
+              request.fromTokenId
             ),
             0
           )
@@ -279,9 +289,10 @@ export function makeSwapuzPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
       } = createOrderJson.result
 
       const toNativeAmount = floor(
-        await toWallet.denominationToNative(
+        denominationToNative(
+          toWallet,
           amountResult.toString(),
-          toCurrencyCode
+          request.toTokenId
         ),
         0
       )
@@ -381,9 +392,10 @@ export function makeSwapuzPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
         // Must make a copy of the request because this is a shared object
         // reused between requests to other exchange plugins
         const requestToHack = { ...requestTop }
-        const requestToExchangeAmount = await toWallet.nativeToDenomination(
+        const requestToExchangeAmount = nativeToDenomination(
+          toWallet,
           nativeAmount,
-          toCurrencyCode
+          requestTop.toTokenId
         )
         let fromQuoteNativeAmount = nativeAmount
         let retries = 5
@@ -402,9 +414,10 @@ export function makeSwapuzPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
             swapOrder.spendInfo.savedAction?.toAsset.nativeAmount
           if (destNativeAmount == null) break
 
-          const toExchangeAmount = await toWallet.nativeToDenomination(
+          const toExchangeAmount = nativeToDenomination(
+            toWallet,
             destNativeAmount,
-            toCurrencyCode
+            requestTop.toTokenId
           )
           if (gte(toExchangeAmount, requestToExchangeAmount)) {
             return await makeSwapPluginQuote(swapOrder)

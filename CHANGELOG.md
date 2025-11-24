@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- changed: Replace wallet denomination methods with synchronous utils
+
 ## 2.40.0 (2025-12-04)
 
 - added: (Maya) Zcash support

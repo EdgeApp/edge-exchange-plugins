@@ -32,7 +32,13 @@ import {
   makeSwapPluginQuote,
   SwapOrder
 } from '../../util/swapHelpers'
-import { convertRequest, getAddress, memoType } from '../../util/utils'
+import {
+  convertRequest,
+  denominationToNative,
+  getAddress,
+  memoType,
+  nativeToDenomination
+} from '../../util/utils'
 import { EdgeSwapRequestPlugin } from '../types'
 
 const pluginId = 'changehero'
@@ -255,13 +261,15 @@ export function makeChangeHeroPlugin(
 
     const quoteAmount =
       request.quoteFor === 'from'
-        ? await request.fromWallet.nativeToDenomination(
+        ? nativeToDenomination(
+            request.fromWallet,
             request.nativeAmount,
-            request.fromCurrencyCode
+            request.fromTokenId
           )
-        : await request.toWallet.nativeToDenomination(
+        : nativeToDenomination(
+            request.toWallet,
             request.nativeAmount,
-            request.toCurrencyCode
+            request.toTokenId
           )
 
     const fixRate = {
@@ -282,21 +290,25 @@ export function makeChangeHeroPlugin(
     const [
       { id: responseId, maxFrom, maxTo, minFrom, minTo }
     ] = asGetFixRateReply(fixedRateQuote).result
-    const maxFromNative = await request.fromWallet.denominationToNative(
+    const maxFromNative = denominationToNative(
+      request.fromWallet,
       maxFrom,
-      request.fromCurrencyCode
+      request.fromTokenId
     )
-    const maxToNative = await request.toWallet.denominationToNative(
+    const maxToNative = denominationToNative(
+      request.toWallet,
       maxTo,
-      request.toCurrencyCode
+      request.toTokenId
     )
-    const minFromNative = await request.fromWallet.denominationToNative(
+    const minFromNative = denominationToNative(
+      request.fromWallet,
       minFrom,
-      request.fromCurrencyCode
+      request.fromTokenId
     )
-    const minToNative = await request.toWallet.denominationToNative(
+    const minToNative = denominationToNative(
+      request.toWallet,
       minTo,
-      request.toCurrencyCode
+      request.toTokenId
     )
 
     if (request.quoteFor === 'from') {
@@ -356,13 +368,15 @@ export function makeChangeHeroPlugin(
     checkReply(sendReply, request)
 
     const quoteInfo = asCreateFixTransactionReply(sendReply).result
-    const amountExpectedFromNative = await request.fromWallet.denominationToNative(
+    const amountExpectedFromNative = denominationToNative(
+      request.fromWallet,
       `${quoteInfo.amountExpectedFrom.toString()}`,
-      request.fromCurrencyCode
+      request.fromTokenId
     )
-    const amountExpectedToNative = await request.toWallet.denominationToNative(
+    const amountExpectedToNative = denominationToNative(
+      request.toWallet,
       `${quoteInfo.amountExpectedTo.toString()}`,
-      request.toCurrencyCode
+      request.toTokenId
     )
 
     const memos: EdgeMemo[] =
