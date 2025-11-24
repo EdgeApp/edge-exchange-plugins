@@ -83,7 +83,7 @@ export function makeTransferPlugin(
       if (
         request.fromWallet.currencyInfo.pluginId !==
           request.toWallet.currencyInfo.pluginId ||
-        request.fromCurrencyCode !== request.toCurrencyCode
+        request.fromTokenId !== request.toTokenId
       ) {
         throw new SwapCurrencyError(swapInfo, request)
       }

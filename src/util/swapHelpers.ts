@@ -363,7 +363,7 @@ export function checkInvalidTokenIds(
   const isSameAsset = (request: EdgeSwapRequestPlugin): boolean =>
     request.fromWallet.currencyInfo.pluginId ===
       request.toWallet.currencyInfo.pluginId &&
-    request.fromCurrencyCode === request.toCurrencyCode
+    request.fromTokenId === request.toTokenId
 
   function check(
     codeMap: InvalidTokenIds,
