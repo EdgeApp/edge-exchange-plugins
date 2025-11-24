@@ -64,6 +64,7 @@ export function makeCosmosIbcPlugin(
         payoutAddress: toAddress,
         plugin: { ...swapInfo },
         payoutCurrencyCode: request.toCurrencyCode,
+        payoutTokenId: request.toTokenId,
         payoutNativeAmount: request.nativeAmount,
         payoutWalletId: request.toWallet.id
       },
