@@ -278,7 +278,7 @@ export function makeLifiPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
     // Do not support transfer between same assets
     if (
       fromWallet.currencyInfo.pluginId === toWallet.currencyInfo.pluginId &&
-      request.fromCurrencyCode === request.toCurrencyCode
+      request.fromTokenId === request.toTokenId
     ) {
       throw new SwapCurrencyError(swapInfo, request)
     }
