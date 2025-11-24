@@ -124,17 +124,17 @@ async function checkQuoteError(
   const { fromWallet } = request
 
   if (quoteErrorMessage.includes('Amount too low')) {
-    const nativeMin = await fromWallet.denominationToNative(
+    const nativeMin = await fromWallet.convertDenominatedToNative(
       rate.min,
-      request.fromCurrencyCode
+      request.fromTokenId
     )
     throw new SwapBelowLimitError(swapInfo, nativeMin)
   }
 
   if (quoteErrorMessage === 'Amount too high') {
-    const nativeMax = await fromWallet.denominationToNative(
+    const nativeMax = await fromWallet.convertDenominatedToNative(
       rate.max,
-      request.fromCurrencyCode
+      request.fromTokenId
     )
     throw new SwapAboveLimitError(swapInfo, nativeMax)
   }
@@ -239,13 +239,13 @@ const fetchSwapQuoteInner = async (
   }
 
   const quoteAmount = await (request.quoteFor === 'from'
-    ? request.fromWallet.nativeToDenomination(
+    ? request.fromWallet.convertNativeToDenominated(
         request.nativeAmount,
-        request.fromCurrencyCode
+        request.fromTokenId
       )
-    : request.toWallet.nativeToDenomination(
+    : request.toWallet.convertNativeToDenominated(
         request.nativeAmount,
-        request.toCurrencyCode
+        request.toTokenId
       ))
 
   const fixedQuoteRequest = asFixedQuoteRequest({
@@ -283,14 +283,14 @@ const fetchSwapQuoteInner = async (
     throw new Error(`SideShift.ai error ${order.error.message}`)
   }
 
-  const amountExpectedFromNative = await request.fromWallet.denominationToNative(
+  const amountExpectedFromNative = await request.fromWallet.convertDenominatedToNative(
     order.depositAmount,
-    request.fromCurrencyCode
+    request.fromTokenId
   )
 
-  const amountExpectedToNative = await request.toWallet.denominationToNative(
+  const amountExpectedToNative = await request.toWallet.convertDenominatedToNative(
     order.settleAmount,
-    request.toCurrencyCode
+    request.toTokenId
   )
 
   const isEstimate = false

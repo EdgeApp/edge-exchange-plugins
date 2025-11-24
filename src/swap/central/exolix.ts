@@ -249,13 +249,13 @@ export function makeExolixPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
 
     const exchangeQuoteAmount =
       request.quoteFor === 'from'
-        ? await request.fromWallet.nativeToDenomination(
+        ? await request.fromWallet.convertNativeToDenominated(
             request.nativeAmount,
-            request.fromCurrencyCode
+            request.fromTokenId
           )
-        : await request.toWallet.nativeToDenomination(
+        : await request.toWallet.convertNativeToDenominated(
             request.nativeAmount,
-            request.toCurrencyCode
+            request.toTokenId
           )
 
     const quoteAmount = parseFloat(exchangeQuoteAmount)
@@ -286,18 +286,18 @@ export function makeExolixPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
 
     // Check rate minimum:
     if (request.quoteFor === 'from') {
-      const nativeMin = await request.fromWallet.denominationToNative(
+      const nativeMin = await request.fromWallet.convertDenominatedToNative(
         rateResponse.minAmount.toString(),
-        request.fromCurrencyCode
+        request.fromTokenId
       )
 
       if (lt(request.nativeAmount, nativeMin)) {
         throw new SwapBelowLimitError(swapInfo, nativeMin, 'from')
       }
     } else {
-      const nativeMin = await request.toWallet.denominationToNative(
+      const nativeMin = await request.toWallet.convertDenominatedToNative(
         rateResponse.withdrawMin.toString(),
-        request.toCurrencyCode
+        request.toTokenId
       )
 
       if (lt(request.nativeAmount, nativeMin)) {
@@ -327,14 +327,14 @@ export function makeExolixPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
     const callJson = await call('POST', 'transactions', exchangeParams)
     const quoteInfo = asQuoteInfo(callJson)
 
-    const fromNativeAmount = await request.fromWallet.denominationToNative(
+    const fromNativeAmount = await request.fromWallet.convertDenominatedToNative(
       quoteInfo.amount.toString(),
-      request.fromCurrencyCode
+      request.fromTokenId
     )
 
-    const toNativeAmount = await request.toWallet.denominationToNative(
+    const toNativeAmount = await request.toWallet.convertDenominatedToNative(
       quoteInfo.amountTo.toString(),
-      request.toCurrencyCode
+      request.toTokenId
     )
 
     const memos: EdgeMemo[] =
@@ -420,23 +420,23 @@ export function makeExolixPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
       let denomToNative: string
       if (newRequest.quoteFor === 'from') {
         currencyCode = newRequest.fromCurrencyCode
-        exchangeAmount = await newRequest.fromWallet.nativeToDenomination(
+        exchangeAmount = await newRequest.fromWallet.convertNativeToDenominated(
           newRequest.nativeAmount,
-          currencyCode
+          newRequest.fromTokenId
         )
-        denomToNative = await newRequest.fromWallet.denominationToNative(
+        denomToNative = await newRequest.fromWallet.convertDenominatedToNative(
           '1',
-          currencyCode
+          newRequest.fromTokenId
         )
       } else {
         currencyCode = newRequest.toCurrencyCode
-        exchangeAmount = await newRequest.toWallet.nativeToDenomination(
+        exchangeAmount = await newRequest.toWallet.convertNativeToDenominated(
           newRequest.nativeAmount,
-          currencyCode
+          newRequest.toTokenId
         )
-        denomToNative = await newRequest.toWallet.denominationToNative(
+        denomToNative = await newRequest.toWallet.convertDenominatedToNative(
           '1',
-          currencyCode
+          newRequest.toTokenId
         )
       }
       const data = [{ currency_pair: `${currencyCode}_iso:USD` }]

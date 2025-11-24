@@ -14,6 +14,7 @@ import {
   EdgeCurrencyWallet,
   EdgeSwapQuote,
   EdgeSwapRequest,
+  EdgeTokenId,
   lockEdgeCorePlugins,
   makeEdgeContext,
   makeFakeEdgeWorld
@@ -49,6 +50,8 @@ interface FetchQuoteParams {
   toWallet: EdgeCurrencyWallet
   fromCurrencyCode: string
   toCurrencyCode: string
+  fromTokenId: EdgeTokenId
+  toTokenId: EdgeTokenId
   quoteFor: 'from' | 'to'
   exchangeAmount?: string
   nativeAmount?: string
@@ -165,6 +168,8 @@ async function main(): Promise<void> {
     toWallet,
     fromCurrencyCode,
     toCurrencyCode,
+    fromTokenId,
+    toTokenId,
     quoteFor,
     exchangeAmount,
     nativeAmount
@@ -173,14 +178,14 @@ async function main(): Promise<void> {
     if (exchangeAmount != null) {
       console.log(`Amount: ${quoteFor} ${exchangeAmount}`)
       if (quoteFor === 'from') {
-        nativeAmount = await fromWallet.denominationToNative(
+        nativeAmount = await fromWallet.convertDenominatedToNative(
           exchangeAmount,
-          fromCurrencyCode
+          fromTokenId
         )
       } else {
-        nativeAmount = await toWallet.denominationToNative(
+        nativeAmount = await toWallet.convertDenominatedToNative(
           exchangeAmount,
-          toCurrencyCode
+          toTokenId
         )
       }
     } else if (nativeAmount != null) {
@@ -189,22 +194,6 @@ async function main(): Promise<void> {
     } else {
       throw new Error('No nativeAmount or exchangeAmount')
     }
-
-    const getTokenId = (
-      coreWallet: EdgeCurrencyWallet,
-      currencyCode: string
-    ): string | null => {
-      if (coreWallet.currencyInfo.currencyCode === currencyCode) return null
-      const { allTokens } = coreWallet.currencyConfig
-      return (
-        Object.keys(allTokens).find(
-          edgeToken => allTokens[edgeToken].currencyCode === currencyCode
-        ) ?? null
-      )
-    }
-
-    const fromTokenId = getTokenId(fromWallet, fromCurrencyCode)
-    const toTokenId = getTokenId(toWallet, toCurrencyCode)
 
     const request: EdgeSwapRequest = {
       fromWallet,
@@ -230,8 +219,10 @@ async function main(): Promise<void> {
   await fetchQuote({
     fromWallet: btcWallet,
     fromCurrencyCode: 'BTC',
+    fromTokenId: null,
     toWallet: ethWallet,
     toCurrencyCode: 'ETH',
+    toTokenId: null,
     exchangeAmount: '0.002',
     quoteFor: 'from'
   })
@@ -239,8 +230,10 @@ async function main(): Promise<void> {
   await fetchQuote({
     fromWallet: ethWallet,
     fromCurrencyCode: 'UNI',
+    fromTokenId: '1f9840a85d5af5bf1d1762f925bdaddc4201f984',
     toWallet: avaxWallet,
     toCurrencyCode: 'JOE',
+    toTokenId: '6e84a6216ea6dacc71ee8e6b0a5b7322eebc0fdd',
     exchangeAmount: '100',
     quoteFor: 'from'
   })
@@ -248,8 +241,10 @@ async function main(): Promise<void> {
   await fetchQuote({
     fromWallet: arrrWallet,
     fromCurrencyCode: 'ARRR',
+    fromTokenId: null,
     toWallet: btcWallet,
     toCurrencyCode: 'BTC',
+    toTokenId: null,
     exchangeAmount: '109',
     quoteFor: 'from'
   })
@@ -257,8 +252,10 @@ async function main(): Promise<void> {
   await fetchQuote({
     fromWallet: btcWallet,
     fromCurrencyCode: 'BTC',
+    fromTokenId: null,
     toWallet: arrrWallet,
     toCurrencyCode: 'ARRR',
+    toTokenId: null,
     exchangeAmount: '0.01',
     quoteFor: 'from'
   })
@@ -267,8 +264,10 @@ async function main(): Promise<void> {
   await fetchQuote({
     fromWallet: ethWallet,
     fromCurrencyCode: 'ETH',
+    fromTokenId: null,
     toWallet: btcWallet,
     toCurrencyCode: 'BTC',
+    toTokenId: null,
     exchangeAmount: '0.004',
     quoteFor: 'to'
   })
@@ -276,8 +275,10 @@ async function main(): Promise<void> {
   await fetchQuote({
     fromWallet: maticWallet,
     fromCurrencyCode: 'USDC',
+    fromTokenId: '3c499c542cef5e3811e1192ce70d8cc03d5c3359',
     toWallet: ethWallet,
     toCurrencyCode: 'WBTC',
+    toTokenId: '2260fac5e5542a773aa44fbcfedf7c193bc2c599',
     exchangeAmount: '4000',
     quoteFor: 'from'
   })
@@ -285,8 +286,10 @@ async function main(): Promise<void> {
   const quote = await fetchQuote({
     fromWallet: bchWallet,
     fromCurrencyCode: 'BCH',
+    fromTokenId: null,
     toWallet: ethWallet,
     toCurrencyCode: 'WBTC',
+    toTokenId: '2260fac5e5542a773aa44fbcfedf7c193bc2c599',
     exchangeAmount: '10',
     quoteFor: 'from'
   })
@@ -296,8 +299,10 @@ async function main(): Promise<void> {
   await fetchQuote({
     fromWallet: bchWallet,
     fromCurrencyCode: 'BCH',
+    fromTokenId: null,
     toWallet: ethWallet,
     toCurrencyCode: 'WBTC',
+    toTokenId: '2260fac5e5542a773aa44fbcfedf7c193bc2c599',
     nativeAmount: quote?.toNativeAmount ?? '0',
     // nativeAmount: await ethWallet.denominationToNative('0.15185834', 'WBTC'),
     quoteFor: 'to'
@@ -306,8 +311,10 @@ async function main(): Promise<void> {
   await fetchQuote({
     fromWallet: btcWallet,
     fromCurrencyCode: 'BTC',
+    fromTokenId: null,
     toWallet: bchWallet,
     toCurrencyCode: 'BCH',
+    toTokenId: null,
     exchangeAmount: '0.2',
     quoteFor: 'from'
   })
@@ -315,8 +322,10 @@ async function main(): Promise<void> {
   await fetchQuote({
     fromWallet: bchWallet,
     fromCurrencyCode: 'BCH',
+    fromTokenId: null,
     toWallet: btcWallet,
     toCurrencyCode: 'BTC',
+    toTokenId: null,
     exchangeAmount: '0.2',
     quoteFor: 'from'
   })

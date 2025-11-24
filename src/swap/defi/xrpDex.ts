@@ -65,9 +65,7 @@ const fetchSwapQuoteInner = async (
   const { appId } = asInitOptions(env.initOptions)
 
   const {
-    fromCurrencyCode,
     fromTokenId,
-    toCurrencyCode,
     toTokenId,
     nativeAmount,
     fromWallet,
@@ -157,9 +155,9 @@ const fetchSwapQuoteInner = async (
 
   if (quoteFor === 'from') {
     fromNativeAmount = nativeAmount
-    const exchangeAmount = await fromWallet.nativeToDenomination(
+    const exchangeAmount = await fromWallet.convertNativeToDenominated(
       nativeAmount,
-      fromCurrencyCode
+      fromTokenId
     )
 
     quote = await getSellQuote(
@@ -180,16 +178,16 @@ const fetchSwapQuoteInner = async (
     quote = quote * (1 - volatilitySpread)
     quote =
       Math.round(quote * MAX_DECIMALS_MULTIPLIER) / MAX_DECIMALS_MULTIPLIER
-    toNativeAmount = await toWallet.denominationToNative(
+    toNativeAmount = await toWallet.convertDenominatedToNative(
       String(quote),
-      toCurrencyCode
+      toTokenId
     )
     toNativeAmount = round(toNativeAmount, 0)
   } else {
     toNativeAmount = nativeAmount
-    const exchangeAmount = await toWallet.nativeToDenomination(
+    const exchangeAmount = await toWallet.convertNativeToDenominated(
       nativeAmount,
-      toCurrencyCode
+      toTokenId
     )
 
     quote = await getBuyQuote(
@@ -211,9 +209,9 @@ const fetchSwapQuoteInner = async (
     quote =
       Math.round(quote * MAX_DECIMALS_MULTIPLIER) / MAX_DECIMALS_MULTIPLIER
 
-    fromNativeAmount = await fromWallet.denominationToNative(
+    fromNativeAmount = await fromWallet.convertDenominatedToNative(
       String(quote),
-      fromCurrencyCode
+      fromTokenId
     )
     fromNativeAmount = round(fromNativeAmount, 0)
   }

@@ -248,9 +248,9 @@ export function makeSwapKitPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
       throw new SwapCurrencyError(swapInfo, request)
     }
 
-    const sellAmount = await fromWallet.nativeToDenomination(
+    const sellAmount = await fromWallet.convertNativeToDenominated(
       nativeAmount,
-      fromCurrencyCode
+      fromTokenId
     )
 
     const quoteParams: ThorSwapQuoteParams = {
@@ -322,7 +322,7 @@ export function makeSwapKitPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
     const { expectedBuyAmount, providers, targetAddress, expiration } = thorSwap
 
     const toNativeAmount = toFixed(
-      await toWallet.denominationToNative(expectedBuyAmount, toCurrencyCode),
+      await toWallet.convertDenominatedToNative(expectedBuyAmount, toTokenId),
       0,
       0
     )

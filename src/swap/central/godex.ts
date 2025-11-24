@@ -208,13 +208,13 @@ export function makeGodexPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
     // Convert the native amount to a denomination:
     const quoteAmount =
       request.quoteFor === 'from'
-        ? await request.fromWallet.nativeToDenomination(
+        ? await request.fromWallet.convertNativeToDenominated(
             request.nativeAmount,
-            request.fromCurrencyCode
+            request.fromTokenId
           )
-        : await request.toWallet.nativeToDenomination(
+        : await request.toWallet.convertNativeToDenominated(
             request.nativeAmount,
-            request.toCurrencyCode
+            request.toTokenId
           )
 
     // Swap the currencies if we need a reverse quote:
@@ -243,13 +243,13 @@ export function makeGodexPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
     // min_amount returned could be for a different network than the user is requesting.
     // Check the minimum:
     const nativeMin = reverseQuote
-      ? await request.toWallet.denominationToNative(
+      ? await request.toWallet.convertDenominatedToNative(
           reply.min_amount,
-          request.toCurrencyCode
+          request.toTokenId
         )
-      : await request.fromWallet.denominationToNative(
+      : await request.fromWallet.convertDenominatedToNative(
           reply.min_amount,
-          request.fromCurrencyCode
+          request.fromTokenId
         )
 
     if (lt(request.nativeAmount, nativeMin)) {
@@ -298,16 +298,16 @@ export function makeGodexPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
     log('sendReply' + JSON.stringify(sendReply, null, 2))
     const quoteInfo = asQuoteInfo(sendReply)
     const fromNativeAmount = floor(
-      await request.fromWallet.denominationToNative(
+      await request.fromWallet.convertDenominatedToNative(
         quoteInfo.deposit_amount,
-        request.fromCurrencyCode
+        request.fromTokenId
       ),
       0
     )
     const toNativeAmount = floor(
-      await request.toWallet.denominationToNative(
+      await request.toWallet.convertDenominatedToNative(
         quoteInfo.withdrawal_amount,
-        request.toCurrencyCode
+        request.toTokenId
       ),
       0
     )

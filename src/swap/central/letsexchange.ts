@@ -267,13 +267,13 @@ export function makeLetsExchangePlugin(
     // Convert the native amount to a denomination:
     const quoteAmount =
       request.quoteFor === 'from'
-        ? await request.fromWallet.nativeToDenomination(
+        ? await request.fromWallet.convertNativeToDenominated(
             request.nativeAmount,
-            request.fromCurrencyCode
+            request.fromTokenId
           )
-        : await request.toWallet.nativeToDenomination(
+        : await request.toWallet.convertNativeToDenominated(
             request.nativeAmount,
-            request.toCurrencyCode
+            request.toTokenId
           )
 
     const {
@@ -316,13 +316,13 @@ export function makeLetsExchangePlugin(
 
     // Check the min/max:
     const nativeMin = reverseQuote
-      ? await request.toWallet.denominationToNative(
+      ? await request.toWallet.convertDenominatedToNative(
           reply.min_amount,
-          request.toCurrencyCode
+          request.toTokenId
         )
-      : await request.fromWallet.denominationToNative(
+      : await request.fromWallet.convertDenominatedToNative(
           reply.min_amount,
-          request.fromCurrencyCode
+          request.fromTokenId
         )
 
     if (lt(request.nativeAmount, nativeMin)) {
@@ -334,13 +334,13 @@ export function makeLetsExchangePlugin(
     }
 
     const nativeMax = reverseQuote
-      ? await request.toWallet.denominationToNative(
+      ? await request.toWallet.convertDenominatedToNative(
           reply.max_amount,
-          request.toCurrencyCode
+          request.toTokenId
         )
-      : await request.fromWallet.denominationToNative(
+      : await request.fromWallet.convertDenominatedToNative(
           reply.max_amount,
-          request.fromCurrencyCode
+          request.fromTokenId
         )
 
     if (gt(nativeMax, '0')) {
@@ -378,13 +378,13 @@ export function makeLetsExchangePlugin(
     log('sendReply', sendReply)
     const quoteInfo = asQuoteInfo(sendReply)
 
-    const rawFromNativeAmount = await request.fromWallet.denominationToNative(
+    const rawFromNativeAmount = await request.fromWallet.convertDenominatedToNative(
       quoteInfo.deposit_amount,
-      request.fromCurrencyCode
+      request.fromTokenId
     )
-    const rawToNativeAmount = await request.toWallet.denominationToNative(
+    const rawToNativeAmount = await request.toWallet.convertDenominatedToNative(
       quoteInfo.withdrawal_amount,
-      request.toCurrencyCode
+      request.toTokenId
     )
     const fromNativeAmount = rawFromNativeAmount.split('.')[0]
     const toNativeAmount = rawToNativeAmount.split('.')[0]
