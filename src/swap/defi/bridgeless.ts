@@ -417,7 +417,7 @@ export function makeBridgelessPlugin(
               headers: {
                 'Content-Type': 'application/json'
               },
-              body: JSON.stringify({ chainId, txHash, txNonce })
+              body: JSON.stringify({ chainId, txHash: txid, txNonce })
             })
             if (!res.ok) {
               throw new Error('Failed to send txid to bridgeless submitter')
