@@ -4,6 +4,8 @@ import {
   EdgeSwapPlugin
 } from 'edge-core-js/types'
 
+import { mayaprotocol as mayaprotocolMapping } from '../../../mappings/mayaprotocol'
+import { mapToStringMap } from '../../../util/swapHelpers'
 import { ExchangeInfo, makeThorchainBasedPlugin } from './thorchainCommon'
 
 const swapInfo: EdgeSwapInfo = {
@@ -23,15 +25,9 @@ const infoServer: {
 } = { exchangeInfo: undefined, exchangeInfoLastUpdate: 0 }
 
 // Network names that don't match parent network currency code
-export const MAINNET_CODE_TRANSCRIPTION: { [cc: string]: string } = {
-  arbitrum: 'ARB',
-  bitcoin: 'BTC',
-  dash: 'DASH',
-  ethereum: 'ETH',
-  litecoin: 'LTC',
-  thorchainrune: 'THOR',
-  zcash: 'ZEC'
-}
+export const MAINNET_CODE_TRANSCRIPTION: {
+  [cc: string]: string
+} = mapToStringMap(mayaprotocolMapping)
 
 export const makeMayaProtocolPlugin = (
   opts: EdgeCorePluginOptions

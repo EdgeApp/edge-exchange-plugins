@@ -8,14 +8,14 @@ exolix.set('3ULL', null)
 exolix.set('ACA', null)
 
 // Display Name: Cardano
-exolix.set('ADA', null)
+exolix.set('ADA', 'cardano')
 
 // Display Name: AKASH
 exolix.set('AKASH', null)
 
 // Display Name: Algorand
 // Short Name: ALGO
-exolix.set('ALGO', null)
+exolix.set('ALGO', 'algorand')
 
 // Display Name: ALPH
 exolix.set('ALPH', null)
@@ -36,7 +36,7 @@ exolix.set('AR', null)
 
 // Display Name: Arbitrum One
 // Short Name: ARB
-exolix.set('ARBITRUM', null)
+exolix.set('ARBITRUM', 'arbitrum')
 
 // Display Name: ARCH
 exolix.set('ARCH', null)
@@ -46,14 +46,14 @@ exolix.set('ARDR', null)
 
 // Display Name: Pirate Chain
 // Short Name: ARRR
-exolix.set('ARRR', null)
+exolix.set('ARRR', 'piratechain')
 
 // Display Name: Astar Network
 exolix.set('ASTR', null)
 
 // Display Name: Cosmos
 // Short Name: ATOM
-exolix.set('ATOM', null)
+exolix.set('ATOM', 'cosmoshub')
 
 // Display Name: AURA
 exolix.set('AURA', null)
@@ -61,9 +61,13 @@ exolix.set('AURA', null)
 // Display Name: AURORA
 exolix.set('AURORA', null)
 
+// Display Name: Avalanche X-CHAIN
+// Short Name: AVAX
+exolix.set('AVAX', null)
+
 // Display Name: Avalanche C-CHAIN
 // Short Name: AVAX_CCHAIN
-exolix.set('AVAXC', null)
+exolix.set('AVAXC', 'avalanche')
 
 // Display Name: AZERO
 exolix.set('AZERO', null)
@@ -79,10 +83,10 @@ exolix.set('BAN', null)
 exolix.set('BAND', null)
 
 // Display Name: BASE MAINNET
-exolix.set('BASE', null)
+exolix.set('BASE', 'base')
 
 // Display Name: Bitcoin Cash
-exolix.set('BCH', null)
+exolix.set('BCH', 'bitcoincash')
 
 // Display Name: BELDEX
 // Short Name: BDX
@@ -120,14 +124,14 @@ exolix.set('BRISE', null)
 
 // Display Name: BNB Smart Chain (BEP20)
 // Short Name: BEP20
-exolix.set('BSC', null)
+exolix.set('BSC', 'binancesmartchain')
 
 // Display Name: Bitcoin SV
 // Short Name: BSV
 exolix.set('BSV', null)
 
 // Display Name: Bitcoin
-exolix.set('BTC', null)
+exolix.set('BTC', 'bitcoin')
 
 // Display Name: BTCRUNES
 exolix.set('BTCRUNES', null)
@@ -147,7 +151,7 @@ exolix.set('CCD', null)
 
 // Display Name: CELO
 // Short Name: CELO
-exolix.set('CELO', null)
+exolix.set('CELO', 'celo')
 
 // Display Name: CHEQ
 exolix.set('CHEQ', null)
@@ -187,14 +191,14 @@ exolix.set('DAG', null)
 
 // Display Name: Dash
 // Short Name: DASH
-exolix.set('DASH', null)
+exolix.set('DASH', 'dash')
 
 // Display Name: Decred
 // Short Name: DCR
 exolix.set('DCR', null)
 
 // Display Name: DigiByte
-exolix.set('DGB', null)
+exolix.set('DGB', 'digibyte')
 
 // Display Name: DIONE
 exolix.set('DIONE', null)
@@ -204,7 +208,7 @@ exolix.set('DNX', null)
 
 // Display Name: dogecoin
 // Short Name: DOGE
-exolix.set('DOGE', null)
+exolix.set('DOGE', 'dogecoin')
 
 // Display Name: DYM
 exolix.set('DYM', null)
@@ -221,18 +225,18 @@ exolix.set('ELA', null)
 exolix.set('ELF', null)
 
 // Display Name: EOS
-exolix.set('EOS', null)
+exolix.set('EOS', 'eos')
 
 // Display Name: Ergo Network
 exolix.set('ERG', null)
 
 // Display Name: Ethereum Classic
 // Short Name: ETC
-exolix.set('ETC', null)
+exolix.set('ETC', 'ethereumclassic')
 
 // Display Name: Ethereum
 // Short Name: ERC20
-exolix.set('ETH', null)
+exolix.set('ETH', 'ethereum')
 
 // Display Name: EthereumPoW
 // Short Name: ETHW
@@ -252,7 +256,7 @@ exolix.set('FET', null)
 
 // Display Name: Filecoin
 // Short Name: FIL
-exolix.set('FIL', null)
+exolix.set('FIL', 'filecoin')
 
 // Display Name: FIO
 // Short Name: FIO
@@ -272,6 +276,9 @@ exolix.set('FLR', null)
 
 // Display Name: FLUX
 exolix.set('FLUX', null)
+
+// WARNING: Not included by the synchronizer synchronization
+exolix.set('FTM', 'fantom')
 
 // Display Name: Bahamut (BHRC20)
 // Short Name: BHRC20
@@ -298,7 +305,7 @@ exolix.set('HAQQ', null)
 
 // Display Name: Hedera Hashgraph
 // Short Name: HBAR
-exolix.set('HBAR', null)
+exolix.set('HBAR', 'hedera')
 
 // Display Name: HIVE
 // Short Name: HIVE
@@ -379,7 +386,7 @@ exolix.set('LKY', null)
 
 // Display Name: Litecoin
 // Short Name: LTC
-exolix.set('LTC', null)
+exolix.set('LTC', 'litecoin')
 
 // Display Name: LUMIA
 exolix.set('LUMIA', null)
@@ -401,7 +408,7 @@ exolix.set('MAPO', null)
 
 // Display Name: Polygon
 // Short Name: POLYGON
-exolix.set('MATIC', null)
+exolix.set('MATIC', 'polygon')
 
 // Display Name: Merlin
 // Short Name: MERL
@@ -474,11 +481,11 @@ exolix.set('OORT', null)
 
 // Display Name: Optimism
 // Short Name: OP
-exolix.set('OPTIMISM', null)
+exolix.set('OPTIMISM', 'optimism')
 
 // Display Name: Osmosis
 // Short Name: OSMO
-exolix.set('OSMO', null)
+exolix.set('OSMO', 'osmosis')
 
 // Display Name: PEPECOIN
 exolix.set('PEPECOIN', null)
@@ -488,7 +495,7 @@ exolix.set('PEPECOIN', null)
 exolix.set('PINETWORK', null)
 
 // Display Name: PIVX
-exolix.set('PIVX', null)
+exolix.set('PIVX', 'pivx')
 
 // Display Name: POKT
 exolix.set('POKT', null)
@@ -501,7 +508,7 @@ exolix.set('QTC', null)
 
 // Display Name: Qtum
 // Short Name: QTUM
-exolix.set('QTUM', null)
+exolix.set('QTUM', 'qtum')
 
 // Display Name: QUBIC
 exolix.set('QUBIC', null)
@@ -535,11 +542,11 @@ exolix.set('ROSE', null)
 exolix.set('RSK', null)
 
 // Display Name: THORChain
-exolix.set('RUNE', null)
+exolix.set('RUNE', 'thorchainrune')
 
 // Display Name: Ravencoin
 // Short Name: RVN
-exolix.set('RVN', null)
+exolix.set('RVN', 'ravencoin')
 
 // Display Name: SAGA
 exolix.set('SAGA', null)
@@ -564,7 +571,7 @@ exolix.set('SGB', null)
 exolix.set('SHARDEUM', null)
 
 // Display Name: Solana
-exolix.set('SOL', null)
+exolix.set('SOL', 'solana')
 
 // Display Name: Sonic
 exolix.set('SONIC', null)
@@ -597,7 +604,7 @@ exolix.set('STX', null)
 
 // Display Name: Sui
 // Short Name: SUI
-exolix.set('SUI', null)
+exolix.set('SUI', 'sui')
 
 // Display Name: SUPRA
 exolix.set('SUPRA', null)
@@ -626,7 +633,7 @@ exolix.set('TARA', null)
 exolix.set('TARI', null)
 
 // Display Name: Telos
-exolix.set('TELOS', null)
+exolix.set('TELOS', 'telos')
 
 // Display Name: Theta Token
 exolix.set('THETA', null)
@@ -643,11 +650,11 @@ exolix.set('TOMO', null)
 
 // Display Name: The Open Network
 // Short Name: TONCOIN
-exolix.set('TON', null)
+exolix.set('TON', 'ton')
 
 // Display Name: Tron
 // Short Name: TRC20
-exolix.set('TRX', null)
+exolix.set('TRX', 'tron')
 
 // Display Name: VANRY
 exolix.set('VANRY', null)
@@ -680,7 +687,7 @@ exolix.set('XCH', null)
 
 // Display Name: eCash
 // Short Name: XEC
-exolix.set('XEC', null)
+exolix.set('XEC', 'ecash')
 
 // Display Name: XELIS
 exolix.set('XELIS', null)
@@ -698,11 +705,11 @@ exolix.set('XION', null)
 
 // Display Name: Stellar
 // Short Name: STELLAR
-exolix.set('XLM', null)
+exolix.set('XLM', 'stellar')
 
 // Display Name: Monero
 // Short Name: XMR
-exolix.set('XMR', null)
+exolix.set('XMR', 'monero')
 
 // Display Name: XNA
 exolix.set('XNA', null)
@@ -715,10 +722,10 @@ exolix.set('XPLA', null)
 exolix.set('XPR', null)
 
 // Display Name: Ripple
-exolix.set('XRP', null)
+exolix.set('XRP', 'ripple')
 
 // Display Name: Tezos
-exolix.set('XTZ', null)
+exolix.set('XTZ', 'tezos')
 
 // Display Name: Verge
 exolix.set('XVG', null)
@@ -728,7 +735,7 @@ exolix.set('XVG', null)
 exolix.set('XYM', null)
 
 // Display Name: Zano
-exolix.set('ZANO', null)
+exolix.set('ZANO', 'zano')
 
 // Display Name: ZETA
 exolix.set('ZETACHAIN', null)
