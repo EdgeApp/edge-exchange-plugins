@@ -121,7 +121,6 @@ export const MAINNET_CODE_TRANSCRIPTION: CurrencyPluginIdSwapChainCodeMap = {
   sonic: null
 }
 
-// Provider data
 let chainCodeTickerMap: ChainCodeTickerMap = new Map()
 let lastUpdated = 0
 const EXPIRATION = 1000 * 60 * 60
@@ -147,6 +146,11 @@ export function xgramPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
         headers
       })
 
+      if (!response.ok) {
+        log.warn('Xgram: list-currency-options HTTP error', response.status)
+        return
+      }
+
       const json = await response.json()
       const jsonArr = Object.entries(json).map(([key, data]) => ({
         ...(data as object),
@@ -154,17 +158,23 @@ export function xgramPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
       }))
       const assets = asXgramAssets(jsonArr)
 
-      const chaincodeArray = Object.values(MAINNET_CODE_TRANSCRIPTION)
+      const mainnetValueToPlugin: Record<string, string> = {}
+      for (const [pluginIdKey, mainnetCode] of Object.entries(
+        MAINNET_CODE_TRANSCRIPTION
+      )) {
+        if (mainnetCode != null) mainnetValueToPlugin[mainnetCode] = pluginIdKey
+      }
+
       const out: ChainCodeTickerMap = new Map()
       for (const asset of assets) {
-        if (chaincodeArray.includes(asset.coinName)) {
-          const tokenCodes = out.get(asset.coinName) ?? []
-          tokenCodes.push({
-            tokenCode: asset.coinName,
-            contractAddress: asset.contract
-          })
-          out.set(asset.network, tokenCodes)
-        }
+        const pluginKey = mainnetValueToPlugin[asset.coinName]
+
+        const tokenCodes = out.get(pluginKey) ?? []
+        tokenCodes.push({
+          tokenCode: asset.coinName,
+          contractAddress: asset.contract ?? null
+        })
+        out.set(pluginKey, tokenCodes)
       }
 
       chainCodeTickerMap = out
@@ -179,7 +189,6 @@ export function xgramPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
   ): Promise<SwapOrder> => {
     const { fromWallet, toWallet, nativeAmount } = request
 
-    // Grab addresses:
     const [fromAddress, toAddress] = await Promise.all([
       getAddress(fromWallet),
       getAddress(toWallet)
@@ -196,7 +205,6 @@ export function xgramPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
       isSelling: boolean,
       largeDenomAmount: string
     ): Promise<XgramResponse> {
-      const validUntil = null
       const orderBody = {
         fromCurrency: xgramCodes.fromCurrencyCode,
         toCurrency: xgramCodes.toCurrencyCode,
@@ -210,21 +218,27 @@ export function xgramPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
 
       const createExchangeUrl = isSelling ? newExchange : newRevExchange
 
+      const qs = new URLSearchParams({
+        toAddress: String(toAddress),
+        refundAddress: String(fromAddress),
+        fromCcy: orderBody.fromCurrency,
+        toCcy: orderBody.toCurrency,
+        ccyAmount: largeDenomAmount,
+        type: swapType
+      }).toString()
+
       const orderResponse = await fetchCors(
-        uri +
-          createExchangeUrl +
-          `?${new URLSearchParams({
-            toAddress: String(toAddress),
-            refundAddress: String(fromAddress),
-            fromCcy: orderBody.fromCurrency,
-            toCcy: orderBody.toCurrency,
-            ccyAmount: largeDenomAmount,
-            type: swapType
-          }).toString()}`,
+        uri + createExchangeUrl + `?${qs}`,
         {
           headers
         }
       )
+
+      if (!orderResponse.ok) {
+        const text = await orderResponse.text().catch(() => '')
+        log.warn('Xgram: create order HTTP error', orderResponse.status, text)
+        throw new Error('Xgram create order failed')
+      }
 
       const orderResponseJson = await orderResponse.json()
 
@@ -242,11 +256,18 @@ export function xgramPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
         if (orderResponseJson.error === 'Max amount error') {
           throw new SwapAboveLimitError(swapInfo, denomAmount, quoteFor)
         }
+        throw new Error('Xgram create order error')
       }
 
-      const orderRes = {
+      let parsedValidUntil: Date | null = null
+      if (orderResponseJson.expiresAt != null) {
+        const maybe = new Date(orderResponseJson.expiresAt)
+        if (!Number.isNaN(maybe.getTime())) parsedValidUntil = maybe
+      }
+
+      return {
         id: orderResponseJson.id,
-        validUntil,
+        validUntil: parsedValidUntil,
         fromAmount: isSelling
           ? orderBody.fromAmount
           : orderResponseJson.ccyAmountFrom,
@@ -256,7 +277,6 @@ export function xgramPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
         payinAddress: orderResponseJson.depositAddress,
         payinExtraId: orderResponseJson.depositTag
       }
-      return orderRes
     }
 
     async function swapExchange(isSelling: boolean): Promise<SwapOrder> {
@@ -269,14 +289,21 @@ export function xgramPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
         nativeAmount,
         isSelling ? request.fromTokenId : request.toTokenId
       )
-      // Get min and max
-      const marketRangeResponse = await fetchCors(
-        uri +
-          `retrieve-rate-value?ccyAmount=${largeDenomAmount}&${getRateUrl}&type=${swapType}`,
-        { headers }
-      )
-      const marketRangeResponseJson = await marketRangeResponse.json()
 
+      const rateQs = `retrieve-rate-value?ccyAmount=${largeDenomAmount}&${getRateUrl}&type=${swapType}`
+      const marketRangeResponse = await fetchCors(uri + rateQs, { headers })
+
+      if (!marketRangeResponse.ok) {
+        const text = await marketRangeResponse.text().catch(() => '')
+        log.warn(
+          'Xgram: retrieve-rate-value HTTP error',
+          marketRangeResponse.status,
+          text
+        )
+        throw new Error('Xgram retrieve-rate-value failed')
+      }
+
+      const marketRangeResponseJson = await marketRangeResponse.json()
       const { minFrom, maxFrom } = asMarketRange(marketRangeResponseJson)
 
       if (lt(largeDenomAmount, minFrom)) {
@@ -285,11 +312,11 @@ export function xgramPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
           minFrom,
           isSelling ? request.fromTokenId : request.toTokenId
         )
-        if (isSelling) {
-          throw new SwapBelowLimitError(swapInfo, minNativeAmount)
-        } else {
-          throw new SwapBelowLimitError(swapInfo, minNativeAmount, 'to')
-        }
+        throw new SwapBelowLimitError(
+          swapInfo,
+          minNativeAmount,
+          isSelling ? undefined : 'to'
+        )
       }
 
       if (gt(largeDenomAmount, maxFrom)) {
@@ -298,11 +325,11 @@ export function xgramPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
           maxFrom,
           isSelling ? request.fromTokenId : request.toTokenId
         )
-        if (isSelling) {
-          throw new SwapAboveLimitError(swapInfo, maxNativeAmount)
-        } else {
-          throw new SwapAboveLimitError(swapInfo, maxNativeAmount, 'to')
-        }
+        throw new SwapAboveLimitError(
+          swapInfo,
+          maxNativeAmount,
+          isSelling ? undefined : 'to'
+        )
       }
 
       const {
@@ -319,7 +346,6 @@ export function xgramPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
         fromAmount.toString(),
         request.fromTokenId
       )
-
       const toNativeAmount = denominationToNative(
         request.toWallet,
         toAmount.toString(),
@@ -414,14 +440,11 @@ export function xgramPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
   return out
 }
 
-/**
- * An optional value, where a blank string means undefined.
- */
 export function asOptionalBlank<T>(
-  cleaner: (raw: null | string) => T
+  cleaner: Cleaner<T>
 ): Cleaner<T | undefined> {
-  return function asIgnoredBlank(raw) {
-    if (raw == null || raw === '') return
+  return function asIgnoredBlank(raw: any) {
+    if (raw == null || raw === '') return undefined
     return cleaner(raw)
   }
 }
@@ -431,15 +454,14 @@ const asMarketRange = asObject({
   minFrom: asString
 })
 
-const asOrder = asObject({
-  fromAmount: asString,
-  toAmount: asString,
-  payinExtraId: asOptionalBlank(asString),
-  id: asString,
-  payinAddress: asString
-})
-
-type XgramResponse = ReturnType<typeof asOrder> & { validUntil?: Date | null }
+interface XgramResponse {
+  id: string
+  fromAmount: string
+  toAmount: string
+  payinExtraId?: string
+  payinAddress: string
+  validUntil?: Date | null
+}
 
 const asXgramAssets = asArray(
   asObject({
