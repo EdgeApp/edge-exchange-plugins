@@ -5,22 +5,22 @@ export const rango = new Map<string, EdgeCurrencyPluginId | null>()
 rango.set('AKASH', null)
 
 // Display Name: Arbitrum
-rango.set('ARBITRUM', null)
+rango.set('ARBITRUM', 'arbitrum')
 
 // Display Name: Aurora
 rango.set('AURORA', null)
 
 // Display Name: Avalanche
-rango.set('AVAX_CCHAIN', null)
+rango.set('AVAX_CCHAIN', 'avalanche')
 
 // Display Name: Axelar
-rango.set('AXELAR', null)
+rango.set('AXELAR', 'axelar')
 
 // Display Name: BandChain
 rango.set('BANDCHAIN', null)
 
 // Display Name: Base
-rango.set('BASE', null)
+rango.set('BASE', 'base')
 
 // Display Name: Bitcoin Cash
 rango.set('BCH', null)
@@ -53,13 +53,13 @@ rango.set('BOBA_BNB', null)
 rango.set('BRISE', null)
 
 // Display Name: BNB Smart Chain
-rango.set('BSC', null)
+rango.set('BSC', 'binancesmartchain')
 
 // Display Name: Bitcoin
-rango.set('BTC', null)
+rango.set('BTC', 'bitcoin')
 
 // Display Name: Celo
-rango.set('CELO', null)
+rango.set('CELO', 'celo')
 
 // Display Name: Chihuahua
 rango.set('CHIHUAHUA', null)
@@ -68,7 +68,7 @@ rango.set('CHIHUAHUA', null)
 rango.set('COMDEX', null)
 
 // Display Name: Cosmos
-rango.set('COSMOS', null)
+rango.set('COSMOS', 'cosmoshub')
 
 // Display Name: Cronos
 rango.set('CRONOS', null)
@@ -92,13 +92,13 @@ rango.set('DYDX', null)
 rango.set('EMONEY', null)
 
 // Display Name: Ethereum
-rango.set('ETH', null)
+rango.set('ETH', 'ethereum')
 
 // Display Name: Evmos
 rango.set('EVMOS', null)
 
 // Display Name: Fantom
-rango.set('FANTOM', null)
+rango.set('FANTOM', 'fantom')
 
 // Display Name: Fuse
 rango.set('FUSE', null)
@@ -179,16 +179,16 @@ rango.set('NOBLE', null)
 rango.set('OKC', null)
 
 // Display Name: Optimism
-rango.set('OPTIMISM', null)
+rango.set('OPTIMISM', 'optimism')
 
 // Display Name: Osmosis
-rango.set('OSMOSIS', null)
+rango.set('OSMOSIS', 'osmosis')
 
 // Display Name: Persistence
 rango.set('PERSISTENCE', null)
 
 // Display Name: Polygon
-rango.set('POLYGON', null)
+rango.set('POLYGON', 'polygon')
 
 // Display Name: polygon zkEVM
 rango.set('POLYGONZK', null)
@@ -212,7 +212,7 @@ rango.set('SHIMMER', null)
 rango.set('SIF', null)
 
 // Display Name: Solana
-rango.set('SOLANA', null)
+rango.set('SOLANA', 'solana')
 
 // Display Name: Soneium
 rango.set('SONEIUM', null)
@@ -248,7 +248,7 @@ rango.set('TERRA', null)
 rango.set('TERRA_CLASSIC', null)
 
 // Display Name: Thorchain
-rango.set('THOR', null)
+rango.set('THOR', 'thorchainrune')
 
 // Display Name: Ton
 rango.set('TON', null)
@@ -272,7 +272,7 @@ rango.set('XRPL', null)
 rango.set('ZETA_CHAIN', null)
 
 // Display Name: zkSync era
-rango.set('ZKSYNC', null)
+rango.set('ZKSYNC', 'zksync')
 
 // Display Name: Zora
 rango.set('ZORA', null)

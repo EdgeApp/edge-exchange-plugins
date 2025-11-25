@@ -4,6 +4,8 @@ import {
   EdgeSwapPlugin
 } from 'edge-core-js/types'
 
+import { thorchain as thorchainMapping } from '../../../mappings/thorchain'
+import { mapToStringMap } from '../../../util/swapHelpers'
 import {
   asInitOptions,
   ExchangeInfo,
@@ -29,20 +31,9 @@ const infoServer: {
 } = { exchangeInfo: undefined, exchangeInfoLastUpdate: 0 }
 
 // Network names that don't match parent network currency code
-export const MAINNET_CODE_TRANSCRIPTION: { [cc: string]: string } = {
-  avalanche: 'AVAX',
-  base: 'BASE',
-  binancechain: 'BNB',
-  binancesmartchain: 'BSC',
-  bitcoin: 'BTC',
-  bitcoincash: 'BCH',
-  dogecoin: 'DOGE',
-  ethereum: 'ETH',
-  litecoin: 'LTC',
-  ripple: 'XRP',
-  tron: 'TRON',
-  thorchainrune: 'THOR'
-}
+const MAINNET_CODE_TRANSCRIPTION: {
+  [cc: string]: string
+} = mapToStringMap(thorchainMapping)
 
 export const makeThorchainPlugin = (
   opts: EdgeCorePluginOptions

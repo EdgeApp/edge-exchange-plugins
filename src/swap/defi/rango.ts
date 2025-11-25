@@ -23,10 +23,12 @@ import {
   SwapCurrencyError
 } from 'edge-core-js/types'
 
+import { rango as rangoMapping } from '../../mappings/rango'
 import { div18 } from '../../util/biggystringplus'
 import {
   getMaxSwappable,
   makeSwapPluginQuote,
+  mapToStringMap,
   SwapOrder
 } from '../../util/swapHelpers'
 import {
@@ -59,33 +61,7 @@ const orderUri = 'https://explorer.rango.exchange/search?query='
 const EXPIRATION_MS = 1000 * 60
 const EXCHANGE_INFO_UPDATE_FREQ_MS = 60000
 
-const MAINNET_CODE_TRANSCRIPTION: StringMap = {
-  arbitrum: 'ARBITRUM',
-  axelar: 'AXELAR', // "Supported," but unable to find actual routes at this time
-  avalanche: 'AVAX_CCHAIN',
-  base: 'BASE',
-  binancesmartchain: 'BSC',
-  bitcoin: 'BTC', // Pending "from" support. Enabled only to allow "to" swaps.
-  celo: 'CELO', // May not have any valid single step routes at this time
-  cosmoshub: 'COSMOS',
-  // dash: 'DASH',
-  // dogecoin: 'DOGE',
-  ethereum: 'ETH',
-  fantom: 'FANTOM',
-  // injective: 'INJECTIVE',
-  // litecoin: 'LTC',
-  // maya: 'MAYA',
-  // moonbeam: 'MOONBEAM',
-  // moonriver: 'MOONRIVER',
-  // okexchain: 'OKC',
-  optimism: 'OPTIMISM',
-  osmosis: 'OSMOSIS',
-  polygon: 'POLYGON',
-  solana: 'SOLANA',
-  thorchainrune: 'THOR',
-  // tron: 'TRON', // Currently only centralized bridges available, so won't return a quote.
-  zksync: 'ZKSYNC'
-}
+const MAINNET_CODE_TRANSCRIPTION: StringMap = mapToStringMap(rangoMapping)
 
 const RANGO_SERVERS_DEFAULT = ['https://api.rango.exchange']
 
