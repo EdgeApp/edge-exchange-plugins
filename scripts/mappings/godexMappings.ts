@@ -5,7 +5,7 @@ export const godex = new Map<string, EdgeCurrencyPluginId | null>()
 godex.set('ACA', null)
 
 // Display Name: Algorand
-godex.set('ALGO', null)
+godex.set('ALGO', 'algorand')
 
 // Display Name: Aptos
 godex.set('APT', null)
@@ -14,7 +14,7 @@ godex.set('APT', null)
 godex.set('AR', null)
 
 // Display Name: Arbitrum One
-godex.set('ARBITRUM', null)
+godex.set('ARBITRUM', 'arbitrum')
 
 // Display Name: Ardor
 godex.set('ARDR', null)
@@ -26,34 +26,43 @@ godex.set('ARK', null)
 godex.set('ASTR', null)
 
 // Display Name: Cosmos
-godex.set('ATOM', null)
+godex.set('ATOM', 'cosmoshub')
 
 // Display Name: Avalanche
 godex.set('AVAX', null)
 
 // Display Name: AVAX C-Chain
-godex.set('AVAXC', null)
+godex.set('AVAXC', 'avalanche')
 
 // Display Name: BAND
 godex.set('BAND', null)
 
 // Display Name: Base
-godex.set('BASE', null)
+godex.set('BASE', 'base')
 
 // Display Name: Bitcoin Cash
-godex.set('BCH', null)
+godex.set('BCH', 'bitcoincash')
+
+// WARNING: Not included by the synchronizer synchronization
+godex.set('BNB', 'binance')
 
 // Display Name: BNC
 godex.set('BNC', null)
 
 // Display Name: Binance Smart Chain (BEP20)
-godex.set('BSC', null)
+godex.set('BSC', 'binancesmartchain')
+
+// WARNING: Not included by the synchronizer synchronization
+godex.set('BSV', 'bitcoinsv')
 
 // Display Name: Bitcoin
-godex.set('BTC', null)
+godex.set('BTC', 'bitcoin')
+
+// WARNING: Not included by the synchronizer synchronization
+godex.set('BTG', 'bitcoingold')
 
 // Display Name: CELO
-godex.set('CELO', null)
+godex.set('CELO', 'celo')
 
 // Display Name: Conflux
 godex.set('CFX', null)
@@ -71,16 +80,16 @@ godex.set('CKB', null)
 godex.set('CTK', null)
 
 // Display Name: Dash
-godex.set('DASH', null)
+godex.set('DASH', 'dash')
 
 // Display Name: Decred
 godex.set('DCR', null)
 
 // Display Name: DigiByte
-godex.set('DGB', null)
+godex.set('DGB', 'digibyte')
 
 // Display Name: dogecoin
-godex.set('DOGE', null)
+godex.set('DOGE', 'dogecoin')
 
 // Display Name: Elrond eGold
 godex.set('EGLD', null)
@@ -89,37 +98,43 @@ godex.set('EGLD', null)
 godex.set('ENJ', null)
 
 // Display Name: EOS
-godex.set('EOS', null)
+godex.set('EOS', 'eos')
 
 // Display Name: Ethereum Classic
-godex.set('ETC', null)
+godex.set('ETC', 'ethereumclassic')
 
 // Display Name: Ethereum Express Chain
 godex.set('ETE', null)
 
 // Display Name: Ethereum
-godex.set('ETH', null)
+godex.set('ETH', 'ethereum')
+
+// WARNING: Not included by the synchronizer synchronization
+godex.set('ETHW', 'ethereumpow')
 
 // Display Name: Fetch.AI
 godex.set('FET', null)
 
 // Display Name: Filecoin
-godex.set('FIL', null)
+godex.set('FIL', 'filecoin')
 
 // Display Name: FIO Protocol
-godex.set('FIO', null)
+godex.set('FIO', 'fio')
+
+// WARNING: Not included by the synchronizer synchronization
+godex.set('FIRO', 'zcoin')
 
 // Display Name: Flow
 godex.set('FLOW', null)
 
 // Display Name: Fantom
-godex.set('FTM', null)
+godex.set('FTM', 'fantom')
 
 // Display Name: Moonbeam
 godex.set('GLMR', null)
 
 // Display Name: Hedera Hashgraph
-godex.set('HBAR', null)
+godex.set('HBAR', 'hedera')
 
 // Display Name: HIVE
 godex.set('HIVE', null)
@@ -152,7 +167,7 @@ godex.set('KAVA', null)
 godex.set('LINEA', null)
 
 // Display Name: Litecoin
-godex.set('LTC', null)
+godex.set('LTC', 'litecoin')
 
 // Display Name: Terra
 godex.set('LUNA', null)
@@ -164,7 +179,7 @@ godex.set('LUNC', null)
 godex.set('MANTA', null)
 
 // Display Name: Polygon
-godex.set('MATIC', null)
+godex.set('MATIC', 'polygon')
 
 // Display Name: METIS
 godex.set('METIS', null)
@@ -188,13 +203,13 @@ godex.set('ONE', null)
 godex.set('ONT', null)
 
 // Display Name: OPTIMISM
-godex.set('OPTIMISM', null)
+godex.set('OPTIMISM', 'optimism')
 
 // Display Name: OSMO
-godex.set('OSMO', null)
+godex.set('OSMO', 'osmosis')
 
 // Display Name: PIVX
-godex.set('PIVX', null)
+godex.set('PIVX', 'pivx')
 
 // Display Name: PLC Ultima
 godex.set('PLCU', null)
@@ -203,7 +218,7 @@ godex.set('PLCU', null)
 godex.set('POLYX', null)
 
 // Display Name: Qtum
-godex.set('QTUM', null)
+godex.set('QTUM', 'qtum')
 
 // Display Name: REI
 godex.set('REI', null)
@@ -215,13 +230,13 @@ godex.set('RON', null)
 godex.set('ROSE', null)
 
 // Display Name: RSK
-godex.set('RSK', null)
+godex.set('RSK', 'rsk')
 
 // Display Name: RUNE
-godex.set('RUNE', null)
+godex.set('RUNE', 'thorchainrune')
 
 // Display Name: Ravencoin
-godex.set('RVN', null)
+godex.set('RVN', 'ravencoin')
 
 // Display Name: SCRT
 godex.set('SCRT', null)
@@ -230,7 +245,7 @@ godex.set('SCRT', null)
 godex.set('SEI', null)
 
 // Display Name: Solana Network
-godex.set('SOL', null)
+godex.set('SOL', 'solana')
 
 // Display Name: StarkNet
 godex.set('STARKNET', null)
@@ -242,7 +257,7 @@ godex.set('STEEM', null)
 godex.set('STRAX', null)
 
 // Display Name: SUI
-godex.set('SUI', null)
+godex.set('SUI', 'sui')
 
 // Display Name: SXP
 godex.set('SXP', null)
@@ -260,10 +275,10 @@ godex.set('THETA', null)
 godex.set('TIA', null)
 
 // Display Name: The Open network
-godex.set('TON', null)
+godex.set('TON', 'ton')
 
 // Display Name: Tron
-godex.set('TRX', null)
+godex.set('TRX', 'tron')
 
 // Display Name: VeChain
 godex.set('VET', null)
@@ -275,22 +290,25 @@ godex.set('VIA', null)
 godex.set('WAN', null)
 
 // Display Name: WAX
-godex.set('WAX', null)
+godex.set('WAX', 'wax')
+
+// WARNING: Not included by the synchronizer synchronization
+godex.set('WAXL', 'axelar')
 
 // Display Name: eCash
-godex.set('XEC', null)
+godex.set('XEC', 'ecash')
 
 // Display Name: Stellar Lumens
-godex.set('XLM', null)
+godex.set('XLM', 'stellar')
 
 // Display Name: Monero
-godex.set('XMR', null)
+godex.set('XMR', 'monero')
 
 // Display Name: Ripple
-godex.set('XRP', null)
+godex.set('XRP', 'ripple')
 
 // Display Name: Tezos
-godex.set('XTZ', null)
+godex.set('XTZ', 'tezos')
 
 // Display Name: Verge
 godex.set('XVG', null)
@@ -299,4 +317,4 @@ godex.set('XVG', null)
 godex.set('ZIL', null)
 
 // Display Name: ZKSYNC
-godex.set('ZKSYNC', null)
+godex.set('ZKSYNC', 'zksync')

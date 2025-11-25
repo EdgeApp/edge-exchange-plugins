@@ -2,37 +2,40 @@ import { EdgeCurrencyPluginId } from '../../src/util/edgeCurrencyPluginIds'
 
 export const sideshift = new Map<string, EdgeCurrencyPluginId | null>()
 // Display Name: algorand
-sideshift.set('algorand', null)
+sideshift.set('algorand', 'algorand')
 
 // Display Name: aptos
 sideshift.set('aptos', null)
 
 // Display Name: arbitrum
-sideshift.set('arbitrum', null)
+sideshift.set('arbitrum', 'arbitrum')
 
 // Display Name: avax
-sideshift.set('avax', null)
+sideshift.set('avax', 'avalanche')
 
 // Display Name: base
-sideshift.set('base', null)
+sideshift.set('base', 'base')
 
 // Display Name: berachain
 sideshift.set('berachain', null)
 
 // Display Name: bitcoin
-sideshift.set('bitcoin', null)
+sideshift.set('bitcoin', 'bitcoin')
 
 // Display Name: bitcoincash
-sideshift.set('bitcoincash', null)
+sideshift.set('bitcoincash', 'bitcoincash')
 
 // Display Name: blast
 sideshift.set('blast', null)
 
 // Display Name: bsc
-sideshift.set('bsc', null)
+sideshift.set('bsc', 'binancesmartchain')
+
+// WARNING: Not included by the synchronizer synchronization
+sideshift.set('bsv', 'bitcoinsv')
 
 // Display Name: cardano
-sideshift.set('cardano', null)
+sideshift.set('cardano', 'cardano')
 
 // Display Name: celestia
 sideshift.set('celestia', null)
@@ -41,19 +44,28 @@ sideshift.set('celestia', null)
 sideshift.set('core', null)
 
 // Display Name: cosmos
-sideshift.set('cosmos', null)
+sideshift.set('cosmos', 'cosmoshub')
 
 // Display Name: cronos
 sideshift.set('cronos', null)
 
 // Display Name: dash
-sideshift.set('dash', null)
+sideshift.set('dash', 'dash')
 
 // Display Name: doge
-sideshift.set('doge', null)
+sideshift.set('doge', 'dogecoin')
+
+// WARNING: Not included by the synchronizer synchronization
+sideshift.set('etc', 'ethereumclassic')
 
 // Display Name: ethereum
-sideshift.set('ethereum', null)
+sideshift.set('ethereum', 'ethereum')
+
+// WARNING: Not included by the synchronizer synchronization
+sideshift.set('fantom', 'fantom')
+
+// WARNING: Not included by the synchronizer synchronization
+sideshift.set('grs', 'groestlcoin')
 
 // Display Name: hyperevm
 sideshift.set('hyperevm', null)
@@ -68,61 +80,70 @@ sideshift.set('internal', null)
 sideshift.set('liquid', null)
 
 // Display Name: litecoin
-sideshift.set('litecoin', null)
+sideshift.set('litecoin', 'litecoin')
 
 // Display Name: monad
 sideshift.set('monad', null)
+
+// WARNING: Not included by the synchronizer synchronization
+sideshift.set('monero', 'monero')
 
 // Display Name: near
 sideshift.set('near', null)
 
 // Display Name: optimism
-sideshift.set('optimism', null)
+sideshift.set('optimism', 'optimism')
 
 // Display Name: plasma
 sideshift.set('plasma', null)
 
 // Display Name: polkadot
-sideshift.set('polkadot', null)
+sideshift.set('polkadot', 'polkadot')
 
 // Display Name: polygon
-sideshift.set('polygon', null)
+sideshift.set('polygon', 'polygon')
 
 // Display Name: ripple
-sideshift.set('ripple', null)
+sideshift.set('ripple', 'ripple')
 
 // Display Name: ronin
 sideshift.set('ronin', null)
 
 // Display Name: rootstock
-sideshift.set('rootstock', null)
+sideshift.set('rootstock', 'rsk')
 
 // Display Name: scroll
 sideshift.set('scroll', null)
 
+// WARNING: Not included by the synchronizer synchronization
+sideshift.set('shielded', 'zcash')
+
 // Display Name: solana
-sideshift.set('solana', null)
+sideshift.set('solana', 'solana')
 
 // Display Name: sonic
-sideshift.set('sonic', null)
+sideshift.set('sonic', 'sonic')
 
 // Display Name: stacks
 sideshift.set('stacks', null)
 
 // Display Name: stellar
-sideshift.set('stellar', null)
+sideshift.set('stellar', 'stellar')
 
 // Display Name: sui
-sideshift.set('sui', null)
+sideshift.set('sui', 'sui')
+
+// WARNING: Not included by the synchronizer synchronization
+sideshift.set('tezos', 'tezos')
 
 // Display Name: ton
-sideshift.set('ton', null)
+sideshift.set('ton', 'ton')
 
 // Display Name: tron
-sideshift.set('tron', null)
+sideshift.set('tron', 'tron')
 
 // Display Name: xec
-sideshift.set('xec', null)
+sideshift.set('xec', 'ecash')
 
 // Display Name: zksyncera
-sideshift.set('zksyncera', null)
+sideshift.set('zksyncera', 'zksync')

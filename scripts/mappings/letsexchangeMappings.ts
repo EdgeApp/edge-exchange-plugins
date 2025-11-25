@@ -23,7 +23,7 @@ letsexchange.set('ABEY', null)
 letsexchange.set('ACA', null)
 
 // Display Name: ADA
-letsexchange.set('ADA', null)
+letsexchange.set('ADA', 'cardano')
 
 // Display Name: ADK
 letsexchange.set('ADK', null)
@@ -47,7 +47,7 @@ letsexchange.set('AKT', null)
 letsexchange.set('ALEO', null)
 
 // Display Name: ALGO
-letsexchange.set('ALGO', null)
+letsexchange.set('ALGO', 'algorand')
 
 // Display Name: ALPH
 letsexchange.set('ALPH', null)
@@ -71,7 +71,7 @@ letsexchange.set('APT', null)
 letsexchange.set('AR', null)
 
 // Display Name: ARBITRUM
-letsexchange.set('ARBITRUM', null)
+letsexchange.set('ARBITRUM', 'arbitrum')
 
 // Display Name: ARBITRUM BRIDGED
 letsexchange.set('ARBITRUM BRIDGED', null)
@@ -92,7 +92,7 @@ letsexchange.set('AREA', null)
 letsexchange.set('ARK', null)
 
 // Display Name: ARRR
-letsexchange.set('ARRR', null)
+letsexchange.set('ARRR', 'piratechain')
 
 // Display Name: ASTR
 letsexchange.set('ASTR', null)
@@ -101,7 +101,7 @@ letsexchange.set('ASTR', null)
 letsexchange.set('ASTR EVM', null)
 
 // Display Name: ATOM
-letsexchange.set('ATOM', null)
+letsexchange.set('ATOM', 'cosmoshub')
 
 // Display Name: AURORA
 letsexchange.set('AURORA', null)
@@ -113,7 +113,7 @@ letsexchange.set('AVAIL', null)
 letsexchange.set('AVAX', null)
 
 // Display Name: AVAXC
-letsexchange.set('AVAXC', null)
+letsexchange.set('AVAXC', 'avalanche')
 
 // Display Name: AXEL
 letsexchange.set('AXEL', null)
@@ -137,7 +137,7 @@ letsexchange.set('BAND', null)
 letsexchange.set('BASE', null)
 
 // Display Name: BCH
-letsexchange.set('BCH', null)
+letsexchange.set('BCH', 'bitcoincash')
 
 // Display Name: BCHSV
 letsexchange.set('BCHSV', null)
@@ -148,8 +148,11 @@ letsexchange.set('BDX', null)
 // Display Name: BELLS
 letsexchange.set('BELLS', null)
 
+// WARNING: Not included by the synchronizer synchronization
+letsexchange.set('BEP2', 'binance')
+
 // Display Name: BEP20
-letsexchange.set('BEP20', null)
+letsexchange.set('BEP20', 'binancesmartchain')
 
 // Display Name: BERA
 letsexchange.set('BERA', null)
@@ -188,10 +191,10 @@ letsexchange.set('BRC20', null)
 letsexchange.set('BRISE', null)
 
 // Display Name: BSV
-letsexchange.set('BSV', null)
+letsexchange.set('BSV', 'bitcoinsv')
 
 // Display Name: BTC
-letsexchange.set('BTC', null)
+letsexchange.set('BTC', 'bitcoin')
 
 // Display Name: BTCRUNES
 letsexchange.set('BTCRUNES', null)
@@ -206,7 +209,7 @@ letsexchange.set('BTCZ', null)
 letsexchange.set('BTF', null)
 
 // Display Name: BTG
-letsexchange.set('BTG', null)
+letsexchange.set('BTG', 'bitcoingold')
 
 // Display Name: BTM
 letsexchange.set('BTM', null)
@@ -239,7 +242,7 @@ letsexchange.set('CC', null)
 letsexchange.set('CCD', null)
 
 // Display Name: CELO
-letsexchange.set('CELO', null)
+letsexchange.set('CELO', 'celo')
 
 // Display Name: CFG
 letsexchange.set('CFG', null)
@@ -272,7 +275,7 @@ letsexchange.set('CMP', null)
 letsexchange.set('CORE', null)
 
 // Display Name: COREUM
-letsexchange.set('COREUM', null)
+letsexchange.set('COREUM', 'coreum')
 
 // Display Name: COTI
 letsexchange.set('COTI', null)
@@ -311,7 +314,7 @@ letsexchange.set('DAG', null)
 letsexchange.set('DARC', null)
 
 // Display Name: DASH
-letsexchange.set('DASH', null)
+letsexchange.set('DASH', 'dash')
 
 // Display Name: DBC
 letsexchange.set('DBC', null)
@@ -332,7 +335,7 @@ letsexchange.set('DESO', null)
 letsexchange.set('DFI', null)
 
 // Display Name: DGB
-letsexchange.set('DGB', null)
+letsexchange.set('DGB', 'digibyte')
 
 // Display Name: DINGO
 letsexchange.set('DINGO', null)
@@ -350,13 +353,13 @@ letsexchange.set('DNX', null)
 letsexchange.set('DOCK', null)
 
 // Display Name: DOGE
-letsexchange.set('DOGE', null)
+letsexchange.set('DOGE', 'dogecoin')
 
 // Display Name: DOGECHAIN
 letsexchange.set('DOGECHAIN', null)
 
 // Display Name: DOT
-letsexchange.set('DOT', null)
+letsexchange.set('DOT', 'polkadot')
 
 // Display Name: DVPN
 letsexchange.set('DVPN', null)
@@ -404,7 +407,7 @@ letsexchange.set('ENJ', null)
 letsexchange.set('ENQ', null)
 
 // Display Name: EOS
-letsexchange.set('EOS', null)
+letsexchange.set('EOS', 'eos')
 
 // Display Name: EOSC
 letsexchange.set('EOSC', null)
@@ -413,7 +416,7 @@ letsexchange.set('EOSC', null)
 letsexchange.set('EQ', null)
 
 // Display Name: ERC20
-letsexchange.set('ERC20', null)
+letsexchange.set('ERC20', 'ethereum')
 
 // Display Name: ERG
 letsexchange.set('ERG', null)
@@ -422,7 +425,7 @@ letsexchange.set('ERG', null)
 letsexchange.set('ESC', null)
 
 // Display Name: ETC
-letsexchange.set('ETC', null)
+letsexchange.set('ETC', 'ethereumclassic')
 
 // Display Name: ETH
 letsexchange.set('ETH', null)
@@ -431,7 +434,7 @@ letsexchange.set('ETH', null)
 letsexchange.set('ETHF', null)
 
 // Display Name: ETHW
-letsexchange.set('ETHW', null)
+letsexchange.set('ETHW', 'ethereumpow')
 
 // Display Name: ETN
 letsexchange.set('ETN', null)
@@ -458,13 +461,13 @@ letsexchange.set('FB', null)
 letsexchange.set('FET', null)
 
 // Display Name: FIL
-letsexchange.set('FIL', null)
+letsexchange.set('FIL', 'filecoin')
 
 // Display Name: FIO
-letsexchange.set('FIO', null)
+letsexchange.set('FIO', 'fio')
 
 // Display Name: FIRO
-letsexchange.set('FIRO', null)
+letsexchange.set('FIRO', 'zcoin')
 
 // Display Name: FIS
 letsexchange.set('FIS', null)
@@ -491,7 +494,7 @@ letsexchange.set('FRAEVM', null)
 letsexchange.set('FSN', null)
 
 // Display Name: FTM
-letsexchange.set('FTM', null)
+letsexchange.set('FTM', 'fantom')
 
 // Display Name: FTN
 letsexchange.set('FTN', null)
@@ -523,6 +526,9 @@ letsexchange.set('GRC20', null)
 // Display Name: GRIN
 letsexchange.set('GRIN', null)
 
+// WARNING: Not included by the synchronizer synchronization
+letsexchange.set('GRS', 'groestlcoin')
+
 // Display Name: GSYS
 letsexchange.set('GSYS', null)
 
@@ -536,7 +542,7 @@ letsexchange.set('GXS', null)
 letsexchange.set('HAQQ', null)
 
 // Display Name: HBAR
-letsexchange.set('HBAR', null)
+letsexchange.set('HBAR', 'hedera')
 
 // Display Name: HC
 letsexchange.set('HC', null)
@@ -569,7 +575,7 @@ letsexchange.set('HUAHUA', null)
 letsexchange.set('HYDRA', null)
 
 // Display Name: HYPE
-letsexchange.set('HYPE', null)
+letsexchange.set('HYPE', 'hyperevm')
 
 // Display Name: HYPEEVM
 letsexchange.set('HYPEEVM', null)
@@ -692,7 +698,7 @@ letsexchange.set('LOKI', null)
 letsexchange.set('LSK', null)
 
 // Display Name: LTC
-letsexchange.set('LTC', null)
+letsexchange.set('LTC', 'litecoin')
 
 // Display Name: LTO
 letsexchange.set('LTO', null)
@@ -875,13 +881,13 @@ letsexchange.set('ONT', null)
 letsexchange.set('OORT', null)
 
 // Display Name: OPTIMISM
-letsexchange.set('OPTIMISM', null)
+letsexchange.set('OPTIMISM', 'optimism')
 
 // Display Name: ORAI
 letsexchange.set('ORAI', null)
 
 // Display Name: OSMO
-letsexchange.set('OSMO', null)
+letsexchange.set('OSMO', 'osmosis')
 
 // Display Name: OVER
 letsexchange.set('OVER', null)
@@ -920,7 +926,7 @@ letsexchange.set('PI', null)
 letsexchange.set('PIONEER', null)
 
 // Display Name: PIVX
-letsexchange.set('PIVX', null)
+letsexchange.set('PIVX', 'pivx')
 
 // Display Name: PIX
 letsexchange.set('PIX', null)
@@ -941,13 +947,13 @@ letsexchange.set('PLEX', null)
 letsexchange.set('PLMC', null)
 
 // Display Name: PLS
-letsexchange.set('PLS', null)
+letsexchange.set('PLS', 'pulsechain')
 
 // Display Name: POKT
 letsexchange.set('POKT', null)
 
 // Display Name: POL
-letsexchange.set('POL', null)
+letsexchange.set('POL', 'polygon')
 
 // Display Name: POLYX
 letsexchange.set('POLYX', null)
@@ -962,7 +968,7 @@ letsexchange.set('QKC', null)
 letsexchange.set('QRL', null)
 
 // Display Name: QTUM
-letsexchange.set('QTUM', null)
+letsexchange.set('QTUM', 'qtum')
 
 // Display Name: QUAI
 letsexchange.set('QUAI', null)
@@ -998,16 +1004,16 @@ letsexchange.set('ROOT', null)
 letsexchange.set('ROSE', null)
 
 // Display Name: RSK
-letsexchange.set('RSK', null)
+letsexchange.set('RSK', 'rsk')
 
 // Display Name: RUNE
-letsexchange.set('RUNE', null)
+letsexchange.set('RUNE', 'thorchainrune')
 
 // Display Name: RVC
 letsexchange.set('RVC', null)
 
 // Display Name: RVN
-letsexchange.set('RVN', null)
+letsexchange.set('RVN', 'ravencoin')
 
 // Display Name: RWN
 letsexchange.set('RWN', null)
@@ -1064,10 +1070,10 @@ letsexchange.set('SMH', null)
 letsexchange.set('SMT', null)
 
 // Display Name: SOL
-letsexchange.set('SOL', null)
+letsexchange.set('SOL', 'solana')
 
 // Display Name: SONIC
-letsexchange.set('SONIC', null)
+letsexchange.set('SONIC', 'sonic')
 
 // Display Name: SPACE
 letsexchange.set('SPACE', null)
@@ -1100,7 +1106,7 @@ letsexchange.set('STT', null)
 letsexchange.set('STX', null)
 
 // Display Name: SUI
-letsexchange.set('SUI', null)
+letsexchange.set('SUI', 'sui')
 
 // Display Name: SUPR
 letsexchange.set('SUPR', null)
@@ -1139,7 +1145,7 @@ letsexchange.set('THETA', null)
 letsexchange.set('TIA', null)
 
 // Display Name: TLOS
-letsexchange.set('TLOS', null)
+letsexchange.set('TLOS', 'telos')
 
 // Display Name: TLOSEVM
 letsexchange.set('TLOSEVM', null)
@@ -1148,13 +1154,13 @@ letsexchange.set('TLOSEVM', null)
 letsexchange.set('TOMO', null)
 
 // Display Name: TON
-letsexchange.set('TON', null)
+letsexchange.set('TON', 'ton')
 
 // Display Name: TOP
 letsexchange.set('TOP', null)
 
 // Display Name: TRC20
-letsexchange.set('TRC20', null)
+letsexchange.set('TRC20', 'tron')
 
 // Display Name: TRUE
 letsexchange.set('TRUE', null)
@@ -1223,10 +1229,10 @@ letsexchange.set('WATER', null)
 letsexchange.set('WAVES', null)
 
 // Display Name: WAX
-letsexchange.set('WAX', null)
+letsexchange.set('WAX', 'wax')
 
 // Display Name: WAXL
-letsexchange.set('WAXL', null)
+letsexchange.set('WAXL', 'axelar')
 
 // Display Name: WBT
 letsexchange.set('WBT', null)
@@ -1271,7 +1277,7 @@ letsexchange.set('XDC', null)
 letsexchange.set('XDEN', null)
 
 // Display Name: XEC
-letsexchange.set('XEC', null)
+letsexchange.set('XEC', 'ecash')
 
 // Display Name: XEL
 letsexchange.set('XEL', null)
@@ -1295,13 +1301,13 @@ letsexchange.set('XHV', null)
 letsexchange.set('XION', null)
 
 // Display Name: XLM
-letsexchange.set('XLM', null)
+letsexchange.set('XLM', 'stellar')
 
 // Display Name: XMC
 letsexchange.set('XMC', null)
 
 // Display Name: XMR
-letsexchange.set('XMR', null)
+letsexchange.set('XMR', 'monero')
 
 // Display Name: XNA
 letsexchange.set('XNA', null)
@@ -1331,10 +1337,10 @@ letsexchange.set('XPX', null)
 letsexchange.set('XRD', null)
 
 // Display Name: XRP
-letsexchange.set('XRP', null)
+letsexchange.set('XRP', 'ripple')
 
 // Display Name: XTZ
-letsexchange.set('XTZ', null)
+letsexchange.set('XTZ', 'tezos')
 
 // Display Name: XVG
 letsexchange.set('XVG', null)
@@ -1349,13 +1355,13 @@ letsexchange.set('YOU', null)
 letsexchange.set('YOYOW', null)
 
 // Display Name: ZANO
-letsexchange.set('ZANO', null)
+letsexchange.set('ZANO', 'zano')
 
 // Display Name: ZCD
 letsexchange.set('ZCD', null)
 
 // Display Name: ZEC
-letsexchange.set('ZEC', null)
+letsexchange.set('ZEC', 'zcash')
 
 // Display Name: ZEN
 letsexchange.set('ZEN', null)
@@ -1374,6 +1380,9 @@ letsexchange.set('ZKF', null)
 
 // Display Name: ZKL
 letsexchange.set('ZKL', null)
+
+// WARNING: Not included by the synchronizer synchronization
+letsexchange.set('ZKSERA', 'zksync')
 
 // Display Name: ZKSYNC
 letsexchange.set('ZKSYNC', null)

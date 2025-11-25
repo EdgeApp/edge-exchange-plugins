@@ -8,16 +8,16 @@ lifi.set('abs', null)
 lifi.set('ape', null)
 
 // Display Name: Arbitrum
-lifi.set('arb', null)
+lifi.set('arb', 'arbitrum')
 
 // Display Name: Aurora
 lifi.set('aur', null)
 
 // Display Name: Avalanche
-lifi.set('ava', null)
+lifi.set('ava', 'avalanche')
 
 // Display Name: Base
-lifi.set('bas', null)
+lifi.set('bas', 'base')
 
 // Display Name: Berachain
 lifi.set('ber', null)
@@ -32,10 +32,10 @@ lifi.set('bob', null)
 lifi.set('boc', null)
 
 // Display Name: BSC
-lifi.set('bsc', null)
+lifi.set('bsc', 'binancesmartchain')
 
 // Display Name: Celo
-lifi.set('cel', null)
+lifi.set('cel', 'celo')
 
 // Display Name: Corn
 lifi.set('crn', null)
@@ -47,10 +47,10 @@ lifi.set('cro', null)
 lifi.set('dai', null)
 
 // Display Name: zkSync
-lifi.set('era', null)
+lifi.set('era', 'zksync')
 
 // Display Name: Ethereum
-lifi.set('eth', null)
+lifi.set('eth', 'ethereum')
 
 // Display Name: Etherlink
 lifi.set('etl', null)
@@ -63,6 +63,9 @@ lifi.set('flw', null)
 
 // Display Name: Fraxtal
 lifi.set('fra', null)
+
+// WARNING: Not included by the synchronizer synchronization
+lifi.set('ftm', 'fantom')
 
 // Display Name: FUSE
 lifi.set('fus', null)
@@ -77,7 +80,7 @@ lifi.set('hmi', null)
 lifi.set('hpl', null)
 
 // Display Name: HyperEVM
-lifi.set('hyp', null)
+lifi.set('hyp', 'hyperevm')
 
 // Display Name: Immutable zkEVM
 lifi.set('imx', null)
@@ -122,7 +125,7 @@ lifi.set('mor', null)
 lifi.set('opb', null)
 
 // Display Name: Optimism
-lifi.set('opt', null)
+lifi.set('opt', 'optimism')
 
 // Display Name: Plasma
 lifi.set('pla', null)
@@ -131,7 +134,7 @@ lifi.set('pla', null)
 lifi.set('plu', null)
 
 // Display Name: Polygon
-lifi.set('pol', null)
+lifi.set('pol', 'polygon')
 
 // Display Name: Polygon zkEVM
 lifi.set('pze', null)
@@ -140,7 +143,7 @@ lifi.set('pze', null)
 lifi.set('ron', null)
 
 // Display Name: Rootstock
-lifi.set('rsk', null)
+lifi.set('rsk', 'rsk')
 
 // Display Name: Scroll
 lifi.set('scl', null)
@@ -151,11 +154,17 @@ lifi.set('sei', null)
 // Display Name: Soneium
 lifi.set('soe', null)
 
+// WARNING: Not included by the synchronizer synchronization
+lifi.set('sol', 'solana')
+
 // Display Name: Sonic
 lifi.set('son', null)
 
 // Display Name: Sophon
 lifi.set('sop', null)
+
+// WARNING: Not included by the synchronizer synchronization
+lifi.set('sui', 'sui')
 
 // Display Name: Superposition
 lifi.set('sup', null)

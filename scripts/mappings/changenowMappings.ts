@@ -3,7 +3,7 @@ import { EdgeCurrencyPluginId } from '../../src/util/edgeCurrencyPluginIds'
 export const changenow = new Map<string, EdgeCurrencyPluginId | null>()
 // Currency Count: 4
 // Display Name: ada
-changenow.set('ada', null)
+changenow.set('ada', 'cardano')
 
 // Currency Count: 1
 // Display Name: aed
@@ -15,7 +15,7 @@ changenow.set('akt', null)
 
 // Currency Count: 3
 // Display Name: algo
-changenow.set('algo', null)
+changenow.set('algo', 'algorand')
 
 // Currency Count: 1
 // Display Name: all
@@ -39,7 +39,7 @@ changenow.set('apt', null)
 
 // Currency Count: 24
 // Display Name: arbitrum
-changenow.set('arbitrum', null)
+changenow.set('arbitrum', 'arbitrum')
 
 // Currency Count: 1
 // Display Name: assethub
@@ -47,7 +47,7 @@ changenow.set('assethub', null)
 
 // Currency Count: 1
 // Display Name: atom
-changenow.set('atom', null)
+changenow.set('atom', 'cosmoshub')
 
 // Currency Count: 1
 // Display Name: aud
@@ -55,7 +55,10 @@ changenow.set('aud', null)
 
 // Currency Count: 10
 // Display Name: avaxc
-changenow.set('avaxc', null)
+changenow.set('avaxc', 'avalanche')
+
+// WARNING: Not included by the synchronizer synchronization
+changenow.set('axl', 'axelar')
 
 // Currency Count: 1
 // Display Name: azn
@@ -75,7 +78,7 @@ changenow.set('band', null)
 
 // Currency Count: 46
 // Display Name: base
-changenow.set('base', null)
+changenow.set('base', 'base')
 
 // Currency Count: 1
 // Display Name: bbd
@@ -83,7 +86,7 @@ changenow.set('bbd', null)
 
 // Currency Count: 1
 // Display Name: bch
-changenow.set('bch', null)
+changenow.set('bch', 'bitcoincash')
 
 // Currency Count: 1
 // Display Name: bdt
@@ -105,6 +108,9 @@ changenow.set('bhd', null)
 // Display Name: bmd
 changenow.set('bmd', null)
 
+// WARNING: Not included by the synchronizer synchronization
+changenow.set('bnb', 'binance')
+
 // Currency Count: 1
 // Display Name: bnd
 changenow.set('bnd', null)
@@ -119,15 +125,18 @@ changenow.set('brl', null)
 
 // Currency Count: 327
 // Display Name: bsc
-changenow.set('bsc', null)
+changenow.set('bsc', 'binancesmartchain')
 
 // Currency Count: 1
 // Display Name: bsv
-changenow.set('bsv', null)
+changenow.set('bsv', 'bitcoinsv')
 
 // Currency Count: 1
 // Display Name: btc
-changenow.set('btc', null)
+changenow.set('btc', 'bitcoin')
+
+// WARNING: Not included by the synchronizer synchronization
+changenow.set('btg', 'bitcoingold')
 
 // Currency Count: 1
 // Display Name: bwp
@@ -147,7 +156,7 @@ changenow.set('cchain', null)
 
 // Currency Count: 4
 // Display Name: celo
-changenow.set('celo', null)
+changenow.set('celo', 'celo')
 
 // Currency Count: 1
 // Display Name: chf
@@ -175,7 +184,7 @@ changenow.set('core', null)
 
 // Currency Count: 1
 // Display Name: coreum
-changenow.set('coreum', null)
+changenow.set('coreum', 'coreum')
 
 // Currency Count: 1
 // Display Name: crc
@@ -199,7 +208,7 @@ changenow.set('czk', null)
 
 // Currency Count: 1
 // Display Name: dash
-changenow.set('dash', null)
+changenow.set('dash', 'dash')
 
 // Currency Count: 1
 // Display Name: dcr
@@ -207,7 +216,7 @@ changenow.set('dcr', null)
 
 // Currency Count: 1
 // Display Name: dgb
-changenow.set('dgb', null)
+changenow.set('dgb', 'digibyte')
 
 // Currency Count: 1
 // Display Name: divi
@@ -223,7 +232,7 @@ changenow.set('dkk', null)
 
 // Currency Count: 1
 // Display Name: doge
-changenow.set('doge', null)
+changenow.set('doge', 'dogecoin')
 
 // Currency Count: 1
 // Display Name: dop
@@ -243,15 +252,15 @@ changenow.set('epic', null)
 
 // Currency Count: 1
 // Display Name: etc
-changenow.set('etc', null)
+changenow.set('etc', 'ethereumclassic')
 
 // Currency Count: 517
 // Display Name: eth
-changenow.set('eth', null)
+changenow.set('eth', 'ethereum')
 
 // Currency Count: 1
 // Display Name: ethw
-changenow.set('ethw', null)
+changenow.set('ethw', 'ethereumpow')
 
 // Currency Count: 1
 // Display Name: eur
@@ -263,11 +272,17 @@ changenow.set('fet', null)
 
 // Currency Count: 1
 // Display Name: fil
-changenow.set('fil', null)
+changenow.set('fil', 'filecoin')
+
+// WARNING: Not included by the synchronizer synchronization
+changenow.set('firo', 'zcoin')
 
 // Currency Count: 1
 // Display Name: flr
 changenow.set('flr', null)
+
+// WARNING: Not included by the synchronizer synchronization
+changenow.set('ftm', 'fantom')
 
 // Currency Count: 1
 // Display Name: ftn
@@ -291,7 +306,7 @@ changenow.set('gtq', null)
 
 // Currency Count: 1
 // Display Name: hbar
-changenow.set('hbar', null)
+changenow.set('hbar', 'hedera')
 
 // Currency Count: 1
 // Display Name: hkd
@@ -419,7 +434,7 @@ changenow.set('lna', null)
 
 // Currency Count: 1
 // Display Name: ltc
-changenow.set('ltc', null)
+changenow.set('ltc', 'litecoin')
 
 // Currency Count: 1
 // Display Name: luna
@@ -439,7 +454,7 @@ changenow.set('manta', null)
 
 // Currency Count: 26
 // Display Name: matic
-changenow.set('matic', null)
+changenow.set('matic', 'polygon')
 
 // Currency Count: 1
 // Display Name: mdl
@@ -511,7 +526,7 @@ changenow.set('ont', null)
 
 // Currency Count: 13
 // Display Name: op
-changenow.set('op', null)
+changenow.set('op', 'optimism')
 
 // Currency Count: 2
 // Display Name: opbnb
@@ -519,7 +534,7 @@ changenow.set('opbnb', null)
 
 // Currency Count: 1
 // Display Name: osmo
-changenow.set('osmo', null)
+changenow.set('osmo', 'osmosis')
 
 // Currency Count: 1
 // Display Name: pab
@@ -539,7 +554,7 @@ changenow.set('php', null)
 
 // Currency Count: 1
 // Display Name: pivx
-changenow.set('pivx', null)
+changenow.set('pivx', 'pivx')
 
 // Currency Count: 1
 // Display Name: pkr
@@ -551,7 +566,7 @@ changenow.set('pln', null)
 
 // Currency Count: 1
 // Display Name: pulse
-changenow.set('pulse', null)
+changenow.set('pulse', 'pulsechain')
 
 // Currency Count: 1
 // Display Name: pyg
@@ -563,7 +578,7 @@ changenow.set('qar', null)
 
 // Currency Count: 1
 // Display Name: qtum
-changenow.set('qtum', null)
+changenow.set('qtum', 'qtum')
 
 // Currency Count: 1
 // Display Name: rsd
@@ -575,7 +590,7 @@ changenow.set('rub', null)
 
 // Currency Count: 1
 // Display Name: rvn
-changenow.set('rvn', null)
+changenow.set('rvn', 'ravencoin')
 
 // Currency Count: 1
 // Display Name: sar
@@ -599,11 +614,11 @@ changenow.set('sgd', null)
 
 // Currency Count: 140
 // Display Name: sol
-changenow.set('sol', null)
+changenow.set('sol', 'solana')
 
 // Currency Count: 1
 // Display Name: sonic
-changenow.set('sonic', null)
+changenow.set('sonic', 'sonic')
 
 // Currency Count: 2
 // Display Name: strk
@@ -615,7 +630,7 @@ changenow.set('stx', null)
 
 // Currency Count: 1
 // Display Name: sui
-changenow.set('sui', null)
+changenow.set('sui', 'sui')
 
 // Currency Count: 1
 // Display Name: sxp
@@ -639,11 +654,11 @@ changenow.set('tia', null)
 
 // Currency Count: 22
 // Display Name: ton
-changenow.set('ton', null)
+changenow.set('ton', 'ton')
 
 // Currency Count: 14
 // Display Name: trx
-changenow.set('trx', null)
+changenow.set('trx', 'tron')
 
 // Currency Count: 1
 // Display Name: try
@@ -707,15 +722,15 @@ changenow.set('xdc', null)
 
 // Currency Count: 1
 // Display Name: xec
-changenow.set('xec', null)
+changenow.set('xec', 'ecash')
 
 // Currency Count: 1
 // Display Name: xlm
-changenow.set('xlm', null)
+changenow.set('xlm', 'stellar')
 
 // Currency Count: 1
 // Display Name: xmr
-changenow.set('xmr', null)
+changenow.set('xmr', 'monero')
 
 // Currency Count: 1
 // Display Name: xof
@@ -723,11 +738,11 @@ changenow.set('xof', null)
 
 // Currency Count: 1
 // Display Name: xrp
-changenow.set('xrp', null)
+changenow.set('xrp', 'ripple')
 
 // Currency Count: 1
 // Display Name: xtz
-changenow.set('xtz', null)
+changenow.set('xtz', 'tezos')
 
 // Currency Count: 1
 // Display Name: xvg
@@ -739,7 +754,7 @@ changenow.set('zar', null)
 
 // Currency Count: 1
 // Display Name: zec
-changenow.set('zec', null)
+changenow.set('zec', 'zcash')
 
 // Currency Count: 1
 // Display Name: zil
@@ -747,7 +762,7 @@ changenow.set('zil', null)
 
 // Currency Count: 2
 // Display Name: zksync
-changenow.set('zksync', null)
+changenow.set('zksync', 'zksync')
 
 // Currency Count: 1
 // Display Name: zmw

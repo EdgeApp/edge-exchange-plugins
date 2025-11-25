@@ -21,6 +21,7 @@ import {
   SwapCurrencyError
 } from 'edge-core-js/types'
 
+import { godex as godexMapping } from '../../mappings/godex'
 import {
   checkInvalidTokenIds,
   checkWhitelistedMainnetCodes,
@@ -29,6 +30,7 @@ import {
   getMaxSwappable,
   InvalidTokenIds,
   makeSwapPluginQuote,
+  mapToRecord,
   SwapOrder
 } from '../../util/swapHelpers'
 import {
@@ -107,89 +109,9 @@ const INVALID_TOKEN_IDS: InvalidTokenIds = {
 
 // Network names that don't match parent network currency code
 // See https://godex.io/exchange-rate for list of supported currencies
-const MAINNET_CODE_TRANSCRIPTION: CurrencyPluginIdSwapChainCodeMap = {
-  abstract: null,
-  algorand: 'ALGO',
-  amoy: null,
-  arbitrum: 'ARBITRUM',
-  avalanche: 'AVAXC',
-  axelar: 'WAXL',
-  badcoin: null,
-  base: 'BASE',
-  binance: 'BNB',
-  binancesmartchain: 'BSC',
-  bitcoin: 'BTC',
-  bitcoincash: 'BCH',
-  bitcoincashtestnet: null,
-  bitcoingold: 'BTG',
-  bitcoingoldtestnet: null,
-  bitcoinsv: 'BSV',
-  bitcointestnet: null,
-  bitcointestnet4: null,
-  bobevm: null,
-  botanix: null,
-  calibration: null,
-  cardano: 'ADA',
-  cardanotestnet: null,
-  celo: 'CELO',
-  coreum: null,
-  cosmoshub: 'ATOM',
-  dash: 'DASH',
-  digibyte: 'DGB',
-  dogecoin: 'DOGE',
-  eboost: null,
-  ecash: 'XEC',
-  eos: 'EOS',
-  ethDev: null,
-  ethereum: 'ETH',
-  ethereumclassic: 'ETC',
-  ethereumpow: 'ETHW',
-  fantom: 'FTM',
-  feathercoin: null,
-  filecoin: 'FIL',
-  filecoinfevm: null,
-  filecoinfevmcalibration: null,
-  fio: 'FIO',
-  groestlcoin: null,
-  hedera: 'HBAR',
-  holesky: null,
-  hyperevm: null,
-  liberland: null,
-  liberlandtestnet: null,
-  litecoin: 'LTC',
-  monero: 'XMR',
-  optimism: 'OPTIMISM',
-  osmosis: 'OSMO',
-  piratechain: null,
-  pivx: 'PIVX',
-  polkadot: 'DOT',
-  polygon: 'MATIC',
-  pulsechain: null,
-  qtum: 'QTUM',
-  ravencoin: 'RVN',
-  ripple: 'XRP',
-  rsk: 'RSK',
-  smartcash: null,
-  sepolia: null,
-  solana: 'SOL',
-  sonic: null,
-  stellar: 'XLM',
-  sui: 'SUI',
-  suitestnet: null,
-  telos: 'TLOS',
-  tezos: 'XTZ',
-  thorchainrune: 'RUNE',
-  thorchainrunestagenet: null,
-  ton: 'TON',
-  tron: 'TRX',
-  ufo: null,
-  vertcoin: null,
-  wax: 'WAX',
-  zano: null,
-  zcash: 'ZEC',
-  zcoin: 'FIRO',
-  zksync: 'ZKSYNC'
-}
+const MAINNET_CODE_TRANSCRIPTION: CurrencyPluginIdSwapChainCodeMap = mapToRecord(
+  godexMapping
+)
 
 export function makeGodexPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
   const { io, log } = opts

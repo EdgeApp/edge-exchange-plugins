@@ -2,25 +2,25 @@ import { EdgeCurrencyPluginId } from '../../src/util/edgeCurrencyPluginIds'
 
 export const mayaprotocol = new Map<string, EdgeCurrencyPluginId | null>()
 // Display Name: ARB
-mayaprotocol.set('ARB', null)
+mayaprotocol.set('ARB', 'arbitrum')
 
 // Display Name: BTC
-mayaprotocol.set('BTC', null)
+mayaprotocol.set('BTC', 'bitcoin')
 
 // Display Name: DASH
-mayaprotocol.set('DASH', null)
+mayaprotocol.set('DASH', 'dash')
 
 // Display Name: ETH
-mayaprotocol.set('ETH', null)
+mayaprotocol.set('ETH', 'ethereum')
 
 // Display Name: KUJI
 mayaprotocol.set('KUJI', null)
 
 // Display Name: THOR
-mayaprotocol.set('THOR', null)
+mayaprotocol.set('THOR', 'thorchainrune')
 
 // Display Name: XRD
 mayaprotocol.set('XRD', null)
 
 // Display Name: ZEC
-mayaprotocol.set('ZEC', null)
+mayaprotocol.set('ZEC', 'zcash')

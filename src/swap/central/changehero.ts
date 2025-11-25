@@ -21,6 +21,7 @@ import {
   SwapCurrencyError
 } from 'edge-core-js/types'
 
+import { changehero as changeheroMapping } from '../../mappings/changehero'
 import {
   ChainCodeTickerMap,
   checkInvalidTokenIds,
@@ -30,6 +31,7 @@ import {
   getMaxSwappable,
   InvalidTokenIds,
   makeSwapPluginQuote,
+  mapToRecord,
   SwapOrder
 } from '../../util/swapHelpers'
 import {
@@ -54,89 +56,9 @@ const asInitOptions = asObject({
   apiKey: asString
 })
 
-export const MAINNET_CODE_TRANSCRIPTION: CurrencyPluginIdSwapChainCodeMap = {
-  abstract: null,
-  algorand: 'algorand',
-  amoy: null,
-  arbitrum: 'arbitrum',
-  avalanche: 'avalanche_(c-chain)',
-  axelar: null,
-  badcoin: null,
-  base: 'base',
-  binance: null,
-  binancesmartchain: 'binance_smart_chain',
-  bitcoin: 'bitcoin',
-  bitcoincash: 'bitcoin_cash',
-  bitcoincashtestnet: null,
-  bitcoingold: null,
-  bitcoingoldtestnet: null,
-  bitcoinsv: 'bitcoin_sv',
-  bitcointestnet: null,
-  bitcointestnet4: null,
-  bobevm: null,
-  botanix: null,
-  calibration: null,
-  cardano: 'cardano',
-  cardanotestnet: null,
-  celo: null,
-  coreum: null,
-  cosmoshub: 'cosmos',
-  dash: 'dash',
-  digibyte: 'digibyte',
-  dogecoin: 'doge',
-  eboost: null,
-  ecash: 'xec',
-  eos: null,
-  ethDev: null,
-  ethereum: 'ethereum',
-  ethereumclassic: 'ethereum_classic',
-  ethereumpow: null,
-  fantom: 'ftm',
-  feathercoin: null,
-  filecoin: null,
-  filecoinfevm: null,
-  filecoinfevmcalibration: null,
-  fio: null,
-  groestlcoin: null,
-  hedera: 'hedera',
-  holesky: null,
-  hyperevm: 'hypeevm',
-  liberland: null,
-  liberlandtestnet: null,
-  litecoin: 'litecoin',
-  monero: 'monero',
-  optimism: 'optimism',
-  osmosis: null,
-  piratechain: null,
-  pivx: null,
-  polkadot: 'polkadot',
-  polygon: 'polygon',
-  pulsechain: null,
-  qtum: 'qtum',
-  ravencoin: null,
-  ripple: 'ripple',
-  rsk: null,
-  smartcash: null,
-  sepolia: null,
-  solana: 'solana',
-  sonic: null,
-  stellar: 'stellar',
-  sui: 'sui',
-  suitestnet: null,
-  telos: null,
-  tezos: 'tezos',
-  thorchainrune: null,
-  thorchainrunestagenet: null,
-  ton: 'ton',
-  tron: 'tron',
-  ufo: null,
-  vertcoin: null,
-  wax: null,
-  zano: null,
-  zcash: 'zcash',
-  zcoin: null,
-  zksync: null
-}
+export const MAINNET_CODE_TRANSCRIPTION: CurrencyPluginIdSwapChainCodeMap = mapToRecord(
+  changeheroMapping
+)
 
 // See https://changehero.io/currencies for list of supported currencies
 // Or `curl -X POST 'https://api.changehero.io/v2' -H 'api-key: <your-api-key>' -H 'Content-Type: application/json' -d '{"jsonrpc":"2.0","id":"one","method":"getCurrenciesFull","params":{}}'`

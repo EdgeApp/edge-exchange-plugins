@@ -24,6 +24,7 @@ import {
   SwapCurrencyError
 } from 'edge-core-js/types'
 
+import { changenow as changenowMapping } from '../../mappings/changenow'
 import {
   ChainCodeTickerMap,
   checkInvalidTokenIds,
@@ -35,6 +36,7 @@ import {
   getMaxSwappable,
   InvalidTokenIds,
   makeSwapPluginQuote,
+  mapToRecord,
   SwapOrder
 } from '../../util/swapHelpers'
 import {
@@ -81,89 +83,9 @@ const addressTypeMap: StringMap = {
  * curl 'https://api.changenow.io/v2/exchange/currencies?isFiat=false'
  * ```
  */
-export const MAINNET_CODE_TRANSCRIPTION: CurrencyPluginIdSwapChainCodeMap = {
-  abstract: null,
-  algorand: 'algo',
-  amoy: null,
-  arbitrum: 'arbitrum',
-  avalanche: 'avaxc',
-  axelar: 'axl',
-  badcoin: null,
-  base: 'base',
-  binance: 'bnb',
-  binancesmartchain: 'bsc',
-  bitcoin: 'btc',
-  bitcoincash: 'bch',
-  bitcoincashtestnet: null,
-  bitcoingold: 'btg',
-  bitcoingoldtestnet: null,
-  bitcoinsv: 'bsv',
-  bitcointestnet: null,
-  bitcointestnet4: null,
-  bobevm: null,
-  botanix: null,
-  calibration: null,
-  cardano: 'ada',
-  cardanotestnet: null,
-  celo: 'celo',
-  coreum: 'coreum',
-  cosmoshub: 'atom',
-  dash: 'dash',
-  digibyte: 'dgb',
-  dogecoin: 'doge',
-  eboost: null,
-  ecash: 'xec',
-  eos: 'eos',
-  ethDev: null,
-  ethereum: 'eth',
-  ethereumclassic: 'etc',
-  ethereumpow: 'ethw',
-  fantom: 'ftm',
-  feathercoin: null,
-  filecoin: 'fil',
-  filecoinfevm: null,
-  filecoinfevmcalibration: null,
-  fio: 'fio',
-  groestlcoin: null,
-  hedera: 'hbar',
-  holesky: null,
-  hyperevm: null,
-  liberland: null,
-  liberlandtestnet: null,
-  litecoin: 'ltc',
-  monero: 'xmr',
-  optimism: 'op',
-  osmosis: 'osmo',
-  piratechain: null,
-  pivx: 'pivx',
-  polkadot: 'dot',
-  polygon: 'matic',
-  pulsechain: 'pulse',
-  qtum: 'qtum',
-  ravencoin: 'rvn',
-  ripple: 'xrp',
-  rsk: null,
-  smartcash: null,
-  sepolia: null,
-  solana: 'sol',
-  sonic: 'sonic',
-  stellar: 'xlm',
-  sui: 'sui',
-  suitestnet: null,
-  telos: null,
-  tezos: 'xtz',
-  thorchainrune: null,
-  thorchainrunestagenet: null,
-  ton: 'ton',
-  tron: 'trx',
-  ufo: null,
-  vertcoin: null,
-  wax: 'waxp',
-  zano: null, // 'zano' disabled until until it can be tested for integrated address/payment id
-  zcash: 'zec',
-  zcoin: 'firo',
-  zksync: 'zksync'
-}
+export const MAINNET_CODE_TRANSCRIPTION: CurrencyPluginIdSwapChainCodeMap = mapToRecord(
+  changenowMapping
+)
 
 export const SPECIAL_MAINNET_CASES: EdgeIdSwapIdMap = new Map([
   ['avalanche', new Map([[null, { chainCode: 'cchain', tokenCode: 'avax' }]])]

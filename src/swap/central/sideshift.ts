@@ -25,6 +25,7 @@ import {
   SwapPermissionError
 } from 'edge-core-js/types'
 
+import { sideshift as sideshiftMapping } from '../../mappings/sideshift'
 import {
   ChainCodeTickerMap,
   checkWhitelistedMainnetCodes,
@@ -33,6 +34,7 @@ import {
   getChainAndTokenCodes,
   getMaxSwappable,
   makeSwapPluginQuote,
+  mapToRecord,
   SwapOrder
 } from '../../util/swapHelpers'
 import {
@@ -45,89 +47,9 @@ import {
 import { EdgeSwapRequestPlugin, StringMap } from '../types'
 
 // See https://help.sideshift.ai/en/articles/4559664-which-coins-and-tokens-are-listed for list of supported currencies
-export const MAINNET_CODE_TRANSCRIPTION: CurrencyPluginIdSwapChainCodeMap = {
-  abstract: null,
-  algorand: 'algorand',
-  amoy: null,
-  arbitrum: 'arbitrum',
-  avalanche: 'avax',
-  axelar: null,
-  badcoin: null,
-  base: 'base',
-  binance: null,
-  binancesmartchain: 'bsc',
-  bitcoin: 'bitcoin',
-  bitcoincash: 'bitcoincash',
-  bitcoincashtestnet: null,
-  bitcoingold: null,
-  bitcoingoldtestnet: null,
-  bitcoinsv: 'bsv',
-  bitcointestnet: null,
-  bitcointestnet4: null,
-  bobevm: null,
-  botanix: null,
-  calibration: null,
-  cardano: 'cardano',
-  cardanotestnet: null,
-  celo: null,
-  coreum: null,
-  cosmoshub: 'cosmos',
-  dash: 'dash',
-  digibyte: null,
-  dogecoin: 'doge',
-  eboost: null,
-  ecash: 'ecash',
-  eos: null,
-  ethDev: null,
-  ethereum: 'ethereum',
-  ethereumclassic: 'etc',
-  ethereumpow: null,
-  fantom: 'fantom',
-  feathercoin: null,
-  filecoin: null,
-  filecoinfevm: null,
-  filecoinfevmcalibration: null,
-  fio: null,
-  groestlcoin: 'grs',
-  hedera: null,
-  holesky: null,
-  hyperevm: null,
-  liberland: null,
-  liberlandtestnet: null,
-  litecoin: 'litecoin',
-  monero: 'monero',
-  optimism: 'optimism',
-  osmosis: null,
-  piratechain: null,
-  pivx: null,
-  polkadot: 'polkadot',
-  polygon: 'polygon',
-  pulsechain: null,
-  qtum: null,
-  ravencoin: null,
-  ripple: 'ripple',
-  rsk: 'rootstock',
-  smartcash: null,
-  sepolia: null,
-  solana: 'solana',
-  sonic: 'sonic',
-  stellar: 'stellar',
-  sui: 'sui',
-  suitestnet: null,
-  telos: null,
-  tezos: 'tezos',
-  thorchainrune: null,
-  thorchainrunestagenet: null,
-  ton: 'ton',
-  tron: 'tron',
-  ufo: null,
-  vertcoin: null,
-  wax: null,
-  zano: null,
-  zcash: 'shielded',
-  zcoin: null,
-  zksync: 'zksyncera'
-}
+export const MAINNET_CODE_TRANSCRIPTION: CurrencyPluginIdSwapChainCodeMap = mapToRecord(
+  sideshiftMapping
+)
 
 const SIDESHIFT_BASE_URL = 'https://sideshift.ai/api/v2'
 const pluginId = 'sideshift'

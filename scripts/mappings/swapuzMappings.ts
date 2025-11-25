@@ -8,7 +8,7 @@ swapuz.set('0G', null)
 swapuz.set('ACA', null)
 
 // Display Name: CARDANO (ADA)
-swapuz.set('ADA', null)
+swapuz.set('ADA', 'cardano')
 
 // Display Name: AUTONOMYS
 swapuz.set('AI3', null)
@@ -17,7 +17,7 @@ swapuz.set('AI3', null)
 swapuz.set('AKT', null)
 
 // Display Name: ALGORAND
-swapuz.set('ALGO', null)
+swapuz.set('ALGO', 'algorand')
 
 // Display Name: ALGORAND
 swapuz.set('ALGORAND', null)
@@ -40,6 +40,9 @@ swapuz.set('AR', null)
 // Display Name: ARBITRUM ONE (ARBITRUM)
 swapuz.set('ARB', null)
 
+// WARNING: Not included by the synchronizer synchronization
+swapuz.set('ARBITRUM', 'arbitrum')
+
 // Display Name: ASH
 swapuz.set('ASH', null)
 
@@ -47,7 +50,7 @@ swapuz.set('ASH', null)
 swapuz.set('ASTR', null)
 
 // Display Name: COSMOS
-swapuz.set('ATOM', null)
+swapuz.set('ATOM', 'cosmoshub')
 
 // Display Name: AURORA
 swapuz.set('AURORA', null)
@@ -68,13 +71,13 @@ swapuz.set('BABYLON', null)
 swapuz.set('BAND', null)
 
 // Display Name: BASE
-swapuz.set('BASE', null)
+swapuz.set('BASE', 'base')
 
 // Display Name: BB
 swapuz.set('BB', null)
 
 // Display Name: BITCOIN CASH
-swapuz.set('BCH', null)
+swapuz.set('BCH', 'bitcoincash')
 
 // Display Name: BCHN
 swapuz.set('BCHN', null)
@@ -107,10 +110,10 @@ swapuz.set('BOUNCEBIT', null)
 swapuz.set('BRISE', null)
 
 // Display Name: BINANCE SMART CHAIN (BEP20)
-swapuz.set('BSC', null)
+swapuz.set('BSC', 'binancesmartchain')
 
 // Display Name: BITCOIN (BTC)
-swapuz.set('BTC', null)
+swapuz.set('BTC', 'bitcoin')
 
 // Display Name: LIGHTNING NETWORK
 swapuz.set('BTCLN', null)
@@ -128,10 +131,10 @@ swapuz.set('CANTON', null)
 swapuz.set('CCD', null)
 
 // Display Name: AVALANCHE C-CHAIN (AVAX)
-swapuz.set('CCHAIN', null)
+swapuz.set('CCHAIN', 'avalanche')
 
 // Display Name: CELO
-swapuz.set('CELO', null)
+swapuz.set('CELO', 'celo')
 
 // Display Name: CFX CORE SPACE
 swapuz.set('CFX', null)
@@ -155,7 +158,7 @@ swapuz.set('CSPR', null)
 swapuz.set('DAG', null)
 
 // Display Name: DASH
-swapuz.set('DASH', null)
+swapuz.set('DASH', 'dash')
 
 // Display Name: DECRED
 swapuz.set('DCR', null)
@@ -164,16 +167,19 @@ swapuz.set('DCR', null)
 swapuz.set('DFI', null)
 
 // Display Name: DIGIBYTE
-swapuz.set('DGB', null)
+swapuz.set('DGB', 'digibyte')
 
 // Display Name: DOCK
 swapuz.set('DOCK', null)
 
 // Display Name: DOGECOIN
-swapuz.set('DOGE', null)
+swapuz.set('DOGE', 'dogecoin')
 
 // Display Name: DOG20
 swapuz.set('DOGECHAIN', null)
+
+// WARNING: Not included by the synchronizer synchronization
+swapuz.set('DOT', 'polkadot')
 
 // Display Name: DOTASSETHUB
 swapuz.set('DOTASSETHUB', null)
@@ -200,16 +206,16 @@ swapuz.set('ELA', null)
 swapuz.set('EMYC', null)
 
 // Display Name: EOS (EOS)
-swapuz.set('EOS', null)
+swapuz.set('EOS', 'eos')
 
 // Display Name: ERGO
 swapuz.set('ERGO', null)
 
 // Display Name: ETHEREUM CLASSIC
-swapuz.set('ETC', null)
+swapuz.set('ETC', 'ethereumclassic')
 
 // Display Name: ETHEREUM (ERC20)
-swapuz.set('ETH', null)
+swapuz.set('ETH', 'ethereum')
 
 // Display Name: ETN
 swapuz.set('ETN', null)
@@ -221,7 +227,7 @@ swapuz.set('ETNEVM', null)
 swapuz.set('EVER', null)
 
 // Display Name: FILECOIN
-swapuz.set('FIL', null)
+swapuz.set('FIL', 'filecoin')
 
 // Display Name: FLARE
 swapuz.set('FLARE', null)
@@ -234,6 +240,9 @@ swapuz.set('FLUX', null)
 
 // Display Name: FRA(EVM)
 swapuz.set('FRA', null)
+
+// WARNING: Not included by the synchronizer synchronization
+swapuz.set('FTM', 'fantom')
 
 // Display Name: FTN
 swapuz.set('FTN', null)
@@ -254,7 +263,7 @@ swapuz.set('GUNZ', null)
 swapuz.set('HAQQ', null)
 
 // Display Name: HEDERA HASHGRAPH
-swapuz.set('HBAR', null)
+swapuz.set('HBAR', 'hedera')
 
 // Display Name: HRC20
 swapuz.set('HECO', null)
@@ -332,7 +341,7 @@ swapuz.set('KMA', null)
 swapuz.set('LAVA', null)
 
 // Display Name: LITECOIN
-swapuz.set('LTC', null)
+swapuz.set('LTC', 'litecoin')
 
 // Display Name: LUKSO
 swapuz.set('LUKSO', null)
@@ -360,6 +369,9 @@ swapuz.set('MAPO', null)
 
 // Display Name: BINANCE-SMART-CHAIN
 swapuz.set('MAT', null)
+
+// WARNING: Not included by the synchronizer synchronization
+swapuz.set('MATIC', 'polygon')
 
 // Display Name: MERLIN
 swapuz.set('MERLIN', null)
@@ -455,7 +467,7 @@ swapuz.set('ONT', null)
 swapuz.set('OORT', null)
 
 // Display Name: OPTIMISM (OPTIMISM)
-swapuz.set('OPTIMISM', null)
+swapuz.set('OPTIMISM', 'optimism')
 
 // Display Name: OSMOSIS
 swapuz.set('OSMO', null)
@@ -494,7 +506,7 @@ swapuz.set('POLYMESH', null)
 swapuz.set('QKC', null)
 
 // Display Name: QTUM
-swapuz.set('QTUM', null)
+swapuz.set('QTUM', 'qtum')
 
 // Display Name: RADIX
 swapuz.set('RADIX', null)
@@ -518,7 +530,7 @@ swapuz.set('ROSE', null)
 swapuz.set('RUNE', null)
 
 // Display Name: RAVENCOIN
-swapuz.set('RVN', null)
+swapuz.set('RVN', 'ravencoin')
 
 // Display Name: SAGA
 swapuz.set('SAGA', null)
@@ -536,7 +548,7 @@ swapuz.set('SEIEVM', null)
 swapuz.set('SHARDEUM', null)
 
 // Display Name: SOLANA (SOL)
-swapuz.set('SOL', null)
+swapuz.set('SOL', 'solana')
 
 // Display Name: SOMNIA
 swapuz.set('SOMI', null)
@@ -569,7 +581,7 @@ swapuz.set('STRAXEVM', null)
 swapuz.set('STX', null)
 
 // Display Name: SUI (SUI)
-swapuz.set('SUI', null)
+swapuz.set('SUI', 'sui')
 
 // Display Name: SUPRA
 swapuz.set('SUPRA', null)
@@ -593,7 +605,7 @@ swapuz.set('TENET', null)
 swapuz.set('THETA', null)
 
 // Display Name: THORCHAIN
-swapuz.set('THORCHAIN', null)
+swapuz.set('THORCHAIN', 'thorchainrune')
 
 // Display Name: TELOS
 swapuz.set('TLOS', null)
@@ -602,13 +614,13 @@ swapuz.set('TLOS', null)
 swapuz.set('TLOSEVM', null)
 
 // Display Name: TONCOIN (TON)
-swapuz.set('TON', null)
+swapuz.set('TON', 'ton')
 
 // Display Name: TON
 swapuz.set('TON2', null)
 
 // Display Name: TRON (TRC20)
-swapuz.set('TRX', null)
+swapuz.set('TRX', 'tron')
 
 // Display Name: TRY
 swapuz.set('TRY', null)
@@ -644,7 +656,7 @@ swapuz.set('WAN', null)
 swapuz.set('WAVES', null)
 
 // Display Name: WAXP
-swapuz.set('WAXP', null)
+swapuz.set('WAXP', 'wax')
 
 // Display Name: WEMIX
 swapuz.set('WEMIX', null)
@@ -659,16 +671,16 @@ swapuz.set('XCHAIN', null)
 swapuz.set('XDBCHAIN', null)
 
 // Display Name: XEC
-swapuz.set('XEC', null)
+swapuz.set('XEC', 'ecash')
 
 // Display Name: BASE
 swapuz.set('XION', null)
 
 // Display Name: STELLAR LUMENS
-swapuz.set('XLM', null)
+swapuz.set('XLM', 'stellar')
 
 // Display Name: MONERO
-swapuz.set('XMR', null)
+swapuz.set('XMR', 'monero')
 
 // Display Name: XPR
 swapuz.set('XPR', null)
@@ -677,16 +689,16 @@ swapuz.set('XPR', null)
 swapuz.set('XPRT', null)
 
 // Display Name: RIPPLE
-swapuz.set('XRP', null)
+swapuz.set('XRP', 'ripple')
 
 // Display Name: XTZ EVM
-swapuz.set('XTZ', null)
+swapuz.set('XTZ', 'tezos')
 
 // Display Name: XYM
 swapuz.set('XYM', null)
 
 // Display Name: ZCASH
-swapuz.set('ZEC', null)
+swapuz.set('ZEC', 'zcash')
 
 // Display Name: ZETA
 swapuz.set('ZETA', null)

@@ -2,37 +2,37 @@ import { EdgeCurrencyPluginId } from '../../src/util/edgeCurrencyPluginIds'
 
 export const thorchain = new Map<string, EdgeCurrencyPluginId | null>()
 // Display Name: AVAX
-thorchain.set('AVAX', null)
+thorchain.set('AVAX', 'avalanche')
 
 // Display Name: BASE
-thorchain.set('BASE', null)
+thorchain.set('BASE', 'base')
 
 // Display Name: BCH
-thorchain.set('BCH', null)
+thorchain.set('BCH', 'bitcoincash')
 
 // Display Name: BSC
-thorchain.set('BSC', null)
+thorchain.set('BSC', 'binancesmartchain')
 
 // Display Name: BTC
-thorchain.set('BTC', null)
+thorchain.set('BTC', 'bitcoin')
 
 // Display Name: DOGE
-thorchain.set('DOGE', null)
+thorchain.set('DOGE', 'dogecoin')
 
 // Display Name: ETH
-thorchain.set('ETH', null)
+thorchain.set('ETH', 'ethereum')
 
 // Display Name: GAIA
 thorchain.set('GAIA', null)
 
 // Display Name: LTC
-thorchain.set('LTC', null)
+thorchain.set('LTC', 'litecoin')
 
 // Display Name: THOR
-thorchain.set('THOR', null)
+thorchain.set('THOR', 'thorchainrune')
 
 // Display Name: TRON
-thorchain.set('TRON', null)
+thorchain.set('TRON', 'tron')
 
 // Display Name: XRP
-thorchain.set('XRP', null)
+thorchain.set('XRP', 'ripple')

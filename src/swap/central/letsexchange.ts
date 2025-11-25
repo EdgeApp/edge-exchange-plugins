@@ -20,6 +20,7 @@ import {
   SwapCurrencyError
 } from 'edge-core-js/types'
 
+import { letsexchange as letsexchangeMapping } from '../../mappings/letsexchange'
 import {
   ChainCodeTickerMap,
   checkInvalidTokenIds,
@@ -30,6 +31,7 @@ import {
   getMaxSwappable,
   InvalidTokenIds,
   makeSwapPluginQuote,
+  mapToRecord,
   SwapOrder
 } from '../../util/swapHelpers'
 import {
@@ -86,89 +88,9 @@ const addressTypeMap: StringMap = {
 
 // See https://letsexchange.io/exchange-pairs for list of supported currencies
 // Or `curl -X GET 'https://api.letsexchange.io/api/v2/coins' -H 'Authorization: Bearer <your-api-key>' | jq .`
-export const MAINNET_CODE_TRANSCRIPTION: CurrencyPluginIdSwapChainCodeMap = {
-  abstract: null,
-  algorand: 'ALGO',
-  amoy: null,
-  arbitrum: 'ARBITRUM',
-  avalanche: 'AVAXC',
-  axelar: 'WAXL',
-  badcoin: null,
-  base: null,
-  binance: 'BEP2',
-  binancesmartchain: 'BEP20',
-  bitcoin: 'BTC',
-  bitcoincash: 'BCH',
-  bitcoincashtestnet: null,
-  bitcoingold: 'BTG',
-  bitcoingoldtestnet: null,
-  bitcoinsv: 'BSV',
-  bitcointestnet: null,
-  bitcointestnet4: null,
-  bobevm: null,
-  botanix: null,
-  calibration: null,
-  cardano: 'ADA',
-  cardanotestnet: null,
-  celo: 'CELO',
-  coreum: 'COREUM',
-  cosmoshub: 'ATOM',
-  dash: 'DASH',
-  digibyte: 'DGB',
-  dogecoin: 'DOGE',
-  eboost: null,
-  ecash: 'XEC',
-  eos: 'EOS',
-  ethDev: null,
-  ethereum: 'ERC20',
-  ethereumclassic: 'ETC',
-  ethereumpow: 'ETHW',
-  fantom: 'FTM',
-  feathercoin: null,
-  filecoin: 'FIL',
-  filecoinfevm: null,
-  filecoinfevmcalibration: null,
-  fio: 'FIO',
-  groestlcoin: 'GRS',
-  hedera: 'HBAR',
-  holesky: null,
-  hyperevm: 'HYPE',
-  liberland: null,
-  liberlandtestnet: null,
-  litecoin: 'LTC',
-  monero: 'XMR',
-  optimism: 'OPTIMISM',
-  osmosis: 'OSMO',
-  piratechain: 'ARRR',
-  pivx: 'PIVX',
-  polkadot: 'DOT',
-  polygon: 'POL',
-  pulsechain: 'PLS',
-  qtum: 'QTUM',
-  ravencoin: 'RVN',
-  ripple: 'XRP',
-  rsk: 'RSK',
-  smartcash: null,
-  sepolia: null,
-  solana: 'SOL',
-  sonic: 'SONIC',
-  stellar: 'XLM',
-  sui: 'SUI',
-  suitestnet: null,
-  telos: 'TLOS',
-  tezos: 'XTZ',
-  thorchainrune: 'RUNE',
-  thorchainrunestagenet: null,
-  ton: 'TON',
-  tron: 'TRC20',
-  ufo: null,
-  vertcoin: null,
-  wax: 'WAX',
-  zano: 'ZANO',
-  zcash: 'ZEC',
-  zcoin: 'FIRO',
-  zksync: 'ZKSERA'
-}
+export const MAINNET_CODE_TRANSCRIPTION: CurrencyPluginIdSwapChainCodeMap = mapToRecord(
+  letsexchangeMapping
+)
 
 export const SPECIAL_MAINNET_CASES: EdgeIdSwapIdMap = new Map([
   // axelar: new Map([[null, 'WAXL']]), // currentlyly disabled
