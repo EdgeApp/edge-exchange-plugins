@@ -392,25 +392,25 @@ export function makeBridgelessPlugin(
           }
           const { txid } = swapResult.transaction
 
+          const savedAction = swapResult.transaction.savedAction
+          const assetAction = swapResult.transaction.assetAction
+
           if (
-            swapResult.transaction.savedAction?.actionType === 'swap' &&
-            swapResult.transaction.savedAction.orderId != null
+            savedAction != null &&
+            savedAction.actionType === 'swap' &&
+            savedAction.orderId != null
           ) {
             const txHash = txid.startsWith('0x') ? txid : `0x${txid}`
-            swapResult.transaction.savedAction.orderId = swapResult.transaction.savedAction.orderId.replace(
+            savedAction.orderId = savedAction.orderId.replace(
               '{{TXID}}',
               txHash
             )
             // Refresh orderUri to include the resolved txid
-            if (swapResult.transaction.savedAction.orderId != null) {
-              swapResult.transaction.savedAction.orderUri = `${ORDER_URL}/check/${swapResult.transaction.savedAction.orderId}`
+            if (savedAction.orderId != null) {
+              savedAction.orderUri = `${ORDER_URL}/check/${savedAction.orderId}`
             }
 
-            const [
-              chainId,
-              ,
-              txNonce
-            ] = swapResult.transaction.savedAction.orderId.split('/')
+            const [chainId, , txNonce] = savedAction.orderId.split('/')
 
             const res = await opts.io.fetch(`${AUTO_BOT_URL}/api/bridgeless`, {
               method: 'PUT',
@@ -422,6 +422,16 @@ export function makeBridgelessPlugin(
             if (!res.ok) {
               throw new Error('Failed to send txid to bridgeless submitter')
             }
+
+            // Persist the updated orderId/orderUri so post-login views see the 0x-prefixed txid:
+            await newRequest.fromWallet.saveTxAction({
+              txid: swapResult.transaction.txid,
+              tokenId: swapResult.transaction.tokenId ?? newRequest.fromTokenId,
+              assetAction: assetAction ?? {
+                assetActionType: 'swap'
+              },
+              savedAction
+            })
           }
           return swapResult
         }
