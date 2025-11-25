@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- fixed: (bridgeless) Normalized txIds would not save after log out/log in
+- fixed: (bridgeless) Autobot body txhash
+
 ## 2.39.1 (2025-11-18)
 
 - fixed: Updated `getMaxSwappable` to handle `makeTx` flows with no `spendInfos`
