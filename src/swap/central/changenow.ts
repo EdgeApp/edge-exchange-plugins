@@ -38,7 +38,7 @@ import {
   SwapOrder
 } from '../../util/swapHelpers'
 import { convertRequest, getAddress, memoType } from '../../util/utils'
-import { EdgeSwapRequestPlugin } from '../types'
+import { EdgeSwapRequestPlugin, StringMap } from '../types'
 
 const pluginId = 'changenow'
 
@@ -58,9 +58,11 @@ const uri = 'https://api.changenow.io/v2/'
 
 const INVALID_CURRENCY_CODES: InvalidCurrencyCodes = {
   from: {},
-  to: {
-    zcash: ['ZEC']
-  }
+  to: {}
+}
+
+const addressTypeMap: StringMap = {
+  zcash: 'transparentAddress'
 }
 
 /**
@@ -204,8 +206,14 @@ export function makeChangeNowPlugin(
 
     // Grab addresses:
     const [fromAddress, toAddress] = await Promise.all([
-      getAddress(request.fromWallet),
-      getAddress(request.toWallet)
+      getAddress(
+        request.fromWallet,
+        addressTypeMap[request.fromWallet.currencyInfo.pluginId]
+      ),
+      getAddress(
+        request.toWallet,
+        addressTypeMap[request.toWallet.currencyInfo.pluginId]
+      )
     ])
 
     const changenowCodes = await getChainAndTokenCodes(

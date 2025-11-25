@@ -2,6 +2,53 @@
 
 ## Unreleased
 
+## 2.39.1 (2025-11-18)
+
+- fixed: Updated `getMaxSwappable` to handle `makeTx` flows with no `spendInfos`
+- fixed: (bridgeless) Normalize non-hex txIds in exchange status link
+
+## 2.39.0 (2025-11-04)
+
+- added: Add additional `approve` transaction for tokens that require allowances to be 0 before updating, like USDT on Ethereum
+- changed: Support multiple pre transactions
+- changed: Enable Zcash swaps on LetsExchange and ChangeNow using transparent addresses
+
+## 2.38.0 (2025-11-03)
+
+- changed: (Letsexchange) Disable ZEC swaps completely
+- changed: (Letsexchange) Fix HBAR support (only disallow "to" wallets that are not activated)
+
+## 2.37.0 (2025-10-31)
+
+- added: (Letsexchange) Zano and HBAR support
+- changed: Updated Bridgeless to use minimum swap amount provided by API
+
+## 2.36.0 (2025-10-16)
+
+- added: (Thorchain) Support for Tron
+- fixed: (Thorchain) Native unit multiplier for XRP
+- fixed: (Letsexchange) Failing swaps due to passing the wrong currency code to the API and receiving fractional `nativeAmount`
+
+## 2.35.1 (2025-10-16)
+
+- changed: Bridgeless minimum to 10000 sats
+- fixed: Bridgeless API breaking change for `commission_rate`
+
+## 2.35.0 (2025-10-03)
+
+- added: (Rango) Support for Axelar, Celo, Cosmos, Osmosis, and Thorchain
+- changed: (Rango) Find minimum swap using native amounts with exponential+binary search
+
+## 2.34.0 (2025-09-18)
+
+- added: (LI.FI) Add SUI blockchain support for swaps via Aftermath and Bluefin7k DEXs
+- changed: Include `orderUri` on Bridgeless swaps
+- fixed: Fix `bridgeless` Zano burn asset params
+
+## 2.33.0 (2025-09-09)
+
+- added: Add Bridgeless plugin
+
 ## 2.32.0 (2025-08-25)
 
 - added: Fantom/Sonic Upgrade: throw `SwapAddressError` when from/to wallet addresses differ so the GUI can auto-select or split a FTM wallet

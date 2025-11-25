@@ -35,7 +35,7 @@ import {
   promiseWithTimeout
 } from '../../../util/utils'
 import { EdgeSwapRequestPlugin } from '../../types'
-import { getEvmApprovalData } from '../defiUtils'
+import { createEvmApprovalEdgeTransactions } from '../defiUtils'
 import { MAINNET_CODE_TRANSCRIPTION } from './thorchain'
 import {
   AFFILIATE_FEE_BASIS_DEFAULT,
@@ -331,8 +331,7 @@ export function makeSwapKitPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
     let memo = ''
 
     const publicAddress = targetAddress
-    let approvalData
-    let preTx: EdgeTransaction | undefined
+    const preTxs: EdgeTransaction[] = []
 
     const evmTransaction = asMaybe(asEvmCleaner)(thorSwap.tx)
     const cosmosTransaction = asMaybe(asCosmosCleaner)(thorSwap.tx)
@@ -347,40 +346,14 @@ export function makeSwapKitPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
 
         const dexContractAddress = asString(thorSwap.meta.approvalAddress)
 
-        // Check if token approval is required and return necessary data field
-        approvalData = await getEvmApprovalData({
-          contractAddress: dexContractAddress,
-          assetAddress: sourceTokenContractAddress,
-          nativeAmount
+        const approvalTxs = await createEvmApprovalEdgeTransactions({
+          request,
+          approvalAmount: nativeAmount,
+          tokenContractAddress: sourceTokenContractAddress,
+          recipientAddress: dexContractAddress,
+          networkFeeOption: 'high'
         })
-        if (approvalData != null) {
-          const spendInfo: EdgeSpendInfo = {
-            // Token approvals only spend the parent currency
-            tokenId: null,
-            memos: [{ type: 'hex', value: approvalData }],
-            spendTargets: [
-              {
-                nativeAmount: '0',
-                publicAddress: sourceTokenContractAddress
-              }
-            ],
-            networkFeeOption: 'high',
-            assetAction: {
-              assetActionType: 'tokenApproval'
-            },
-            savedAction: {
-              actionType: 'tokenApproval',
-              tokenApproved: {
-                pluginId: fromWallet.currencyInfo.pluginId,
-                tokenId: fromTokenId,
-                nativeAmount
-              },
-              tokenContractAddress: sourceTokenContractAddress,
-              contractAddress: dexContractAddress
-            }
-          }
-          preTx = await request.fromWallet.makeSpend(spendInfo)
-        }
+        preTxs.push(...approvalTxs)
       }
       memo = evmTransaction.data.replace(/^0x/, '')
     } else if (cosmosTransaction != null) {
@@ -465,7 +438,7 @@ export function makeSwapKitPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
       swapInfo,
       fromNativeAmount: nativeAmount,
       expirationDate: new Date(expirationMs),
-      preTx,
+      preTxs,
       metadataNotes: notes
     }
   }

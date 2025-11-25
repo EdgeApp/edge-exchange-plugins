@@ -1,4 +1,4 @@
-import { add, max } from 'biggystring'
+import { add, div, gt, max, mul, round } from 'biggystring'
 import {
   EdgeCurrencyWallet,
   EdgeFetchFunction,
@@ -11,6 +11,7 @@ import { EdgeSwapRequestPlugin } from '../swap/types'
 import { getCodes } from './swapHelpers'
 const INFO_SERVERS = ['https://info1.edge.app', 'https://info2.edge.app']
 const RATES_SERVERS = ['https://rates1.edge.app', 'https://rates2.edge.app']
+const RATES_SERVERS_V3 = ['https://rates3.edge.app', 'https://rates4.edge.app']
 
 export interface QueryParams {
   [key: string]: string | number | boolean | null
@@ -154,6 +155,15 @@ export const fetchRates = async (
   return await multiFetch(fetch, RATES_SERVERS, path, options, timeout)
 }
 
+export const fetchRatesV3 = async (
+  fetch: EdgeFetchFunction,
+  path: string,
+  options?: Object,
+  timeout?: number
+): Promise<EdgeFetchResponse> => {
+  return await multiFetch(fetch, RATES_SERVERS_V3, path, options, timeout)
+}
+
 export const prettyLogObject = (val: any): void =>
   console.log(JSON.stringify(val, null, 2))
 
@@ -222,4 +232,67 @@ const pluginIdMemoTypes: { [pluginId: string]: EdgeMemoOption['type'] } = {
 }
 export const memoType = (pluginId: string): EdgeMemoOption['type'] => {
   return pluginIdMemoTypes[pluginId] ?? 'text'
+}
+
+/**
+ * Find the minimum native swap amount that succeeds.
+ *
+ * Strategy:
+ * 1) Exponential search upward from a starting native amount to find a
+ *    successful upper bound.
+ * 2) Binary search between the last failing amount and the first
+ *    successful amount to find the minimum working native amount.
+ */
+export async function findMinimumSwapAmount({
+  startingNativeAmount,
+  expandIterations = 10,
+  maxIterations = 20,
+  quoteTester
+}: {
+  startingNativeAmount?: string
+  /** Max doubling steps to find an upper bound */
+  expandIterations?: number
+  /** Max bisection steps between bounds */
+  maxIterations?: number
+  /** Returns true if quote succeeds */
+  quoteTester: (nativeAmount: string) => Promise<boolean>
+}): Promise<string | undefined> {
+  // Ensure a sane starting point >= 1
+  let amount = startingNativeAmount?.toString() ?? '1'
+
+  // 1) Exponential search to find a successful upper bound
+  let lowFail = '0'
+  let highSuccess: string | undefined
+  for (let i = 0; i < expandIterations; i++) {
+    const ok = await quoteTester(amount).catch(() => false)
+    if (ok) {
+      highSuccess = amount
+      break
+    }
+    lowFail = amount
+    amount = mul(amount, '2')
+  }
+
+  if (highSuccess == null) {
+    // Could not find any working amount in expansion phase
+    return undefined
+  }
+
+  // 2) Binary search between (lowFail, highSuccess]
+  let low = lowFail
+  let high = highSuccess
+  let lastWorkingAmount: string | undefined = highSuccess
+
+  for (let i = 0; i < maxIterations && gt(high, low); i++) {
+    const mid = round(div(add(low, high), '2'), 0)
+    if (await quoteTester(mid).catch(() => false)) {
+      lastWorkingAmount = mid
+      high = mid
+    } else {
+      // Exclude failing mid to avoid infinite loops
+      low = add(mid, '1')
+    }
+  }
+
+  return lastWorkingAmount
 }

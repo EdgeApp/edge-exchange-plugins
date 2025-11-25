@@ -40,6 +40,7 @@ export const MAINNET_CODE_TRANSCRIPTION: { [cc: string]: string } = {
   ethereum: 'ETH',
   litecoin: 'LTC',
   ripple: 'XRP',
+  tron: 'TRON',
   thorchainrune: 'THOR'
 }
 

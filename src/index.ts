@@ -11,6 +11,7 @@ import { makeSideshiftPlugin } from './swap/central/sideshift'
 import { makeSwapuzPlugin } from './swap/central/swapuz'
 import { xgramPlugin } from './swap/central/xgram'
 import { make0xGaslessPlugin } from './swap/defi/0x/0xGasless'
+import { makeBridgelessPlugin } from './swap/defi/bridgeless'
 import { makeCosmosIbcPlugin } from './swap/defi/cosmosIbc'
 import { makeFantomSonicUpgradePlugin } from './swap/defi/fantomSonicUpgrade'
 import { makeLifiPlugin } from './swap/defi/lifi'
@@ -27,6 +28,7 @@ import { xrpdex } from './swap/xrpDexInfo'
 
 const plugins = {
   // Swap plugins:
+  bridgeless: makeBridgelessPlugin,
   changehero: makeChangeHeroPlugin,
   changenow: makeChangeNowPlugin,
   xgram: xgramPlugin,

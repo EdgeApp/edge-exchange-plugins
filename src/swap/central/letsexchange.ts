@@ -33,7 +33,7 @@ import {
   SwapOrder
 } from '../../util/swapHelpers'
 import { convertRequest, getAddress, memoType } from '../../util/utils'
-import { asNumberString, EdgeSwapRequestPlugin } from '../types'
+import { asNumberString, EdgeSwapRequestPlugin, StringMap } from '../types'
 import { asOptionalBlank } from './changenow'
 
 const pluginId = 'letsexchange'
@@ -71,9 +71,11 @@ const asInfoReply = asObject({
 })
 const INVALID_CURRENCY_CODES: InvalidCurrencyCodes = {
   from: {},
-  to: {
-    zcash: ['ZEC']
-  }
+  to: {}
+}
+
+const addressTypeMap: StringMap = {
+  zcash: 'transparentAddress'
 }
 
 // See https://letsexchange.io/exchange-pairs for list of supported currencies
@@ -139,7 +141,7 @@ export const MAINNET_CODE_TRANSCRIPTION: CurrencyPluginIdSwapChainCodeMap = {
   ufo: null,
   vertcoin: null,
   wax: 'WAX',
-  zano: null, // 'ZANO' disabled until until it can be tested for integrated address/payment id
+  zano: 'ZANO',
   zcash: 'ZEC',
   zcoin: 'FIRO',
   zksync: 'ZKSERA'
@@ -162,6 +164,11 @@ let chainCodeTickerMap: ChainCodeTickerMap = new Map()
 let lastUpdated = 0
 const EXPIRATION = 1000 * 60 * 60 // 1 hour
 
+// Hedera accounts are considered activated when the address is a numeric account ID
+// format: 0.0.<digits>
+const isHederaActivatedAddress = (address: string): boolean =>
+  /^0\.0\.\d+$/.test(address)
+
 export function makeLetsExchangePlugin(
   opts: EdgeCorePluginOptions
 ): EdgeSwapPlugin {
@@ -183,10 +190,13 @@ export function makeLetsExchangePlugin(
     const body = JSON.stringify(data.params)
     const response = await fetchCors(url, { method: 'POST', body, headers })
     if (!response.ok) {
+      const message = await response.text()
       if (response.status === 422) {
         throw new SwapCurrencyError(swapInfo, request)
       }
-      throw new Error(`letsexchange returned error code ${response.status}`)
+      throw new Error(
+        `letsexchange returned error code ${response.status}: ${message}`
+      )
     }
     return await response.json()
   }
@@ -236,9 +246,23 @@ export function makeLetsExchangePlugin(
 
     // Grab addresses:
     const [fromAddress, toAddress] = await Promise.all([
-      getAddress(request.fromWallet),
-      getAddress(request.toWallet)
+      getAddress(
+        request.fromWallet,
+        addressTypeMap[request.fromWallet.currencyInfo.pluginId]
+      ),
+      getAddress(
+        request.toWallet,
+        addressTypeMap[request.toWallet.currencyInfo.pluginId]
+      )
     ])
+
+    // HBAR support: Disable if the "to" wallet is not yet activated, pending
+    // support from LetsExchange.
+    if (request.toWallet.currencyInfo.pluginId === 'hedera') {
+      if (!isHederaActivatedAddress(toAddress)) {
+        throw new SwapCurrencyError(swapInfo, request)
+      }
+    }
 
     // Convert the native amount to a denomination:
     const quoteAmount =
@@ -335,8 +359,8 @@ export function makeLetsExchangePlugin(
       params: {
         deposit_amount: reverseQuote ? undefined : fromAmount,
         withdrawal_amount: reverseQuote ? toAmount : undefined,
-        coin_from: request.fromCurrencyCode,
-        coin_to: request.toCurrencyCode,
+        coin_from: fromCurrencyCode,
+        coin_to: toCurrencyCode,
         network_from: fromMainnetCode,
         network_to: toMainnetCode,
         withdrawal: toAddress,
@@ -354,14 +378,16 @@ export function makeLetsExchangePlugin(
     log('sendReply', sendReply)
     const quoteInfo = asQuoteInfo(sendReply)
 
-    const fromNativeAmount = await request.fromWallet.denominationToNative(
+    const rawFromNativeAmount = await request.fromWallet.denominationToNative(
       quoteInfo.deposit_amount,
       request.fromCurrencyCode
     )
-    const toNativeAmount = await request.toWallet.denominationToNative(
+    const rawToNativeAmount = await request.toWallet.denominationToNative(
       quoteInfo.withdrawal_amount,
       request.toCurrencyCode
     )
+    const fromNativeAmount = rawFromNativeAmount.split('.')[0]
+    const toNativeAmount = rawToNativeAmount.split('.')[0]
 
     const memos: EdgeMemo[] =
       quoteInfo.deposit_extra_id == null

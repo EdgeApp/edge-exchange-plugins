@@ -45,7 +45,10 @@ import {
   QueryParams
 } from '../../../util/utils'
 import { EdgeSwapRequestPlugin, MakeTxParams } from '../../types'
-import { getDepositWithExpiryData, getEvmApprovalData } from '../defiUtils'
+import {
+  createEvmApprovalEdgeTransactions,
+  getDepositWithExpiryData
+} from '../defiUtils'
 
 export const EXPIRATION_MS = 1000 * 60
 export const EXCHANGE_INFO_UPDATE_FREQ_MS = 60000
@@ -146,7 +149,29 @@ export const EVM_CURRENCY_CODES: { [cc: string]: boolean } = {
   ETH: true,
   FTM: true,
   LTC: false,
-  THOR: false
+  THOR: false,
+  TRON: false,
+  XRP: false
+}
+
+/** Thorchain has weird heuristics for some currencies */
+const NATIVE_TO_THOR_MULTIPLIER: { [cc: string]: string } = {
+  ARB: NATIVE_IN_GWEI,
+  AVAX: NATIVE_IN_GWEI,
+  BASE: NATIVE_IN_GWEI,
+  BCH: '1',
+  BNB: '1',
+  BSC: NATIVE_IN_GWEI,
+  BTC: '1',
+  DASH: '1',
+  DOGE: '1',
+  ETC: NATIVE_IN_GWEI,
+  ETH: NATIVE_IN_GWEI,
+  FTM: NATIVE_IN_GWEI,
+  LTC: '1',
+  THOR: '1',
+  TRON: '1',
+  XRP: '0.01'
 }
 
 export const asInitOptions = asObject({
@@ -464,10 +489,11 @@ export function makeThorchainBasedPlugin(
         const inboundJson = await inboundResponse.json()
         const inboundAddresses = asInboundAddresses(inboundJson)
         for (const inbound of inboundAddresses) {
+          const nativeToThorMultiplier =
+            NATIVE_TO_THOR_MULTIPLIER[inbound.chain] ?? '1'
           dustThresholds[inbound.chain] = mul(
             inbound.dust_threshold,
-            // EVM currencies' dust thresholds are given in gwei
-            EVM_CURRENCY_CODES[inbound.chain] ? NATIVE_IN_GWEI : '1'
+            nativeToThorMultiplier
           )
         }
       } else {
@@ -628,7 +654,7 @@ export function makeThorchainBasedPlugin(
 
     let ethNativeAmount = fromNativeAmount
     let publicAddress = thorAddress
-    let approvalData
+    const preTxs: EdgeTransaction[] = []
     let memoType: EdgeMemo['type']
 
     const savedAction: EdgeTxActionSwap = {
@@ -671,12 +697,14 @@ export function makeThorchainBasedPlugin(
         // Token transactions send no ETH (or other EVM mainnet coin)
         ethNativeAmount = '0'
 
-        // Check if token approval is required and return necessary data field
-        approvalData = await getEvmApprovalData({
-          contractAddress: router,
-          assetAddress: sourceTokenContractAddress,
-          nativeAmount: fromNativeAmount
+        const approvalTxs = await createEvmApprovalEdgeTransactions({
+          request,
+          approvalAmount: nativeAmount,
+          tokenContractAddress: sourceTokenContractAddress,
+          recipientAddress: router,
+          networkFeeOption: 'high'
         })
+        preTxs.push(...approvalTxs)
       }
 
       // Need to use ethers.js to craft a proper tx that calls Thorchain contract, then extract the data payload
@@ -739,41 +767,6 @@ export function makeThorchainBasedPlugin(
         // Cannot yet do tokens on utxo chains
         throw new SwapCurrencyError(swapInfo, request)
       }
-    }
-
-    let preTx: EdgeTransaction | undefined
-    if (approvalData != null) {
-      const spendInfo: EdgeSpendInfo = {
-        // Token approvals only spend the parent currency
-        tokenId: null,
-        memos: [
-          {
-            type: 'hex',
-            value: approvalData
-          }
-        ],
-        spendTargets: [
-          {
-            nativeAmount: '0',
-            publicAddress: sourceTokenContractAddress
-          }
-        ],
-        networkFeeOption: 'high',
-        assetAction: {
-          assetActionType: 'tokenApproval'
-        },
-        savedAction: {
-          actionType: 'tokenApproval',
-          tokenApproved: {
-            pluginId: fromWallet.currencyInfo.pluginId,
-            tokenId: fromTokenId,
-            nativeAmount
-          },
-          tokenContractAddress: sourceTokenContractAddress ?? '',
-          contractAddress: router ?? ''
-        }
-      }
-      preTx = await request.fromWallet.makeSpend(spendInfo)
     }
 
     if (publicAddress == null) {
@@ -867,7 +860,7 @@ export function makeThorchainBasedPlugin(
       swapInfo,
       fromNativeAmount,
       expirationDate: new Date(Date.now() + EXPIRATION_MS),
-      preTx
+      preTxs
     }
   }
 

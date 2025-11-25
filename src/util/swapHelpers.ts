@@ -54,7 +54,7 @@ export type SwapOrder = SwapOrderInner & {
   maxFulfillmentSeconds?: number
   metadataNotes?: string
   minReceiveAmount?: string
-  preTx?: EdgeTransaction
+  preTxs?: EdgeTransaction[]
   request: EdgeSwapRequestPlugin
   swapInfo: EdgeSwapInfo
 }
@@ -69,7 +69,7 @@ export async function makeSwapPluginQuote(
     maxFulfillmentSeconds,
     metadataNotes,
     minReceiveAmount,
-    preTx,
+    preTxs = [],
     request,
     swapInfo
   } = order
@@ -79,25 +79,45 @@ export async function makeSwapPluginQuote(
   if ('spendInfo' in order) {
     const { spendInfo } = order
     const spend =
-      preTx != null ? { ...spendInfo, pendingTxs: [preTx] } : spendInfo
+      preTxs.length > 0 ? { ...spendInfo, pendingTxs: preTxs } : spendInfo
     tx = await fromWallet.makeSpend(spend)
   } else {
     const { makeTxParams } = order
-    const { assetAction, savedAction } = makeTxParams
-    const params =
-      preTx != null ? { ...makeTxParams, pendingTxs: [preTx] } : makeTxParams
-    tx = await fromWallet.otherMethods.makeTx(params)
+
+    // Handle the new MakeTx type for SUI
+    if (makeTxParams.type === 'MakeTx') {
+      tx = await fromWallet.otherMethods.makeTx(makeTxParams)
+      if (
+        tx.savedAction == null &&
+        makeTxParams.metadata?.savedAction != null
+      ) {
+        tx.savedAction = makeTxParams.metadata.savedAction
+      }
+      if (
+        tx.assetAction == null &&
+        makeTxParams.metadata?.assetAction != null
+      ) {
+        tx.assetAction = makeTxParams.metadata.assetAction
+      }
+    } else {
+      const { assetAction, savedAction } = makeTxParams
+      const params =
+        preTxs.length > 0
+          ? { ...makeTxParams, pendingTxs: preTxs }
+          : makeTxParams
+      tx = await fromWallet.otherMethods.makeTx(params)
+      if (tx.savedAction == null) {
+        tx.savedAction = savedAction
+      }
+      if (tx.assetAction == null) {
+        tx.assetAction = assetAction
+      }
+    }
     if (tx.tokenId == null) {
       tx.tokenId = request.fromTokenId
     }
     if (tx.currencyCode == null) {
       tx.currencyCode = request.fromCurrencyCode
-    }
-    if (tx.savedAction == null) {
-      tx.savedAction = savedAction
-    }
-    if (tx.assetAction == null) {
-      tx.assetAction = assetAction
     }
   }
   const action = tx.savedAction
@@ -121,11 +141,12 @@ export async function makeSwapPluginQuote(
   let nativeAmount =
     tx.parentNetworkFee != null ? tx.parentNetworkFee : tx.networkFee
 
-  if (preTx != null)
+  for (const preTx of preTxs) {
     nativeAmount = add(
       nativeAmount,
       preTx.parentNetworkFee != null ? preTx.parentNetworkFee : preTx.networkFee
     )
+  }
 
   const out: EdgeSwapQuote = {
     canBePartial,
@@ -144,7 +165,7 @@ export async function makeSwapPluginQuote(
     swapInfo,
     toNativeAmount,
     async approve(opts?: EdgeSwapApproveOptions): Promise<EdgeSwapResult> {
-      if (preTx != null) {
+      for (const preTx of preTxs) {
         const signedTransaction = await fromWallet.signTx(preTx)
         const broadcastedTransaction = await fromWallet.broadcastTx(
           signedTransaction
@@ -227,25 +248,36 @@ export const getMaxSwappable = async <T extends any[]>(
   requestCopy.nativeAmount = balance
   requestCopy.quoteFor = 'from'
   const swapOrder = await fetchSwap(requestCopy, ...args)
-  if (!('spendInfo' in swapOrder)) {
-    return request
+  const hasSpendInfo = 'spendInfo' in swapOrder
+
+  // If the partner flow provides a spendInfo, compute getMaxSpendable. Otherwise,
+  // fall back to using the full balance (minus any preTx fees if applicable).
+  if (hasSpendInfo) {
+    // Then use getMaxSpendable with the partner's address
+    delete swapOrder.spendInfo.spendTargets[0].nativeAmount
+    let maxAmount = await fromWallet.getMaxSpendable(swapOrder.spendInfo)
+
+    // Subtract fee from pretx
+    if (fromCurrencyCode === fromWallet.currencyInfo.currencyCode) {
+      for (const preTx of swapOrder.preTxs ?? []) {
+        maxAmount = sub(maxAmount, preTx.networkFee)
+      }
+    }
+
+    // Update and return the request object
+    requestCopy.nativeAmount = maxAmount
+    return requestCopy
+  } else {
+    // Fallback: Use full balance for makeTx paths
+    let maxAmount = balance
+    if (fromCurrencyCode === fromWallet.currencyInfo.currencyCode) {
+      for (const preTx of swapOrder.preTxs ?? []) {
+        maxAmount = sub(maxAmount, preTx.networkFee)
+      }
+    }
+    requestCopy.nativeAmount = maxAmount
+    return requestCopy
   }
-
-  // Then use getMaxSpendable with the partner's address
-  delete swapOrder.spendInfo.spendTargets[0].nativeAmount
-  let maxAmount = await fromWallet.getMaxSpendable(swapOrder.spendInfo)
-
-  // Subtract fee from pretx
-  if (
-    swapOrder.preTx != null &&
-    fromCurrencyCode === fromWallet.currencyInfo.currencyCode
-  ) {
-    maxAmount = sub(maxAmount, swapOrder.preTx.networkFee)
-  }
-
-  // Update and return the request object
-  requestCopy.nativeAmount = maxAmount
-  return requestCopy
 }
 
 // Store custom fees so a request can use consistent fees when calling makeSpend multiple times
@@ -266,7 +298,7 @@ export const customFeeCache = {
   setFees: (uid: string, customNetworkFee?: JsonObject): void => {
     for (const id of Object.keys(customFeeCacheMap)) {
       if (Date.now() > customFeeCacheMap[id].timestamp + 30000) {
-        delete customFeeCacheMap[id] // eslint-disable-line
+        delete customFeeCacheMap[id]; // eslint-disable-line
       }
     }
     customFeeCacheMap[uid] = { customNetworkFee, timestamp: Date.now() }
