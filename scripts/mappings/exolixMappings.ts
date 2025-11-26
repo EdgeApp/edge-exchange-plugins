@@ -746,4 +746,4 @@ exolix.set('ZIL', null)
 
 // Display Name: ZKSYNC
 // Short Name: ZKV2
-exolix.set('ZKSYNCERA', null)
+exolix.set('ZKSYNCERA', 'zksync')

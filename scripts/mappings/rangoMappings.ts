@@ -77,13 +77,13 @@ rango.set('CRONOS', null)
 rango.set('CRYPTO_ORG', null)
 
 // Display Name: Dash
-rango.set('DASH', null)
+rango.set('DASH', 'dash')
 
 // Display Name: Desmos
 rango.set('DESMOS', null)
 
 // Display Name: Doge
-rango.set('DOGE', null)
+rango.set('DOGE', 'dogecoin')
 
 // Display Name: Dydx
 rango.set('DYDX', null)
@@ -140,7 +140,7 @@ rango.set('KUJIRA', null)
 rango.set('LINEA', null)
 
 // Display Name: LiteCoin
-rango.set('LTC', null)
+rango.set('LTC', 'litecoin')
 
 // Display Name: Lum Network
 rango.set('LUMNETWORK', null)
@@ -233,13 +233,13 @@ rango.set('STARNAME', null)
 rango.set('STRIDE', null)
 
 // Display Name: Sui
-rango.set('SUI', null)
+rango.set('SUI', 'sui')
 
 // Display Name: Taiko
 rango.set('TAIKO', null)
 
 // Display Name: Telos
-rango.set('TELOS', null)
+rango.set('TELOS', 'telos')
 
 // Display Name: Terra 2.0
 rango.set('TERRA', null)
@@ -251,10 +251,10 @@ rango.set('TERRA_CLASSIC', null)
 rango.set('THOR', 'thorchainrune')
 
 // Display Name: Ton
-rango.set('TON', null)
+rango.set('TON', 'ton')
 
 // Display Name: Tron
-rango.set('TRON', null)
+rango.set('TRON', 'tron')
 
 // Display Name: Umee
 rango.set('UMEE', null)
@@ -266,7 +266,7 @@ rango.set('UNICHAIN', null)
 rango.set('XLAYER', null)
 
 // Display Name: XRPL
-rango.set('XRPL', null)
+rango.set('XRPL', 'ripple')
 
 // Display Name: ZetaChain
 rango.set('ZETA_CHAIN', null)

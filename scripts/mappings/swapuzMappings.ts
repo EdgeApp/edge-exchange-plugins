@@ -20,7 +20,7 @@ swapuz.set('AKT', null)
 swapuz.set('ALGO', 'algorand')
 
 // Display Name: ALGORAND
-swapuz.set('ALGORAND', null)
+swapuz.set('ALGORAND', 'algorand')
 
 // Display Name: ALLORA
 swapuz.set('ALLORA', null)
@@ -38,7 +38,7 @@ swapuz.set('APT', null)
 swapuz.set('AR', null)
 
 // Display Name: ARBITRUM ONE (ARBITRUM)
-swapuz.set('ARB', null)
+swapuz.set('ARB', 'arbitrum')
 
 // WARNING: Not included by the synchronizer synchronization
 swapuz.set('ARBITRUM', 'arbitrum')
@@ -59,7 +59,7 @@ swapuz.set('AURORA', null)
 swapuz.set('AVAIL', null)
 
 // Display Name: AVALANCHE
-swapuz.set('AVAX', null)
+swapuz.set('AVAX', 'avalanche')
 
 // Display Name: AXEL
 swapuz.set('AXEL', null)
@@ -470,7 +470,7 @@ swapuz.set('OORT', null)
 swapuz.set('OPTIMISM', 'optimism')
 
 // Display Name: OSMOSIS
-swapuz.set('OSMO', null)
+swapuz.set('OSMO', 'osmosis')
 
 // Display Name: PARTISIA
 swapuz.set('PARTISIA', null)
@@ -512,7 +512,7 @@ swapuz.set('QTUM', 'qtum')
 swapuz.set('RADIX', null)
 
 // Display Name: RAVENCOIN
-swapuz.set('RAVENCOIN', null)
+swapuz.set('RAVENCOIN', 'ravencoin')
 
 // Display Name: REDBELLY
 swapuz.set('REDBELLY', null)
@@ -554,7 +554,7 @@ swapuz.set('SOL', 'solana')
 swapuz.set('SOMI', null)
 
 // Display Name: SONIC
-swapuz.set('SONIC', null)
+swapuz.set('SONIC', 'sonic')
 
 // Display Name: SOPHON
 swapuz.set('SOPHON', null)
@@ -608,7 +608,7 @@ swapuz.set('THETA', null)
 swapuz.set('THORCHAIN', 'thorchainrune')
 
 // Display Name: TELOS
-swapuz.set('TLOS', null)
+swapuz.set('TLOS', 'telos')
 
 // Display Name: TELOS(EVM)
 swapuz.set('TLOSEVM', null)
