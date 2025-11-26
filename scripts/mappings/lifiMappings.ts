@@ -158,7 +158,7 @@ lifi.set('soe', null)
 lifi.set('sol', 'solana')
 
 // Display Name: Sonic
-lifi.set('son', null)
+lifi.set('son', 'sonic')
 
 // Display Name: Sophon
 lifi.set('sop', null)

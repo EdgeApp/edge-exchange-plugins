@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- added: Added new mappings to all swap providers.
+
 ## 2.39.1 (2025-11-18)
 
 - fixed: Updated `getMaxSwappable` to handle `makeTx` flows with no `spendInfos`
