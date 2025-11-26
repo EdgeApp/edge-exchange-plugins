@@ -38,6 +38,7 @@
     "start": "webpack serve",
     "test": "nyc mocha 'test/**/*.test.ts'",
     "types": "tsc",
+    "mapctl": "node -r sucrase/register scripts/mapctl.ts",
     "webpack": "webpack && cp -r android/src/main/assets/edge-exchange-plugins dist",
     "verify": "npm-run-all prepare lint types test"
   },
