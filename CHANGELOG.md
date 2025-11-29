@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- added: (Maya) Zcash support
+
 ## 2.39.2 (2025-11-25)
 
 - fixed: (bridgeless) Normalized txIds would not save after log out/log in
