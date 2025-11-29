@@ -29,7 +29,8 @@ export const MAINNET_CODE_TRANSCRIPTION: { [cc: string]: string } = {
   dash: 'DASH',
   ethereum: 'ETH',
   litecoin: 'LTC',
-  thorchainrune: 'THOR'
+  thorchainrune: 'THOR',
+  zcash: 'ZEC'
 }
 
 export const makeMayaProtocolPlugin = (
