@@ -31,7 +31,13 @@ import {
   makeSwapPluginQuote,
   SwapOrder
 } from '../../util/swapHelpers'
-import { convertRequest, getAddress, memoType } from '../../util/utils'
+import {
+  convertRequest,
+  denominationToNative,
+  getAddress,
+  memoType,
+  nativeToDenomination
+} from '../../util/utils'
 import { asNumberString, EdgeSwapRequestPlugin } from '../types'
 
 const pluginId = 'godex'
@@ -214,11 +220,13 @@ export function makeGodexPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
     // Convert the native amount to a denomination:
     const quoteAmount =
       request.quoteFor === 'from'
-        ? await request.fromWallet.convertNativeToDenominated(
+        ? nativeToDenomination(
+            request.fromWallet,
             request.nativeAmount,
             request.fromTokenId
           )
-        : await request.toWallet.convertNativeToDenominated(
+        : nativeToDenomination(
+            request.toWallet,
             request.nativeAmount,
             request.toTokenId
           )
@@ -249,11 +257,13 @@ export function makeGodexPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
     // min_amount returned could be for a different network than the user is requesting.
     // Check the minimum:
     const nativeMin = reverseQuote
-      ? await request.toWallet.convertDenominatedToNative(
+      ? denominationToNative(
+          request.toWallet,
           reply.min_amount,
           request.toTokenId
         )
-      : await request.fromWallet.convertDenominatedToNative(
+      : denominationToNative(
+          request.fromWallet,
           reply.min_amount,
           request.fromTokenId
         )
@@ -304,14 +314,16 @@ export function makeGodexPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
     log('sendReply' + JSON.stringify(sendReply, null, 2))
     const quoteInfo = asQuoteInfo(sendReply)
     const fromNativeAmount = floor(
-      await request.fromWallet.convertDenominatedToNative(
+      denominationToNative(
+        request.fromWallet,
         quoteInfo.deposit_amount,
         request.fromTokenId
       ),
       0
     )
     const toNativeAmount = floor(
-      await request.toWallet.convertDenominatedToNative(
+      denominationToNative(
+        request.toWallet,
         quoteInfo.withdrawal_amount,
         request.toTokenId
       ),

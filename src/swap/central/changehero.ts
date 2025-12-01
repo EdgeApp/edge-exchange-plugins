@@ -32,7 +32,13 @@ import {
   makeSwapPluginQuote,
   SwapOrder
 } from '../../util/swapHelpers'
-import { convertRequest, getAddress, memoType } from '../../util/utils'
+import {
+  convertRequest,
+  denominationToNative,
+  getAddress,
+  memoType,
+  nativeToDenomination
+} from '../../util/utils'
 import { EdgeSwapRequestPlugin } from '../types'
 
 const pluginId = 'changehero'
@@ -255,11 +261,13 @@ export function makeChangeHeroPlugin(
 
     const quoteAmount =
       request.quoteFor === 'from'
-        ? await request.fromWallet.convertNativeToDenominated(
+        ? nativeToDenomination(
+            request.fromWallet,
             request.nativeAmount,
             request.fromTokenId
           )
-        : await request.toWallet.convertNativeToDenominated(
+        : nativeToDenomination(
+            request.toWallet,
             request.nativeAmount,
             request.toTokenId
           )
@@ -282,19 +290,23 @@ export function makeChangeHeroPlugin(
     const [
       { id: responseId, maxFrom, maxTo, minFrom, minTo }
     ] = asGetFixRateReply(fixedRateQuote).result
-    const maxFromNative = await request.fromWallet.convertDenominatedToNative(
+    const maxFromNative = denominationToNative(
+      request.fromWallet,
       maxFrom,
       request.fromTokenId
     )
-    const maxToNative = await request.toWallet.convertDenominatedToNative(
+    const maxToNative = denominationToNative(
+      request.toWallet,
       maxTo,
       request.toTokenId
     )
-    const minFromNative = await request.fromWallet.convertDenominatedToNative(
+    const minFromNative = denominationToNative(
+      request.fromWallet,
       minFrom,
       request.fromTokenId
     )
-    const minToNative = await request.toWallet.convertDenominatedToNative(
+    const minToNative = denominationToNative(
+      request.toWallet,
       minTo,
       request.toTokenId
     )
@@ -356,11 +368,13 @@ export function makeChangeHeroPlugin(
     checkReply(sendReply, request)
 
     const quoteInfo = asCreateFixTransactionReply(sendReply).result
-    const amountExpectedFromNative = await request.fromWallet.convertDenominatedToNative(
+    const amountExpectedFromNative = denominationToNative(
+      request.fromWallet,
       `${quoteInfo.amountExpectedFrom.toString()}`,
       request.fromTokenId
     )
-    const amountExpectedToNative = await request.toWallet.convertDenominatedToNative(
+    const amountExpectedToNative = denominationToNative(
+      request.toWallet,
       `${quoteInfo.amountExpectedTo.toString()}`,
       request.toTokenId
     )

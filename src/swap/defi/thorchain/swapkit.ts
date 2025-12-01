@@ -29,9 +29,11 @@ import {
 } from '../../../util/swapHelpers'
 import {
   convertRequest,
+  denominationToNative,
   fetchInfo,
   fetchWaterfall,
   getAddress,
+  nativeToDenomination,
   promiseWithTimeout
 } from '../../../util/utils'
 import { EdgeSwapRequestPlugin } from '../../types'
@@ -248,7 +250,8 @@ export function makeSwapKitPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
       throw new SwapCurrencyError(swapInfo, request)
     }
 
-    const sellAmount = await fromWallet.convertNativeToDenominated(
+    const sellAmount = nativeToDenomination(
+      fromWallet,
       nativeAmount,
       fromTokenId
     )
@@ -322,7 +325,7 @@ export function makeSwapKitPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
     const { expectedBuyAmount, providers, targetAddress, expiration } = thorSwap
 
     const toNativeAmount = toFixed(
-      await toWallet.convertDenominatedToNative(expectedBuyAmount, toTokenId),
+      denominationToNative(toWallet, expectedBuyAmount, toTokenId),
       0,
       0
     )

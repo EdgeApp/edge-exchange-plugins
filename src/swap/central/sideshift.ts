@@ -35,7 +35,13 @@ import {
   makeSwapPluginQuote,
   SwapOrder
 } from '../../util/swapHelpers'
-import { convertRequest, getAddress, memoType } from '../../util/utils'
+import {
+  convertRequest,
+  denominationToNative,
+  getAddress,
+  memoType,
+  nativeToDenomination
+} from '../../util/utils'
 import { EdgeSwapRequestPlugin, StringMap } from '../types'
 
 // See https://help.sideshift.ai/en/articles/4559664-which-coins-and-tokens-are-listed for list of supported currencies
@@ -124,7 +130,8 @@ async function checkQuoteError(
   const { fromWallet } = request
 
   if (quoteErrorMessage.includes('Amount too low')) {
-    const nativeMin = await fromWallet.convertDenominatedToNative(
+    const nativeMin = denominationToNative(
+      fromWallet,
       rate.min,
       request.fromTokenId
     )
@@ -132,7 +139,8 @@ async function checkQuoteError(
   }
 
   if (quoteErrorMessage === 'Amount too high') {
-    const nativeMax = await fromWallet.convertDenominatedToNative(
+    const nativeMax = denominationToNative(
+      fromWallet,
       rate.max,
       request.fromTokenId
     )
@@ -238,15 +246,18 @@ const fetchSwapQuoteInner = async (
     throw new SwapPermissionError(swapInfo, 'geoRestriction')
   }
 
-  const quoteAmount = await (request.quoteFor === 'from'
-    ? request.fromWallet.convertNativeToDenominated(
-        request.nativeAmount,
-        request.fromTokenId
-      )
-    : request.toWallet.convertNativeToDenominated(
-        request.nativeAmount,
-        request.toTokenId
-      ))
+  const quoteAmount =
+    request.quoteFor === 'from'
+      ? nativeToDenomination(
+          request.fromWallet,
+          request.nativeAmount,
+          request.fromTokenId
+        )
+      : nativeToDenomination(
+          request.toWallet,
+          request.nativeAmount,
+          request.toTokenId
+        )
 
   const fixedQuoteRequest = asFixedQuoteRequest({
     depositCoin: fromCurrencyCode,
@@ -283,12 +294,14 @@ const fetchSwapQuoteInner = async (
     throw new Error(`SideShift.ai error ${order.error.message}`)
   }
 
-  const amountExpectedFromNative = await request.fromWallet.convertDenominatedToNative(
+  const amountExpectedFromNative = denominationToNative(
+    request.fromWallet,
     order.depositAmount,
     request.fromTokenId
   )
 
-  const amountExpectedToNative = await request.toWallet.convertDenominatedToNative(
+  const amountExpectedToNative = denominationToNative(
+    request.toWallet,
     order.settleAmount,
     request.toTokenId
   )

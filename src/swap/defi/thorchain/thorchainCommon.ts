@@ -38,10 +38,12 @@ import {
 } from '../../../util/swapHelpers'
 import {
   convertRequest,
+  denominationToNative,
   fetchInfo,
   fetchWaterfall,
   getAddress,
   makeQueryParams,
+  nativeToDenomination,
   promiseWithTimeout,
   QueryParams
 } from '../../../util/utils'
@@ -963,7 +965,8 @@ const calcSwapFrom = async ({
   const fromNativeAmount = quoteFor === 'max' ? '1000000000' : nativeAmount
 
   // Get exchange rate from source to destination asset
-  const fromExchangeAmount = await fromWallet.convertNativeToDenominated(
+  const fromExchangeAmount = nativeToDenomination(
+    fromWallet,
     fromNativeAmount,
     fromTokenId
   )
@@ -1030,7 +1033,8 @@ const calcSwapFrom = async ({
   const toExchangeAmount = div18(toThorAmountWithSpread, THOR_LIMIT_UNITS)
   log(`toExchangeAmount: ${toExchangeAmount}`)
 
-  const toNativeAmountFloat = await toWallet.convertDenominatedToNative(
+  const toNativeAmountFloat = denominationToNative(
+    toWallet,
     toExchangeAmount,
     toTokenId
   )
@@ -1089,7 +1093,8 @@ const calcSwapTo = async ({
   const toNativeAmount = nativeAmount
 
   // Get exchange rate from source to destination asset
-  const toExchangeAmount = await toWallet.convertNativeToDenominated(
+  const toExchangeAmount = nativeToDenomination(
+    toWallet,
     nativeAmount,
     toTokenId
   )
@@ -1180,7 +1185,8 @@ const calcSwapTo = async ({
   const fromExchangeAmount = div18(fromThorAmountWithSpread, THOR_LIMIT_UNITS)
   log(`fromExchangeAmount: ${fromExchangeAmount}`)
 
-  const fromNativeAmountFloat = await fromWallet.convertDenominatedToNative(
+  const fromNativeAmountFloat = denominationToNative(
+    fromWallet,
     fromExchangeAmount,
     fromTokenId
   )

@@ -24,6 +24,7 @@ import currencyPlugins from 'edge-currency-plugins'
 import fs from 'fs'
 
 import edgeExchangePlugins from '../src'
+import { denominationToNative } from '../src/util/utils'
 import { arrrCurrencyInfo } from './fakeArrrInfo'
 import { makeFakePlugin } from './fakeCurrencyPlugin'
 import { asTestConfig } from './testconfig'
@@ -178,15 +179,13 @@ async function main(): Promise<void> {
     if (exchangeAmount != null) {
       console.log(`Amount: ${quoteFor} ${exchangeAmount}`)
       if (quoteFor === 'from') {
-        nativeAmount = await fromWallet.convertDenominatedToNative(
+        nativeAmount = denominationToNative(
+          fromWallet,
           exchangeAmount,
           fromTokenId
         )
       } else {
-        nativeAmount = await toWallet.convertDenominatedToNative(
-          exchangeAmount,
-          toTokenId
-        )
+        nativeAmount = denominationToNative(toWallet, exchangeAmount, toTokenId)
       }
     } else if (nativeAmount != null) {
       console.log(`Request: ${fromCurrencyCode} to ${toCurrencyCode}`)

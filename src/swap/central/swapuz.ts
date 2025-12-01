@@ -33,7 +33,13 @@ import {
   makeSwapPluginQuote,
   SwapOrder
 } from '../../util/swapHelpers'
-import { convertRequest, getAddress, memoType } from '../../util/utils'
+import {
+  convertRequest,
+  denominationToNative,
+  getAddress,
+  memoType,
+  nativeToDenomination
+} from '../../util/utils'
 import { EdgeSwapRequestPlugin } from '../types'
 
 const pluginId = 'swapuz'
@@ -175,7 +181,8 @@ export function makeSwapuzPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
     const getQuote = async (mode: 'fix' | 'float'): Promise<SwapOrder> => {
       const { nativeAmount } = request
 
-      const largeDenomAmount = await fromWallet.convertNativeToDenominated(
+      const largeDenomAmount = nativeToDenomination(
+        fromWallet,
         nativeAmount,
         request.fromTokenId
       )
@@ -196,7 +203,8 @@ export function makeSwapuzPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
           const requiredMatch = json.message.match(/required ([0-9.]+)/)
           if (requiredMatch?.[1] != null) {
             const minAmount = requiredMatch[1]
-            const nativeMin = await fromWallet.convertDenominatedToNative(
+            const nativeMin = denominationToNative(
+              fromWallet,
               minAmount,
               request.fromTokenId
             )
@@ -222,7 +230,8 @@ export function makeSwapuzPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
       const { minAmount } = getRateJson.result
 
       if (gt(minAmount.toString(), largeDenomAmount)) {
-        const nativeMinAmount = await fromWallet.convertDenominatedToNative(
+        const nativeMinAmount = denominationToNative(
+          fromWallet,
           minAmount.toString(),
           request.fromTokenId
         )
@@ -254,7 +263,8 @@ export function makeSwapuzPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
         const textArray = text.split(' ')
         if (textArray[7] === 'maxAmount' && !isNaN(parseFloat(textArray[12]))) {
           const nativeMaxAmount = floor(
-            await fromWallet.convertDenominatedToNative(
+            denominationToNative(
+              fromWallet,
               textArray[12],
               request.fromTokenId
             ),
@@ -285,7 +295,8 @@ export function makeSwapuzPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
       } = createOrderJson.result
 
       const toNativeAmount = floor(
-        await toWallet.convertDenominatedToNative(
+        denominationToNative(
+          toWallet,
           amountResult.toString(),
           request.toTokenId
         ),
@@ -387,7 +398,8 @@ export function makeSwapuzPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
         // Must make a copy of the request because this is a shared object
         // reused between requests to other exchange plugins
         const requestToHack = { ...requestTop }
-        const requestToExchangeAmount = await toWallet.convertNativeToDenominated(
+        const requestToExchangeAmount = nativeToDenomination(
+          toWallet,
           nativeAmount,
           requestTop.toTokenId
         )
@@ -408,7 +420,8 @@ export function makeSwapuzPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
             swapOrder.spendInfo.savedAction?.toAsset.nativeAmount
           if (destNativeAmount == null) break
 
-          const toExchangeAmount = await toWallet.convertNativeToDenominated(
+          const toExchangeAmount = nativeToDenomination(
+            toWallet,
             destNativeAmount,
             requestTop.toTokenId
           )

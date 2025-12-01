@@ -4,8 +4,10 @@ import {
   EdgeFetchFunction,
   EdgeFetchResponse,
   EdgeMemoOption,
-  EdgeSwapRequest
-} from 'edge-core-js'
+  EdgeSwapRequest,
+  EdgeToken,
+  EdgeTokenId
+} from 'edge-core-js/types'
 
 import { EdgeSwapRequestPlugin } from '../swap/types'
 import { getCodes } from './swapHelpers'
@@ -295,4 +297,46 @@ export async function findMinimumSwapAmount({
   }
 
   return lastWorkingAmount
+}
+
+function getTokenMultiplier(
+  wallet: EdgeCurrencyWallet,
+  tokenId: EdgeTokenId
+): string {
+  const currencyInfo = wallet.currencyInfo
+  const allTokens = wallet.currencyConfig.allTokens
+  if (tokenId == null) {
+    for (const denomination of currencyInfo.denominations) {
+      if (denomination.name === currencyInfo.currencyCode) {
+        return denomination.multiplier
+      }
+    }
+  } else {
+    const token: EdgeToken | undefined = allTokens[tokenId]
+    if (token != null) {
+      for (const denomination of token.denominations) {
+        if (denomination.name === token.currencyCode) {
+          return denomination.multiplier
+        }
+      }
+    }
+  }
+
+  return '1'
+}
+export function denominationToNative(
+  wallet: EdgeCurrencyWallet,
+  denominatedAmount: string,
+  tokenId: EdgeTokenId
+): string {
+  const multiplier = getTokenMultiplier(wallet, tokenId)
+  return mul(denominatedAmount, multiplier)
+}
+export function nativeToDenomination(
+  wallet: EdgeCurrencyWallet,
+  nativeAmount: string,
+  tokenId: EdgeTokenId
+): string {
+  const multiplier = getTokenMultiplier(wallet, tokenId)
+  return div(nativeAmount, multiplier, multiplier.length)
 }
