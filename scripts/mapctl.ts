@@ -19,6 +19,7 @@ import { makeSwapKitSynchronizer } from './synchronizers/swapkit/swapkitSynchron
 import { makeSwapuzSynchronizer } from './synchronizers/swapuz/swapuzSynchronizer'
 import { makeThorchainSynchronizer } from './synchronizers/thorchain/thorchainSynchronizer'
 import { SwapSynchronizerFactory } from './types'
+import { findSimilar } from './util/stringSimilarity'
 
 const OUTPUT_MAPPINGS_DIR = path.join(__dirname, '../src/mappings')
 
@@ -224,15 +225,94 @@ async function addPluginId(id: string): Promise<void> {
   console.log(
     `Added '${id}' to edgeCurrencyPluginIds.ts (sorted alphabetically)`
   )
+
+  // Use the array we already created (it's already sorted and includes the new ID)
+  const updatedPluginIds = pluginIdsArray as EdgeCurrencyPluginId[]
+
+  // Update all generated mapping files to include the new plugin ID
+  console.log(
+    '\nUpdating all provider mappings to include the new plugin ID...'
+  )
+  await updateMappings(updatedPluginIds)
+
+  // Find similar keys per provider
+  // Use a very high threshold (1.0 = 100% different) to always show top matches
+  const providerSuggestions = new Map<
+    string,
+    Array<{ value: string; similarity: number }>
+  >()
+  for (const factory of synchronizerFactories) {
+    const synchronizer = factory(config)
+    const providerKeys = Array.from(synchronizer.map.keys())
+    // Always show top 5 most similar matches, regardless of similarity score
+    const suggestions = findSimilar(id, providerKeys, 5, 1.0)
+    providerSuggestions.set(synchronizer.name, suggestions)
+  }
+
+  console.log('\n' + '='.repeat(70))
+  console.log(`⚠️  IMPORTANT: New plugin ID '${id}' has been added`)
+  console.log('='.repeat(70))
+  console.log(
+    '\nThe new plugin ID has been added to all generated mapping files'
+  )
+  console.log(
+    'with a value of `null`. You must now update the source mapping files'
+  )
+  console.log('for each provider that supports this network.\n')
+
+  // Check if any provider has suggestions
+  const hasAnySuggestions = Array.from(providerSuggestions.values()).some(
+    suggestions => suggestions.length > 0
+  )
+
+  if (hasAnySuggestions) {
+    console.log('💡 Similar provider chain codes found (potential mappings):')
+    console.log('')
+  } else {
+    console.log('💡 Checking for similar provider chain codes...')
+    console.log('')
+  }
+
+  // Always show all providers with their most similar matches
+  for (const factory of synchronizerFactories) {
+    const synchronizer = factory(config)
+    const suggestions = providerSuggestions.get(synchronizer.name) ?? []
+    console.log(`   ${synchronizer.name}:`)
+    if (suggestions.length > 0) {
+      suggestions.forEach((match, index) => {
+        const similarityPercent = Math.round((1 - match.similarity) * 100)
+        console.log(
+          `      ${index + 1}. "${match.value}" (${similarityPercent}% similar)`
+        )
+      })
+    } else {
+      // This should rarely happen, but handle empty provider keys case
+      console.log('      (no chain codes found in mapping file)')
+    }
+    console.log('')
+  }
+
+  console.log('\nTo update mappings:')
+  console.log('  1. Edit scripts/mappings/<provider>Mappings.ts')
+  console.log(
+    '  2. Add mappings for provider chain codes that correspond to this plugin ID'
+  )
+  console.log('  3. Run: yarn mapctl update-mappings')
+  console.log('\n' + '='.repeat(70))
 }
 
-async function updateMappings(): Promise<void> {
+async function updateMappings(
+  pluginIdsOverride?: EdgeCurrencyPluginId[]
+): Promise<void> {
   console.log('Updating inverted mappings...')
 
   // Ensure output directory exists
   if (!fs.existsSync(OUTPUT_MAPPINGS_DIR)) {
     fs.mkdirSync(OUTPUT_MAPPINGS_DIR, { recursive: true })
   }
+
+  // Use override if provided (e.g., after adding a new plugin ID), otherwise use imported list
+  const pluginIdsToUse = pluginIdsOverride ?? edgeCurrencyPluginIds
 
   // Process each synchronizer
   for (const factory of synchronizerFactories) {
@@ -253,7 +333,7 @@ async function updateMappings(): Promise<void> {
       })
 
       // Include ALL plugin IDs, setting unmapped ones to null
-      const sortedPluginIds = [...edgeCurrencyPluginIds].sort((a, b) => {
+      const sortedPluginIds = [...pluginIdsToUse].sort((a, b) => {
         if (a < b) return -1
         if (a > b) return 1
         return 0
