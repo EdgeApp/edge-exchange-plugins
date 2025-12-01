@@ -358,12 +358,7 @@ export function checkInvalidTokenIds(
   swapInfo: EdgeSwapInfo
 ): void {
   const { fromPluginId, toPluginId } = getPluginIds(request)
-  const {
-    fromMainnetCode,
-    toMainnetCode,
-    fromCurrencyCode,
-    toCurrencyCode
-  } = getCodes(request)
+  const { fromTokenId, toTokenId } = request
 
   const isSameAsset = (request: EdgeSwapRequestPlugin): boolean =>
     request.fromWallet.currencyInfo.pluginId ===
@@ -374,39 +369,20 @@ export function checkInvalidTokenIds(
     codeMap: InvalidTokenIds,
     direction: 'from' | 'to',
     pluginId: string,
-    main: string,
-    token: string
+    tokenId: EdgeTokenId
   ): boolean {
     const codes = codeMap[direction][pluginId]
     if (codes == null) return false
     if (codes === 'allCodes') return true
-    if (codes === 'allTokens') return main !== token
-    return codes.some(code => code === token)
+    if (codes === 'allTokens') return tokenId !== null
+    return codes.some(code => code === tokenId)
   }
 
   if (
-    check(
-      invalidCodes,
-      'from',
-      fromPluginId,
-      fromMainnetCode,
-      fromCurrencyCode
-    ) ||
-    check(
-      defaultInvalidCodes,
-      'from',
-      fromPluginId,
-      fromMainnetCode,
-      fromCurrencyCode
-    ) ||
-    check(invalidCodes, 'to', toPluginId, toMainnetCode, toCurrencyCode) ||
-    check(
-      defaultInvalidCodes,
-      'to',
-      toPluginId,
-      toMainnetCode,
-      toCurrencyCode
-    ) ||
+    check(invalidCodes, 'from', fromPluginId, fromTokenId) ||
+    check(defaultInvalidCodes, 'from', fromPluginId, fromTokenId) ||
+    check(invalidCodes, 'to', toPluginId, toTokenId) ||
+    check(defaultInvalidCodes, 'to', toPluginId, toTokenId) ||
     isSameAsset(request)
   )
     throw new SwapCurrencyError(swapInfo, request)
