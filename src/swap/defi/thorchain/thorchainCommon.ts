@@ -1,3 +1,4 @@
+import { base64urlnopad, utf8 } from '@scure/base'
 import { add, gt, lt, mul, round, sub } from 'biggystring'
 import {
   asArray,
@@ -189,7 +190,14 @@ export const asInboundAddresses = asArray(
     halted: asBoolean,
     pub_key: asString,
     router: asOptional(asString),
-    dust_threshold: asString
+    dust_threshold: asString,
+    shielded_memo_config: asOptional(
+      asObject({
+        enabled: asBoolean,
+        uivk: asString,
+        unified_address: asString
+      })
+    )
   })
 )
 
@@ -476,8 +484,9 @@ export function makeThorchainBasedPlugin(
       `volatilitySpreadStreamingFinal: ${volatilitySpreadStreamingFinal.toString()}`
     )
 
-    // Fetch `inbound_addresses` for dust thresholds
+    // Fetch `inbound_addresses` for dust thresholds and shielded memo config
     const dustThresholds: Record<string, string> = {}
+    const shieldedMemoUnifiedAddressByChain: Record<string, string> = {}
     try {
       const inboundResponse = await fetchWaterfall(
         fetchCors,
@@ -495,6 +504,12 @@ export function makeThorchainBasedPlugin(
             inbound.dust_threshold,
             nativeToThorMultiplier
           )
+          if (inbound.shielded_memo_config?.enabled === true) {
+            const ua = inbound.shielded_memo_config.unified_address
+            if (ua != null && ua !== '') {
+              shieldedMemoUnifiedAddressByChain[inbound.chain] = ua
+            }
+          }
         }
       } else {
         log.warn(`Failed to fetch inbound_addresses: ${inboundResponse.status}`)
@@ -676,6 +691,9 @@ export function makeThorchainBasedPlugin(
       payoutWalletId: toWallet.id
     }
 
+    // ZIP-321 URI for ZEC transactions (populated in UTXO path if applicable)
+    let zip321Uri: string | undefined
+
     if (EVM_CURRENCY_CODES[fromMainnetCode]) {
       if (router == null)
         throw new Error(`Missing router address for ${fromMainnetCode}`)
@@ -758,6 +776,68 @@ export function makeThorchainBasedPlugin(
         fromNativeAmount,
         expirationDate: new Date(Date.now() + EXPIRATION_MS)
       }
+    } else if (fromWallet.currencyInfo.pluginId === 'zcash') {
+      // Handle ZEC swaps separately from UTXO chains.
+      // Build a ZIP-321 URI to satisfy Maya's requirements.
+      memoType = 'text'
+
+      if (fromTokenId != null) {
+        // Cannot yet do tokens on ZEC
+        throw new SwapCurrencyError(swapInfo, request)
+      }
+
+      if (thorAddress == null) {
+        throw new Error('Invalid vault address')
+      }
+
+      // Inbound address must be transparent (t-address)
+      if (!(thorAddress.startsWith('t1') || thorAddress.startsWith('t3'))) {
+        throw new SwapCurrencyError(swapInfo, request)
+      }
+
+      // Shielded memo recipient must be available from inbound_addresses
+      const memoRecipient = shieldedMemoUnifiedAddressByChain[fromCurrencyCode]
+      if (memoRecipient == null || memoRecipient === '') {
+        throw new SwapCurrencyError(swapInfo, request)
+      }
+
+      // Convert native to a decimal string per ZIP-321 spec
+      const amountZec = await fromWallet.nativeToDenomination(
+        fromNativeAmount,
+        fromCurrencyCode
+      )
+
+      // Debug logging for Maya ZEC ZIP-321 construction
+      log(
+        '[MAYA ZEC] zip321 components ' +
+          JSON.stringify({
+            chain: fromCurrencyCode,
+            inbound_address: thorAddress,
+            memo_ascii: memo,
+            memo_recipient: memoRecipient,
+            amount_native: fromNativeAmount,
+            amount_decimal: amountZec
+          })
+      )
+
+      // Encode memo per ZIP-321 as base64url (unpadded).
+      const memoBase64Url = base64urlnopad.encode(utf8.decode(memo))
+
+      // ZIP-321 requires grouping parameters by payment using paramindex.
+      // Payment 0 (unindexed): transparent vault recipient & swap amount.
+      // Payment 1 (indexed .1): shielded memo recipient with zero amount.
+      zip321Uri =
+        `zcash:?address=${encodeURIComponent(thorAddress)}` + // output 1: transparent vault
+        `&amount=${encodeURIComponent(amountZec)}` +
+        `&address.1=${encodeURIComponent(memoRecipient)}` + // output 2: shielded memo note
+        `&amount.1=0` +
+        `&memo.1=${memoBase64Url}`
+
+      // Clear memo since it's already embedded in zip321Uri
+      memo = ''
+
+      // Set publicAddress for spendTargets
+      publicAddress = thorAddress
     } else {
       // For UTXO chains, we send the memo as text which gets
       // encoded by the plugins
@@ -791,7 +871,9 @@ export function makeThorchainBasedPlugin(
       assetAction: { assetActionType: 'swap' },
       savedAction,
       otherParams: {
-        outputSort: 'targets'
+        outputSort: 'targets',
+        // Pass ZIP-321 if present for ZEC:
+        zip321Uri
       }
     }
 
