@@ -131,9 +131,7 @@ export const INVALID_CURRENCY_CODES: InvalidCurrencyCodes = {
   from: {
     optimism: ['VELO']
   },
-  to: {
-    zcash: ['ZEC']
-  }
+  to: {}
 }
 
 export const EVM_CURRENCY_CODES: { [cc: string]: boolean } = {
@@ -384,7 +382,14 @@ export function makeThorchainBasedPlugin(
     checkInvalidCodes(INVALID_CURRENCY_CODES, request, swapInfo)
 
     // Grab addresses:
-    const toAddress = await getAddress(toWallet)
+    // For Zcash receives, prefer a transparent address as Maya requires
+    // t-addresses for inbound/outbound routing.
+    const toAddress = await getAddress(
+      toWallet,
+      toWallet.currencyInfo.pluginId === 'zcash'
+        ? 'transparentAddress'
+        : undefined
+    )
 
     const fromMainnetCode =
       MAINNET_CODE_TRANSCRIPTION[fromWallet.currencyInfo.pluginId]
