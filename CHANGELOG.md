@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- added: Added new mappings to all swap providers.
+
 ## 2.40.0 (2025-12-04)
 
 - added: (Maya) Zcash support

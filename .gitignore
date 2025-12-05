@@ -21,3 +21,5 @@ yarn-error.log
 
 # Config
 testconfig.json
+mapctlConfig.json
+.env
