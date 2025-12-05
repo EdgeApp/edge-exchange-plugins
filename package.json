@@ -1,6 +1,6 @@
 {
   "name": "edge-exchange-plugins",
-  "version": "2.39.2",
+  "version": "2.40.0",
   "description": "Exchange-rate sources for the Edge core",
   "homepage": "https://edge.app/",
   "repository": {
@@ -46,7 +46,7 @@
   },
   "dependencies": {
     "@cosmjs/encoding": "^0.32.2",
-    "@scure/base": "^2.0.0",
+    "@scure/base": "^1.2.6",
     "@unizen-io/unizen-contract-addresses": "^0.0.15",
     "biggystring": "^4.2.3",
     "cleaners": "^0.3.13",

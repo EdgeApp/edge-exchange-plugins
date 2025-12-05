@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 2.40.0 (2025-12-04)
+
 - added: (Maya) Zcash support
 
 ## 2.39.2 (2025-11-25)
