@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 2.40.1 (2025-12-09)
+
 - changed: Replace wallet denomination methods with synchronous utils
 - changed: Use tokenIds in invalid currency objects
 
