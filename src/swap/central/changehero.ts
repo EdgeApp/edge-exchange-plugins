@@ -23,16 +23,22 @@ import {
 
 import {
   ChainCodeTickerMap,
-  checkInvalidCodes,
+  checkInvalidTokenIds,
   checkWhitelistedMainnetCodes,
   CurrencyPluginIdSwapChainCodeMap,
   getChainAndTokenCodes,
   getMaxSwappable,
-  InvalidCurrencyCodes,
+  InvalidTokenIds,
   makeSwapPluginQuote,
   SwapOrder
 } from '../../util/swapHelpers'
-import { convertRequest, getAddress, memoType } from '../../util/utils'
+import {
+  convertRequest,
+  denominationToNative,
+  getAddress,
+  memoType,
+  nativeToDenomination
+} from '../../util/utils'
 import { EdgeSwapRequestPlugin } from '../types'
 
 const pluginId = 'changehero'
@@ -117,10 +123,10 @@ export const MAINNET_CODE_TRANSCRIPTION: CurrencyPluginIdSwapChainCodeMap = {
 
 // See https://changehero.io/currencies for list of supported currencies
 // Or `curl -X POST 'https://api.changehero.io/v2' -H 'api-key: <your-api-key>' -H 'Content-Type: application/json' -d '{"jsonrpc":"2.0","id":"one","method":"getCurrenciesFull","params":{}}'`
-const INVALID_CURRENCY_CODES: InvalidCurrencyCodes = {
+const INVALID_TOKEN_IDS: InvalidTokenIds = {
   from: {},
   to: {
-    zcash: ['ZEC'] // ChangeHero doesn't support sending to shielded addresses
+    zcash: [null] // ChangeHero doesn't support sending to shielded addresses
   }
 }
 
@@ -255,13 +261,15 @@ export function makeChangeHeroPlugin(
 
     const quoteAmount =
       request.quoteFor === 'from'
-        ? await request.fromWallet.nativeToDenomination(
+        ? nativeToDenomination(
+            request.fromWallet,
             request.nativeAmount,
-            request.fromCurrencyCode
+            request.fromTokenId
           )
-        : await request.toWallet.nativeToDenomination(
+        : nativeToDenomination(
+            request.toWallet,
             request.nativeAmount,
-            request.toCurrencyCode
+            request.toTokenId
           )
 
     const fixRate = {
@@ -282,21 +290,25 @@ export function makeChangeHeroPlugin(
     const [
       { id: responseId, maxFrom, maxTo, minFrom, minTo }
     ] = asGetFixRateReply(fixedRateQuote).result
-    const maxFromNative = await request.fromWallet.denominationToNative(
+    const maxFromNative = denominationToNative(
+      request.fromWallet,
       maxFrom,
-      request.fromCurrencyCode
+      request.fromTokenId
     )
-    const maxToNative = await request.toWallet.denominationToNative(
+    const maxToNative = denominationToNative(
+      request.toWallet,
       maxTo,
-      request.toCurrencyCode
+      request.toTokenId
     )
-    const minFromNative = await request.fromWallet.denominationToNative(
+    const minFromNative = denominationToNative(
+      request.fromWallet,
       minFrom,
-      request.fromCurrencyCode
+      request.fromTokenId
     )
-    const minToNative = await request.toWallet.denominationToNative(
+    const minToNative = denominationToNative(
+      request.toWallet,
       minTo,
-      request.toCurrencyCode
+      request.toTokenId
     )
 
     if (request.quoteFor === 'from') {
@@ -356,13 +368,15 @@ export function makeChangeHeroPlugin(
     checkReply(sendReply, request)
 
     const quoteInfo = asCreateFixTransactionReply(sendReply).result
-    const amountExpectedFromNative = await request.fromWallet.denominationToNative(
+    const amountExpectedFromNative = denominationToNative(
+      request.fromWallet,
       `${quoteInfo.amountExpectedFrom.toString()}`,
-      request.fromCurrencyCode
+      request.fromTokenId
     )
-    const amountExpectedToNative = await request.toWallet.denominationToNative(
+    const amountExpectedToNative = denominationToNative(
+      request.toWallet,
       `${quoteInfo.amountExpectedTo.toString()}`,
-      request.toCurrencyCode
+      request.toTokenId
     )
 
     const memos: EdgeMemo[] =
@@ -427,7 +441,7 @@ export function makeChangeHeroPlugin(
       // Fetch and persist chaincode/tokencode maps from provider
       await fetchSupportedAssets()
 
-      checkInvalidCodes(INVALID_CURRENCY_CODES, request, swapInfo)
+      checkInvalidTokenIds(INVALID_TOKEN_IDS, request, swapInfo)
       checkWhitelistedMainnetCodes(
         MAINNET_CODE_TRANSCRIPTION,
         request,

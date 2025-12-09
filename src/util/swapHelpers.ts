@@ -339,74 +339,50 @@ const getPluginIds = (
   toPluginId: request.toWallet.currencyInfo.pluginId
 })
 
-export interface InvalidCurrencyCodes {
-  from: { [pluginId: string]: 'allCodes' | 'allTokens' | string[] }
-  to: { [pluginId: string]: 'allCodes' | 'allTokens' | string[] }
+export interface InvalidTokenIds {
+  from: { [pluginId: string]: 'allCodes' | 'allTokens' | EdgeTokenId[] }
+  to: { [pluginId: string]: 'allCodes' | 'allTokens' | EdgeTokenId[] }
 }
 
-const defaultInvalidCodes: InvalidCurrencyCodes = {
-  from: { ethereum: ['REP'] },
-  to: { ethereum: ['REP'] }
+const defaultInvalidCodes: InvalidTokenIds = {
+  from: { ethereum: ['1985365e9f78359a9b6ad760e32412f4a445e862' /* REP */] },
+  to: { ethereum: ['1985365e9f78359a9b6ad760e32412f4a445e862' /* REP */] }
 }
 
 /**
  * Throws if either currency code has been disabled by the plugin
  */
-export function checkInvalidCodes(
-  invalidCodes: InvalidCurrencyCodes,
+export function checkInvalidTokenIds(
+  invalidCodes: InvalidTokenIds,
   request: EdgeSwapRequestPlugin,
   swapInfo: EdgeSwapInfo
 ): void {
   const { fromPluginId, toPluginId } = getPluginIds(request)
-  const {
-    fromMainnetCode,
-    toMainnetCode,
-    fromCurrencyCode,
-    toCurrencyCode
-  } = getCodes(request)
+  const { fromTokenId, toTokenId } = request
 
   const isSameAsset = (request: EdgeSwapRequestPlugin): boolean =>
     request.fromWallet.currencyInfo.pluginId ===
       request.toWallet.currencyInfo.pluginId &&
-    request.fromCurrencyCode === request.toCurrencyCode
+    request.fromTokenId === request.toTokenId
 
   function check(
-    codeMap: InvalidCurrencyCodes,
+    codeMap: InvalidTokenIds,
     direction: 'from' | 'to',
     pluginId: string,
-    main: string,
-    token: string
+    tokenId: EdgeTokenId
   ): boolean {
     const codes = codeMap[direction][pluginId]
     if (codes == null) return false
     if (codes === 'allCodes') return true
-    if (codes === 'allTokens') return main !== token
-    return codes.some(code => code === token)
+    if (codes === 'allTokens') return tokenId !== null
+    return codes.some(code => code === tokenId)
   }
 
   if (
-    check(
-      invalidCodes,
-      'from',
-      fromPluginId,
-      fromMainnetCode,
-      fromCurrencyCode
-    ) ||
-    check(
-      defaultInvalidCodes,
-      'from',
-      fromPluginId,
-      fromMainnetCode,
-      fromCurrencyCode
-    ) ||
-    check(invalidCodes, 'to', toPluginId, toMainnetCode, toCurrencyCode) ||
-    check(
-      defaultInvalidCodes,
-      'to',
-      toPluginId,
-      toMainnetCode,
-      toCurrencyCode
-    ) ||
+    check(invalidCodes, 'from', fromPluginId, fromTokenId) ||
+    check(defaultInvalidCodes, 'from', fromPluginId, fromTokenId) ||
+    check(invalidCodes, 'to', toPluginId, toTokenId) ||
+    check(defaultInvalidCodes, 'to', toPluginId, toTokenId) ||
     isSameAsset(request)
   )
     throw new SwapCurrencyError(swapInfo, request)

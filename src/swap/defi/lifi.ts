@@ -22,9 +22,9 @@ import { base64 } from 'rfc4648'
 
 import { div18 } from '../../util/biggystringplus'
 import {
-  checkInvalidCodes,
+  checkInvalidTokenIds,
   getMaxSwappable,
-  InvalidCurrencyCodes,
+  InvalidTokenIds,
   makeSwapPluginQuote,
   SwapOrder
 } from '../../util/swapHelpers'
@@ -96,10 +96,10 @@ const getParentTokenContractAddress = (pluginId: string): string => {
   }
 }
 
-export const INVALID_CURRENCY_CODES: InvalidCurrencyCodes = {
+export const INVALID_TOKEN_IDS: InvalidTokenIds = {
   from: {},
   to: {
-    zcash: ['ZEC']
+    zcash: [null]
   }
 }
 
@@ -278,14 +278,14 @@ export function makeLifiPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
     // Do not support transfer between same assets
     if (
       fromWallet.currencyInfo.pluginId === toWallet.currencyInfo.pluginId &&
-      request.fromCurrencyCode === request.toCurrencyCode
+      request.fromTokenId === request.toTokenId
     ) {
       throw new SwapCurrencyError(swapInfo, request)
     }
 
     let lifiServers: string[] = LIFI_SERVERS_DEFAULT
 
-    checkInvalidCodes(INVALID_CURRENCY_CODES, request, swapInfo)
+    checkInvalidTokenIds(INVALID_TOKEN_IDS, request, swapInfo)
 
     // Grab addresses:
     const fromAddress = await getAddress(fromWallet)

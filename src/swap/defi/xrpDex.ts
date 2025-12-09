@@ -14,8 +14,10 @@ import { PluginEnvironment } from '../../util/makeSwapPlugin'
 import { makeSwapPluginQuote, SwapOrder } from '../../util/swapHelpers'
 import {
   convertRequest,
+  denominationToNative,
   fetchInfo,
   getAddress,
+  nativeToDenomination,
   promiseWithTimeout,
   shuffleArray
 } from '../../util/utils'
@@ -65,9 +67,7 @@ const fetchSwapQuoteInner = async (
   const { appId } = asInitOptions(env.initOptions)
 
   const {
-    fromCurrencyCode,
     fromTokenId,
-    toCurrencyCode,
     toTokenId,
     nativeAmount,
     fromWallet,
@@ -157,9 +157,10 @@ const fetchSwapQuoteInner = async (
 
   if (quoteFor === 'from') {
     fromNativeAmount = nativeAmount
-    const exchangeAmount = await fromWallet.nativeToDenomination(
+    const exchangeAmount = nativeToDenomination(
+      fromWallet,
       nativeAmount,
-      fromCurrencyCode
+      fromTokenId
     )
 
     quote = await getSellQuote(
@@ -180,16 +181,14 @@ const fetchSwapQuoteInner = async (
     quote = quote * (1 - volatilitySpread)
     quote =
       Math.round(quote * MAX_DECIMALS_MULTIPLIER) / MAX_DECIMALS_MULTIPLIER
-    toNativeAmount = await toWallet.denominationToNative(
-      String(quote),
-      toCurrencyCode
-    )
+    toNativeAmount = denominationToNative(toWallet, String(quote), toTokenId)
     toNativeAmount = round(toNativeAmount, 0)
   } else {
     toNativeAmount = nativeAmount
-    const exchangeAmount = await toWallet.nativeToDenomination(
+    const exchangeAmount = nativeToDenomination(
+      toWallet,
       nativeAmount,
-      toCurrencyCode
+      toTokenId
     )
 
     quote = await getBuyQuote(
@@ -211,9 +210,10 @@ const fetchSwapQuoteInner = async (
     quote =
       Math.round(quote * MAX_DECIMALS_MULTIPLIER) / MAX_DECIMALS_MULTIPLIER
 
-    fromNativeAmount = await fromWallet.denominationToNative(
+    fromNativeAmount = denominationToNative(
+      fromWallet,
       String(quote),
-      fromCurrencyCode
+      fromTokenId
     )
     fromNativeAmount = round(fromNativeAmount, 0)
   }

@@ -35,7 +35,13 @@ import {
   makeSwapPluginQuote,
   SwapOrder
 } from '../../util/swapHelpers'
-import { convertRequest, getAddress, memoType } from '../../util/utils'
+import {
+  convertRequest,
+  denominationToNative,
+  getAddress,
+  memoType,
+  nativeToDenomination
+} from '../../util/utils'
 import { EdgeSwapRequestPlugin, StringMap } from '../types'
 
 // See https://help.sideshift.ai/en/articles/4559664-which-coins-and-tokens-are-listed for list of supported currencies
@@ -124,17 +130,19 @@ async function checkQuoteError(
   const { fromWallet } = request
 
   if (quoteErrorMessage.includes('Amount too low')) {
-    const nativeMin = await fromWallet.denominationToNative(
+    const nativeMin = denominationToNative(
+      fromWallet,
       rate.min,
-      request.fromCurrencyCode
+      request.fromTokenId
     )
     throw new SwapBelowLimitError(swapInfo, nativeMin)
   }
 
   if (quoteErrorMessage === 'Amount too high') {
-    const nativeMax = await fromWallet.denominationToNative(
+    const nativeMax = denominationToNative(
+      fromWallet,
       rate.max,
-      request.fromCurrencyCode
+      request.fromTokenId
     )
     throw new SwapAboveLimitError(swapInfo, nativeMax)
   }
@@ -238,15 +246,18 @@ const fetchSwapQuoteInner = async (
     throw new SwapPermissionError(swapInfo, 'geoRestriction')
   }
 
-  const quoteAmount = await (request.quoteFor === 'from'
-    ? request.fromWallet.nativeToDenomination(
-        request.nativeAmount,
-        request.fromCurrencyCode
-      )
-    : request.toWallet.nativeToDenomination(
-        request.nativeAmount,
-        request.toCurrencyCode
-      ))
+  const quoteAmount =
+    request.quoteFor === 'from'
+      ? nativeToDenomination(
+          request.fromWallet,
+          request.nativeAmount,
+          request.fromTokenId
+        )
+      : nativeToDenomination(
+          request.toWallet,
+          request.nativeAmount,
+          request.toTokenId
+        )
 
   const fixedQuoteRequest = asFixedQuoteRequest({
     depositCoin: fromCurrencyCode,
@@ -283,14 +294,16 @@ const fetchSwapQuoteInner = async (
     throw new Error(`SideShift.ai error ${order.error.message}`)
   }
 
-  const amountExpectedFromNative = await request.fromWallet.denominationToNative(
+  const amountExpectedFromNative = denominationToNative(
+    request.fromWallet,
     order.depositAmount,
-    request.fromCurrencyCode
+    request.fromTokenId
   )
 
-  const amountExpectedToNative = await request.toWallet.denominationToNative(
+  const amountExpectedToNative = denominationToNative(
+    request.toWallet,
     order.settleAmount,
-    request.toCurrencyCode
+    request.toTokenId
   )
 
   const isEstimate = false
