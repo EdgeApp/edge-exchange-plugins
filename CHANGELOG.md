@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 2.40.2 (2025-12-10)
+
 - added: Added new mappings to all swap providers.
 
 ## 2.40.1 (2025-12-09)
