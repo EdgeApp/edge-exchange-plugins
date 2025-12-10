@@ -2,7 +2,7 @@ import { EdgeCurrencyPluginId } from '../../src/util/edgeCurrencyPluginIds'
 
 export const swapkit = new Map<string, EdgeCurrencyPluginId | null>()
 // Display Name: ARB
-swapkit.set('ARB', null)
+swapkit.set('ARB', 'arbitrum')
 
 // Display Name: AVAX
 swapkit.set('AVAX', null)
@@ -23,13 +23,13 @@ swapkit.set('BSC', null)
 swapkit.set('BTC', null)
 
 // Display Name: DASH
-swapkit.set('DASH', null)
+swapkit.set('DASH', 'dash')
 
 // Display Name: DOGE
 swapkit.set('DOGE', null)
 
 // Display Name: DOT
-swapkit.set('DOT', null)
+swapkit.set('DOT', 'polkadot')
 
 // Display Name: ETH
 swapkit.set('ETH', null)
@@ -56,16 +56,16 @@ swapkit.set('MONAD', null)
 swapkit.set('NEAR', null)
 
 // Display Name: OP
-swapkit.set('OP', null)
+swapkit.set('OP', 'optimism')
 
 // Display Name: POL
-swapkit.set('POL', null)
+swapkit.set('POL', 'polygon')
 
 // Display Name: SOL
-swapkit.set('SOL', null)
+swapkit.set('SOL', 'solana')
 
 // Display Name: SUI
-swapkit.set('SUI', null)
+swapkit.set('SUI', 'sui')
 
 // Display Name: THOR
 swapkit.set('THOR', null)

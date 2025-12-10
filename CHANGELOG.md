@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- added: Added new mappings to all swap providers.
+
 ## 2.40.1 (2025-12-09)
 
 - changed: Replace wallet denomination methods with synchronous utils
