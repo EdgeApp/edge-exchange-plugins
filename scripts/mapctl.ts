@@ -18,25 +18,10 @@ import { makeSideShiftSynchronizer } from './synchronizers/sideshift/sideshiftSy
 import { makeSwapKitSynchronizer } from './synchronizers/swapkit/swapkitSynchronizer'
 import { makeSwapuzSynchronizer } from './synchronizers/swapuz/swapuzSynchronizer'
 import { makeThorchainSynchronizer } from './synchronizers/thorchain/thorchainSynchronizer'
-import { SwapSynchronizerFactory } from './types'
+import { SwapSynchronizer } from './types'
 import { findSimilar } from './util/stringSimilarity'
 
 const OUTPUT_MAPPINGS_DIR = path.join(__dirname, '../src/mappings')
-
-const synchronizerFactories: SwapSynchronizerFactory[] = [
-  makeChangeHeroSynchronizer,
-  makeChangeNowSynchronizer,
-  makeExolixSynchronizer,
-  makeGodexSynchronizer,
-  makeLetsExchangeSynchronizer,
-  makeLifiSynchronizer,
-  makeMayaProtocolSynchronizer,
-  makeRangoSynchronizer,
-  makeSideShiftSynchronizer,
-  makeSwapKitSynchronizer,
-  makeSwapuzSynchronizer,
-  makeThorchainSynchronizer
-]
 
 const SCRIPTS_MAPPINGS_DIR = path.join(__dirname, 'mappings')
 
@@ -49,13 +34,29 @@ async function main(): Promise<void> {
     return
   }
 
+  // Initialize all synchronizers upfront, logging errors for any that fail
+  const synchronizers: SwapSynchronizer[] = [
+    makeChangeHeroSynchronizer(config),
+    makeChangeNowSynchronizer(config),
+    makeExolixSynchronizer(config),
+    makeGodexSynchronizer(config),
+    makeLetsExchangeSynchronizer(config),
+    makeLifiSynchronizer(config),
+    makeMayaProtocolSynchronizer(config),
+    makeRangoSynchronizer(config),
+    makeSideShiftSynchronizer(config),
+    makeSwapKitSynchronizer(config),
+    makeSwapuzSynchronizer(config),
+    makeThorchainSynchronizer(config)
+  ]
+
   if (command === 'sync-providers') {
     const filter = args[1] != null && args[1] !== '' ? args[1] : undefined
-    await syncSynchronizers(filter)
+    await syncSynchronizers(synchronizers, filter)
   } else if (command === 'update-mappings') {
-    await updateMappings()
+    await updateMappings(synchronizers)
   } else if (command === 'add-plugin') {
-    await addPluginId(args[1])
+    await addPluginId(synchronizers, args[1])
   } else {
     console.error(`Unknown command: ${command}`)
     showUsage()
@@ -67,8 +68,10 @@ async function main(): Promise<void> {
 // Commands
 // ---------------------------------------------------------------------
 
-async function syncSynchronizers(filter?: string): Promise<void> {
-  const synchronizers = synchronizerFactories.map(f => f(config))
+async function syncSynchronizers(
+  synchronizers: SwapSynchronizer[],
+  filter?: string
+): Promise<void> {
   const filteredSynchronizers =
     filter != null
       ? synchronizers.filter(s => s.name === filter)
@@ -173,7 +176,10 @@ ${setCalls}
   }
 }
 
-async function addPluginId(id: string): Promise<void> {
+async function addPluginId(
+  synchronizers: SwapSynchronizer[],
+  id: string
+): Promise<void> {
   if (id == null || id === '') {
     console.error('Please provide a plugin ID to add.')
     return
@@ -233,7 +239,7 @@ async function addPluginId(id: string): Promise<void> {
   console.log(
     '\nUpdating all provider mappings to include the new plugin ID...'
   )
-  await updateMappings(updatedPluginIds)
+  await updateMappings(synchronizers, updatedPluginIds)
 
   // Find similar keys per provider
   // Use a very high threshold (1.0 = 100% different) to always show top matches
@@ -241,8 +247,7 @@ async function addPluginId(id: string): Promise<void> {
     string,
     Array<{ value: string; similarity: number }>
   >()
-  for (const factory of synchronizerFactories) {
-    const synchronizer = factory(config)
+  for (const synchronizer of synchronizers) {
     const providerKeys = Array.from(synchronizer.map.keys())
     // Always show top 5 most similar matches, regardless of similarity score
     const suggestions = findSimilar(id, providerKeys, 5, 1.0)
@@ -274,8 +279,7 @@ async function addPluginId(id: string): Promise<void> {
   }
 
   // Always show all providers with their most similar matches
-  for (const factory of synchronizerFactories) {
-    const synchronizer = factory(config)
+  for (const synchronizer of synchronizers) {
     const suggestions = providerSuggestions.get(synchronizer.name) ?? []
     console.log(`   ${synchronizer.name}:`)
     if (suggestions.length > 0) {
@@ -286,7 +290,6 @@ async function addPluginId(id: string): Promise<void> {
         )
       })
     } else {
-      // This should rarely happen, but handle empty provider keys case
       console.log('      (no chain codes found in mapping file)')
     }
     console.log('')
@@ -302,6 +305,7 @@ async function addPluginId(id: string): Promise<void> {
 }
 
 async function updateMappings(
+  synchronizers: SwapSynchronizer[],
   pluginIdsOverride?: EdgeCurrencyPluginId[]
 ): Promise<void> {
   console.log('Updating inverted mappings...')
@@ -315,9 +319,7 @@ async function updateMappings(
   const pluginIdsToUse = pluginIdsOverride ?? edgeCurrencyPluginIds
 
   // Process each synchronizer
-  for (const factory of synchronizerFactories) {
-    const synchronizer = factory(config)
-
+  for (const synchronizer of synchronizers) {
     try {
       // Build inverted mapping: pluginId -> synchronizer network ID
       const invertedMap = new Map<string, string | null>()
