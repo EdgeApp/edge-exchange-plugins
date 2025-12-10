@@ -52,7 +52,7 @@ export const swapInfo: EdgeSwapInfo = {
 
 const asInitOptions = asObject({
   apiKey: asString,
-  referralCode: asOptional(asString)
+  referralCode: asString
 })
 
 const orderUri = 'https://n.exchange/order/'
@@ -212,12 +212,8 @@ export function makeNexchangePlugin(
   const headers: { [key: string]: string } = {
     'Content-Type': 'application/json',
     Accept: 'application/json',
-    Authorization: `ApiKey ${apiKey}`
-  }
-
-  // Add referral token header if referral code is provided
-  if (referralCode != null && referralCode !== '') {
-    headers['x-referral-token'] = referralCode
+    Authorization: `ApiKey ${apiKey}`,
+    'x-referral-token': referralCode
   }
 
   async function call(
