@@ -392,12 +392,11 @@ export function makeNexchangePlugin(
       }
     }
 
-    // Create order - always use BUY side
-    // BUY = buying withdraw_currency with deposit_currency (sending deposit_currency, receiving withdraw_currency)
+    // Create order
+    // BUY is the default side (buying withdraw_currency with deposit_currency)
     // For Edge: fromCurrency -> toCurrency means sending fromCurrency, receiving toCurrency
     // For Nexchange: deposit_currency = what we send, withdraw_currency = what we receive
-    // Pair format: TOFROM (receive TO, send FROM) - always use BUY side
-    const orderSide = 'BUY'
+    // Pair format: TOFROM (receive TO, send FROM)
 
     // Map Edge currencies to Nexchange currencies
     // deposit_currency = what Edge sends = Edge fromCurrency
@@ -406,7 +405,6 @@ export function makeNexchangePlugin(
     const withdrawCurrency = formatCurrency(toCurrencyCode, toMainnetCode)
 
     const orderBody: {
-      side: string
       deposit_currency: string | { code: string; network: string }
       withdraw_currency: string | { code: string; network: string }
       withdraw_address: string
@@ -415,7 +413,6 @@ export function makeNexchangePlugin(
       deposit_amount?: string
       withdraw_amount?: string
     } = {
-      side: orderSide,
       deposit_currency: depositCurrency,
       withdraw_currency: withdrawCurrency,
       withdraw_address: toAddress,
