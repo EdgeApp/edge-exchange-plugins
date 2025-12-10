@@ -22,6 +22,7 @@ import {
   SwapCurrencyError
 } from 'edge-core-js/types'
 
+import { exolix as exolixMapping } from '../../mappings/exolix'
 import { div18 } from '../../util/biggystringplus'
 import {
   checkInvalidTokenIds,
@@ -31,6 +32,7 @@ import {
   getMaxSwappable,
   InvalidTokenIds,
   makeSwapPluginQuote,
+  mapToRecord,
   SwapOrder
 } from '../../util/swapHelpers'
 import {
@@ -97,72 +99,9 @@ while true; do
   ((n++));
 done
 */
-const MAINNET_CODE_TRANSCRIPTION: CurrencyPluginIdSwapChainCodeMap = {
-  algorand: 'ALGO',
-  arbitrum: 'ARBITRUM',
-  avalanche: 'AVAXC',
-  axelar: null,
-  base: 'BASE',
-  binance: null,
-  binancesmartchain: 'BSC',
-  bitcoin: 'BTC',
-  bitcoincash: 'BCH',
-  bitcoingold: null,
-  bitcoinsv: null,
-  bobevm: null,
-  cardano: 'ADA',
-  celo: 'CELO',
-  coreum: null,
-  cosmoshub: 'ATOM',
-  dash: 'DASH',
-  digibyte: 'DGB',
-  dogecoin: 'DOGE',
-  eboost: null,
-  ecash: 'XEC',
-  eos: 'EOS',
-  ethereum: 'ETH',
-  ethereumclassic: 'ETC',
-  ethereumpow: null,
-  fantom: 'FTM',
-  feathercoin: null,
-  filecoin: 'FIL',
-  filecoinfevm: null,
-  fio: null,
-  groestlcoin: null,
-  hedera: 'HBAR',
-  hyperevm: null,
-  liberland: null,
-  litecoin: 'LTC',
-  monero: 'XMR',
-  optimism: 'OPTIMISM',
-  osmosis: 'OSMO',
-  piratechain: 'ARRR',
-  pivx: 'PIVX',
-  polkadot: 'DOT',
-  polygon: 'POLYGON',
-  pulsechain: null,
-  qtum: 'QTUM',
-  ravencoin: 'RVN',
-  ripple: 'XRP',
-  rsk: null,
-  smartcash: null,
-  solana: 'SOL',
-  sonic: null,
-  stellar: 'XLM',
-  sui: 'SUI',
-  telos: 'TELOS',
-  tezos: 'XTZ',
-  thorchainrune: 'RUNE',
-  ton: 'ton',
-  tron: 'TRX',
-  ufo: null,
-  vertcoin: null,
-  wax: null,
-  zano: 'ZANO',
-  zcash: 'ZEC',
-  zcoin: null,
-  zksync: null
-}
+const MAINNET_CODE_TRANSCRIPTION: CurrencyPluginIdSwapChainCodeMap = mapToRecord(
+  exolixMapping
+)
 
 const orderUri = 'https://exolix.com/transaction/'
 const uri = 'https://exolix.com/api/v2/'

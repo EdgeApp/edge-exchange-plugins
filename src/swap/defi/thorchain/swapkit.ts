@@ -21,10 +21,12 @@ import {
   SwapCurrencyError
 } from 'edge-core-js/types'
 
+import { swapkit as swapkitMapping } from '../../../mappings/swapkit'
 import {
   checkInvalidTokenIds,
   getMaxSwappable,
   makeSwapPluginQuote,
+  mapToStringMap,
   SwapOrder
 } from '../../../util/swapHelpers'
 import {
@@ -38,7 +40,6 @@ import {
 } from '../../../util/utils'
 import { EdgeSwapRequestPlugin } from '../../types'
 import { createEvmApprovalEdgeTransactions } from '../defiUtils'
-import { MAINNET_CODE_TRANSCRIPTION } from './thorchain'
 import {
   AFFILIATE_FEE_BASIS_DEFAULT,
   EVM_CURRENCY_CODES,
@@ -55,6 +56,11 @@ const swapInfo: EdgeSwapInfo = {
   displayName: 'SwapKit',
   supportEmail: 'support@edge.app'
 }
+
+// Network names that don't match parent network currency code
+const MAINNET_CODE_TRANSCRIPTION: {
+  [cc: string]: string
+} = mapToStringMap(swapkitMapping)
 
 // This needs to be a type so adding the '& {}' prevents auto correction to an interface
 type ThorSwapQuoteParams = {

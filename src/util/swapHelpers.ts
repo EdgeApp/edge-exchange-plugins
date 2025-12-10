@@ -16,6 +16,7 @@ import {
 } from 'edge-core-js/types'
 
 import { EdgeSwapRequestPlugin, MakeTxParams, StringMap } from '../swap/types'
+import { EdgeCurrencyPluginId } from './edgeCurrencyPluginIds'
 
 const likeKindAssets = [
   ['BTC', 'WBTC', 'SBTC', 'RBTC'],
@@ -500,72 +501,6 @@ export const isLikeKind = (
 export const consify = (val: any): void =>
   console.log(JSON.stringify(val, null, 2))
 
-export type EdgeCurrencyPluginId =
-  | 'algorand'
-  | 'arbitrum'
-  | 'avalanche'
-  | 'axelar'
-  | 'base'
-  | 'binance'
-  | 'binancesmartchain'
-  | 'bitcoin'
-  | 'bitcoincash'
-  | 'bitcoingold'
-  | 'bitcoinsv'
-  | 'bobevm'
-  | 'cardano'
-  | 'celo'
-  | 'coreum'
-  | 'cosmoshub'
-  | 'dash'
-  | 'digibyte'
-  | 'dogecoin'
-  | 'eboost'
-  | 'ecash'
-  | 'eos'
-  | 'ethereum'
-  | 'ethereumclassic'
-  | 'ethereumpow'
-  | 'fantom'
-  | 'feathercoin'
-  | 'filecoin'
-  | 'filecoinfevm'
-  | 'fio'
-  | 'groestlcoin'
-  | 'hedera'
-  | 'hyperevm'
-  | 'liberland'
-  | 'litecoin'
-  | 'monero'
-  | 'optimism'
-  | 'osmosis'
-  | 'piratechain'
-  | 'pivx'
-  | 'polkadot'
-  | 'polygon'
-  | 'pulsechain'
-  | 'qtum'
-  | 'ravencoin'
-  | 'ripple'
-  | 'rsk'
-  | 'smartcash'
-  | 'solana'
-  | 'sonic'
-  | 'stellar'
-  | 'sui'
-  | 'telos'
-  | 'tezos'
-  | 'thorchainrune'
-  | 'ton'
-  | 'tron'
-  | 'ufo'
-  | 'vertcoin'
-  | 'wax'
-  | 'zcash'
-  | 'zcoin'
-  | 'zano'
-  | 'zksync'
-
 export const toStringMap = (
   map: CurrencyPluginIdSwapChainCodeMap
 ): StringMap => {
@@ -575,6 +510,35 @@ export const toStringMap = (
     out[key] = value
   }
   return out
+}
+
+/**
+ * Converts a Map<EdgeCurrencyPluginId, string | null> to CurrencyPluginIdSwapChainCodeMap
+ */
+export const mapToRecord = (
+  map: Map<EdgeCurrencyPluginId, string | null>
+): CurrencyPluginIdSwapChainCodeMap => {
+  const record: Partial<Record<EdgeCurrencyPluginId, string | null>> = {}
+  map.forEach((value, key) => {
+    record[key] = value
+  })
+  return record as CurrencyPluginIdSwapChainCodeMap
+}
+
+/**
+ * Converts a Map<EdgeCurrencyPluginId, string | null> to StringMap
+ * Filters out null values since StringMap doesn't allow null
+ */
+export const mapToStringMap = (
+  map: Map<EdgeCurrencyPluginId, string | null>
+): StringMap => {
+  const record: StringMap = {}
+  map.forEach((value, key) => {
+    if (value != null && value !== '') {
+      record[key] = value
+    }
+  })
+  return record
 }
 
 export type CurrencyPluginIdSwapChainCodeMap = Record<
