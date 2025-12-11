@@ -106,7 +106,7 @@ export const MAINNET_CODE_TRANSCRIPTION: CurrencyPluginIdSwapChainCodeMap = {
   hyperevm: null,
   liberland: null,
   litecoin: 'LTC',
-  monero: 'XMR',
+  monero: null,
   optimism: 'OP',
   osmosis: null,
   piratechain: null,
