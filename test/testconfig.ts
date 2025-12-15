@@ -78,6 +78,12 @@ export const asTestConfig = asObject({
       apiKey: asOptional(asString, '')
     }).withRest
   ),
+  NEXCHANGE_INIT: asCorePluginInit(
+    asObject({
+      apiKey: asOptional(asString, ''),
+      referralCode: asOptional(asString, '')
+    }).withRest
+  ),
   MONERO_INIT: asCorePluginInit(
     asObject({
       apiKey: asOptional(asString, '')
