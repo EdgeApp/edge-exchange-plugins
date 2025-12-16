@@ -22,11 +22,7 @@ import {
 } from 'edge-core-js/types'
 
 import {
-  checkInvalidTokenIds,
-  CurrencyPluginIdSwapChainCodeMap,
-  getCodesWithTranscription,
   getMaxSwappable,
-  InvalidTokenIds,
   makeSwapPluginQuote,
   SwapOrder
 } from '../../util/swapHelpers'
@@ -56,11 +52,6 @@ const asInitOptions = asObject({
 const orderUri = 'https://n.exchange/order/'
 const uri = 'https://api.n.exchange/en/api/v2'
 
-const INVALID_TOKEN_IDS: InvalidTokenIds = {
-  from: {},
-  to: {}
-}
-
 const addressTypeMap: StringMap = {
   zcash: 'transparentAddress'
 }
@@ -68,7 +59,7 @@ const addressTypeMap: StringMap = {
 // See https://api.n.exchange/en/api/v2/currency/ for list of supported currencies
 // Network codes map to Nexchange network identifiers
 // Based on supported networks: ALGO, ATOM, SOL, BCH, BTC, DASH, DOGE, DOT, EOS, TON, HBAR, LTC, XLM, XMR, XRP, XTZ, ZEC, TRON, ADA, BASE, MATIC/POL, ETH, AVAXC, BSC, ETC, ARB, OP, FTM, SONIC
-export const MAINNET_CODE_TRANSCRIPTION: CurrencyPluginIdSwapChainCodeMap = {
+export const MAINNET_CODE_TRANSCRIPTION: Record<string, string | null> = {
   algorand: 'ALGO',
   arbitrum: 'ARB',
   avalanche: 'AVAXC',
@@ -287,13 +278,11 @@ export function makeNexchangePlugin(
       )
     ])
 
-    // Get network codes, currency codes, and contract addresses using transcription helper
-    const {
-      fromCurrencyCode,
-      toCurrencyCode,
-      fromMainnetCode,
-      toMainnetCode
-    } = getCodesWithTranscription(request, MAINNET_CODE_TRANSCRIPTION)
+    // Get network codes from plugin IDs (no currency codes needed - using contract addresses only)
+    const fromMainnetCode =
+      MAINNET_CODE_TRANSCRIPTION[request.fromWallet.currencyInfo.pluginId]
+    const toMainnetCode =
+      MAINNET_CODE_TRANSCRIPTION[request.toWallet.currencyInfo.pluginId]
 
     if (fromMainnetCode == null || toMainnetCode == null) {
       throw new SwapCurrencyError(swapInfo, request)
@@ -322,12 +311,7 @@ export function makeNexchangePlugin(
             request.toTokenId
           )
 
-    // Build rate query using contract addresses (recommended API feature)
-    // Always try contract address format first, fallback to pair name if needed
-    let rateResponse: any
-    let rate: ReturnType<typeof asRateV2> | undefined
-
-    // Try using contract address format (new API feature)
+    // Build rate query using contract addresses only - API MUST support contract addresses
     // This works for both tokens and native currencies
     const params = new URLSearchParams()
     // For native currencies, use empty string for contract_address
@@ -336,32 +320,14 @@ export function makeNexchangePlugin(
     params.append('toContractAddress', toContractAddress ?? '')
     params.append('toNetwork', toMainnetCode)
 
-    try {
-      rateResponse = await call(
-        `${uri}/rate/?${params.toString()}`,
-        {},
-        request
-      )
-      const rates = asArray(asRateV2)(rateResponse)
-      rate = rates[0] // Contract address query returns single rate
-    } catch (e) {
-      // Fallback to pair name format if contract address query fails (backward compatibility)
-      log.warn(
-        'Contract address rate query failed, falling back to pair name',
-        e
-      )
-
-      // Currency codes already extracted via getCodesWithTranscription above
-      // Build pair name for rate lookup
-      // Pair format: "TOFROM" where TO is what you receive, FROM is what you send
-      const pairName = `${toCurrencyCode}${fromCurrencyCode}`
-
-      rateResponse = await call(`${uri}/rate/?pairs=${pairName}`, {}, request)
-      const rates = asArray(asRateV2)(rateResponse)
-      rate = rates.find(
-        r => r.from === fromCurrencyCode && r.to === toCurrencyCode
-      )
-    }
+    // Use contract address format only - API MUST support contract addresses
+    const rateResponse = await call(
+      `${uri}/rate/?${params.toString()}`,
+      {},
+      request
+    )
+    const rates = asArray(asRateV2)(rateResponse)
+    const rate = rates[0] // Contract address query returns single rate
 
     if (rate == null) {
       throw new SwapCurrencyError(swapInfo, request)
