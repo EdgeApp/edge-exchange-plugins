@@ -211,8 +211,6 @@ const asOrderV2 = asObject({
   withdraw_transaction: asOptional(asString)
 })
 
-// Provider data (removed - no longer needed with contract address approach)
-
 export function makeNexchangePlugin(
   opts: EdgeCorePluginOptions
 ): EdgeSwapPlugin {
@@ -259,9 +257,6 @@ export function makeNexchangePlugin(
 
     return await response.json()
   }
-
-  // Removed fetchSupportedAssets - not needed when using contract addresses directly
-  // Contract addresses come from tokenIds, eliminating the need for currency mapping
 
   async function getFixedQuote(
     request: EdgeSwapRequestPlugin,
