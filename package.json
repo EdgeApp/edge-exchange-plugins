@@ -1,6 +1,6 @@
 {
   "name": "edge-exchange-plugins",
-  "version": "2.40.1",
+  "version": "2.40.2",
   "description": "Exchange-rate sources for the Edge core",
   "homepage": "https://edge.app/",
   "repository": {
@@ -38,6 +38,7 @@
     "start": "webpack serve",
     "test": "nyc mocha 'test/**/*.test.ts'",
     "types": "tsc",
+    "mapctl": "node -r sucrase/register scripts/mapctl.ts",
     "webpack": "webpack && cp -r android/src/main/assets/edge-exchange-plugins dist",
     "verify": "npm-run-all prepare lint types test"
   },

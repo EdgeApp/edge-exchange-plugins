@@ -24,6 +24,7 @@ import {
   SwapCurrencyError
 } from 'edge-core-js/types'
 
+import { changenow as changenowMapping } from '../../mappings/changenow'
 import {
   ChainCodeTickerMap,
   checkInvalidTokenIds,
@@ -35,6 +36,7 @@ import {
   getMaxSwappable,
   InvalidTokenIds,
   makeSwapPluginQuote,
+  mapToRecord,
   SwapOrder
 } from '../../util/swapHelpers'
 import {
@@ -78,75 +80,12 @@ const addressTypeMap: StringMap = {
  * Use this command to list currencies supported:
  *
  * ```sh
- * curl 'https://api.changenow.io/v2/exchange/currencies?active=true&isFiat=false'
+ * curl 'https://api.changenow.io/v2/exchange/currencies?isFiat=false'
  * ```
  */
-export const MAINNET_CODE_TRANSCRIPTION: CurrencyPluginIdSwapChainCodeMap = {
-  algorand: 'algo',
-  arbitrum: 'arbitrum',
-  avalanche: 'avaxc',
-  axelar: 'axl',
-  base: 'base',
-  binance: 'bnb',
-  binancesmartchain: 'bsc',
-  bitcoin: 'btc',
-  bitcoincash: 'bch',
-  bitcoingold: 'btg',
-  bitcoinsv: 'bsv',
-  bobevm: null,
-  cardano: 'ada',
-  celo: 'celo',
-  coreum: 'coreum',
-  cosmoshub: 'atom',
-  dash: 'dash',
-  digibyte: 'dgb',
-  dogecoin: 'doge',
-  eboost: null,
-  ecash: 'xec',
-  eos: 'eos',
-  ethereum: 'eth',
-  ethereumclassic: 'etc',
-  ethereumpow: 'ethw',
-  fantom: 'ftm',
-  feathercoin: null,
-  filecoin: 'fil',
-  filecoinfevm: null,
-  fio: 'fio',
-  groestlcoin: null,
-  hedera: 'hbar',
-  hyperevm: null,
-  liberland: null,
-  litecoin: 'ltc',
-  monero: 'xmr',
-  optimism: 'op',
-  osmosis: 'osmo',
-  piratechain: null,
-  pivx: 'pivx',
-  polkadot: 'dot',
-  polygon: 'matic',
-  pulsechain: 'pulse',
-  qtum: 'qtum',
-  ravencoin: 'rvn',
-  ripple: 'xrp',
-  rsk: null,
-  smartcash: null,
-  solana: 'sol',
-  sonic: 'sonic',
-  stellar: 'xlm',
-  sui: 'sui',
-  telos: null,
-  tezos: 'xtz',
-  thorchainrune: null,
-  ton: 'ton',
-  tron: 'trx',
-  ufo: null,
-  vertcoin: null,
-  wax: 'waxp',
-  zano: null, // 'zano' disabled until until it can be tested for integrated address/payment id
-  zcash: 'zec',
-  zcoin: 'firo',
-  zksync: 'zksync'
-}
+export const MAINNET_CODE_TRANSCRIPTION: CurrencyPluginIdSwapChainCodeMap = mapToRecord(
+  changenowMapping
+)
 
 export const SPECIAL_MAINNET_CASES: EdgeIdSwapIdMap = new Map([
   ['avalanche', new Map([[null, { chainCode: 'cchain', tokenCode: 'avax' }]])]

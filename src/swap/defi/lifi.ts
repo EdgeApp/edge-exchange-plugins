@@ -20,12 +20,14 @@ import {
 } from 'edge-core-js/types'
 import { base64 } from 'rfc4648'
 
+import { lifi as lifiMapping } from '../../mappings/lifi'
 import { div18 } from '../../util/biggystringplus'
 import {
   checkInvalidTokenIds,
   getMaxSwappable,
   InvalidTokenIds,
   makeSwapPluginQuote,
+  mapToStringMap,
   SwapOrder
 } from '../../util/swapHelpers'
 import {
@@ -105,33 +107,7 @@ export const INVALID_TOKEN_IDS: InvalidTokenIds = {
 
 // Network names that don't match parent network currency code
 // See https://docs.li.fi/list-chains-bridges-dexs#chains
-const MAINNET_CODE_TRANSCRIPTION: StringMap = {
-  arbitrum: 'ARB',
-  aurora: 'AUR',
-  avalanche: 'AVA',
-  base: 'BAS',
-  binancesmartchain: 'BSC',
-  celo: 'CEL',
-  cronos: 'CRO',
-  ethereum: 'ETH',
-  evmos: 'EVM',
-  fantom: 'FTM',
-  fuse: 'FUS',
-  gnosis: 'DAI',
-  harmony: 'ONE',
-  hyperevm: 'HYP',
-  metis: 'MAM',
-  moonbeam: 'MOO',
-  moonriver: 'MOR',
-  okexchain: 'OKT',
-  optimism: 'OPT',
-  polygon: 'POL',
-  rsk: 'RSK',
-  solana: 'SOL',
-  sui: 'SUI',
-  velas: 'VEL',
-  zksync: 'ERA'
-}
+const MAINNET_CODE_TRANSCRIPTION: StringMap = mapToStringMap(lifiMapping)
 
 const asExchangeInfo = asObject({
   swap: asObject({

@@ -20,6 +20,7 @@ import {
   SwapCurrencyError
 } from 'edge-core-js/types'
 
+import { swapuz as swapuzMapping } from '../../mappings/swapuz'
 import { div18 } from '../../util/biggystringplus'
 import {
   checkInvalidTokenIds,
@@ -31,6 +32,7 @@ import {
   InvalidTokenIds,
   isLikeKind,
   makeSwapPluginQuote,
+  mapToRecord,
   SwapOrder
 } from '../../util/swapHelpers'
 import {
@@ -80,72 +82,9 @@ const INVALID_TOKEN_IDS: InvalidTokenIds = {
 
 // Network names that don't match parent network currency code
 // See https://swapuz.com/ for list of supported currencies
-const MAINNET_CODE_TRANSCRIPTION: CurrencyPluginIdSwapChainCodeMap = {
-  algorand: 'ALGO',
-  arbitrum: 'ARBITRUM',
-  avalanche: 'CCHAIN',
-  axelar: null,
-  base: 'BASE',
-  binance: null,
-  binancesmartchain: 'BSC',
-  bitcoin: 'BTC',
-  bitcoincash: 'BCH',
-  bitcoingold: null,
-  bitcoinsv: null,
-  bobevm: null,
-  cardano: 'ADA',
-  celo: 'CELO',
-  coreum: null,
-  cosmoshub: 'ATOM',
-  dash: 'DASH',
-  digibyte: 'DGB',
-  dogecoin: 'DOGE',
-  eboost: null,
-  ecash: 'XEC',
-  eos: 'EOS',
-  ethereum: 'ETH',
-  ethereumclassic: 'ETC',
-  ethereumpow: null,
-  fantom: 'FTM',
-  feathercoin: null,
-  filecoin: 'FIL',
-  filecoinfevm: null,
-  fio: null,
-  groestlcoin: null,
-  hedera: 'HBAR',
-  hyperevm: null,
-  liberland: null,
-  litecoin: 'LTC',
-  monero: 'XMR',
-  optimism: 'OPTIMISM',
-  osmosis: null,
-  piratechain: null,
-  pivx: null,
-  polkadot: 'DOT',
-  polygon: 'MATIC',
-  pulsechain: null,
-  qtum: 'QTUM',
-  ravencoin: 'RVN',
-  ripple: 'XRP',
-  rsk: null,
-  smartcash: null,
-  solana: 'SOL',
-  sonic: null,
-  stellar: 'XLM',
-  sui: 'SUI',
-  telos: null,
-  tezos: 'XTZ',
-  thorchainrune: 'THORCHAIN',
-  ton: 'TON',
-  tron: 'TRX',
-  ufo: null,
-  vertcoin: null,
-  wax: 'WAXP',
-  zano: null,
-  zcash: 'ZEC',
-  zcoin: null,
-  zksync: null
-}
+const MAINNET_CODE_TRANSCRIPTION: CurrencyPluginIdSwapChainCodeMap = mapToRecord(
+  swapuzMapping
+)
 
 export function makeSwapuzPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
   const { io } = opts
