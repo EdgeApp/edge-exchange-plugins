@@ -2,7 +2,6 @@ import { gt, lt } from 'biggystring'
 import {
   asArray,
   asEither,
-  asNull,
   asNumber,
   asObject,
   asOptional,
@@ -10,6 +9,7 @@ import {
 } from 'cleaners'
 import {
   EdgeCorePluginOptions,
+  EdgeCurrencyWallet,
   EdgeMemo,
   EdgeSpendInfo,
   EdgeSwapInfo,
@@ -22,11 +22,8 @@ import {
 } from 'edge-core-js/types'
 
 import {
-  ChainCodeTickerMap,
   checkInvalidTokenIds,
-  checkWhitelistedMainnetCodes,
   CurrencyPluginIdSwapChainCodeMap,
-  getChainAndTokenCodes,
   getMaxSwappable,
   InvalidTokenIds,
   makeSwapPluginQuote,
@@ -137,20 +134,43 @@ export const MAINNET_CODE_TRANSCRIPTION: CurrencyPluginIdSwapChainCodeMap = {
   zksync: null
 }
 
+// Helper function to get contract address from tokenId
+function getContractAddress(
+  wallet: EdgeCurrencyWallet,
+  tokenId: string | null
+): string | null {
+  if (tokenId == null) return null
+  const token = wallet.currencyConfig.allTokens[tokenId]
+  if (token == null) return null
+  return token.networkLocation?.contractAddress ?? null
+}
+
 // Helper function to format currency for Nexchange API
-// Supports both string format ("USDTERC") and object format ({"code": "USDT", "network": "ETH"})
+// Supports contract address format (recommended for tokens) or code format (backward compatible)
 function formatCurrency(
-  currencyCode: string,
-  networkCode: string | null
-): string | { code: string; network: string } {
-  // If network is null or matches the currency code (native currency), return just the code
-  if (networkCode == null || networkCode === currencyCode) {
-    return currencyCode
+  networkCode: string | null,
+  contractAddress: string | null
+):
+  | string
+  | { code: string; network: string }
+  | { contract_address: string; network: string } {
+  // For native currencies (no contract address), return just the code
+  if (contractAddress == null || contractAddress === '') {
+    if (networkCode == null) {
+      throw new Error(
+        'Network code required when contract address is not provided'
+      )
+    }
+    return networkCode
   }
 
-  // For tokens on networks, use object format
+  // For tokens, use contract address format (recommended)
+  if (networkCode == null) {
+    throw new Error('Network code required when contract address is provided')
+  }
+
   return {
-    code: currencyCode,
+    contract_address: contractAddress,
     network: networkCode
   }
 }
@@ -176,11 +196,13 @@ const asOrderV2 = asObject({
   deposit_amount: asString,
   deposit_currency: asEither(
     asString,
-    asObject({ code: asString, network: asString })
+    asObject({ code: asString, network: asString }),
+    asObject({ contract_address: asString, network: asString })
   ),
   withdraw_currency: asEither(
     asString,
-    asObject({ code: asString, network: asString })
+    asObject({ code: asString, network: asString }),
+    asObject({ contract_address: asString, network: asString })
   ),
   status: asString,
   created_on: asString,
@@ -197,10 +219,7 @@ const asOrderV2 = asObject({
   withdraw_transaction: asOptional(asString)
 })
 
-// Provider data
-let chainCodeTickerMap: ChainCodeTickerMap = new Map()
-let lastUpdated = 0
-const EXPIRATION = 1000 * 60 * 60 // 1 hour
+// Provider data (removed - no longer needed with contract address approach)
 
 export function makeNexchangePlugin(
   opts: EdgeCorePluginOptions
@@ -249,41 +268,8 @@ export function makeNexchangePlugin(
     return await response.json()
   }
 
-  async function fetchSupportedAssets(): Promise<void> {
-    if (lastUpdated > Date.now() - EXPIRATION) return
-
-    try {
-      const currencies = await call(`${uri}/currency/`, {}, undefined)
-      const assets = asArray(
-        asObject({
-          code: asString,
-          network: asOptional(asString),
-          contract_address: asOptional(asEither(asString, asNull))
-        })
-      )(currencies)
-
-      const chaincodeArray = Object.values(MAINNET_CODE_TRANSCRIPTION).filter(
-        (code): code is string => code != null
-      )
-      const out: ChainCodeTickerMap = new Map()
-      for (const asset of assets) {
-        const network = asset.network ?? asset.code
-        if (chaincodeArray.includes(network)) {
-          const tokenCodes = out.get(network) ?? []
-          tokenCodes.push({
-            tokenCode: asset.code,
-            contractAddress: asset.contract_address ?? null
-          })
-          out.set(network, tokenCodes)
-        }
-      }
-
-      chainCodeTickerMap = out
-      lastUpdated = Date.now()
-    } catch (e) {
-      log.warn('Nexchange: Error updating supported assets', e)
-    }
-  }
+  // Removed fetchSupportedAssets - not needed when using contract addresses directly
+  // Contract addresses come from tokenIds, eliminating the need for currency mapping
 
   async function getFixedQuote(
     request: EdgeSwapRequestPlugin
@@ -299,16 +285,30 @@ export function makeNexchangePlugin(
       )
     ])
 
-    const {
-      fromCurrencyCode,
-      toCurrencyCode,
-      fromMainnetCode,
-      toMainnetCode
-    } = await getChainAndTokenCodes(
-      request,
-      swapInfo,
-      chainCodeTickerMap,
-      MAINNET_CODE_TRANSCRIPTION
+    // Get network codes and contract addresses from tokenIds
+    const fromMainnetCode =
+      MAINNET_CODE_TRANSCRIPTION[
+        request.fromWallet.currencyInfo
+          .pluginId as keyof typeof MAINNET_CODE_TRANSCRIPTION
+      ]
+    const toMainnetCode =
+      MAINNET_CODE_TRANSCRIPTION[
+        request.toWallet.currencyInfo
+          .pluginId as keyof typeof MAINNET_CODE_TRANSCRIPTION
+      ]
+
+    if (fromMainnetCode == null || toMainnetCode == null) {
+      throw new SwapCurrencyError(swapInfo, request)
+    }
+
+    // Get contract addresses from tokenIds
+    const fromContractAddress = getContractAddress(
+      request.fromWallet,
+      request.fromTokenId
+    )
+    const toContractAddress = getContractAddress(
+      request.toWallet,
+      request.toTokenId
     )
 
     const quoteAmount =
@@ -324,22 +324,57 @@ export function makeNexchangePlugin(
             request.toTokenId
           )
 
-    // Build pair name for rate lookup
-    // Pair format: "TOFROM" where TO is what you receive, FROM is what you send
-    // Example: Buy USDC with BTC -> USDCBTC (receive USDC, send BTC)
-    // Example: Sell USDC for BTC -> BTCUSDC (receive BTC, send USDC)
-    const pairName = `${toCurrencyCode}${fromCurrencyCode}`
+    // Build rate query using contract addresses (recommended API feature)
+    // Always try contract address format first, fallback to pair name if needed
+    let rateResponse: any
+    let rate: ReturnType<typeof asRateV2> | undefined
 
-    // Get rate information
-    const rateResponse = await call(
-      `${uri}/rate/?pairs=${pairName}`,
-      {},
-      request
-    )
-    const rates = asArray(asRateV2)(rateResponse)
-    const rate = rates.find(
-      r => r.from === fromCurrencyCode && r.to === toCurrencyCode
-    )
+    // Try using contract address format (new API feature)
+    // This works for both tokens and native currencies
+    const params = new URLSearchParams()
+    // For native currencies, use empty string for contract_address
+    params.append('fromContractAddress', fromContractAddress ?? '')
+    params.append('fromNetwork', fromMainnetCode)
+    params.append('toContractAddress', toContractAddress ?? '')
+    params.append('toNetwork', toMainnetCode)
+
+    try {
+      rateResponse = await call(
+        `${uri}/rate/?${params.toString()}`,
+        {},
+        request
+      )
+      const rates = asArray(asRateV2)(rateResponse)
+      rate = rates[0] // Contract address query returns single rate
+    } catch (e) {
+      // Fallback to pair name format if contract address query fails (backward compatibility)
+      log.warn(
+        'Contract address rate query failed, falling back to pair name',
+        e
+      )
+
+      // Get currency codes for pair name construction
+      const fromCurrencyCode =
+        request.fromTokenId == null
+          ? request.fromWallet.currencyInfo.currencyCode
+          : request.fromWallet.currencyConfig.allTokens[request.fromTokenId]
+              ?.currencyCode ?? request.fromWallet.currencyInfo.currencyCode
+      const toCurrencyCode =
+        request.toTokenId == null
+          ? request.toWallet.currencyInfo.currencyCode
+          : request.toWallet.currencyConfig.allTokens[request.toTokenId]
+              ?.currencyCode ?? request.toWallet.currencyInfo.currencyCode
+
+      // Build pair name for rate lookup
+      // Pair format: "TOFROM" where TO is what you receive, FROM is what you send
+      const pairName = `${toCurrencyCode}${fromCurrencyCode}`
+
+      rateResponse = await call(`${uri}/rate/?pairs=${pairName}`, {}, request)
+      const rates = asArray(asRateV2)(rateResponse)
+      rate = rates.find(
+        r => r.from === fromCurrencyCode && r.to === toCurrencyCode
+      )
+    }
 
     if (rate == null) {
       throw new SwapCurrencyError(swapInfo, request)
@@ -396,17 +431,26 @@ export function makeNexchangePlugin(
     // BUY is the default side (buying withdraw_currency with deposit_currency)
     // For Edge: fromCurrency -> toCurrency means sending fromCurrency, receiving toCurrency
     // For Nexchange: deposit_currency = what we send, withdraw_currency = what we receive
-    // Pair format: TOFROM (receive TO, send FROM)
+    //
+    // Use contract addresses from tokenIds (required by API requirements)
+    // Format: { contract_address: "0x...", network: "ETH" } for tokens
+    // Format: "BTC" (string) for native currencies
 
-    // Map Edge currencies to Nexchange currencies
+    // Map Edge currencies to Nexchange currencies using contract addresses
     // deposit_currency = what Edge sends = Edge fromCurrency
     // withdraw_currency = what Edge receives = Edge toCurrency
-    const depositCurrency = formatCurrency(fromCurrencyCode, fromMainnetCode)
-    const withdrawCurrency = formatCurrency(toCurrencyCode, toMainnetCode)
+    const depositCurrency = formatCurrency(fromMainnetCode, fromContractAddress)
+    const withdrawCurrency = formatCurrency(toMainnetCode, toContractAddress)
 
     const orderBody: {
-      deposit_currency: string | { code: string; network: string }
-      withdraw_currency: string | { code: string; network: string }
+      deposit_currency:
+        | string
+        | { code: string; network: string }
+        | { contract_address: string; network: string }
+      withdraw_currency:
+        | string
+        | { code: string; network: string }
+        | { contract_address: string; network: string }
       withdraw_address: string
       refund_address: string
       rate_id: string
@@ -526,15 +570,7 @@ export function makeNexchangePlugin(
     ): Promise<EdgeSwapQuote> {
       const request = convertRequest(req)
 
-      // Fetch and persist chaincode/tokencode maps from provider
-      await fetchSupportedAssets()
-
       checkInvalidTokenIds(INVALID_TOKEN_IDS, request, swapInfo)
-      checkWhitelistedMainnetCodes(
-        MAINNET_CODE_TRANSCRIPTION,
-        request,
-        swapInfo
-      )
 
       const newRequest = await getMaxSwappable(getFixedQuote, request)
       const swapOrder = await getFixedQuote(newRequest)
