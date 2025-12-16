@@ -24,6 +24,7 @@ import {
 import {
   checkInvalidTokenIds,
   CurrencyPluginIdSwapChainCodeMap,
+  getCodesWithTranscription,
   getMaxSwappable,
   InvalidTokenIds,
   makeSwapPluginQuote,
@@ -272,7 +273,8 @@ export function makeNexchangePlugin(
   // Contract addresses come from tokenIds, eliminating the need for currency mapping
 
   async function getFixedQuote(
-    request: EdgeSwapRequestPlugin
+    request: EdgeSwapRequestPlugin,
+    _userSettings: Object | undefined
   ): Promise<SwapOrder> {
     const [fromAddress, toAddress] = await Promise.all([
       getAddress(
@@ -285,17 +287,13 @@ export function makeNexchangePlugin(
       )
     ])
 
-    // Get network codes and contract addresses from tokenIds
-    const fromMainnetCode =
-      MAINNET_CODE_TRANSCRIPTION[
-        request.fromWallet.currencyInfo
-          .pluginId as keyof typeof MAINNET_CODE_TRANSCRIPTION
-      ]
-    const toMainnetCode =
-      MAINNET_CODE_TRANSCRIPTION[
-        request.toWallet.currencyInfo
-          .pluginId as keyof typeof MAINNET_CODE_TRANSCRIPTION
-      ]
+    // Get network codes, currency codes, and contract addresses using transcription helper
+    const {
+      fromCurrencyCode,
+      toCurrencyCode,
+      fromMainnetCode,
+      toMainnetCode
+    } = getCodesWithTranscription(request, MAINNET_CODE_TRANSCRIPTION)
 
     if (fromMainnetCode == null || toMainnetCode == null) {
       throw new SwapCurrencyError(swapInfo, request)
@@ -353,18 +351,7 @@ export function makeNexchangePlugin(
         e
       )
 
-      // Get currency codes for pair name construction
-      const fromCurrencyCode =
-        request.fromTokenId == null
-          ? request.fromWallet.currencyInfo.currencyCode
-          : request.fromWallet.currencyConfig.allTokens[request.fromTokenId]
-              ?.currencyCode ?? request.fromWallet.currencyInfo.currencyCode
-      const toCurrencyCode =
-        request.toTokenId == null
-          ? request.toWallet.currencyInfo.currencyCode
-          : request.toWallet.currencyConfig.allTokens[request.toTokenId]
-              ?.currencyCode ?? request.toWallet.currencyInfo.currencyCode
-
+      // Currency codes already extracted via getCodesWithTranscription above
       // Build pair name for rate lookup
       // Pair format: "TOFROM" where TO is what you receive, FROM is what you send
       const pairName = `${toCurrencyCode}${fromCurrencyCode}`
@@ -570,10 +557,12 @@ export function makeNexchangePlugin(
     ): Promise<EdgeSwapQuote> {
       const request = convertRequest(req)
 
-      checkInvalidTokenIds(INVALID_TOKEN_IDS, request, swapInfo)
-
-      const newRequest = await getMaxSwappable(getFixedQuote, request)
-      const swapOrder = await getFixedQuote(newRequest)
+      const newRequest = await getMaxSwappable(
+        getFixedQuote,
+        request,
+        userSettings
+      )
+      const swapOrder = await getFixedQuote(newRequest, userSettings)
       return await makeSwapPluginQuote(swapOrder)
     }
   }
