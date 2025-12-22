@@ -1,5 +1,27 @@
 # Edge Exchange Provider API Requirements
 
+This document defines the **technical API requirements** for third-party exchange providers seeking to integrate with the Edge wallet platform. It establishes standards for both **crypto-to-crypto swap providers** and **fiat on/off ramp providers**.
+
+Key requirements include:
+1. [**Asset identification**](#1-chain-and-token-identification) using chain network identifiers and token contract addresses (not just ticker symbols)
+2. [**Order tracking**](#2-order-identification-and-status-page) via unique order IDs with unauthenticated status pages
+3. [**Structured error handling**](#3-error-handling) that returns all applicable errors (region restrictions, limits, unsupported assets) in a single response
+4. [**Bi-directional quoting**](#4-quoting-requirements) allowing users to specify either source or destination amounts
+5. [**Transaction status API**](#5-transaction-status-api) for querying order status
+6. [**Reporting APIs**](#6-reporting-api) for affiliate revenue tracking
+7. [**Account activation**](#7-account-activation) for assets like XRP and HBAR
+8. [**Affiliate revenue withdrawal**](#8-affiliate-revenue-withdrawal) with automated monthly payouts
+
+For fiat on/off ramp providers specifically, the document adds requirements around:
+
+9. [**User authentication**](#9-user-authentication) using cryptographic auth keys
+10. [**Regional and fiat currency support**](#10-regional-and-fiat-currency-support) with proper error handling
+11. [**KYC information**](#11-kyc-information) submission via API (not widget)
+12. [**Bank information**](#12-bank-information) submission for wire/SEPA transfers
+13. [**Verification**](#13-verification) code handling for phone and email
+14. [**Widget return URIs**](#14-widgets) for seamless app integration
+15. [**Off-ramp flow**](#15-off-ramp-flow) supporting no-widget transactions
+
 ## Requirements for both Swap and On/Off Ramp providers
 
 ### 1. Chain and Token Identification
