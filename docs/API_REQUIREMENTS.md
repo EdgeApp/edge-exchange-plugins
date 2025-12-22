@@ -26,7 +26,7 @@ For fiat on/off ramp providers specifically, the document adds requirements arou
 
 ### 1. Chain and Token Identification
 
-API must allow requesting quotes and orders using a unique chain identifier and token identifier such as the contract address. This is to prevent confusion on which token is being referenced as well to prevent the need to map provider tickers to tokens supported by Edge. Note that it is NOT sufficient to provide a separate endpoint to list all assets as this would require too many API calls to get a quote. This example shows how assets should be specified for a quote. The Edge exchange plugins will map the provider's chain network identifiers to edge specific chain network identifiers so they need not match exactly.
+API must allow requesting quotes and orders using a unique chain identifier and token identifier such as the contract address. This is to prevent confusion on which token is being referenced as well as to prevent the need to map provider tickers to tokens supported by Edge. Note that it is NOT sufficient to provide a separate endpoint to list all assets as this would require too many API calls to get a quote. This example shows how assets should be specified for a quote. The Edge exchange plugins will map the provider's chain network identifiers to edge specific chain network identifiers so they need not match exactly.
 
 ```json
 {
@@ -35,7 +35,7 @@ API must allow requesting quotes and orders using a unique chain identifier and 
 }
 ```
 
-For EVM chains, API must allow requesting quotes using the universally accepted EVM `chainId` to specify the chain in addition to the token identifier. This allows automatic support of new EVMs with no need to add a mapping of provider chain identifiers to Edge chain identifiers. Ie
+For EVM chains, API must allow requesting quotes using the universally accepted EVM `chainId` to specify the chain in addition to the token identifier. This allows automatic support of new EVMs with no need to add a mapping of provider chain identifiers to Edge chain identifiers. I.e.
 
 ```json
 {
@@ -47,7 +47,7 @@ For EVM chains, API must allow requesting quotes using the universally accepted 
 ### 2. Order Identification and Status Page
 
 - Order requests must provide a unique `orderId` identifier that can be used to query status of the order via an unauthenticated API as well as connect the order with completed swaps reported via a reporting API.
-- Provider must provide an un-authenticated status page that uses the `orderId` to provide status on the swap. Ie [`https://status.provider.com/orderStatus/{orderId`](https://status.provider.com/orderStatus/{orderId)`}`
+- Provider must provide an un-authenticated status page that uses the `orderId` to provide status on the swap. I.e. [`https://status.provider.com/orderStatus/{orderId}`](https://status.provider.com/orderStatus/{orderId)
 
 ### 3. Error Handling
 
@@ -57,7 +57,7 @@ Quote request errors must return all the following possible errors at once with 
 - Asset unsupported error
 - Above or below limit errors with min/max amounts specified in both the source and destination asset
 
-Limit errors need to be specified with a hardened error code and not using an arbitrary string. Ie. for swap from BTC to USDT
+Limit errors need to be specified with a hardened error code and not using an arbitrary string. I.e. for swap from BTC to USDT
 
 ```json
 {
@@ -124,7 +124,7 @@ Provider must provide an authenticated reporting API that allows querying of all
 
 ### 7. Account Activation
 
-When a user requests an exchange into assets like XRP and HBAR. The provider should detect that the withdrawal address is not activated and send an activation transaction as part of the withdrawal.
+When a user requests an exchange into assets like XRP and HBAR, the provider should detect that the withdrawal address is not activated and send an activation transaction as part of the withdrawal.
 
 ### 8. Affiliate Revenue Withdrawal
 
@@ -134,7 +134,7 @@ Providers must automatically withdraw affiliate revenue funds in a single asset 
 
 ### 9. User Authentication
 
-Provider API should allow the Edge application to authenticate a user via cryptographically random authKey. The authKey should be created by Edge and passed into any quoting or order execution endpoint. If the authKey does not exist on the Provider system, the Provider's API should allow for account creation by receiving KYC info via API
+Provider API should allow the Edge application to authenticate a user via cryptographically random authKey. The authKey should be created by Edge and passed into any quoting or order execution endpoint. If the authKey does not exist on the Provider system, the Provider's API should allow for account creation by receiving KYC info via API.
 
 ### 10. Regional and Fiat Currency Support
 
@@ -151,7 +151,7 @@ Provider API should allow the Edge application to provide basic KYC information 
 
 ### 12. Bank Information
 
-For basic bank transfers (ie. wire, SEPA) and any payment methods that do not have opposing regulatory requirements, Provider must have an API that allows Edge to submit bank information. Ie Account number, IBAN, and routing number.
+For basic bank transfers (i.e. wire, SEPA) and any payment methods that do not have opposing regulatory requirements, Provider must have an API that allows Edge to submit bank information. I.e. account number, IBAN, and routing number.
 
 ### 13. Verification
 
