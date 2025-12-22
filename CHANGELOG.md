@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- added: n.exchange centralized swap integration with support for multiple networks and tokens
+
 ## 2.40.2 (2025-12-10)
 
 - added: Added new mappings to all swap providers.
