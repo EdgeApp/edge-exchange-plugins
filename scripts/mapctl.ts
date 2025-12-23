@@ -5,19 +5,7 @@ import {
   EdgeCurrencyPluginId,
   edgeCurrencyPluginIds
 } from '../src/util/edgeCurrencyPluginIds'
-import { config } from './mapctlConfig'
-import { makeChangeHeroSynchronizer } from './synchronizers/changehero/changeheroSynchronizer'
-import { makeChangeNowSynchronizer } from './synchronizers/changenow/changenowSynchronizer'
-import { makeExolixSynchronizer } from './synchronizers/exolix/exolixSynchronizer'
-import { makeGodexSynchronizer } from './synchronizers/godex/godexSynchronizer'
-import { makeLetsExchangeSynchronizer } from './synchronizers/letsexchange/letsexchangeSynchronizer'
-import { makeLifiSynchronizer } from './synchronizers/lifi/lifiSynchronizer'
-import { makeMayaProtocolSynchronizer } from './synchronizers/mayaprotocol/mayaprotocolSynchronizer'
-import { makeRangoSynchronizer } from './synchronizers/rango/rangoSynchronizer'
-import { makeSideShiftSynchronizer } from './synchronizers/sideshift/sideshiftSynchronizer'
-import { makeSwapKitSynchronizer } from './synchronizers/swapkit/swapkitSynchronizer'
-import { makeSwapuzSynchronizer } from './synchronizers/swapuz/swapuzSynchronizer'
-import { makeThorchainSynchronizer } from './synchronizers/thorchain/thorchainSynchronizer'
+import { synchronizers } from './allSynchronizers'
 import { SwapSynchronizer } from './types'
 import { findSimilar } from './util/stringSimilarity'
 
@@ -33,22 +21,6 @@ async function main(): Promise<void> {
     showUsage()
     return
   }
-
-  // Initialize all synchronizers upfront, logging errors for any that fail
-  const synchronizers: SwapSynchronizer[] = [
-    makeChangeHeroSynchronizer(config),
-    makeChangeNowSynchronizer(config),
-    makeExolixSynchronizer(config),
-    makeGodexSynchronizer(config),
-    makeLetsExchangeSynchronizer(config),
-    makeLifiSynchronizer(config),
-    makeMayaProtocolSynchronizer(config),
-    makeRangoSynchronizer(config),
-    makeSideShiftSynchronizer(config),
-    makeSwapKitSynchronizer(config),
-    makeSwapuzSynchronizer(config),
-    makeThorchainSynchronizer(config)
-  ]
 
   if (command === 'sync-providers') {
     const filter = args[1] != null && args[1] !== '' ? args[1] : undefined

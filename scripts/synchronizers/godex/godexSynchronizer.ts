@@ -1,31 +1,21 @@
-import fs from 'fs'
 import fetch from 'node-fetch'
-import path from 'path'
 
-import { EdgeCurrencyPluginId } from '../../../src/util/edgeCurrencyPluginIds'
 import { MapctlConfig } from '../../mapctlConfig'
 import { FetchChainCodeResult, SwapSynchronizer } from '../../types'
+import { getMappingFilePath, loadMappingFile } from '../../util/loadMappingFile'
 import { asGodexCoinsResponse } from './godexTypes'
 
-const MAPPING_FILE_PATH = path.join(
-  __dirname,
-  '../../mappings/godexMappings.ts'
-)
+const NAME = 'godex'
 
 export const makeGodexSynchronizer = (
   config: MapctlConfig
 ): SwapSynchronizer => {
   return {
-    name: 'godex',
-    get map(): Map<string, EdgeCurrencyPluginId | null> {
-      if (fs.existsSync(MAPPING_FILE_PATH)) {
-        // eslint-disable-next-line @typescript-eslint/no-var-requires
-        const { godex } = require('../../mappings/godexMappings')
-        return godex
-      }
-      return new Map()
+    name: NAME,
+    get map() {
+      return loadMappingFile(NAME)
     },
-    mappingFilePath: MAPPING_FILE_PATH,
+    mappingFilePath: getMappingFilePath(NAME),
     fetchChainCodes: async (): Promise<FetchChainCodeResult[]> => {
       const networkMap = new Map<string, { name: string }>()
 

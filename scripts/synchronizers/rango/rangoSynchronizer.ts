@@ -1,16 +1,11 @@
-import fs from 'fs'
 import fetch from 'node-fetch'
-import path from 'path'
 
-import { EdgeCurrencyPluginId } from '../../../src/util/edgeCurrencyPluginIds'
 import { MapctlConfig } from '../../mapctlConfig'
 import { FetchChainCodeResult, SwapSynchronizer } from '../../types'
+import { getMappingFilePath, loadMappingFile } from '../../util/loadMappingFile'
 import { asRangoMetaResponse } from './rangoTypes'
 
-const MAPPING_FILE_PATH = path.join(
-  __dirname,
-  '../../mappings/rangoMappings.ts'
-)
+const NAME = 'rango'
 
 export const makeRangoSynchronizer = (
   config: MapctlConfig
@@ -21,16 +16,11 @@ export const makeRangoSynchronizer = (
   }
 
   return {
-    name: 'rango',
-    get map(): Map<string, EdgeCurrencyPluginId | null> {
-      if (fs.existsSync(MAPPING_FILE_PATH)) {
-        // eslint-disable-next-line @typescript-eslint/no-var-requires
-        const { rango } = require('../../mappings/rangoMappings')
-        return rango
-      }
-      return new Map()
+    name: NAME,
+    get map() {
+      return loadMappingFile(NAME)
     },
-    mappingFilePath: MAPPING_FILE_PATH,
+    mappingFilePath: getMappingFilePath(NAME),
     fetchChainCodes: async (): Promise<FetchChainCodeResult[]> => {
       const response = await fetch(
         `https://api.rango.exchange/basic/meta?apiKey=${apiKey}`
