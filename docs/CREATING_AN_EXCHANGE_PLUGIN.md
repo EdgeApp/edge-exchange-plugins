@@ -62,17 +62,43 @@ const asInitOptions = asObject({
 
 ### Step 3: Chain Code Mapping
 
-Map Edge currency plugin IDs to your exchange's chain codes. **For EVM chains, use `evmChainId` (not provider-specific network names)** per API requirements.
+Each plugin needs a mapping file in `src/mappings/` that translates Edge currency plugin IDs to your exchange provider's chain codes. **For EVM chains, use `evmChainId` (not provider-specific network names)** per API requirements.
+
+#### Creating the Mapping File
+
+Follow the [Chain Mapping Synchronizers](./CHAIN_MAPPING_SYNCHRONIZERS.md) guide to set up automated synchronization for your mapping file. This fetches supported chains from your provider's API and keeps the mapping up-to-date.
+
+#### Using the Mapping in Your Plugin
+
+Import and use the mapping directly:
 
 ```typescript
-import { CurrencyPluginIdSwapChainCodeMap } from '../../util/swapHelpers'
+import { yourplugin as yourpluginMapping } from '../../mappings/yourplugin'
 
-export const MAINNET_CODE_TRANSCRIPTION: CurrencyPluginIdSwapChainCodeMap = {
-  bitcoin: 'BTC',
-  ethereum: 'ERC20',
-  binancesmartchain: 'BEP20',
-  // ... map all supported chains (use null for unsupported)
+// In your quote function:
+const fromMainnetCode = yourpluginMapping.get(fromWallet.currencyInfo.pluginId)
+const toMainnetCode = yourpluginMapping.get(toWallet.currencyInfo.pluginId)
+
+if (fromMainnetCode == null || toMainnetCode == null) {
+  throw new SwapCurrencyError(swapInfo, request)
 }
+```
+
+> **Note**: Some existing plugins convert the Map to an object using `mapToStringMap()` or `mapToRecord()` from `swapHelpers.ts`. This is a legacy pattern - new plugins can use the Map directly.
+
+#### Manual Mapping (Alternative)
+
+For providers without a chain configuration API, you can manually create and maintain `src/mappings/yourplugin.ts`:
+
+```typescript
+import { EdgeCurrencyPluginId } from '../util/edgeCurrencyPluginIds'
+
+export const yourplugin = new Map<EdgeCurrencyPluginId, string | null>()
+yourplugin.set('bitcoin', 'BTC')
+yourplugin.set('ethereum', 'ETH')
+yourplugin.set('binancesmartchain', 'BSC')
+yourplugin.set('unsupportedchain', null)  // null = not supported by provider
+// ... map all Edge plugin IDs to your provider's chain codes
 ```
 
 ### Step 4: Quote Fetching
@@ -100,6 +126,8 @@ const nativeAmount = denominationToNative(wallet, apiAmount, tokenId)
 ### Step 6: Error Handling
 
 **The API must return all applicable errors in an array.** Your plugin prioritizes which error to throw.
+
+<!-- TODO: Link to a error handling Edge conventions documentation with detailed guidelines on how we treat errors in our codebase. -->
 
 Define cleaners:
 
@@ -262,6 +290,7 @@ Plugin ID must match your `pluginId` constant.
 
 **Documentation**:
 - [`API_REQUIREMENTS.md`](./API_REQUIREMENTS.md) - Mandatory API requirements
+- [`CHAIN_MAPPING_SYNCHRONIZERS.md`](./CHAIN_MAPPING_SYNCHRONIZERS.md) - Automated mapping synchronization
 - [`edge-conventions`](https://github.com/EdgeApp/edge-conventions) - Code style, setup, git conventions
 
 **Examples**:
@@ -270,9 +299,13 @@ Plugin ID must match your `pluginId` constant.
 - `src/swap/defi/lifi.ts` - Production DeFi exchange
 
 **Utilities** (`src/util/`):
-- `swapHelpers.ts` - `makeSwapPluginQuote`, `getContractAddresses`, etc.
+- `swapHelpers.ts` - `makeSwapPluginQuote`, etc.
 - `utils.ts` - `getAddress`, `denominationToNative`, etc.
 - `edgeCurrencyPluginIds.ts` - Currency plugin ID constants
+
+**Chain Mappings**:
+- `src/mappings/` - Chain code mapping files (Edge plugin IDs → provider codes)
+- See [Chain Mapping Synchronizers](./CHAIN_MAPPING_SYNCHRONIZERS.md) for automated sync setup
 
 **PR Requirements**:
 1. Rebase on master
@@ -281,7 +314,7 @@ Plugin ID must match your `pluginId` constant.
 4. All linting/type checking passes
 
 **Common Pitfalls**:
-- Missing chain mappings in `MAINNET_CODE_TRANSCRIPTION`
+- Missing chain mappings in `src/mappings/yourplugin.ts`
 - Incorrect amount conversions (use `nativeToDenomination`/`denominationToNative`)
 - Missing error handling (all types from API_REQUIREMENTS.md)
 - EVM chains: use `evmChainId`, not provider network names
