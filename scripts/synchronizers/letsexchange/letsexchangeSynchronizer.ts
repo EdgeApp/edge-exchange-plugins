@@ -1,16 +1,11 @@
-import fs from 'fs'
 import fetch from 'node-fetch'
-import path from 'path'
 
-import { EdgeCurrencyPluginId } from '../../../src/util/edgeCurrencyPluginIds'
 import { MapctlConfig } from '../../mapctlConfig'
 import { FetchChainCodeResult, SwapSynchronizer } from '../../types'
+import { getMappingFilePath, loadMappingFile } from '../../util/loadMappingFile'
 import { asLetsExchangeCurrenciesResponse } from './letsexchangeTypes'
 
-const MAPPING_FILE_PATH = path.join(
-  __dirname,
-  '../../mappings/letsexchangeMappings.ts'
-)
+const NAME = 'letsexchange'
 
 export const makeLetsExchangeSynchronizer = (
   config: MapctlConfig
@@ -21,16 +16,11 @@ export const makeLetsExchangeSynchronizer = (
   }
 
   return {
-    name: 'letsexchange',
-    get map(): Map<string, EdgeCurrencyPluginId | null> {
-      if (fs.existsSync(MAPPING_FILE_PATH)) {
-        // eslint-disable-next-line @typescript-eslint/no-var-requires
-        const { letsexchange } = require('../../mappings/letsexchangeMappings')
-        return letsexchange
-      }
-      return new Map()
+    name: NAME,
+    get map() {
+      return loadMappingFile(NAME)
     },
-    mappingFilePath: MAPPING_FILE_PATH,
+    mappingFilePath: getMappingFilePath(NAME),
     fetchChainCodes: async (): Promise<FetchChainCodeResult[]> => {
       const response = await fetch('https://api.letsexchange.io/api/v2/coins', {
         headers: {

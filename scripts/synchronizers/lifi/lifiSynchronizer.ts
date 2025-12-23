@@ -1,28 +1,21 @@
-import fs from 'fs'
 import fetch from 'node-fetch'
-import path from 'path'
 
-import { EdgeCurrencyPluginId } from '../../../src/util/edgeCurrencyPluginIds'
 import { MapctlConfig } from '../../mapctlConfig'
 import { FetchChainCodeResult, SwapSynchronizer } from '../../types'
+import { getMappingFilePath, loadMappingFile } from '../../util/loadMappingFile'
 import { asLifiChainsResponse } from './lifiTypes'
 
-const MAPPING_FILE_PATH = path.join(__dirname, '../../mappings/lifiMappings.ts')
+const NAME = 'lifi'
 
 export const makeLifiSynchronizer = (
   config: MapctlConfig
 ): SwapSynchronizer => {
   return {
-    name: 'lifi',
-    get map(): Map<string, EdgeCurrencyPluginId | null> {
-      if (fs.existsSync(MAPPING_FILE_PATH)) {
-        // eslint-disable-next-line @typescript-eslint/no-var-requires
-        const { lifi } = require('../../mappings/lifiMappings')
-        return lifi
-      }
-      return new Map()
+    name: NAME,
+    get map() {
+      return loadMappingFile(NAME)
     },
-    mappingFilePath: MAPPING_FILE_PATH,
+    mappingFilePath: getMappingFilePath(NAME),
     fetchChainCodes: async (): Promise<FetchChainCodeResult[]> => {
       const response = await fetch('https://li.quest/v1/chains')
       if (!response.ok) {
