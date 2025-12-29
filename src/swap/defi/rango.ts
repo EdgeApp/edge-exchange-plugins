@@ -679,7 +679,7 @@ export function makeRangoPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
             request,
             approvalAmount: nativeAmount,
             tokenContractAddress: fromContractAddress,
-            recipientAddress: approveTo
+            recipientAddress: evmTransaction.txTo
           })
           preTxs.push(...approvalTxs)
         }
