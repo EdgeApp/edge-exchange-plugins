@@ -4,6 +4,14 @@ This library exports a collection of exchange-rate & swap plugins for use with [
 
 Please see [index.js](./src/index.js) for the list of plugins in this repo. These are compatible with edge-core-js v0.19.37 or later.
 
+## Quick Links
+
+- [Edge Company Conventions](https://github.com/EdgeApp/edge-conventions) - Company-wide development standards
+- [TypeScript Style Guide](docs/conventions/typescript-style-guide.md) - Project-specific code conventions
+- [Adding New Exchange Guide](docs/guides/adding-new-exchange.md) - Step-by-step integration guide
+- [Plugin Architecture](docs/patterns/swap-plugin-architecture.md) - Understanding plugin patterns
+- [Agent Guidelines](AGENTS.md) - For AI coding assistants
+
 ## Installing
 
 Fist, add this library to your project:
@@ -17,21 +25,21 @@ yarn add edge-exchange-plugins
 For Node.js, you should call `addEdgeCorePlugins` to register these plugins with edge-core-js:
 
 ```js
-const { addEdgeCorePlugins, lockEdgeCorePlugins } = require('edge-core-js')
-const plugins = require('edge-exchange-plugins')
+const { addEdgeCorePlugins, lockEdgeCorePlugins } = require("edge-core-js");
+const plugins = require("edge-exchange-plugins");
 
-addEdgeCorePlugins(plugins)
+addEdgeCorePlugins(plugins);
 
 // Once you are done adding plugins, call this:
-lockEdgeCorePlugins()
+lockEdgeCorePlugins();
 ```
 
 You can also add plugins individually if you want to be more picky:
 
 ```js
 addEdgeCorePlugins({
-  thorchain: plugins.thorchain
-})
+  thorchain: plugins.thorchain,
+});
 ```
 
 ### Browser
@@ -50,12 +58,12 @@ and then adjust your script URL to http://localhost:8083/edge-exchange-plugins.j
 This package will automatically install itself using React Native autolinking. To integrate the plugins with edge-core-js, add its URI to the context component:
 
 ```jsx
-import { pluginUri } from 'edge-exchange-plugins'
+import { pluginUri } from "edge-exchange-plugins";
 
 <MakeEdgeContext
   pluginUris={[pluginUri]}
   // Plus other props as required...
-/>
+/>;
 ```
 
 To debug this project, run `yarn start` to start a Webpack server, and then use `debugUri` instead of `pluginUri`.
@@ -90,7 +98,7 @@ Please be aware that when considering merging pull requests for additional excha
 
 - Accompanying PR submitted to `edge-reports` that fetches transaction data to your exchange that is credited to Edge users
 - Rebase of your branch upon this repo's `master` branch. For more info:
-https://github.com/edx/edx-platform/wiki/How-to-Rebase-a-Pull-Request
+  https://github.com/edx/edx-platform/wiki/How-to-Rebase-a-Pull-Request
 - Accompanying PR submitted to `edge-react-gui` that includes (but is not limited to) the following:
-    - Small 64x64 pixel square logos with a white background
-    - 600x210 pixel horizontal logo for your exchange, with **no** empty space around the logo (we will add this programatically within the app
+  - Small 64x64 pixel square logos with a white background
+  - 600x210 pixel horizontal logo for your exchange, with **no** empty space around the logo (we will add this programatically within the app
