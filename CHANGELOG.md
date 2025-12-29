@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+## 2.40.3 (2025-12-29)
+
+- fixed: Fix Rango EVM approval address
+- fixed: Add pendingTxs to createEvmApprovalEdgeTransactions
+
 ## 2.40.2 (2025-12-10)
 
 - added: Added new mappings to all swap providers.
