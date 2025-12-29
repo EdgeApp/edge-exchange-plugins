@@ -131,6 +131,7 @@ export const createEvmApprovalEdgeTransactions = async ({
           publicAddress: tokenContractAddress
         }
       ],
+      pendingTxs: [...out],
       networkFeeOption,
       customNetworkFee,
       assetAction: {
