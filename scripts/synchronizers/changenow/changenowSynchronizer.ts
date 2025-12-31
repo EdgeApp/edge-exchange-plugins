@@ -1,16 +1,11 @@
-import fs from 'fs'
 import fetch from 'node-fetch'
-import path from 'path'
 
-import { EdgeCurrencyPluginId } from '../../../src/util/edgeCurrencyPluginIds'
 import { MapctlConfig } from '../../mapctlConfig'
 import { FetchChainCodeResult, SwapSynchronizer } from '../../types'
+import { getMappingFilePath, loadMappingFile } from '../../util/loadMappingFile'
 import { asChangeNowCurrenciesResponse } from './changenowTypes'
 
-const MAPPING_FILE_PATH = path.join(
-  __dirname,
-  '../../mappings/changenowMappings.ts'
-)
+const NAME = 'changenow'
 
 export const makeChangeNowSynchronizer = (
   config: MapctlConfig
@@ -21,16 +16,11 @@ export const makeChangeNowSynchronizer = (
   }
 
   return {
-    name: 'changenow',
-    get map(): Map<string, EdgeCurrencyPluginId | null> {
-      if (fs.existsSync(MAPPING_FILE_PATH)) {
-        // eslint-disable-next-line @typescript-eslint/no-var-requires
-        const { changenow } = require('../../mappings/changenowMappings')
-        return changenow
-      }
-      return new Map()
+    name: NAME,
+    get map() {
+      return loadMappingFile(NAME)
     },
-    mappingFilePath: MAPPING_FILE_PATH,
+    mappingFilePath: getMappingFilePath(NAME),
     fetchChainCodes: async (): Promise<FetchChainCodeResult[]> => {
       const response = await fetch(
         'https://api.changenow.io/v2/exchange/currencies?isFiat=false',
