@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- added: n.exchange centralized swap integration with support for multiple networks and tokens using contract address-based identification
+
 ## 2.40.3 (2025-12-29)
 
 - fixed: Fix Rango EVM approval address
