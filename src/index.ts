@@ -7,6 +7,7 @@ import { makeChangeNowPlugin } from './swap/central/changenow'
 import { makeExolixPlugin } from './swap/central/exolix'
 import { makeGodexPlugin } from './swap/central/godex'
 import { makeLetsExchangePlugin } from './swap/central/letsexchange'
+import { makeNexchangePlugin } from './swap/central/nexchange'
 import { makeSideshiftPlugin } from './swap/central/sideshift'
 import { makeSwapuzPlugin } from './swap/central/swapuz'
 import { make0xGaslessPlugin } from './swap/defi/0x/0xGasless'
@@ -35,6 +36,7 @@ const plugins = {
   godex: makeGodexPlugin,
   letsexchange: makeLetsExchangePlugin,
   lifi: makeLifiPlugin,
+  nexchange: makeNexchangePlugin,
   rango: makeRangoPlugin,
   sideshift: makeSideshiftPlugin,
   spookySwap: makeSpookySwapPlugin,
