@@ -18,6 +18,7 @@ import { makeSideShiftSynchronizer } from './synchronizers/sideshift/sideshiftSy
 import { makeSwapKitSynchronizer } from './synchronizers/swapkit/swapkitSynchronizer'
 import { makeSwapuzSynchronizer } from './synchronizers/swapuz/swapuzSynchronizer'
 import { makeThorchainSynchronizer } from './synchronizers/thorchain/thorchainSynchronizer'
+import { makeXgramSynchronizer } from './synchronizers/xgram/xgramSynchronizer'
 import { SwapSynchronizer } from './types'
 import { findSimilar } from './util/stringSimilarity'
 
@@ -47,6 +48,7 @@ async function main(): Promise<void> {
     makeSideShiftSynchronizer(config),
     makeSwapKitSynchronizer(config),
     makeSwapuzSynchronizer(config),
+    makeXgramSynchronizer(config),
     makeThorchainSynchronizer(config)
   ]
 
