@@ -48,7 +48,11 @@ import {
   MakeTxParams,
   StringMap
 } from '../types'
-import { createEvmApprovalEdgeTransactions, WEI_MULTIPLIER } from './defiUtils'
+import {
+  createEvmApprovalEdgeTransactions,
+  decodeEvmApprovalData,
+  WEI_MULTIPLIER
+} from './defiUtils'
 
 const swapInfo: EdgeSwapInfo = {
   pluginId: 'rango',
@@ -675,11 +679,12 @@ export function makeRangoPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
         }
         const { approveData, approveTo } = evmTransaction
         if (approveData != null && approveTo != null) {
+          const { spendingAddress } = decodeEvmApprovalData(approveData)
           const approvalTxs = await createEvmApprovalEdgeTransactions({
             request,
             approvalAmount: nativeAmount,
             tokenContractAddress: fromContractAddress,
-            recipientAddress: evmTransaction.txTo
+            recipientAddress: spendingAddress
           })
           preTxs.push(...approvalTxs)
         }
