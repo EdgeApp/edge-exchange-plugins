@@ -9,6 +9,7 @@ import { makeGodexPlugin } from './swap/central/godex'
 import { makeLetsExchangePlugin } from './swap/central/letsexchange'
 import { makeSideshiftPlugin } from './swap/central/sideshift'
 import { makeSwapuzPlugin } from './swap/central/swapuz'
+import { makeXgramPlugin } from './swap/central/xgram'
 import { make0xGaslessPlugin } from './swap/defi/0x/0xGasless'
 import { makeBridgelessPlugin } from './swap/defi/bridgeless'
 import { makeCosmosIbcPlugin } from './swap/defi/cosmosIbc'
@@ -30,6 +31,7 @@ const plugins = {
   bridgeless: makeBridgelessPlugin,
   changehero: makeChangeHeroPlugin,
   changenow: makeChangeNowPlugin,
+  xgram: makeXgramPlugin,
   cosmosibc: makeCosmosIbcPlugin,
   exolix: makeExolixPlugin,
   godex: makeGodexPlugin,
