@@ -139,7 +139,7 @@ export const MAINNET_CODE_TRANSCRIPTION: CurrencyPluginIdSwapChainCodeMap = {
   zcash: 'ZEC',
   zcoin: null,
   zksync: 'ZKSYNCERA'
-}
+} as CurrencyPluginIdSwapChainCodeMap
 
 export const SPECIAL_MAINNET_CASES: EdgeIdSwapIdMap = new Map()
 
