@@ -1,10 +1,8 @@
-import fs from 'fs'
 import fetch, { Response } from 'node-fetch'
-import path from 'path'
 
-import { EdgeCurrencyPluginId } from '../../../src/util/edgeCurrencyPluginIds'
 import { MapctlConfig } from '../../mapctlConfig'
 import { FetchChainCodeResult, SwapSynchronizer } from '../../types'
+import { getMappingFilePath, loadMappingFile } from '../../util/loadMappingFile'
 import { asThorchainPoolsResponse } from './thorchainTypes'
 
 // Fallback Midgard servers (try multiple endpoints)
@@ -13,10 +11,7 @@ const MIDGARD_SERVERS = [
   'https://midgard.thorchain.info'
 ]
 
-const MAPPING_FILE_PATH = path.join(
-  __dirname,
-  '../../mappings/thorchainMappings.ts'
-)
+const NAME = 'thorchain'
 
 async function fetchWithFallback(
   servers: string[],
@@ -53,16 +48,11 @@ export const makeThorchainSynchronizer = (
   config: MapctlConfig
 ): SwapSynchronizer => {
   return {
-    name: 'thorchain',
-    get map(): Map<string, EdgeCurrencyPluginId | null> {
-      if (fs.existsSync(MAPPING_FILE_PATH)) {
-        // eslint-disable-next-line @typescript-eslint/no-var-requires
-        const { thorchain } = require('../../mappings/thorchainMappings')
-        return thorchain
-      }
-      return new Map()
+    name: NAME,
+    get map() {
+      return loadMappingFile(NAME)
     },
-    mappingFilePath: MAPPING_FILE_PATH,
+    mappingFilePath: getMappingFilePath(NAME),
     fetchChainCodes: async (): Promise<FetchChainCodeResult[]> => {
       const response = await fetchWithFallback(MIDGARD_SERVERS, 'v2/pools')
 
