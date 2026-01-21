@@ -96,6 +96,20 @@ export const getEvmApprovalData = ({
   return data
 }
 
+export const decodeEvmApprovalData = (
+  data: string
+): {
+  spendingAddress: string
+  nativeAmount: string
+} => {
+  const iface = new ethers.utils.Interface(erc20Abi)
+  const decoded = iface.decodeFunctionData('approve', data)
+  return {
+    spendingAddress: decoded[0],
+    nativeAmount: decoded[1].toString()
+  }
+}
+
 const NON_STANDARD_APPROVAL_TOKENS: { [pluginId: string]: string[] } = {
   ethereum: ['dac17f958d2ee523a2206206994597c13d831ec7' /* USDT */]
 }
