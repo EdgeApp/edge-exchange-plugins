@@ -137,23 +137,59 @@ export const INVALID_TOKEN_IDS: InvalidTokenIds = {
   to: {}
 }
 
+export type ChainType = 'evm' | 'utxo' | 'cosmos' | 'other'
+
+/** Chain type classification for THORChain/Maya supported chains */
+export const CHAIN_TYPE_MAP: { [cc: string]: ChainType } = {
+  // EVM chains
+  ARB: 'evm',
+  AVAX: 'evm',
+  BASE: 'evm',
+  BSC: 'evm',
+  ETH: 'evm',
+  OP: 'evm',
+  POL: 'evm',
+
+  // UTXO chains
+  BCH: 'utxo',
+  BTC: 'utxo',
+  DASH: 'utxo',
+  DOGE: 'utxo',
+  LTC: 'utxo',
+  ZEC: 'utxo',
+
+  // Cosmos chains
+  GAIA: 'cosmos',
+  THOR: 'cosmos',
+  MAYA: 'cosmos',
+  KUJI: 'cosmos',
+
+  // Other chain types
+  DOT: 'other',
+  SOL: 'other',
+  SUI: 'other',
+  TRON: 'other',
+  XRP: 'other'
+}
+
+/** @deprecated Use CHAIN_TYPE_MAP instead */
 export const EVM_CURRENCY_CODES: { [cc: string]: boolean } = {
   ARB: true,
   AVAX: true,
   BASE: true,
   BCH: false,
-  BNB: false,
   BSC: true,
   BTC: false,
   DASH: false,
   DOGE: false,
-  ETC: true,
   ETH: true,
-  FTM: true,
   LTC: false,
+  OP: true,
+  POL: true,
   THOR: false,
   TRON: false,
-  XRP: false
+  XRP: false,
+  ZEC: false
 }
 
 /** Thorchain has weird heuristics for some currencies */

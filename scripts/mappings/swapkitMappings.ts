@@ -4,37 +4,38 @@ export const swapkit = new Map<string, EdgeCurrencyPluginId | null>()
 // Display Name: ARB
 swapkit.set('ARB', 'arbitrum')
 
-// Display Name: AVAX
-swapkit.set('AVAX', null)
+// Display Name: AVAX - THORCHAIN supported
+swapkit.set('AVAX', 'avalanche')
 
-// Display Name: BASE
-swapkit.set('BASE', null)
+// Display Name: BASE - THORCHAIN supported
+swapkit.set('BASE', 'base')
 
-// Display Name: BCH
-swapkit.set('BCH', null)
+// Display Name: BCH - THORCHAIN supported
+swapkit.set('BCH', 'bitcoincash')
 
 // Display Name: BERA
 swapkit.set('BERA', null)
 
-// Display Name: BSC
-swapkit.set('BSC', null)
+// Display Name: BSC - THORCHAIN supported
+swapkit.set('BSC', 'binancesmartchain')
 
-// Display Name: BTC
-swapkit.set('BTC', null)
+// Display Name: BTC - THORCHAIN & MAYACHAIN supported
+swapkit.set('BTC', 'bitcoin')
 
-// Display Name: DASH
+// Display Name: DASH - MAYACHAIN supported
 swapkit.set('DASH', 'dash')
 
-// Display Name: DOGE
-swapkit.set('DOGE', null)
+// Display Name: DOGE - THORCHAIN supported
+swapkit.set('DOGE', 'dogecoin')
 
 // Display Name: DOT
 swapkit.set('DOT', 'polkadot')
 
-// Display Name: ETH
-swapkit.set('ETH', null)
+// Display Name: ETH - THORCHAIN & MAYACHAIN supported
+swapkit.set('ETH', 'ethereum')
 
-// Display Name: GAIA
+// Display Name: GAIA - THORCHAIN supported (Cosmos Hub)
+// Disabled: swapkit plugin only supports EVM and UTXO chain types
 swapkit.set('GAIA', null)
 
 // Display Name: GNO
@@ -43,8 +44,8 @@ swapkit.set('GNO', null)
 // Display Name: KUJI
 swapkit.set('KUJI', null)
 
-// Display Name: LTC
-swapkit.set('LTC', null)
+// Display Name: LTC - THORCHAIN supported
+swapkit.set('LTC', 'litecoin')
 
 // Display Name: MAYA
 swapkit.set('MAYA', null)
@@ -67,17 +68,21 @@ swapkit.set('SOL', 'solana')
 // Display Name: SUI
 swapkit.set('SUI', 'sui')
 
-// Display Name: THOR
+// Display Name: THOR - THORCHAIN native
+// Disabled: swapkit plugin only supports EVM and UTXO chain types
 swapkit.set('THOR', null)
 
-// Display Name: TRON
+// Display Name: TRON - THORCHAIN supported
+// Disabled: swapkit plugin only supports EVM and UTXO chain types
 swapkit.set('TRON', null)
 
 // Display Name: XRD
 swapkit.set('XRD', null)
 
-// Display Name: XRP
+// Display Name: XRP - THORCHAIN supported
+// Disabled: swapkit plugin only supports EVM and UTXO chain types
 swapkit.set('XRP', null)
 
-// Display Name: ZEC
+// Display Name: ZEC - MAYACHAIN supported
+// Disabled: requires ZIP-321 handling not implemented in swapkit plugin
 swapkit.set('ZEC', null)
