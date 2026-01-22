@@ -137,23 +137,41 @@ export const INVALID_TOKEN_IDS: InvalidTokenIds = {
   to: {}
 }
 
-export const EVM_CURRENCY_CODES: { [cc: string]: boolean } = {
-  ARB: true,
-  AVAX: true,
-  BASE: true,
-  BCH: false,
-  BNB: false,
-  BSC: true,
-  BTC: false,
-  DASH: false,
-  DOGE: false,
-  ETC: true,
-  ETH: true,
-  FTM: true,
-  LTC: false,
-  THOR: false,
-  TRON: false,
-  XRP: false
+export type ChainType = 'evm' | 'utxo' | 'cosmos' | 'other'
+
+/** Chain type classification for THORChain/Maya supported chains */
+export const CHAIN_TYPE_MAP: { [cc: string]: ChainType } = {
+  // EVM chains
+  ARB: 'evm',
+  AVAX: 'evm',
+  BASE: 'evm',
+  BSC: 'evm',
+  ETC: 'evm',
+  ETH: 'evm',
+  FTM: 'evm',
+  OP: 'evm',
+  POL: 'evm',
+
+  // UTXO chains
+  BCH: 'utxo',
+  BTC: 'utxo',
+  DASH: 'utxo',
+  DOGE: 'utxo',
+  LTC: 'utxo',
+  ZEC: 'utxo',
+
+  // Cosmos chains
+  GAIA: 'cosmos',
+  THOR: 'cosmos',
+  MAYA: 'cosmos',
+  KUJI: 'cosmos',
+
+  // Other chain types
+  DOT: 'other',
+  SOL: 'other',
+  SUI: 'other',
+  TRON: 'other',
+  XRP: 'other'
 }
 
 /** Thorchain has weird heuristics for some currencies */
@@ -708,7 +726,7 @@ export function makeThorchainBasedPlugin(
     // ZIP-321 URI for ZEC transactions (populated in UTXO path if applicable)
     let zip321Uri: string | undefined
 
-    if (EVM_CURRENCY_CODES[fromMainnetCode]) {
+    if (CHAIN_TYPE_MAP[fromMainnetCode] === 'evm') {
       if (router == null)
         throw new Error(`Missing router address for ${fromMainnetCode}`)
       if (thorAddress == null) {
@@ -933,7 +951,7 @@ export function makeThorchainBasedPlugin(
       }
     }
 
-    if (EVM_CURRENCY_CODES[fromMainnetCode]) {
+    if (CHAIN_TYPE_MAP[fromMainnetCode] === 'evm') {
       if (fromTokenId == null) {
         // For mainnet coins of EVM chains, use gasLimit override since makeSpend doesn't
         // know how to estimate an ETH spend with extra data
@@ -1432,7 +1450,7 @@ export const getGasLimit = (
   chain: string,
   tokenId: string | null
 ): string | undefined => {
-  if (EVM_CURRENCY_CODES[chain]) {
+  if (CHAIN_TYPE_MAP[chain] === 'evm') {
     if (tokenId == null) {
       return EVM_SEND_GAS
     } else {

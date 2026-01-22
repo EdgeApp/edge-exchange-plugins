@@ -1,3 +1,4 @@
+import { asJSON } from 'cleaners'
 import fetch from 'node-fetch'
 
 import { MapctlConfig } from '../../mapctlConfig'
@@ -40,8 +41,8 @@ export const makeSwapKitSynchronizer = (
         )
       }
 
-      const providersJson = await providersResponse.json()
-      const providers = asSwapKitResponse(providersJson)
+      const providersText = await providersResponse.text()
+      const providers = asJSON(asSwapKitResponse)(providersText)
 
       // Extract provider names from the providers response
       const providerNames = new Set<string>()
@@ -78,8 +79,8 @@ export const makeSwapKitSynchronizer = (
             continue
           }
 
-          const tokensJson = await tokensResponse.json()
-          const tokensData = asSwapKitTokensResponse(tokensJson)
+          const tokensText = await tokensResponse.text()
+          const tokensData = asJSON(asSwapKitTokensResponse)(tokensText)
 
           // Extract unique chain ticker codes from tokens
           // The `chain` field contains the ticker code (e.g., "BTC", "ETH", "SOL")
@@ -88,10 +89,11 @@ export const makeSwapKitSynchronizer = (
               chainTickers.add(token.chain)
             }
           })
-        } catch (error: any) {
+        } catch (error: unknown) {
+          const message = error instanceof Error ? error.message : String(error)
           console.warn(
             `Error fetching tokens for provider ${providerName}:`,
-            error.message
+            message
           )
           // Continue with other providers
         }
