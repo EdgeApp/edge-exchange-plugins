@@ -49,6 +49,7 @@ export const edgeCurrencyPluginIds = [
   'liberlandtestnet',
   'litecoin',
   'monero',
+  'opbnb',
   'optimism',
   'osmosis',
   'piratechain',

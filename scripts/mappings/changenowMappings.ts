@@ -530,7 +530,7 @@ changenow.set('op', 'optimism')
 
 // Currency Count: 2
 // Display Name: opbnb
-changenow.set('opbnb', null)
+changenow.set('opbnb', 'opbnb')
 
 // Currency Count: 1
 // Display Name: osmo
