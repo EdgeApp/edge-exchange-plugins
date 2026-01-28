@@ -67,8 +67,10 @@ const addressTypeMap: StringMap = {
 }
 
 // Type for Nexchange currency format used when creating orders
-// Supports string code for native currencies, or contract address object for tokens
-type NexchangeCurrency = string | { contract_address: string; network: string }
+// Supports code object for native currencies, or contract address object for tokens
+type NexchangeCurrency =
+  | { code: string; network: string }
+  | { contract_address: string; network: string }
 
 // See https://api.n.exchange/en/api/v2/currency/ for list of supported currencies
 // Network codes map to Nexchange network identifiers
@@ -159,7 +161,7 @@ function getContractAddress(
 }
 
 // Helper function to format currency for Nexchange API
-// Returns contract address format for tokens, network code string for native currencies
+// Returns code object format for native currencies, contract address object format for tokens
 function formatCurrency(
   networkCode: string | null,
   contractAddress: string | null
@@ -168,9 +170,12 @@ function formatCurrency(
     throw new Error('Network code is required')
   }
 
-  // For native currencies (no contract address), return just the network code
+  // For native currencies (no contract address), use code object format
   if (contractAddress == null || contractAddress === '') {
-    return networkCode
+    return {
+      code: networkCode,
+      network: networkCode
+    }
   }
 
   // For tokens, use contract address format
@@ -335,14 +340,28 @@ export function makeNexchangePlugin(
             request.toTokenId
           )
 
-    // Build rate query using contract addresses for tokens, empty string for native currencies
-    // This works for both tokens and native currencies
+    // Build rate query using API v2 recommended format:
+    // For native currencies: use 'from' + 'fromNetwork' (currency code + network)
+    // For tokens: use 'fromContractAddress' + 'fromNetwork' (contract address + network)
     const params = new URLSearchParams()
-    // For native currencies, use empty string for contract_address
-    params.append('fromContractAddress', fromContractAddress ?? '')
-    params.append('fromNetwork', fromMainnetCode)
-    params.append('toContractAddress', toContractAddress ?? '')
-    params.append('toNetwork', toMainnetCode)
+    if (fromContractAddress == null || fromContractAddress === '') {
+      // Native currency: use code + network format
+      params.append('from', fromMainnetCode)
+      params.append('fromNetwork', fromMainnetCode)
+    } else {
+      // Token: use contract address + network format
+      params.append('fromContractAddress', fromContractAddress)
+      params.append('fromNetwork', fromMainnetCode)
+    }
+    if (toContractAddress == null || toContractAddress === '') {
+      // Native currency: use code + network format
+      params.append('to', toMainnetCode)
+      params.append('toNetwork', toMainnetCode)
+    } else {
+      // Token: use contract address + network format
+      params.append('toContractAddress', toContractAddress)
+      params.append('toNetwork', toMainnetCode)
+    }
 
     // Query rate using contract address format
     const rateResponse = await call(
@@ -414,9 +433,9 @@ export function makeNexchangePlugin(
     // For Edge: fromCurrency -> toCurrency means sending fromCurrency, receiving toCurrency
     // For Nexchange: deposit_currency = what we send, withdraw_currency = what we receive
     //
-    // Use contract addresses from tokenIds (required by API requirements)
+    // Use API v2 recommended format:
     // Format: { contract_address: "0x...", network: "ETH" } for tokens
-    // Format: "BTC" (string) for native currencies
+    // Format: { code: "BTC", network: "BTC" } for native currencies
 
     // Map Edge currencies to Nexchange currencies using contract addresses
     // deposit_currency = what Edge sends = Edge fromCurrency
