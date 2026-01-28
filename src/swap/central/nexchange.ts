@@ -66,11 +66,9 @@ const addressTypeMap: StringMap = {
   zcash: 'transparentAddress'
 }
 
-// Type for Nexchange currency format (supports string code, code object, or contract address object)
-type NexchangeCurrency =
-  | string
-  | { code: string; network: string }
-  | { contract_address: string; network: string }
+// Type for Nexchange currency format used when creating orders
+// Supports string code for native currencies, or contract address object for tokens
+type NexchangeCurrency = string | { contract_address: string; network: string }
 
 // See https://api.n.exchange/en/api/v2/currency/ for list of supported currencies
 // Network codes map to Nexchange network identifiers
@@ -161,7 +159,7 @@ function getContractAddress(
 }
 
 // Helper function to format currency for Nexchange API
-// Supports contract address format (recommended for tokens) or code format (backward compatible)
+// Returns contract address format for tokens, network code string for native currencies
 function formatCurrency(
   networkCode: string | null,
   contractAddress: string | null
@@ -551,7 +549,7 @@ export function makeNexchangePlugin(
     async fetchSwapQuote(
       req: EdgeSwapRequest,
       userSettings: Object | undefined,
-      opts: { promoCode?: string }
+      opts: { promoCode?: string } // Reserved for future use
     ): Promise<EdgeSwapQuote> {
       const request = convertRequest(req)
 
