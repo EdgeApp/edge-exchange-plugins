@@ -201,6 +201,14 @@ const asRateV2 = asObject({
   expiration_time_unix: asString
 })
 
+// Cleaner for currency format in API responses
+// Supports string format, code object format, or contract address object format
+const asNexchangeCurrencyResponse = asEither(
+  asString,
+  asObject({ code: asString, network: asString }),
+  asObject({ contract_address: asString, network: asString })
+)
+
 const asOrderV2 = asObject({
   unique_reference: asString,
   // Fields validated but not currently used: side, status, rate, withdraw_address, withdraw_address_extra_id,
@@ -209,16 +217,8 @@ const asOrderV2 = asObject({
   side: asString,
   withdraw_amount: asString,
   deposit_amount: asString,
-  deposit_currency: asEither(
-    asString,
-    asObject({ code: asString, network: asString }),
-    asObject({ contract_address: asString, network: asString })
-  ),
-  withdraw_currency: asEither(
-    asString,
-    asObject({ code: asString, network: asString }),
-    asObject({ contract_address: asString, network: asString })
-  ),
+  deposit_currency: asNexchangeCurrencyResponse,
+  withdraw_currency: asNexchangeCurrencyResponse,
   status: asString,
   created_on: asDate,
   payment_window_minutes: asNumber,
