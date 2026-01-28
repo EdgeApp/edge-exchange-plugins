@@ -66,6 +66,12 @@ const addressTypeMap: StringMap = {
   zcash: 'transparentAddress'
 }
 
+// Type for Nexchange currency format (supports string code, code object, or contract address object)
+type NexchangeCurrency =
+  | string
+  | { code: string; network: string }
+  | { contract_address: string; network: string }
+
 // See https://api.n.exchange/en/api/v2/currency/ for list of supported currencies
 // Network codes map to Nexchange network identifiers
 // Based on supported networks: ALGO, ATOM, SOL, BCH, BTC, DASH, DOGE, DOT, EOS, TON, HBAR, LTC, XLM, XRP, XTZ, ZEC, TRON, ADA, BASE, MATIC/POL, ETH, AVAXC, BSC, ETC, ARB, OP, FTM, SONIC
@@ -144,8 +150,14 @@ function getContractAddress(
 ): string | null {
   if (tokenId == null) return null
   const token = wallet.currencyConfig.allTokens[tokenId]
-  if (token == null) return null
-  return token.networkLocation?.contractAddress ?? null
+  if (token == null) {
+    throw new Error(`Token not found for tokenId: ${tokenId}`)
+  }
+  const contractAddress = token.networkLocation?.contractAddress
+  if (contractAddress == null) {
+    throw new Error(`Contract address not found for token: ${tokenId}`)
+  }
+  return contractAddress
 }
 
 // Helper function to format currency for Nexchange API
@@ -153,25 +165,17 @@ function getContractAddress(
 function formatCurrency(
   networkCode: string | null,
   contractAddress: string | null
-):
-  | string
-  | { code: string; network: string }
-  | { contract_address: string; network: string } {
-  // For native currencies (no contract address), return just the code
+): NexchangeCurrency {
+  if (networkCode == null) {
+    throw new Error('Network code is required')
+  }
+
+  // For native currencies (no contract address), return just the network code
   if (contractAddress == null || contractAddress === '') {
-    if (networkCode == null) {
-      throw new Error(
-        'Network code required when contract address is not provided'
-      )
-    }
     return networkCode
   }
 
-  // For tokens, use contract address format (recommended)
-  if (networkCode == null) {
-    throw new Error('Network code required when contract address is provided')
-  }
-
+  // For tokens, use contract address format
   return {
     contract_address: contractAddress,
     network: networkCode
@@ -179,6 +183,8 @@ function formatCurrency(
 }
 
 const asRateV2 = asObject({
+  // Fields validated but not currently used: pair, from, to, withdrawal_fee
+  // These are kept for API validation and potential future use
   pair: asString,
   from: asString,
   to: asString,
@@ -194,6 +200,9 @@ const asRateV2 = asObject({
 
 const asOrderV2 = asObject({
   unique_reference: asString,
+  // Fields validated but not currently used: side, status, rate, withdraw_address, withdraw_address_extra_id,
+  // refund_address, refund_address_extra_id, deposit_transaction, withdraw_transaction
+  // These are kept for API validation and potential future use
   side: asString,
   withdraw_amount: asString,
   deposit_amount: asString,
@@ -266,7 +275,12 @@ export function makeNexchangePlugin(
       throw new Error(errorMessage)
     }
 
-    return await response.json()
+    const text = await response.text()
+    try {
+      return JSON.parse(text)
+    } catch (error) {
+      throw new Error(`Nexchange returned invalid JSON: ${text}`)
+    }
   }
 
   async function getFixedQuote(
@@ -284,7 +298,7 @@ export function makeNexchangePlugin(
       )
     ])
 
-    // Get network codes from plugin IDs (no currency codes needed - using contract addresses only)
+    // Get network codes from plugin IDs (contract addresses used for tokens, network codes for native currencies)
     const fromMainnetCode =
       MAINNET_CODE_TRANSCRIPTION[
         request.fromWallet.currencyInfo
@@ -323,7 +337,7 @@ export function makeNexchangePlugin(
             request.toTokenId
           )
 
-    // Build rate query using contract addresses only - API MUST support contract addresses
+    // Build rate query using contract addresses for tokens, empty string for native currencies
     // This works for both tokens and native currencies
     const params = new URLSearchParams()
     // For native currencies, use empty string for contract_address
@@ -332,13 +346,18 @@ export function makeNexchangePlugin(
     params.append('toContractAddress', toContractAddress ?? '')
     params.append('toNetwork', toMainnetCode)
 
-    // Use contract address format only - API MUST support contract addresses
+    // Query rate using contract address format
     const rateResponse = await call(
       `${uri}/rate/?${params.toString()}`,
       {},
       request
     )
-    const rates = asArray(asRateV2)(rateResponse)
+    let rates
+    try {
+      rates = asArray(asRateV2)(rateResponse)
+    } catch (e) {
+      throw new Error(`Nexchange rate response parsing failed: ${String(e)}`)
+    }
     const rate = rates[0] // Contract address query returns single rate
 
     if (rate == null) {
@@ -347,7 +366,7 @@ export function makeNexchangePlugin(
 
     // Check if rate is expired
     const expirationTime = parseInt(rate.expiration_time_unix, 10) * 1000
-    if (Date.now() >= expirationTime) {
+    if (Number.isNaN(expirationTime) || Date.now() >= expirationTime) {
       throw new SwapCurrencyError(swapInfo, request)
     }
 
@@ -408,14 +427,8 @@ export function makeNexchangePlugin(
     const withdrawCurrency = formatCurrency(toMainnetCode, toContractAddress)
 
     const orderBody: {
-      deposit_currency:
-        | string
-        | { code: string; network: string }
-        | { contract_address: string; network: string }
-      withdraw_currency:
-        | string
-        | { code: string; network: string }
-        | { contract_address: string; network: string }
+      deposit_currency: NexchangeCurrency
+      withdraw_currency: NexchangeCurrency
       withdraw_address: string
       refund_address: string
       rate_id: string
@@ -447,7 +460,12 @@ export function makeNexchangePlugin(
       request
     )
 
-    const order = asOrderV2(orderResponse)
+    let order
+    try {
+      order = asOrderV2(orderResponse)
+    } catch (e) {
+      throw new Error(`Nexchange order response parsing failed: ${String(e)}`)
+    }
 
     // Calculate amounts
     const amountExpectedFromNative = denominationToNative(
