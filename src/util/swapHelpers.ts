@@ -1,6 +1,7 @@
-import { add, sub } from 'biggystring'
+import { add, div, mul, sub } from 'biggystring'
 import {
   EdgeAssetActionType,
+  EdgeCurrencyInfo,
   EdgeCurrencyWallet,
   EdgeSpendInfo,
   EdgeSwapApproveOptions,
@@ -10,6 +11,7 @@ import {
   EdgeSwapResult,
   EdgeToken,
   EdgeTokenId,
+  EdgeTokenMap,
   EdgeTransaction,
   JsonObject,
   SwapCurrencyError
@@ -649,4 +651,83 @@ export const getChainAndTokenCodes = async (
     toCurrencyCode: toCodes.tokenCode,
     toMainnetCode: toCodes.chainCode
   }
+}
+
+export const nativeToDenomination = (
+  wallet: EdgeCurrencyWallet,
+  nativeAmount: string,
+  tokenId: EdgeTokenId
+): string => {
+  const { currencyInfo } = wallet
+  const { currencyConfig } = wallet
+  const { allTokens } = currencyConfig
+  const multiplier = getCurrencyMultiplier(currencyInfo, allTokens, tokenId)
+  return div(nativeAmount, multiplier, multiplier.length)
+}
+
+export const getCurrencyMultiplier = (
+  currencyInfo: EdgeCurrencyInfo,
+  allTokens: EdgeTokenMap,
+  tokenId: EdgeTokenId
+): string => {
+  if (tokenId == null) {
+    return currencyInfo.denominations[0].multiplier
+  }
+
+  const token = allTokens[tokenId]
+  return token.denominations[0].multiplier
+}
+
+/**
+ * @param request - The swap request
+ * @returns The contract addresses for the from and to tokens, or undefined if the token is native
+ */
+export const getContractAddresses = (
+  request: EdgeSwapRequest
+): {
+  fromContractAddress: string | undefined
+  toContractAddress: string | undefined
+} => {
+  let fromContractAddress: string | undefined
+  let toContractAddress: string | undefined
+
+  if (request.fromTokenId != null) {
+    fromContractAddress =
+      request.fromWallet.currencyConfig.allTokens[request.fromTokenId]
+        ?.networkLocation?.contractAddress
+    if (fromContractAddress == null) {
+      throw new Error(
+        `Missing contract address for fromTokenId: ${request.fromTokenId}`
+      )
+    }
+  }
+
+  if (request.toTokenId != null) {
+    toContractAddress =
+      request.toWallet.currencyConfig.allTokens[request.toTokenId]
+        ?.networkLocation?.contractAddress
+    if (toContractAddress == null) {
+      throw new Error(
+        `Missing contract address for toTokenId: ${request.toTokenId}`
+      )
+    }
+  }
+
+  return {
+    fromContractAddress,
+    toContractAddress
+  }
+}
+
+export const denominationToNative = (
+  wallet: EdgeCurrencyWallet,
+  denominatedAmount: string,
+  tokenId: EdgeTokenId
+): string => {
+  const multiplier = getCurrencyMultiplier(
+    wallet.currencyInfo,
+    wallet.currencyConfig.allTokens,
+    tokenId
+  )
+  return mul(denominatedAmount, multiplier)
 }
