@@ -1,18 +1,13 @@
-import fs from 'fs'
 import fetch from 'node-fetch'
-import path from 'path'
 
-import { EdgeCurrencyPluginId } from '../../../src/util/edgeCurrencyPluginIds'
 import { MapctlConfig } from '../../mapctlConfig'
 import { FetchChainCodeResult, SwapSynchronizer } from '../../types'
+import { getMappingFilePath, loadMappingFile } from '../../util/loadMappingFile'
 import { asSwapKitResponse, asSwapKitTokensResponse } from './swapkitTypes'
 
 // Based on SwapKit API docs: https://docs.swapkit.dev/swapkit-api/tokens-request-supported-tokens-by-a-swap-provider
 
-const MAPPING_FILE_PATH = path.join(
-  __dirname,
-  '../../mappings/swapkitMappings.ts'
-)
+const NAME = 'swapkit'
 
 export const makeSwapKitSynchronizer = (
   config: MapctlConfig
@@ -23,16 +18,11 @@ export const makeSwapKitSynchronizer = (
   }
 
   return {
-    name: 'swapkit',
-    get map(): Map<string, EdgeCurrencyPluginId | null> {
-      if (fs.existsSync(MAPPING_FILE_PATH)) {
-        // eslint-disable-next-line @typescript-eslint/no-var-requires
-        const { swapkit } = require('../../mappings/swapkitMappings')
-        return swapkit
-      }
-      return new Map()
+    name: NAME,
+    get map() {
+      return loadMappingFile(NAME)
     },
-    mappingFilePath: MAPPING_FILE_PATH,
+    mappingFilePath: getMappingFilePath(NAME),
     fetchChainCodes: async (): Promise<FetchChainCodeResult[]> => {
       // First, get list of providers to know which ones to query
       const providersResponse = await fetch(
