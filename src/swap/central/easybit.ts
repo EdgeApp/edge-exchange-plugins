@@ -10,7 +10,6 @@ import {
 } from 'cleaners'
 import {
   EdgeCorePluginOptions,
-  EdgeMemo,
   EdgeSpendInfo,
   EdgeSwapInfo,
   EdgeSwapPlugin,
@@ -29,7 +28,6 @@ import {
   checkWhitelistedMainnetCodes,
   CurrencyPluginIdSwapChainCodeMap,
   EdgeIdSwapIdMap,
-  ensureInFuture,
   getChainAndTokenCodes,
   getMaxSwappable,
   InvalidTokenIds,
@@ -273,10 +271,11 @@ export function makeEasyBitPlugin(
       headers
     })
 
-    const json = await response.json()
     if (!response.ok) {
+      const message = await response.text()
       throw new SwapCurrencyError(swapInfo, request)
     }
+    const json = await response.json()
 
     const rate = asRateResponse(json)
     if (rate.success !== 1) {
@@ -301,6 +300,7 @@ export function makeEasyBitPlugin(
       receiveNetwork: params.receiveNetwork,
       amount: params.sendAmount,
       receiveAddress: params.receiveAddress,
+      refundAddress: params.refundAddress,
       userDeviceId: `edge_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`
     }
 
@@ -387,7 +387,12 @@ export function makeEasyBitPlugin(
     const sendAmount =
       quoteFor === 'from'
         ? amount
-        : rate.sendAmount?.toString() ?? amount
+        : (() => {
+          if (rate.sendAmount == null) {
+            throw new Error('EasyBit: Missing sendAmount in reverse quote response')
+          }
+          return rate.sendAmount.toString()
+        })()
 
     const sendNativeAmount = denominationToNative(
       request.fromWallet,
@@ -395,9 +400,13 @@ export function makeEasyBitPlugin(
       request.fromTokenId
     )
 
+    if (rate.receiveAmount == null) {
+      throw new Error('Missing receiveAmount from rate response')
+    }
+
     const toNativeAmount = denominationToNative(
       request.toWallet,
-      (rate.receiveAmount ?? '0').toString(),
+      rate.receiveAmount.toString(),
       request.toTokenId
     )
 
@@ -449,9 +458,6 @@ export function makeEasyBitPlugin(
       spendInfo,
       swapInfo,
       fromNativeAmount: sendNativeAmount,
-      expirationDate: ensureInFuture(
-        rate.expireTime != null ? new Date(rate.expireTime) : undefined
-      ),
       metadataNotes: JSON.stringify({ orderParams })
     }
   }
@@ -489,7 +495,13 @@ export function makeEasyBitPlugin(
           if (orderParamsStr == null) {
             throw new Error('EasyBit: Missing order parameters')
           }
-          const { orderParams } = JSON.parse(orderParamsStr)
+          let orderParams
+          try {
+            const parsed = JSON.parse(orderParamsStr)
+            orderParams = parsed.orderParams
+          } catch (error) {
+            throw new Error('EasyBit: Invalid order parameters format')
+          }
           const order = await createOrder(orderParams)
 
           if (!('spendInfo' in swapOrder) || swapOrder.spendInfo.savedAction?.actionType !== 'swap') {
@@ -570,11 +582,10 @@ const asStringOrNumber = (raw: any): number => {
 
 const asRateData = asObject({
   rate: asOptional(asStringOrNumber),
-  minSendAmount: asOptional(asString),
-  maxSendAmount: asOptional(asString),
+  minimumAmount: asOptional(asString),
+  maximumAmount: asOptional(asString),
   sendAmount: asOptional(asString),
   receiveAmount: asOptional(asString),
-  expireTime: asOptional(asNumber)
 })
 type RateData = ReturnType<typeof asRateData>
 
@@ -591,8 +602,7 @@ const asOrderData = asObject({
   sendTag: asOptional(asString),
   refundAddress: asOptional(asString),
   receiveAmount: asOptional(asString),
-  sendAmount: asOptional(asString),
-  expireTime: asOptional(asNumber)
+  sendAmount: asOptional(asString)
 })
 type OrderData = ReturnType<typeof asOrderData>
 
