@@ -200,14 +200,19 @@ export function makeEasyBitPlugin(
     sendNetwork: string
     receiveNetwork: string
     amount: string
+    isFromQuote: boolean
   }): Promise<PairInfoData> {
-    const { request, amount } = params
+    const { request, amount, isFromQuote } = params
     const queryParams = new URLSearchParams({
       send: params.send,
       receive: params.receive,
       sendNetwork: params.sendNetwork,
       receiveNetwork: params.receiveNetwork
     })
+    if (!isFromQuote) {
+      queryParams.set('amountType', 'receive')  // Reverse Quoting
+    }
+
     const url = `${apiBase}/pairInfo?${queryParams.toString()}`
     const response = await fetchCors(url, { method: 'GET', headers })
     if (!response.ok) {
@@ -372,6 +377,7 @@ export function makeEasyBitPlugin(
       sendNetwork: codes.fromMainnetCode,
       receiveNetwork: codes.toMainnetCode,
       amount,
+      isFromQuote: quoteFor === 'from'
     })
 
     const rate = await getRate({
