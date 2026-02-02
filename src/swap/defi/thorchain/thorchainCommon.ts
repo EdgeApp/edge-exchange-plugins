@@ -766,13 +766,18 @@ export function makeThorchainBasedPlugin(
         memo
       })
       memo = memo.replace(/^0x/, '')
-    } else if (fromWallet.currencyInfo.pluginId === 'thorchainrune') {
+    } else if (
+      fromWallet.currencyInfo.pluginId === 'thorchainrune' ||
+      fromWallet.currencyInfo.pluginId === 'cacao'
+    ) {
+      const chainPrefix =
+        fromWallet.currencyInfo.pluginId === 'thorchainrune' ? 'THOR' : 'MAYA'
       const makeTxParams: MakeTxParams = {
         type: 'MakeTxDeposit',
         assets: [
           {
             amount: fromNativeAmount,
-            asset: `THOR.${fromCurrencyCode}`,
+            asset: `${chainPrefix}.${fromCurrencyCode}`,
             decimals: THOR_LIMIT_UNITS
           }
         ],
@@ -783,9 +788,6 @@ export function makeThorchainBasedPlugin(
 
       // If this is a max quote. Call getMaxTx and modify the request
       if (quoteFor === 'max') {
-        if (fromWallet.currencyInfo.pluginId !== 'thorchainrune') {
-          throw new Error('fetchSwapQuoteInner max quote only for RUNE')
-        }
         const maxNativeAmount = await fromWallet.otherMethods.getMaxTx(
           makeTxParams
         )
@@ -988,10 +990,11 @@ export function makeThorchainBasedPlugin(
       let swapOrder
       if (
         quoteFor === 'max' &&
-        fromWallet.currencyInfo.pluginId === 'thorchainrune'
+        (fromWallet.currencyInfo.pluginId === 'thorchainrune' ||
+          fromWallet.currencyInfo.pluginId === 'cacao')
       ) {
         // fetchSwapQuoteInner has unique logic to handle 'max' quotes but
-        // only when sending RUNE
+        // only when sending RUNE or CACAO
         swapOrder = await fetchSwapQuoteInner(request, true)
       } else {
         const newRequest = await getMaxSwappable(
@@ -1008,6 +1011,28 @@ export function makeThorchainBasedPlugin(
   return out
 }
 
+/**
+ * Create a fake pool for native base tokens (RUNE/CACAO) that don't have
+ * their own pools. Uses BTC pool to derive USD price.
+ */
+const createNativePool = (
+  request: EdgeSwapRequestPlugin,
+  swapInfo: EdgeSwapInfo,
+  asset: string,
+  pools: Pool[]
+): Pool => {
+  const btcPool = pools.find(pool => pool.asset === 'BTC.BTC')
+  if (btcPool == null) {
+    throw new SwapCurrencyError(swapInfo, request)
+  }
+  const { assetPrice, assetPriceUSD } = btcPool
+  return {
+    asset,
+    assetPrice: '1',
+    assetPriceUSD: div18(assetPriceUSD, assetPrice)
+  }
+}
+
 const getPool = (
   request: EdgeSwapRequestPlugin,
   swapInfo: EdgeSwapInfo,
@@ -1015,20 +1040,12 @@ const getPool = (
   tokenCode: string,
   pools: Pool[]
 ): Pool => {
+  // Handle native base tokens that don't have their own pools
   if (mainnetCode === 'THOR' && tokenCode === 'RUNE') {
-    // Create a fake pool for rune. Use BTC pool to find rune USD price
-    const btcPool = pools.find(pool => pool.asset === 'BTC.BTC')
-
-    if (btcPool == null) {
-      throw new SwapCurrencyError(swapInfo, request)
-    }
-    const { assetPrice, assetPriceUSD } = btcPool
-    const pool: Pool = {
-      asset: 'THOR.RUNE',
-      assetPrice: '1',
-      assetPriceUSD: div18(assetPriceUSD, assetPrice)
-    }
-    return pool
+    return createNativePool(request, swapInfo, 'THOR.RUNE', pools)
+  }
+  if (mainnetCode === 'MAYA' && tokenCode === 'CACAO') {
+    return createNativePool(request, swapInfo, 'MAYA.CACAO', pools)
   }
 
   const pool = pools.find(pool => {

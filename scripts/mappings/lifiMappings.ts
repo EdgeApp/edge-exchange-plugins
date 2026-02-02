@@ -113,7 +113,7 @@ lifi.set('mnt', null)
 lifi.set('mod', null)
 
 // Display Name: Monad
-lifi.set('mon', null)
+lifi.set('mon', 'monad')
 
 // Display Name: Moonbeam
 lifi.set('moo', null)
@@ -122,7 +122,7 @@ lifi.set('moo', null)
 lifi.set('mor', null)
 
 // Display Name: opBNB
-lifi.set('opb', null)
+lifi.set('opb', 'opbnb')
 
 // Display Name: Optimism
 lifi.set('opt', 'optimism')

@@ -468,6 +468,10 @@ changenow.set('mkd', null)
 // Display Name: mnt
 changenow.set('mnt', null)
 
+// Currency Count: 2
+// Display Name: mon
+changenow.set('mon', 'monad')
+
 // Currency Count: 1
 // Display Name: mop
 changenow.set('mop', null)
@@ -530,7 +534,7 @@ changenow.set('op', 'optimism')
 
 // Currency Count: 2
 // Display Name: opbnb
-changenow.set('opbnb', null)
+changenow.set('opbnb', 'opbnb')
 
 // Currency Count: 1
 // Display Name: osmo

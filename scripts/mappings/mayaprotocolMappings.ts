@@ -16,6 +16,9 @@ mayaprotocol.set('ETH', 'ethereum')
 // Display Name: KUJI
 mayaprotocol.set('KUJI', null)
 
+// Display Name: MAYA
+mayaprotocol.set('MAYA', 'cacao')
+
 // Display Name: THOR
 mayaprotocol.set('THOR', 'thorchainrune')
 

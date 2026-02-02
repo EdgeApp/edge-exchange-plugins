@@ -149,7 +149,7 @@ rango.set('LUMNETWORK', null)
 rango.set('MARS', null)
 
 // Display Name: MayaChain
-rango.set('MAYA', null)
+rango.set('MAYA', 'cacao')
 
 // Display Name: MediBloc
 rango.set('MEDIBLOC', null)
@@ -161,7 +161,7 @@ rango.set('METIS', null)
 rango.set('MODE', null)
 
 // Display Name: Monad
-rango.set('MONAD', null)
+rango.set('MONAD', 'monad')
 
 // Display Name: MoonBeam
 rango.set('MOONBEAM', null)

@@ -83,7 +83,7 @@ sideshift.set('liquid', null)
 sideshift.set('litecoin', 'litecoin')
 
 // Display Name: monad
-sideshift.set('monad', null)
+sideshift.set('monad', 'monad')
 
 // WARNING: Not included by the synchronizer synchronization
 sideshift.set('monero', 'monero')
