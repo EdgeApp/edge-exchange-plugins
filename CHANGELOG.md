@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- fixed: Fix max swap special case handling in thorchainCommon
+
 ## 2.41.0 (2026-02-07)
 
 - added: SwapKit V3 as a separate exchange plugin (`swapkitv3`)
