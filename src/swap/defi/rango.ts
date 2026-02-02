@@ -83,7 +83,7 @@ const createAssetString = (
   contractAddress: string,
   currencyCode: string
 ): string => {
-  if (['COSMOS', 'OSMOSIS', 'THOR', 'AXELAR'].includes(mainnetCode)) {
+  if (['COSMOS', 'MAYA', 'OSMOSIS', 'THOR', 'AXELAR'].includes(mainnetCode)) {
     // For Cosmos chains, Rango expects BLOCKCHAIN.SYMBOL format
     if (contractAddress === PARENT_TOKEN_CONTRACT_ADDRESS) {
       // Native tokens: BLOCKCHAIN.SYMBOL (e.g., COSMOS.ATOM, OSMOSIS.OSMO)
