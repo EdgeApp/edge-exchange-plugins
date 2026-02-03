@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 2.40.5 (2026-02-03)
+
 - changed: CORS headers included in `webpack.config.js` for local development
 
 ## 2.40.4 (2026-01-15)
