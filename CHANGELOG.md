@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- changed: CORS headers included in `webpack.config.js` for local development
+
 ## 2.40.4 (2026-01-15)
 
 - fixed: Fix Rango EVM approval address
