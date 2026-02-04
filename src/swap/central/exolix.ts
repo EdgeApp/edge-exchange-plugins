@@ -47,7 +47,7 @@ import { EdgeSwapRequestPlugin, StringMap } from '../types'
 
 const pluginId = 'exolix'
 
-export const swapInfo: EdgeSwapInfo = {
+const swapInfo: EdgeSwapInfo = {
   pluginId,
   isDex: false,
   displayName: 'Exolix',
@@ -121,7 +121,7 @@ done
 
 const EVM_CHAIN_NETWORK = 'evmGeneric'
 
-export const MAINNET_CODE_TRANSCRIPTION: CurrencyPluginIdSwapChainCodeMap = mapToRecord(
+const MAINNET_CODE_TRANSCRIPTION: CurrencyPluginIdSwapChainCodeMap = mapToRecord(
   exolixMapping
 )
 
@@ -312,9 +312,9 @@ export function makeExolixPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
       }
 
       const nativeMax = denominationToNative(
-        request.fromWallet,
+        request.toWallet,
         rateResponse.withdrawMax.toString(),
-        request.fromTokenId
+        request.toTokenId
       )
 
       if (gt(request.nativeAmount, nativeMax)) {
