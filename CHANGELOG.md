@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- changed: (SwapKit) Upgrade to v3 API
+
 ## 2.40.5 (2026-02-03)
 
 - changed: CORS headers included in `webpack.config.js` for local development

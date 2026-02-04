@@ -1,13 +1,12 @@
 import { gt, toFixed } from 'biggystring'
 import {
   asArray,
-  asEither,
+  asJSON,
   asMaybe,
   asNumber,
   asObject,
   asOptional,
-  asString,
-  asUnknown
+  asString
 } from 'cleaners'
 import {
   EdgeCorePluginOptions,
@@ -42,7 +41,7 @@ import { EdgeSwapRequestPlugin } from '../../types'
 import { createEvmApprovalEdgeTransactions } from '../defiUtils'
 import {
   AFFILIATE_FEE_BASIS_DEFAULT,
-  EVM_CURRENCY_CODES,
+  CHAIN_TYPE_MAP,
   EXCHANGE_INFO_UPDATE_FREQ_MS,
   EXPIRATION_MS,
   getGasLimit,
@@ -62,75 +61,97 @@ const MAINNET_CODE_TRANSCRIPTION: {
   [cc: string]: string
 } = mapToStringMap(swapkitMapping)
 
-// This needs to be a type so adding the '& {}' prevents auto correction to an interface
-type ThorSwapQuoteParams = {
+// --------------------------------------------------------------------------
+// V3 API Types and Cleaners
+// --------------------------------------------------------------------------
+
+/**
+ * V3 Quote Request Parameters (Step 1 - Price Discovery)
+ * Note: sourceAddress and destinationAddress are NOT required for initial quote
+ * Note: affiliate info is inferred from API key - affiliateFee can override
+ */
+interface SwapKitV3QuoteParams {
   sellAsset: string
   buyAsset: string
   sellAmount: string
-  slippage: number
+  slippage?: number
+  affiliateFee?: number
+  providers?: string[]
+}
+
+/**
+ * V3 Swap Request Parameters (Step 2 - Transaction Building)
+ * Requires routeId from quote response plus user addresses
+ */
+interface SwapKitV3SwapParams {
+  routeId: string
   sourceAddress: string
   destinationAddress: string
-  affiliate: string
-  affiliateFee: number
-  referer?: string
-  includeTx: boolean
-} & {}
+  disableBalanceCheck?: boolean
+  disableBuildTx?: boolean
+}
 
-const asEvmCleaner = asObject({
-  // to: asString,
-  // from: asString,
-  // gas: asString,
-  // gasPrice: asString,
-  // value: asString,
+// EVM transaction cleaner
+const asEvmTx = asObject({
   data: asString
 })
 
-const asCosmosCleaner = asObject({
-  memo: asString,
-  accountNumber: asNumber,
-  sequence: asNumber,
-  chainId: asString,
-  msgs: asArray(asObject({ typeUrl: asString, value: asUnknown })),
-  fee: asObject({
-    amount: asArray(
-      asObject({
-        denom: asString,
-        amount: asString
-      })
-    ),
-    gas: asString
-  })
+// Validates that a string contains an integer and returns it as a number.
+// The SwapKit API currently returns Unix timestamps in seconds as integer
+// strings (e.g., "1770165380"). Non-integer formats (e.g., decimals) will
+// fail validation, causing asMaybe to return undefined and trigger fallback
+// to the default expiration.
+const asIntegerString = (raw: unknown): number => {
+  const str = asString(raw)
+  const num = Number(str)
+  if (!Number.isInteger(num)) {
+    throw new TypeError(`Expected integer string, got: ${str}`)
+  }
+  return num
+}
+
+// V3 Quote Route (from /v3/quote - no tx data, has routeId)
+const asSwapKitV3QuoteRoute = asObject({
+  routeId: asString,
+  expectedBuyAmount: asString,
+  expectedBuyAmountMaxSlippage: asOptional(asString),
+  providers: asArray(asString),
+  meta: asObject({
+    approvalAddress: asOptional(asString),
+    tags: asOptional(asArray(asString))
+  }),
+  expiration: asMaybe(asIntegerString)
 })
 
-const asThorSwapRoute = asObject({
-  // buyAsset: asString,
-  // destinationAddress: asString,
+// V3 Quote Response
+const asSwapKitV3QuoteResponse = asObject({
+  routes: asArray(asMaybe(asSwapKitV3QuoteRoute))
+})
+
+// V3 Swap Route (from /v3/swap - has tx data)
+const asSwapKitV3SwapRoute = asObject({
+  routeId: asString,
   expectedBuyAmount: asString,
-  // expectedBuyAmountMaxSlippage: asString,
-  // fees,
-  // legs,
+  providers: asArray(asString),
   meta: asObject({
     approvalAddress: asOptional(asString)
   }),
-  providers: asArray(asString),
-  // sellAsset: asString,
-  // sellAmount: asString,
-  // sourceAddress: asString,
-  // totalSlippageBps: asNumber,
-  // warnings,
-  // estimatedTime,
-  expiration: asOptional(asString),
-  // inboundAddress: asOptional(asString),
+  expiration: asMaybe(asIntegerString),
   targetAddress: asString,
-  tx: asOptional(asEither(asEvmCleaner, asCosmosCleaner)),
-  memo: asOptional(asString)
-  // txType
+  inboundAddress: asOptional(asString),
+  memo: asOptional(asString),
+  // Can also give a Cosmos tx, but we don't support that yet.
+  // Can also give a UTXO tx, but their side doesn't support it without the
+  // entirety of the source coming from one utxo.
+  tx: asOptional(asEvmTx)
 })
 
-const asThorSwapQuoteResponse = asObject({
-  routes: asArray(asMaybe(asThorSwapRoute))
-})
+// V3 Swap Response - returns single route object directly
+const asSwapKitV3SwapResponse = asSwapKitV3SwapRoute
 
+type SwapKitV3QuoteRoute = ReturnType<typeof asSwapKitV3QuoteRoute>
+
+// Exchange info cleaner
 const asExchangeInfo = asObject({
   swap: asObject({
     plugins: asObject({
@@ -145,15 +166,12 @@ const asExchangeInfo = asObject({
 const asInitOptions = asObject({
   appId: asOptional(asString, 'edge'),
   affiliateFeeBasis: asOptional(asString, AFFILIATE_FEE_BASIS_DEFAULT),
-  ninerealmsClientId: asOptional(asString, ''),
-  thorname: asOptional(asString, 'ej'),
-  thorswapApiKey: asOptional(asString),
-  thorswapXApiKey: asOptional(asString)
+  thorswapApiKey: asOptional(asString)
 })
 
-/** Max slippage for 5% for estimated quotes */
+/** Max slippage of 5% for estimated quotes */
 const DA_VOLATILITY_SPREAD_DEFAULT = 0.05
-const THORSWAP_DEFAULT_SERVERS = ['https://api.swapkit.dev']
+const SWAPKIT_DEFAULT_SERVERS = ['https://api.swapkit.dev']
 
 type ExchangeInfo = ReturnType<typeof asExchangeInfo>
 
@@ -163,15 +181,23 @@ let exchangeInfoLastUpdate: number = 0
 export function makeSwapKitPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
   const { io, log } = opts
   const { fetchCors = io.fetch } = io
-  const { appId, thorname, thorswapApiKey, thorswapXApiKey } = asInitOptions(
-    opts.initOptions
-  )
-  let { affiliateFeeBasis } = asInitOptions(opts.initOptions)
+  const initOptions = asInitOptions(opts.initOptions)
+  const { appId, thorswapApiKey } = initOptions
 
-  const thorswapHeaders = {
+  const swapkitHeaders: Record<string, string | undefined> = {
     'Content-Type': 'application/json',
-    'x-api-key': thorswapXApiKey,
-    referer: thorswapApiKey
+    'x-api-key': thorswapApiKey
+  }
+
+  // Filter out undefined header values
+  const getHeaders = (): Record<string, string> => {
+    const headers: Record<string, string> = {}
+    for (const [key, value] of Object.entries(swapkitHeaders)) {
+      if (value != null) {
+        headers[key] = value
+      }
+    }
+    return headers
   }
 
   const fetchSwapQuoteInner = async (
@@ -197,12 +223,9 @@ export function makeSwapKitPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
     const reverseQuote = quoteFor === 'to'
     const isEstimate = true
 
-    let daVolatilitySpread: number = DA_VOLATILITY_SPREAD_DEFAULT
-    const thorswapServers: string[] = THORSWAP_DEFAULT_SERVERS
-
     checkInvalidTokenIds(INVALID_TOKEN_IDS, request, swapInfo)
 
-    // Grab addresses:
+    // Grab addresses for the /v3/swap step
     const fromAddress = await getAddress(fromWallet)
     const toAddress = await getAddress(toWallet)
 
@@ -226,32 +249,30 @@ export function makeSwapKitPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
         )
 
         if (exchangeInfoResponse.ok === true) {
-          exchangeInfo = asExchangeInfo(await exchangeInfoResponse.json())
+          const responseText = await exchangeInfoResponse.text()
+          exchangeInfo = asJSON(asExchangeInfo)(responseText)
           exchangeInfoLastUpdate = now
         } else {
           // Error is ok. We just use defaults
           log.warn('Error getting info server exchangeInfo. Using defaults...')
         }
-      } catch (e: any) {
+      } catch (error: unknown) {
+        const message = error instanceof Error ? error.message : String(error)
         log.warn(
           'Error getting info server exchangeInfo. Using defaults...',
-          e.message
+          message
         )
       }
     }
 
-    if (exchangeInfo != null) {
-      const { swapkit } = exchangeInfo.swap.plugins
-      affiliateFeeBasis = swapkit.affiliateFeeBasis ?? affiliateFeeBasis
-      daVolatilitySpread =
-        swapkit.daVolatilitySpread ?? DA_VOLATILITY_SPREAD_DEFAULT
-    }
+    const daVolatilitySpread =
+      exchangeInfo?.swap.plugins.swapkit?.daVolatilitySpread ??
+      DA_VOLATILITY_SPREAD_DEFAULT
+    const affiliateFeeBasis =
+      exchangeInfo?.swap.plugins.swapkit?.affiliateFeeBasis ??
+      initOptions.affiliateFeeBasis
 
-    const volatilitySpreadFinal = daVolatilitySpread // Might add a likeKind spread later
-
-    //
-    // Get Quote
-    //
+    // Reverse quotes not supported
     if (reverseQuote) {
       throw new SwapCurrencyError(swapInfo, request)
     }
@@ -262,73 +283,67 @@ export function makeSwapKitPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
       fromTokenId
     )
 
-    const quoteParams: ThorSwapQuoteParams = {
-      sellAsset:
-        `${fromMainnetCode}.${fromCurrencyCode}` +
-        (fromTokenId != null ? `-0x${fromTokenId}` : ''),
-      buyAsset:
-        `${toMainnetCode}.${toCurrencyCode}` +
-        (toTokenId != null ? `-0x${toTokenId}` : ''),
-      sellAmount,
-      slippage: volatilitySpreadFinal * 100,
-      destinationAddress: toAddress,
-      sourceAddress: fromAddress,
-      includeTx: true,
-      referer: thorswapApiKey,
-      affiliate: thorname,
-      affiliateFee: parseInt(affiliateFeeBasis)
-    }
-    const sourceTokenContractAddress =
-      fromTokenId != null ? `0x${fromTokenId}` : undefined
-    const uri = `quote`
+    const sellAsset =
+      `${fromMainnetCode}.${fromCurrencyCode}` +
+      (fromTokenId != null ? `-0x${fromTokenId}` : '')
+    const buyAsset =
+      `${toMainnetCode}.${toCurrencyCode}` +
+      (toTokenId != null ? `-0x${toTokenId}` : '')
 
-    const thorSwapResponse = await fetchWaterfall(
+    // --------------------------------------------------------------------------
+    // STEP 1: Get Quote (Price Discovery - no addresses needed)
+    // Note: Affiliate identity is tied to API key in V3, affiliateFee can override
+    // --------------------------------------------------------------------------
+    const quoteParams: SwapKitV3QuoteParams = {
+      sellAsset,
+      buyAsset,
+      sellAmount,
+      slippage: daVolatilitySpread * 100,
+      affiliateFee: parseInt(affiliateFeeBasis),
+      providers: ['THORCHAIN', 'MAYACHAIN']
+    }
+
+    const quoteResponse = await fetchWaterfall(
       fetchCors,
-      thorswapServers,
-      uri,
+      SWAPKIT_DEFAULT_SERVERS,
+      'v3/quote',
       {
         method: 'POST',
-        headers: thorswapHeaders,
+        headers: getHeaders(),
         body: JSON.stringify(quoteParams)
       }
     )
 
-    if (!thorSwapResponse.ok) {
-      const responseText = await thorSwapResponse.text()
-      if (responseText.includes('No routes found for ')) {
+    if (!quoteResponse.ok) {
+      const responseText = await quoteResponse.text()
+      if (responseText.includes('No routes found')) {
         log.warn('No routes found')
         throw new SwapCurrencyError(swapInfo, request)
       }
-      throw new Error(
-        `SwapKit could not get thorswap quote: ${JSON.stringify(
-          responseText,
-          null,
-          2
-        )}`
-      )
+      throw new Error(`SwapKit v3/quote failed: ${responseText}`)
     }
 
-    const thorSwapJson = await thorSwapResponse.json()
-    const thorSwapQuote = asThorSwapQuoteResponse(thorSwapJson)
+    const quoteResponseText = await quoteResponse.text()
+    const quoteData = asJSON(asSwapKitV3QuoteResponse)(quoteResponseText)
 
-    const routes = thorSwapQuote.routes.filter(
-      (r: any): r is ReturnType<typeof asThorSwapRoute> => r != null
+    const validRoutes = quoteData.routes.filter(
+      (r): r is SwapKitV3QuoteRoute => r != null
     )
 
-    const thorSwap = routes
+    // Find the best route that uses THORCHAIN or MAYACHAIN
+    const selectedRoute = validRoutes
       .sort((a, b) => (gt(a.expectedBuyAmount, b.expectedBuyAmount) ? -1 : 1))
       .find(
         route =>
-          // route.providers.length > 1 &&
           route.providers.includes('THORCHAIN') ||
           route.providers.includes('MAYACHAIN')
       )
 
-    if (thorSwap == null) {
+    if (selectedRoute == null) {
       throw new SwapCurrencyError(swapInfo, request)
     }
 
-    const { expectedBuyAmount, providers, targetAddress, expiration } = thorSwap
+    const { routeId, expectedBuyAmount, providers, expiration } = selectedRoute
 
     const toNativeAmount = toFixed(
       denominationToNative(toWallet, expectedBuyAmount, toTokenId),
@@ -338,48 +353,100 @@ export function makeSwapKitPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
 
     let memoType: EdgeMemo['type'] = 'hex'
     let memo = ''
-
-    const publicAddress = targetAddress
+    let publicAddress = ''
     const preTxs: EdgeTransaction[] = []
+    const sourceTokenContractAddress =
+      fromTokenId != null ? `0x${fromTokenId}` : undefined
 
-    const evmTransaction = asMaybe(asEvmCleaner)(thorSwap.tx)
-    const cosmosTransaction = asMaybe(asCosmosCleaner)(thorSwap.tx)
-    if (evmTransaction != null) {
-      // EVM
+    // --------------------------------------------------------------------------
+    // Check chain type and call /v3/swap
+    // --------------------------------------------------------------------------
+    const chainType = CHAIN_TYPE_MAP[fromMainnetCode]
+
+    // Only support EVM and UTXO chains
+    if (chainType !== 'evm' && chainType !== 'utxo') {
+      log.warn(`Chain type '${chainType}' not supported for ${fromMainnetCode}`)
+      throw new SwapCurrencyError(swapInfo, request)
+    }
+
+    // UTXO chains don't support tokens
+    if (chainType === 'utxo' && fromTokenId != null) {
+      throw new SwapCurrencyError(swapInfo, request)
+    }
+
+    // Call /v3/swap
+    // - disableBalanceCheck: skip SwapKit's balance validation
+    // - disableBuildTx: skip tx building (needed for UTXO to avoid bitcoinjs-lib balance check)
+    const swapParams: SwapKitV3SwapParams = {
+      routeId,
+      sourceAddress: fromAddress,
+      destinationAddress: toAddress,
+      disableBalanceCheck: true,
+      disableBuildTx: chainType === 'utxo'
+    }
+
+    const swapResponse = await fetchWaterfall(
+      fetchCors,
+      SWAPKIT_DEFAULT_SERVERS,
+      'v3/swap',
+      {
+        method: 'POST',
+        headers: getHeaders(),
+        body: JSON.stringify(swapParams)
+      }
+    )
+
+    if (!swapResponse.ok) {
+      const responseText = await swapResponse.text()
+      throw new Error(`SwapKit v3/swap failed: ${responseText}`)
+    }
+
+    const swapResponseText = await swapResponse.text()
+    const swapRoute = asJSON(asSwapKitV3SwapResponse)(swapResponseText)
+
+    publicAddress = swapRoute.targetAddress
+
+    if (chainType === 'evm') {
+      // --------------------------------------------------------------------------
+      // EVM chain: Use tx.data as memo
+      // --------------------------------------------------------------------------
+      const evmTransaction = asMaybe(asEvmTx)(swapRoute.tx)
+      if (evmTransaction == null) {
+        throw new Error('Missing EVM transaction data from SwapKit')
+      }
+
       if (fromMainnetCode !== fromCurrencyCode) {
+        // Token swap - need approval
         if (sourceTokenContractAddress == null) {
           throw new Error(
             `Missing sourceTokenContractAddress for ${fromMainnetCode}`
           )
         }
 
-        const dexContractAddress = asString(thorSwap.meta.approvalAddress)
+        const approvalAddress = swapRoute.meta.approvalAddress
+        if (approvalAddress == null) {
+          throw new Error('Missing approvalAddress for token swap')
+        }
 
         const approvalTxs = await createEvmApprovalEdgeTransactions({
           request,
           approvalAmount: nativeAmount,
           tokenContractAddress: sourceTokenContractAddress,
-          recipientAddress: dexContractAddress,
+          recipientAddress: approvalAddress,
           networkFeeOption: 'high'
         })
         preTxs.push(...approvalTxs)
       }
       memo = evmTransaction.data.replace(/^0x/, '')
-    } else if (cosmosTransaction != null) {
-      // COSMOS
-      // We can add cosmos support later
-      throw new SwapCurrencyError(swapInfo, request)
     } else {
-      // UTXO
-      if (
-        // Cannot yet do tokens on non-EVM chains
-        fromMainnetCode !== fromCurrencyCode ||
-        // Require memo existence for UTXO chains
-        thorSwap.memo == null
-      ) {
-        throw new SwapCurrencyError(swapInfo, request)
+      // --------------------------------------------------------------------------
+      // UTXO chain: Use memo from response
+      // --------------------------------------------------------------------------
+      if (swapRoute.memo == null) {
+        throw new Error('Missing memo for UTXO swap')
       }
-      memo = thorSwap.memo
+
+      memo = swapRoute.memo
       memoType = 'text'
     }
 
@@ -395,7 +462,7 @@ export function makeSwapKitPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
       assetAction: {
         assetActionType: 'swap'
       },
-      memos: memo == null ? undefined : [{ type: memoType, value: memo }],
+      memos: [{ type: memoType, value: memo }],
       savedAction: {
         actionType: 'swap',
         swapInfo,
@@ -419,7 +486,7 @@ export function makeSwapKitPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
       }
     }
 
-    if (EVM_CURRENCY_CODES[fromMainnetCode]) {
+    if (chainType === 'evm') {
       if (fromMainnetCode === fromCurrencyCode) {
         // For mainnet coins of EVM chains, use gasLimit override since makeSpend doesn't
         // know how to estimate an ETH spend with extra data
@@ -436,10 +503,9 @@ export function makeSwapKitPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
     const providersStr = providers.join(' -> ')
     const notes = `DEX Providers: ${providersStr}`
 
+    // Use expiration from quote if valid, fall back to default (60s)
     const expirationMs =
-      expiration != null
-        ? parseInt(`${expiration}000`) // expiration provided as seconds
-        : Date.now() + EXPIRATION_MS
+      expiration != null ? expiration * 1000 : Date.now() + EXPIRATION_MS
 
     return {
       request,
