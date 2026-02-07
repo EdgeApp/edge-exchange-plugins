@@ -3,6 +3,13 @@
 ## Unreleased
 
 - added: SwapKit V3 as a separate exchange plugin (`swapkitv3`)
+- added: (ChangeHero) Monad support
+- added: (ChangeNow) Monad and opBNB support
+- added: (LiFi) Monad and opBNB support
+- added: (Maya) MAYAChain (CACAO) support
+- added: (Rango) MAYAChain and Monad support
+- added: (SideShift) Monad support
+- added: (SwapKit) Monad support
 
 ## 2.40.5 (2026-02-03)
 

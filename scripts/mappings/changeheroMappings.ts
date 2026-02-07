@@ -114,7 +114,7 @@ changehero.set('lumia', null)
 
 // Currency Count: 2
 // Display Name: monad
-changehero.set('monad', null)
+changehero.set('monad', 'monad')
 
 // Currency Count: 1
 // Display Name: monero
