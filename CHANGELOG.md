@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 2.41.0 (2026-02-07)
+
 - added: SwapKit V3 as a separate exchange plugin (`swapkitv3`)
 - added: (ChangeHero) Monad support
 - added: (ChangeNow) Monad and opBNB support
