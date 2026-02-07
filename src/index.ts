@@ -17,6 +17,7 @@ import { makeLifiPlugin } from './swap/defi/lifi'
 import { makeRangoPlugin } from './swap/defi/rango'
 import { makeMayaProtocolPlugin } from './swap/defi/thorchain/mayaprotocol'
 import { makeSwapKitPlugin } from './swap/defi/thorchain/swapkit'
+import { makeSwapKitV3Plugin } from './swap/defi/thorchain/swapkitV3'
 import { makeThorchainPlugin } from './swap/defi/thorchain/thorchain'
 import { makeSpookySwapPlugin } from './swap/defi/uni-v2-based/plugins/spookySwap'
 import { makeTombSwapPlugin } from './swap/defi/uni-v2-based/plugins/tombSwap'
@@ -42,6 +43,7 @@ const plugins = {
   mayaprotocol: makeMayaProtocolPlugin,
   thorchain: makeThorchainPlugin,
   swapkit: makeSwapKitPlugin,
+  swapkitv3: makeSwapKitV3Plugin,
   tombSwap: makeTombSwapPlugin,
   transfer: makeTransferPlugin,
   unizen: makeUnizenPlugin,

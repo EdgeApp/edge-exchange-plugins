@@ -2,7 +2,7 @@
 
 ## Unreleased
 
-- changed: (SwapKit) Upgrade to v3 API
+- added: SwapKit V3 as a separate exchange plugin (`swapkitv3`)
 
 ## 2.40.5 (2026-02-03)
 

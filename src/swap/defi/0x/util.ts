@@ -60,8 +60,8 @@ export function makeSignatureStruct(signatureHash: string): SignatureStruct {
   const signature = secp256k1.Signature.fromCompact(signatureHash.slice(2, 130))
   return {
     v: parseInt(hexToDecimal(`0x${signatureHash.slice(130)}`)),
-    r: `0x${signature.r.toString(16)}`,
-    s: `0x${signature.s.toString(16)}`,
+    r: `0x${String(signature.r.toString(16))}`,
+    s: `0x${String(signature.s.toString(16))}`,
     signatureType: SignatureType.EIP712
   }
 }
