@@ -25,6 +25,10 @@ import {
   swapInfo as letsexchangeSwapInfo
 } from '../../src/swap/central/letsexchange'
 import {
+  MAINNET_CODE_TRANSCRIPTION as nexchangeMainnetTranscription,
+  swapInfo as nexchangeSwapInfo
+} from '../../src/swap/central/nexchange'
+import {
   MAINNET_CODE_TRANSCRIPTION as sideshiftMainnetTranscription,
   swapInfo as sideshiftSwapInfo
 } from '../../src/swap/central/sideshift'
@@ -35,6 +39,7 @@ import {
 import changeheroChainCodeTickerJson from './changeheroMap.json'
 import changenowChainCodeTickerJson from './changenowMap.json'
 import letsexchangeChainCodeTickerJson from './letsexchangeMap.json'
+import nexchangeChainCodeTickerJson from './nexchangeMap.json'
 import sideshiftChainCodeTickerJson from './sideshiftMap.json'
 
 const btcWallet = {
@@ -137,6 +142,18 @@ const letsexchange = async (request: EdgeSwapRequest): Promise<Codes> => {
     letsexchangeMainnetSpecialCases
   )
 }
+const nexchange = async (request: EdgeSwapRequest): Promise<Codes> => {
+  const nexchangeChainCodeTickerMap = getChainCodeTickerMap(
+    nexchangeChainCodeTickerJson
+  )
+
+  return await getChainAndTokenCodes(
+    request,
+    nexchangeSwapInfo,
+    nexchangeChainCodeTickerMap,
+    nexchangeMainnetTranscription
+  )
+}
 const sideshift = async (request: EdgeSwapRequest): Promise<Codes> => {
   const sideshiftChainCodeTickerMap = getChainCodeTickerMap(
     sideshiftChainCodeTickerJson
@@ -182,6 +199,15 @@ describe(`swap btc to eth`, function () {
   })
   it('letsexchange', async function () {
     const result = await letsexchange(request)
+    return assert.deepEqual(result, {
+      fromMainnetCode: 'BTC',
+      fromCurrencyCode: 'BTC',
+      toMainnetCode: 'ETH',
+      toCurrencyCode: 'ETH'
+    })
+  })
+  it('nexchange', async function () {
+    const result = await nexchange(request)
     return assert.deepEqual(result, {
       fromMainnetCode: 'BTC',
       fromCurrencyCode: 'BTC',
@@ -239,6 +265,15 @@ describe(`swap btc to avax`, function () {
       toCurrencyCode: 'AVAX'
     })
   })
+  it('nexchange', async function () {
+    const result = await nexchange(request)
+    return assert.deepEqual(result, {
+      fromMainnetCode: 'BTC',
+      fromCurrencyCode: 'BTC',
+      toMainnetCode: 'AVAXC',
+      toCurrencyCode: 'AVAX'
+    })
+  })
   it('sideshift', async function () {
     const result = await sideshift(request)
     return assert.deepEqual(result, {
@@ -282,6 +317,15 @@ describe(`swap btc to usdt (avax c-chain)`, function () {
   })
   it('letsexchange', async function () {
     const result = await letsexchange(request)
+    return assert.deepEqual(result, {
+      fromMainnetCode: 'BTC',
+      fromCurrencyCode: 'BTC',
+      toMainnetCode: 'AVAXC',
+      toCurrencyCode: 'USDT'
+    })
+  })
+  it('nexchange', async function () {
+    const result = await nexchange(request)
     return assert.deepEqual(result, {
       fromMainnetCode: 'BTC',
       fromCurrencyCode: 'BTC',
