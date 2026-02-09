@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 2.41.1 (2026-02-09)
+
 - fixed: Fix max swap special case handling in thorchainCommon
 
 ## 2.41.0 (2026-02-07)
