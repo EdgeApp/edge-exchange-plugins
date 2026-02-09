@@ -788,6 +788,11 @@ export function makeThorchainBasedPlugin(
 
       // If this is a max quote. Call getMaxTx and modify the request
       if (quoteFor === 'max') {
+        if (fromTokenId != null) {
+          throw new Error(
+            'fetchSwapQuoteInner max quote only for RUNE or CACAO'
+          )
+        }
         const maxNativeAmount = await fromWallet.otherMethods.getMaxTx(
           makeTxParams
         )
@@ -991,7 +996,8 @@ export function makeThorchainBasedPlugin(
       if (
         quoteFor === 'max' &&
         (fromWallet.currencyInfo.pluginId === 'thorchainrune' ||
-          fromWallet.currencyInfo.pluginId === 'cacao')
+          fromWallet.currencyInfo.pluginId === 'cacao') &&
+        request.fromTokenId == null
       ) {
         // fetchSwapQuoteInner has unique logic to handle 'max' quotes but
         // only when sending RUNE or CACAO
@@ -1084,7 +1090,13 @@ const calcSwapFrom = async ({
   streamingQuantity
 }: CalcSwapParams): Promise<CalcSwapResponse> => {
   // Max quotes start with getting a quote for 10 RUNE
-  const fromNativeAmount = quoteFor === 'max' ? '1000000000' : nativeAmount
+  const fromNativeAmount =
+    quoteFor === 'max' &&
+    (fromWallet.currencyInfo.pluginId === 'thorchainrune' ||
+      fromWallet.currencyInfo.pluginId === 'cacao') &&
+    fromTokenId == null
+      ? '1000000000'
+      : nativeAmount
 
   // Get exchange rate from source to destination asset
   const fromExchangeAmount = nativeToDenomination(
