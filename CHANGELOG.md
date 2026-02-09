@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- added: n.exchange centralized swap integration
+
 ## 2.41.2 (2026-03-02)
 
 - changed: (XRPDEX) Add fallback xrpl servers
