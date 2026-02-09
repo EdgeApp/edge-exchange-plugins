@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- added: n.exchange centralized swap integration with support for multiple networks and tokens using contract address-based identification
+
 ## 2.41.0 (2026-02-07)
 
 - added: SwapKit V3 as a separate exchange plugin (`swapkitv3`)
