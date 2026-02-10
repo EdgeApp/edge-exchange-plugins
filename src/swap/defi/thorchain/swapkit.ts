@@ -147,8 +147,7 @@ const asInitOptions = asObject({
   affiliateFeeBasis: asOptional(asString, AFFILIATE_FEE_BASIS_DEFAULT),
   ninerealmsClientId: asOptional(asString, ''),
   thorname: asOptional(asString, 'ej'),
-  thorswapApiKey: asOptional(asString),
-  thorswapXApiKey: asOptional(asString)
+  thorswapApiKey: asOptional(asString)
 })
 
 /** Max slippage for 5% for estimated quotes */
@@ -163,14 +162,12 @@ let exchangeInfoLastUpdate: number = 0
 export function makeSwapKitPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
   const { io, log } = opts
   const { fetchCors = io.fetch } = io
-  const { appId, thorname, thorswapApiKey, thorswapXApiKey } = asInitOptions(
-    opts.initOptions
-  )
+  const { appId, thorname, thorswapApiKey } = asInitOptions(opts.initOptions)
   let { affiliateFeeBasis } = asInitOptions(opts.initOptions)
 
   const thorswapHeaders = {
     'Content-Type': 'application/json',
-    'x-api-key': thorswapXApiKey,
+    'x-api-key': thorswapApiKey,
     referer: thorswapApiKey
   }
 

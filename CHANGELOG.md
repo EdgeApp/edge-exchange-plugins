@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- fixed: Use `thorswapApiKey` as `x-api-key` header for SwapKit v2 API authentication
+
 ## 2.41.1 (2026-02-09)
 
 - fixed: Fix max swap special case handling in thorchainCommon
