@@ -78,7 +78,7 @@ interface NexchangeCurrency {
   network: string
 }
 
-const MAINNET_CODE_TRANSCRIPTION: CurrencyPluginIdSwapChainCodeMap = mapToRecord(
+export const MAINNET_CODE_TRANSCRIPTION: CurrencyPluginIdSwapChainCodeMap = mapToRecord(
   nexchangeMapping
 )
 
