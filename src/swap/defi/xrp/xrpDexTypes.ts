@@ -1,16 +1,16 @@
 import { asObject, asString } from 'cleaners'
-import { Client, Wallet } from 'xrpl'
+import { Wallet } from 'xrpl'
 
 /**
  * Below types copied from https://github.com/florent-uzio/xrpl.js-demo.git
  */
 export interface TxnOptions {
   wallet: Wallet
-  client: Client
+  rippleServers: string[]
   showLogs?: boolean
 }
 
-export type MethodOptions = Pick<TxnOptions, 'showLogs' | 'client'>
+export type MethodOptions = Pick<TxnOptions, 'showLogs' | 'rippleServers'>
 
 export type LedgerIndex = number | ('validated' | 'closed' | 'current')
 

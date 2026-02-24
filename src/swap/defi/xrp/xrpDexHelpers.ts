@@ -5,11 +5,13 @@
 import {
   BookOfferCurrency,
   BookOffersRequest,
+  Client,
   dropsToXrp,
   xrpToDrops
 } from 'xrpl'
 import { BookOffersResponse } from 'xrpl/dist/npm/models/methods/bookOffers'
 
+import { shuffleArray } from '../../../util/utils'
 import { MethodOptions } from './xrpDexTypes'
 
 // https://xrpl.org/currency-formats.html#nonstandard-currency-codes
@@ -83,19 +85,38 @@ export const convertHexCurrencyCodeToString = (
 export const getBookOffers = async (
   // eslint-disable-next-line @typescript-eslint/naming-convention
   { taker_gets, taker_pays, ...rest }: BookOffersRequest,
-  { client, showLogs }: MethodOptions
+  { rippleServers, showLogs }: MethodOptions
 ): Promise<BookOffersResponse> => {
-  // Send the request
-  const response = await client.request({
-    taker_gets,
-    taker_pays,
-    ...rest
-  })
-
-  if (showLogs === true) {
-    console.log(JSON.stringify(response, undefined, 2))
+  if (rippleServers.length === 0) {
+    throw new Error('No ripple servers')
   }
-  return response
+
+  let error
+  const shuffled = shuffleArray(rippleServers)
+  for (const server of shuffled) {
+    const client = new Client(server)
+    try {
+      await client.connect()
+
+      const response = await client.request({
+        taker_gets,
+        taker_pays,
+        ...rest
+      })
+
+      if (showLogs === true) {
+        console.log(JSON.stringify(response, undefined, 2))
+      }
+
+      return response
+    } catch (e) {
+      error = e
+      // Harmless if one server fails
+    } finally {
+      client.disconnect().catch(() => {})
+    }
+  }
+  throw error
 }
 
 export type GetBuyQuoteProps = Omit<
@@ -130,7 +151,7 @@ export type GetBuyQuoteProps = Omit<
  */
 export const getBuyQuote = async (
   { weWant, weWantAmountOfToken, counterCurrency, ...rest }: GetBuyQuoteProps,
-  { client, showLogs }: MethodOptions
+  { rippleServers, showLogs }: MethodOptions
 ): Promise<number> => {
   const offers = await getBookOffers(
     {
@@ -139,7 +160,7 @@ export const getBuyQuote = async (
       taker_pays: counterCurrency,
       ...rest
     },
-    { client, showLogs }
+    { rippleServers, showLogs }
   )
 
   // Amount of remaining token we want to buy.
@@ -232,7 +253,7 @@ type GetSellQuoteProps = Omit<
  */
 export const getSellQuote = async (
   { weSell, weSellAmountOfTokens, counterCurrency, ...rest }: GetSellQuoteProps,
-  { client, showLogs }: MethodOptions
+  { rippleServers, showLogs }: MethodOptions
 ): Promise<number> => {
   const offers = await getBookOffers(
     {
@@ -241,7 +262,7 @@ export const getSellQuote = async (
       taker_pays: weSell,
       ...rest
     },
-    { client, showLogs }
+    { rippleServers, showLogs }
   )
 
   /** Amount of remaining token we want to sell. */

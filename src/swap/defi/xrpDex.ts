@@ -8,7 +8,6 @@ import {
   JsonObject,
   SwapCurrencyError
 } from 'edge-core-js/types'
-import { Client } from 'xrpl'
 
 import { PluginEnvironment } from '../../util/makeSwapPlugin'
 import { makeSwapPluginQuote, SwapOrder } from '../../util/swapHelpers'
@@ -18,8 +17,7 @@ import {
   fetchInfo,
   getAddress,
   nativeToDenomination,
-  promiseWithTimeout,
-  shuffleArray
+  promiseWithTimeout
 } from '../../util/utils'
 import { EdgeSwapRequestPlugin, MakeTxParams } from '../types'
 import { getBuyQuote, getSellQuote } from './xrp/xrpDexHelpers'
@@ -31,7 +29,12 @@ const asInitOptions = asObject({
 
 const EXPIRATION_MS = 1000 * 60
 const DEX_MAX_FULLFILLMENT_TIME_S = 5 * 60 // 5 mins
-const RIPPLE_SERVERS_DEFAULT = ['wss://s2.ripple.com']
+const RIPPLE_SERVERS_DEFAULT = [
+  'wss://xrplcluster.com',
+  'wss://s1.ripple.com',
+  'wss://s2.ripple.com',
+  'wss://xrpl.ws'
+]
 const EXCHANGE_INFO_UPDATE_FREQ_MS = 60000
 const VOLATILITY_SPREAD_DEFAULT = 0.0075
 const DUMMY_XRP_ADDRESS = 'rfuESo7eHUnvebxgaFjfYxfwXhM2uBPAj3'
@@ -148,8 +151,6 @@ const fetchSwapQuoteInner = async (
   // Get a quote
   // ----------------------------------------------------------------
 
-  const client = await getXrplConnectedClient(rippleServers)
-
   let quote: number
   let fromNativeAmount: string
   let toNativeAmount: string
@@ -176,7 +177,7 @@ const fetchSwapQuoteInner = async (
         },
         taker
       },
-      { client, showLogs: false }
+      { rippleServers, showLogs: false }
     )
     quote = quote * (1 - volatilitySpread)
     quote =
@@ -204,7 +205,7 @@ const fetchSwapQuoteInner = async (
         },
         taker
       },
-      { client, showLogs: false }
+      { rippleServers, showLogs: false }
     )
     quote = quote * (1 + volatilitySpread)
     quote =
@@ -249,8 +250,6 @@ const fetchSwapQuoteInner = async (
     toNativeAmount,
     expiration
   }
-
-  await client.disconnect()
 
   return {
     canBePartial: true,
@@ -304,24 +303,4 @@ export async function fetchSwapQuote(
     }
   }
   return await makeSwapPluginQuote(swapOrder)
-}
-
-const getXrplConnectedClient = async (servers: string[]): Promise<Client> => {
-  let client
-  let error
-  if (servers.length === 0) {
-    throw new Error('No ripple servers')
-  }
-  const shuffled = shuffleArray(servers)
-  for (const server of shuffled) {
-    client = new Client(server)
-    try {
-      await client.connect()
-      return client
-    } catch (e) {
-      error = e
-      // Harmless if one server fails
-    }
-  }
-  throw error
 }
