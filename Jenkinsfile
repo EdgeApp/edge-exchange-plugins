@@ -1,5 +1,5 @@
 pipeline {
-  agent any
+  agent { label 'build' }
   tools { nodejs '22' }
   options {
     buildDiscarder logRotator(daysToKeepStr: '30', numToKeepStr: '5')
