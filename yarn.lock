@@ -5106,9 +5106,9 @@ duplexer3@^0.1.4:
   resolved "https://registry.yarnpkg.com/duplexer3/-/duplexer3-0.1.4.tgz#ee01dd1cac0ed3cbc7fdbea37dc0a8f1ce002ce2"
   integrity sha1-7gHdHKwO08vH/b6jfcCo8c4ALOI=
 
-"ecpair@git+https://github.com/EdgeApp/ecpair.git#b193eb8ea2ec0c93b528f4b0223a605407ff43e4":
+"ecpair@https://github.com/EdgeApp/ecpair.git#b193eb8ea2ec0c93b528f4b0223a605407ff43e4":
   version "2.1.0"
-  resolved "git+https://github.com/EdgeApp/ecpair.git#b193eb8ea2ec0c93b528f4b0223a605407ff43e4"
+  resolved "https://github.com/EdgeApp/ecpair.git#b193eb8ea2ec0c93b528f4b0223a605407ff43e4"
   dependencies:
     "@types/bs58check" "^2.1.0"
     base-x "^4.0.0"
