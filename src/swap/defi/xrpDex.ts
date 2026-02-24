@@ -32,7 +32,7 @@ const DEX_MAX_FULLFILLMENT_TIME_S = 5 * 60 // 5 mins
 const RIPPLE_SERVERS_DEFAULT = [
   'wss://xrplcluster.com',
   'wss://s1.ripple.com',
-  'wss:///s2.ripple.com',
+  'wss://s2.ripple.com',
   'wss://xrpl.ws'
 ]
 const EXCHANGE_INFO_UPDATE_FREQ_MS = 60000

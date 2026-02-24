@@ -108,11 +108,12 @@ export const getBookOffers = async (
         console.log(JSON.stringify(response, undefined, 2))
       }
 
-      client.disconnect().catch(() => {})
       return response
     } catch (e) {
       error = e
       // Harmless if one server fails
+    } finally {
+      client.disconnect().catch(() => {})
     }
   }
   throw error
