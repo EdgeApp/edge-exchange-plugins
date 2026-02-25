@@ -1,15 +1,46 @@
 # Edge Exchange Plugins
 
+[![Version](https://img.shields.io/npm/v/edge-exchange-plugins.svg)](https://www.npmjs.com/package/edge-exchange-plugins)
+[![License](https://img.shields.io/npm/l/edge-exchange-plugins.svg)](https://github.com/EdgeApp/edge-exchange-plugins/blob/master/LICENSE)
+
 This library exports a collection of exchange-rate & swap plugins for use with [`edge-core-js`](https://github.com/EdgeApp/edge-core-js).
 
-Please see [index.js](./src/index.js) for the list of plugins in this repo. These are compatible with edge-core-js v0.19.37 or later.
+Please see [index.ts](./src/index.ts) for the list of plugins in this repo. These are compatible with edge-core-js v0.19.37 or later.
+
+## Table of Contents
+
+- [Quick Start](#quick-start)
+- [Installing](#installing)
+  - [Node.js](#nodejs)
+  - [Browser](#browser)
+  - [React Native](#react-native)
+- [Available Plugins](#available-plugins)
+- [Development](#development)
+- [edge-react-gui Integration](#edge-react-gui)
+- [Adding Your Exchange](#adding-your-exchange)
+
+## Quick Start
+
+```bash
+# Install the package
+yarn add edge-exchange-plugins
+
+# For Node.js projects
+const { addEdgeCorePlugins, lockEdgeCorePlugins } = require('edge-core-js')
+const plugins = require('edge-exchange-plugins')
+
+addEdgeCorePlugins(plugins)
+lockEdgeCorePlugins()
+```
 
 ## Installing
 
-Fist, add this library to your project:
+First, add this library to your project:
 
 ```sh
 yarn add edge-exchange-plugins
+# or
+npm install edge-exchange-plugins
 ```
 
 ### Node.js
@@ -60,11 +91,62 @@ import { pluginUri } from 'edge-exchange-plugins'
 
 To debug this project, run `yarn start` to start a Webpack server, and then use `debugUri` instead of `pluginUri`.
 
-## edge-react-gui
+## Available Plugins
+
+This library includes the following exchange and swap plugins:
+
+### Centralized Exchanges
+- **ChangeHero** - Centralized exchange service
+- **ChangeNow** - Instant cryptocurrency exchange
+- **Exolix** - Cross-chain exchange platform
+- **Godex** - Anonymous cryptocurrency exchange
+- **LetsExchange** - Multi-currency exchange service
+- **SideShift** - Non-custodial exchange
+- **Swapuz** - Cryptocurrency exchange platform
+
+### DeFi Protocols
+- **0x Gasless** - Gasless trading on 0x protocol
+- **Cosmos IBC** - Inter-blockchain communication swaps
+- **Fantom Sonic Upgrade** - Fantom network upgrades
+- **LiFi** - Cross-chain aggregation protocol
+- **Rango** - Multi-chain DEX aggregator
+- **Thorchain** - Cross-chain liquidity protocol
+- **Maya Protocol** - Thorchain-based protocol
+- **SwapKit** - Thorchain swap toolkit
+- **SpookySwap** - Fantom DEX
+- **TombSwap** - Fantom-based DEX
+- **Velodrome** - Optimism DEX
+- **Unizen** - Multi-chain DeFi platform
+
+### and more...
+
+## Development
+
+To contribute to this project:
+
+```bash
+# Clone the repository
+git clone https://github.com/EdgeApp/edge-exchange-plugins.git
+cd edge-exchange-plugins
+
+# Install dependencies
+yarn install
+
+# Build the project
+yarn prepare
+
+# Run tests
+yarn test
+
+# Start development server
+yarn start
+```
+
+## edge-react-gui Integration
 
 To enable in edge-react-gui please make sure that the appropriate truthy value (can be object) is included into `env.json`, and that the new `env.json` values are updated on the server building and delivering the app. Since `env.json` is gitignored, plugins may be enabled on your local dev environment but will not be enabled for `develop` or `master` (release) builds until the `env.json` on that build server is updated to include the new plugin.
 
-# Adding Your Exchange
+## Adding Your Exchange
 
 To test your exchange plugin, build the full application at [`edge-react-gui`](https://github.com/EdgeApp/edge-react-gui). Follow the README there for instructions on building and running the app.
 
