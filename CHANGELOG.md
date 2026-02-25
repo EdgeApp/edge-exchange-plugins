@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- added: n.exchange centralized swap integration with support for multiple networks and tokens using contract address-based identification
+
 ## 2.41.1 (2026-02-09)
 
 - fixed: Fix max swap special case handling in thorchainCommon
