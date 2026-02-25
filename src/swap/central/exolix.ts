@@ -1,4 +1,4 @@
-import { gt, lt, mul } from 'biggystring'
+import { gt, lt } from 'biggystring'
 import {
   asEither,
   asMaybe,
@@ -10,6 +10,7 @@ import {
 } from 'cleaners'
 import {
   EdgeCorePluginOptions,
+  EdgeCurrencyWallet,
   EdgeFetchResponse,
   EdgeMemo,
   EdgeSpendInfo,
@@ -23,12 +24,12 @@ import {
 } from 'edge-core-js/types'
 
 import { exolix as exolixMapping } from '../../mappings/exolix'
-import { div18 } from '../../util/biggystringplus'
+import { EdgeCurrencyPluginId } from '../../util/edgeCurrencyPluginIds'
 import {
   checkInvalidTokenIds,
   checkWhitelistedMainnetCodes,
   CurrencyPluginIdSwapChainCodeMap,
-  getCodesWithTranscription,
+  getContractAddresses,
   getMaxSwappable,
   InvalidTokenIds,
   makeSwapPluginQuote,
@@ -38,17 +39,11 @@ import {
 import {
   convertRequest,
   denominationToNative,
-  fetchRates,
   getAddress,
   memoType,
   nativeToDenomination
 } from '../../util/utils'
-import {
-  asRatesResponse,
-  EdgeSwapRequestPlugin,
-  RatesRespose,
-  StringMap
-} from '../types'
+import { EdgeSwapRequestPlugin, StringMap } from '../types'
 
 const pluginId = 'exolix'
 
@@ -63,7 +58,6 @@ const asInitOptions = asObject({
   apiKey: asString
 })
 
-const MAX_USD_VALUE = '70000'
 const INVALID_TOKEN_IDS: InvalidTokenIds = {
   from: {
     polygon: [
@@ -78,6 +72,31 @@ const INVALID_TOKEN_IDS: InvalidTokenIds = {
     ]
   }
 }
+
+interface ExolixCommonQuoteParams {
+  networkFrom: string
+  networkTo: string
+  coinAddressFrom?: string
+  coinAddressTo?: string
+  networkFromChainId?: number
+  networkToChainId?: number
+  withdrawalAddress: string
+  withdrawalExtraId: string
+  refundAddress: string
+  refundExtraId: string
+  rateType: 'fixed' | 'float'
+  rateId?: string
+}
+
+type ExolixFromQuoteParams = ExolixCommonQuoteParams & {
+  amount: string
+}
+
+type ExolixToQuoteParams = ExolixCommonQuoteParams & {
+  withdrawalAmount: string
+}
+
+type ExolixQuoteParams = ExolixFromQuoteParams | ExolixToQuoteParams
 
 const addressTypeMap: StringMap = {
   digibyte: 'publicAddress',
@@ -99,9 +118,20 @@ while true; do
   ((n++));
 done
 */
+
+const EVM_CHAIN_NETWORK = 'evmGeneric'
+
 const MAINNET_CODE_TRANSCRIPTION: CurrencyPluginIdSwapChainCodeMap = mapToRecord(
   exolixMapping
 )
+
+const getNetwork = (wallet: EdgeCurrencyWallet): string | null => {
+  const evmChainId = wallet.currencyInfo.evmChainId
+  if (evmChainId != null) return EVM_CHAIN_NETWORK
+  return MAINNET_CODE_TRANSCRIPTION[
+    wallet.currencyInfo.pluginId as EdgeCurrencyPluginId
+  ]
+}
 
 const orderUri = 'https://exolix.com/transaction/'
 const uri = 'https://exolix.com/api/v2/'
@@ -110,10 +140,13 @@ const expirationMs = 1000 * 60
 
 const asRateResponse = asObject({
   minAmount: asNumber,
+  maxAmount: asNumber,
   withdrawMin: asOptional(asNumber, 0),
+  withdrawMax: asOptional(asNumber, 0),
   fromAmount: asNumber,
   toAmount: asNumber,
-  message: asEither(asString, asNull)
+  message: asEither(asString, asNull),
+  rateId: asString
 })
 
 const asQuoteInfo = asObject({
@@ -133,6 +166,18 @@ export function makeExolixPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
     request: EdgeSwapRequestPlugin,
     _userSettings: Object | undefined
   ): Promise<SwapOrder> => {
+    const { fromWallet, toWallet, quoteFor } = request
+
+    const networkFrom = getNetwork(fromWallet)
+    const networkTo = getNetwork(toWallet)
+
+    if (networkFrom == null || networkTo == null) {
+      throw new SwapCurrencyError(swapInfo, request)
+    }
+
+    const networkFromChainId = fromWallet.currencyInfo.evmChainId
+    const networkToChainId = toWallet.currencyInfo.evmChainId
+
     async function call(
       method: 'GET' | 'POST',
       route: string,
@@ -194,47 +239,48 @@ export function makeExolixPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
       )
     ])
 
-    const exchangeQuoteAmount =
-      request.quoteFor === 'from'
-        ? nativeToDenomination(
-            request.fromWallet,
-            request.nativeAmount,
-            request.fromTokenId
-          )
-        : nativeToDenomination(
-            request.toWallet,
-            request.nativeAmount,
-            request.toTokenId
-          )
-
-    const quoteAmount = parseFloat(exchangeQuoteAmount)
-
-    const {
-      fromCurrencyCode,
-      toCurrencyCode,
-      fromMainnetCode,
-      toMainnetCode
-    } = getCodesWithTranscription(request, MAINNET_CODE_TRANSCRIPTION)
-
-    const quoteParams: Record<string, any> = {
-      coinFrom: fromCurrencyCode,
-      coinFromNetwork: fromMainnetCode,
-      coinTo: toCurrencyCode,
-      coinToNetwork: toMainnetCode,
-      amount: quoteAmount,
-      rateType: 'fixed'
+    let amount
+    if (quoteFor === 'from') {
+      const quoteAmount = nativeToDenomination(
+        request.fromWallet,
+        request.nativeAmount,
+        request.fromTokenId
+      )
+      amount = { amount: quoteAmount }
+    } else {
+      const quoteAmount = nativeToDenomination(
+        request.toWallet,
+        request.nativeAmount,
+        request.toTokenId
+      )
+      amount = { withdrawalAmount: quoteAmount }
     }
 
-    // Set the withdrawal amount if we are quoting for the toCurrencyCode
-    if (request.quoteFor === 'to') {
-      quoteParams.withdrawalAmount = quoteAmount
+    const {
+      fromContractAddress: coinAddressFrom,
+      toContractAddress: coinAddressTo
+    } = getContractAddresses(request)
+
+    const quoteParams: ExolixQuoteParams = {
+      coinAddressFrom,
+      networkFrom,
+      networkFromChainId,
+      coinAddressTo,
+      networkTo,
+      networkToChainId,
+      rateType: 'fixed',
+      withdrawalAddress: toAddress,
+      refundAddress: fromAddress,
+      refundExtraId: '',
+      withdrawalExtraId: '',
+      ...amount
     }
 
     // Get Rate
     const rateResponse = asRateResponse(await call('GET', 'rate', quoteParams))
 
     // Check rate minimum:
-    if (request.quoteFor === 'from') {
+    if (quoteFor === 'from') {
       const nativeMin = denominationToNative(
         request.fromWallet,
         rateResponse.minAmount.toString(),
@@ -243,6 +289,16 @@ export function makeExolixPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
 
       if (lt(request.nativeAmount, nativeMin)) {
         throw new SwapBelowLimitError(swapInfo, nativeMin, 'from')
+      }
+
+      const nativeMax = denominationToNative(
+        request.fromWallet,
+        rateResponse.maxAmount.toString(),
+        request.fromTokenId
+      )
+
+      if (gt(request.nativeAmount, nativeMax)) {
+        throw new SwapAboveLimitError(swapInfo, nativeMax, 'from')
       }
     } else {
       const nativeMin = denominationToNative(
@@ -254,26 +310,25 @@ export function makeExolixPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
       if (lt(request.nativeAmount, nativeMin)) {
         throw new SwapBelowLimitError(swapInfo, nativeMin, 'to')
       }
+
+      const nativeMax = denominationToNative(
+        request.toWallet,
+        rateResponse.withdrawMax.toString(),
+        request.toTokenId
+      )
+
+      if (gt(request.nativeAmount, nativeMax)) {
+        throw new SwapAboveLimitError(swapInfo, nativeMax, 'to')
+      }
     }
 
     // Make the transaction:
-    const exchangeParams: Record<string, any> = {
-      coinFrom: quoteParams.coinFrom,
-      networkFrom: quoteParams.coinFromNetwork,
-      coinTo: quoteParams.coinTo,
-      networkTo: quoteParams.coinToNetwork,
-      amount: quoteAmount,
-      withdrawalAddress: toAddress,
-      withdrawalExtraId: '',
-      refundAddress: fromAddress,
-      refundExtraId: '',
-      rateType: 'fixed'
+    const exchangeParams: ExolixQuoteParams = {
+      ...quoteParams,
+      rateId: rateResponse.rateId
     }
 
     // Set the withdrawal amount if we are quoting for the toCurrencyCode
-    if (request.quoteFor === 'to') {
-      exchangeParams.withdrawalAmount = quoteAmount
-    }
 
     const callJson = await call('POST', 'transactions', exchangeParams)
     const quoteInfo = asQuoteInfo(callJson)
@@ -366,71 +421,6 @@ export function makeExolixPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
       )
       const fixedOrder = await getFixedQuote(newRequest, userSettings)
       const fixedResult = await makeSwapPluginQuote(fixedOrder)
-
-      // Limit exolix to $70k USD
-      let currencyCode: string
-      let exchangeAmount: string
-      let denomToNative: string
-      if (newRequest.quoteFor === 'from') {
-        currencyCode = newRequest.fromCurrencyCode
-        exchangeAmount = nativeToDenomination(
-          newRequest.fromWallet,
-          newRequest.nativeAmount,
-          newRequest.fromTokenId
-        )
-        denomToNative = denominationToNative(
-          newRequest.fromWallet,
-          '1',
-          newRequest.fromTokenId
-        )
-      } else {
-        currencyCode = newRequest.toCurrencyCode
-        exchangeAmount = nativeToDenomination(
-          newRequest.toWallet,
-          newRequest.nativeAmount,
-          newRequest.toTokenId
-        )
-        denomToNative = denominationToNative(
-          newRequest.toWallet,
-          '1',
-          newRequest.toTokenId
-        )
-      }
-      const data = [{ currency_pair: `${currencyCode}_iso:USD` }]
-
-      const options = {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ data })
-      }
-      let rates: RatesRespose
-      try {
-        const response = await fetchRates(fetch, 'v2/exchangeRates', options)
-        if (!response.ok) {
-          const text = await response.text()
-          throw new Error(`Error fetching rates: ${text}`)
-        }
-        const reply = await response.json()
-        rates = asRatesResponse(reply)
-      } catch (e) {
-        log.error('Error fetching rates', String(e))
-        throw new Error('Error fetching rates')
-      }
-
-      const { exchangeRate } = rates.data[0]
-      if (exchangeRate == null) throw new SwapCurrencyError(swapInfo, request)
-
-      const usdValue = mul(exchangeAmount, exchangeRate)
-      const maxExchangeAmount = div18(MAX_USD_VALUE, exchangeRate)
-      const maxNativeAmount = mul(maxExchangeAmount, denomToNative)
-
-      if (gt(usdValue, MAX_USD_VALUE)) {
-        throw new SwapAboveLimitError(
-          swapInfo,
-          maxNativeAmount,
-          newRequest.quoteFor === 'from' ? 'from' : 'to'
-        )
-      }
 
       return fixedResult
     }
