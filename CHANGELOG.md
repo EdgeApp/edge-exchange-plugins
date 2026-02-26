@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- added: Xgram support
+
 ## 2.42.3 (2026-03-10)
 
 - fixed: Map `mayachain` pluginId to MAYA chain correctly and remove non-existent `cacao` pluginId

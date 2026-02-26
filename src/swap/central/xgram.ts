@@ -71,6 +71,7 @@ const addressTypeMap: StringMap = {
 }
 
 const swapType = 'fixed' as const
+const ccyAmountLimitRegex = /ccyAmount must be ([><])\s*([\d.]+)/
 
 export function makeXgramPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
   const { io } = opts
@@ -166,30 +167,58 @@ export function makeXgramPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
           .find(e => e != null)
 
         if (limitError?.code === 'BELOW_LIMIT') {
-          const sourceAmountLimit = denominationToNative(
+          const nativeLimit = denominationToNative(
             isSelling ? request.fromWallet : request.toWallet,
-            limitError.sourceAmountLimit,
+            isSelling
+              ? limitError.sourceAmountLimit
+              : limitError.destinationAmountLimit,
             isSelling ? request.fromTokenId : request.toTokenId
           )
 
-          throw new SwapBelowLimitError(swapInfo, sourceAmountLimit, quoteFor)
+          throw new SwapBelowLimitError(swapInfo, nativeLimit, quoteFor)
         }
         if (limitError?.code === 'ABOVE_LIMIT') {
-          const sourceAmountLimit = denominationToNative(
+          const nativeLimit = denominationToNative(
             isSelling ? request.fromWallet : request.toWallet,
-            limitError.sourceAmountLimit,
+            isSelling
+              ? limitError.sourceAmountLimit
+              : limitError.destinationAmountLimit,
             isSelling ? request.fromTokenId : request.toTokenId
           )
-          throw new SwapAboveLimitError(swapInfo, sourceAmountLimit, quoteFor)
+          throw new SwapAboveLimitError(swapInfo, nativeLimit, quoteFor)
         }
         throw new Error('Xgram create order error')
+      }
+      if ('error' in quoteReply) {
+        const match = ccyAmountLimitRegex.exec(quoteReply.error)
+        if (match != null) {
+          const [, direction, limitStr] = match
+          const nativeLimit = denominationToNative(
+            isSelling ? request.fromWallet : request.toWallet,
+            limitStr,
+            isSelling ? request.fromTokenId : request.toTokenId
+          )
+          if (direction === '>') {
+            throw new SwapBelowLimitError(swapInfo, nativeLimit, quoteFor)
+          }
+          throw new SwapAboveLimitError(swapInfo, nativeLimit, quoteFor)
+        }
+
+        throw new Error(`Xgram: ${quoteReply.error}`)
+      }
+
+      if (quoteReply.ccyAmountToExpected == null && isSelling) {
+        throw new Error('Xgram quote missing ccyAmountToExpected')
       }
 
       return {
         id: quoteReply.id,
         validUntil: quoteReply.expiresAt,
         fromAmount: quoteReply.ccyAmountFrom,
-        toAmount: quoteReply.ccyAmountToExpected.toString(),
+        toAmount:
+          quoteReply.ccyAmountToExpected != null
+            ? quoteReply.ccyAmountToExpected.toString()
+            : largeDenomAmount,
         payinAddress: quoteReply.depositAddress,
         payinExtraId: quoteReply.depositTag
       }
@@ -345,8 +374,11 @@ const asXgramError = asObject({
     asEither(asXgramLimitError, asXgramRegionError, asXgramCurrencyError)
   )
 })
+const asXgramStringError = asObject({
+  error: asString
+})
 const asXgramQuote = asObject({
-  ccyAmountToExpected: asNumberString,
+  ccyAmountToExpected: asOptional(asNumberString),
   depositAddress: asString,
   depositTag: asOptionalBlank(asString),
   id: asString,
@@ -354,4 +386,8 @@ const asXgramQuote = asObject({
   expiresAt: asOptional(asDate),
   ccyAmountFrom: asNumberString
 })
-const asXgramQuoteReply = asEither(asXgramQuote, asXgramError)
+const asXgramQuoteReply = asEither(
+  asXgramQuote,
+  asXgramError,
+  asXgramStringError
+)
