@@ -72,6 +72,7 @@ const addressTypeMap: StringMap = {
 }
 
 const swapType = 'fixed' as const
+const ccyAmountLimitRegex = /ccyAmount must be ([><])\s*([\d.]+)/
 
 export function makeXgramPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
   const { io } = opts
@@ -180,6 +181,23 @@ export function makeXgramPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
           throw new SwapAboveLimitError(swapInfo, sourceAmountLimit, quoteFor)
         }
         throw new Error('Xgram create order error')
+      }
+      if ('error' in quoteReply) {
+        const match = ccyAmountLimitRegex.exec(quoteReply.error)
+        if (match != null) {
+          const [, direction, limitStr] = match
+          const nativeLimit = denominationToNative(
+            isSelling ? request.fromWallet : request.toWallet,
+            limitStr,
+            isSelling ? request.fromTokenId : request.toTokenId
+          )
+          if (direction === '>') {
+            throw new SwapBelowLimitError(swapInfo, nativeLimit, quoteFor)
+          }
+          throw new SwapAboveLimitError(swapInfo, nativeLimit, quoteFor)
+        }
+
+        throw new Error(`Xgram: ${quoteReply.error}`)
       }
 
       return {
@@ -342,6 +360,9 @@ const asXgramError = asObject({
     asEither(asXgramLimitError, asXgramRegionError, asXgramCurrencyError)
   )
 })
+const asXgramStringError = asObject({
+  error: asString
+})
 const asXgramQuote = asObject({
   ccyAmountToExpected: asNumber,
   depositAddress: asString,
@@ -351,4 +372,8 @@ const asXgramQuote = asObject({
   expiresAt: asDate,
   ccyAmountFrom: asString
 })
-const asXgramQuoteReply = asEither(asXgramQuote, asXgramError)
+const asXgramQuoteReply = asEither(
+  asXgramQuote,
+  asXgramError,
+  asXgramStringError
+)

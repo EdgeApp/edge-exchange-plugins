@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- added: Xgram support
+
 ## 2.41.1 (2026-02-09)
 
 - fixed: Fix max swap special case handling in thorchainCommon
