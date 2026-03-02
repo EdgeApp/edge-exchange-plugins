@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 2.41.2 (2026-03-02)
+
 - changed: (XRPDEX) Add fallback xrpl servers
 
 ## 2.41.1 (2026-02-09)
