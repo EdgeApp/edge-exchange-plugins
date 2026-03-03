@@ -19,7 +19,6 @@ export const edgeCurrencyPluginIds = [
   'bitcointestnet4',
   'bobevm',
   'botanix',
-  'cacao',
   'calibration',
   'cardano',
   'cardanotestnet',
