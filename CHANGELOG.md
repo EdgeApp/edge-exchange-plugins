@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 2.42.0 (2026-03-06)
+
 - added: n.exchange centralized swap integration
 
 ## 2.41.2 (2026-03-02)
