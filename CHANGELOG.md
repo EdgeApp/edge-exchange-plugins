@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 2.42.1 (2026-03-06)
+
 - fixed: n.exchange unknown errors incorrectly translated to `SwapCurrencyError`.
 
 ## 2.42.0 (2026-03-06)
