@@ -187,10 +187,7 @@ export function makeNexchangePlugin(
     const text = await response.text()
     if (!response.ok) {
       log.warn('Nexchange response:', text)
-      if (
-        (response.status === 400 || response.status === 404) &&
-        request != null
-      ) {
+      if (response.status === 404 && request != null) {
         throw new SwapCurrencyError(swapInfo, request)
       }
       throw new Error(
