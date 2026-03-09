@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- fixed: Translate n.exchange IP restriction errors to SwapPermissionError.
+
 ## 2.42.1 (2026-03-06)
 
 - fixed: n.exchange unknown errors incorrectly translated to `SwapCurrencyError`.
