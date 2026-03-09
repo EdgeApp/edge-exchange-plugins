@@ -3,6 +3,7 @@
 ## Unreleased
 
 - fixed: Map `mayachain` pluginId to MAYA chain correctly and remove non-existent `cacao` pluginId
+- fixed: Translate n.exchange IP restriction errors to SwapPermissionError.
 
 ## 2.42.1 (2026-03-06)
 
