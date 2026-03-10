@@ -10,6 +10,7 @@ import { makeLetsExchangePlugin } from './swap/central/letsexchange'
 import { makeNexchangePlugin } from './swap/central/nexchange'
 import { makeSideshiftPlugin } from './swap/central/sideshift'
 import { makeSwapuzPlugin } from './swap/central/swapuz'
+import { makeXgramPlugin } from './swap/central/xgram'
 import { make0xGaslessPlugin } from './swap/defi/0x/0xGasless'
 import { makeBridgelessPlugin } from './swap/defi/bridgeless'
 import { makeCosmosIbcPlugin } from './swap/defi/cosmosIbc'
@@ -50,6 +51,7 @@ const plugins = {
   transfer: makeTransferPlugin,
   unizen: makeUnizenPlugin,
   velodrome: makeVelodromePlugin,
+  xgram: makeXgramPlugin,
   xrpdex,
   fantomsonicupgrade: makeFantomSonicUpgradePlugin,
   '0xgasless': make0xGaslessPlugin
