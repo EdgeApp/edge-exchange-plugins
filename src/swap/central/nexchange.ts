@@ -3,6 +3,8 @@ import {
   asArray,
   asDate,
   asEither,
+  asJSON,
+  asMaybe,
   asNull,
   asNumber,
   asObject,
@@ -19,7 +21,8 @@ import {
   EdgeSwapRequest,
   SwapAboveLimitError,
   SwapBelowLimitError,
-  SwapCurrencyError
+  SwapCurrencyError,
+  SwapPermissionError
 } from 'edge-core-js/types'
 
 import { nexchange as nexchangeMapping } from '../../mappings/nexchange'
@@ -104,6 +107,12 @@ function formatCurrency(
   }
 }
 
+// Cleaner for Nexchange error responses, e.g. {"non_field_errors":["User's IP has risk."]}
+// Uses asMaybe so it returns null instead of throwing on unexpected shapes
+const asErrorResponse = asMaybe(
+  asJSON(asObject({ non_field_errors: asArray(asString) }))
+)
+
 const asRateV2 = asObject({
   // Fields validated but not currently used: pair, from, to, withdrawal_fee
   // These are kept for API validation and potential future use
@@ -187,9 +196,20 @@ export function makeNexchangePlugin(
     const text = await response.text()
     if (!response.ok) {
       log.warn('Nexchange response:', text)
+
       if (response.status === 404 && request != null) {
         throw new SwapCurrencyError(swapInfo, request)
       }
+
+      if (response.status === 400) {
+        const errorData = asErrorResponse(text)
+        if (
+          errorData?.non_field_errors.includes("User's IP has risk.") === true
+        ) {
+          throw new SwapPermissionError(swapInfo, 'geoRestriction')
+        }
+      }
+
       throw new Error(
         `Nexchange returned error code ${response.status}: ${text}`
       )
