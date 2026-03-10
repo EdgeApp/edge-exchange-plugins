@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 2.42.3 (2026-03-10)
+
 - fixed: Map `mayachain` pluginId to MAYA chain correctly and remove non-existent `cacao` pluginId
 
 ## 2.42.2 (2026-03-10)
