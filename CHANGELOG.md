@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 2.43.0 (2026-03-10)
+
 - added: Xgram support
 
 ## 2.42.3 (2026-03-10)
