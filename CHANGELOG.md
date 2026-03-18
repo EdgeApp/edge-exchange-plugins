@@ -2,6 +2,30 @@
 
 ## Unreleased
 
+## 2.43.0 (2026-03-10)
+
+- added: Xgram support
+
+## 2.42.3 (2026-03-10)
+
+- fixed: Map `mayachain` pluginId to MAYA chain correctly and remove non-existent `cacao` pluginId
+
+## 2.42.2 (2026-03-10)
+
+- fixed: Translate n.exchange IP restriction errors to SwapPermissionError.
+
+## 2.42.1 (2026-03-06)
+
+- fixed: n.exchange unknown errors incorrectly translated to `SwapCurrencyError`.
+
+## 2.42.0 (2026-03-06)
+
+- added: n.exchange centralized swap integration
+
+## 2.41.2 (2026-03-02)
+
+- changed: (XRPDEX) Add fallback xrpl servers
+
 ## 2.41.1 (2026-02-09)
 
 - fixed: Fix max swap special case handling in thorchainCommon
