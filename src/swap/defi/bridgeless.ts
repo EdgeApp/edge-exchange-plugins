@@ -113,6 +113,34 @@ const fetchBridgeless = async (
   return json
 }
 
+export const scaleNativeAmount = (
+  amount: string,
+  fromDecimals: number,
+  toDecimals: number,
+  round: 'down' | 'up'
+): string => {
+  const diff = toDecimals - fromDecimals
+  if (diff === 0) return amount
+
+  if (diff > 0) {
+    return amount + '0'.repeat(diff)
+  }
+
+  const places = -diff
+  if (amount.length <= places) {
+    return round === 'up' && /[1-9]/.test(amount) ? '1' : '0'
+  }
+
+  const whole = amount.slice(0, -places)
+  const remainder = amount.slice(-places)
+
+  if (round === 'up' && /[1-9]/.test(remainder)) {
+    return add(whole, '1')
+  }
+
+  return whole
+}
+
 export function makeBridgelessPlugin(
   opts: EdgeCorePluginOptions
 ): EdgeSwapPlugin {
@@ -169,24 +197,33 @@ export function makeBridgelessPlugin(
         let toTokenInfoForToken: TokenInfo | undefined
         for (const info of token.info) {
           try {
-            const tokenId = await getTokenId(request.fromWallet, info.address)
-            if (
-              info.chain_id ===
-                EDGE_PLUGINID_CHAINID_MAP[
-                  request.fromWallet.currencyInfo.pluginId
-                ] &&
-              tokenId === request.fromTokenId
-            ) {
-              fromTokenInfoForToken = info
+            if (fromTokenInfoForToken == null) {
+              const tokenId = await getTokenId(request.fromWallet, info.address)
+              if (
+                info.chain_id ===
+                  EDGE_PLUGINID_CHAINID_MAP[
+                    request.fromWallet.currencyInfo.pluginId
+                  ] &&
+                tokenId === request.fromTokenId
+              ) {
+                fromTokenInfoForToken = info
+              }
             }
-            if (
-              info.chain_id ===
-                EDGE_PLUGINID_CHAINID_MAP[
-                  request.toWallet.currencyInfo.pluginId
-                ] &&
-              tokenId === request.toTokenId
-            ) {
-              toTokenInfoForToken = info
+          } catch (e) {
+            // ignore tokens that fail validation
+          }
+          try {
+            if (toTokenInfoForToken == null) {
+              const tokenId = await getTokenId(request.toWallet, info.address)
+              if (
+                info.chain_id ===
+                  EDGE_PLUGINID_CHAINID_MAP[
+                    request.toWallet.currencyInfo.pluginId
+                  ] &&
+                tokenId === request.toTokenId
+              ) {
+                toTokenInfoForToken = info
+              }
             }
           } catch (e) {
             // ignore tokens that fail validation
@@ -213,14 +250,13 @@ export function makeBridgelessPlugin(
       throw new SwapCurrencyError(swapInfo, request)
     }
 
+    const fromDecimals = parseInt(fromTokenInfo.decimals, 10)
+    const toDecimals = parseInt(toTokenInfo.decimals, 10)
+
     // The minimum amount is enforced by the amount of toToken received
     let fromAmount: string
     let toAmount: string
     if (request.quoteFor === 'to') {
-      fromAmount = ceil(
-        mul(request.nativeAmount, add('1', toTokenInfo.commission_rate)),
-        0
-      )
       toAmount = request.nativeAmount
 
       if (lt(toAmount, toTokenInfo.min_withdrawal_amount)) {
@@ -230,19 +266,42 @@ export function makeBridgelessPlugin(
           'to'
         )
       }
+
+      const grossToAmount = ceil(
+        mul(toAmount, add('1', toTokenInfo.commission_rate)),
+        0
+      )
+      fromAmount = scaleNativeAmount(
+        grossToAmount,
+        toDecimals,
+        fromDecimals,
+        'up'
+      )
     } else {
       fromAmount = request.nativeAmount
+      const bridgedToAmount = scaleNativeAmount(
+        fromAmount,
+        fromDecimals,
+        toDecimals,
+        'down'
+      )
       toAmount = ceil(
-        mul(request.nativeAmount, sub('1', toTokenInfo.commission_rate)),
+        mul(bridgedToAmount, sub('1', toTokenInfo.commission_rate)),
         0
       )
 
-      const minFromAmount = ceil(
+      const minGrossToAmount = ceil(
         mul(
           toTokenInfo.min_withdrawal_amount,
           add('1', toTokenInfo.commission_rate)
         ),
         0
+      )
+      const minFromAmount = scaleNativeAmount(
+        minGrossToAmount,
+        toDecimals,
+        fromDecimals,
+        'up'
       )
       if (lt(toAmount, toTokenInfo.min_withdrawal_amount)) {
         throw new SwapBelowLimitError(swapInfo, minFromAmount, 'from')
