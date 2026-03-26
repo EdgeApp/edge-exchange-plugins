@@ -47,12 +47,29 @@ import {
 } from '../../util/utils'
 import { EdgeSwapRequestPlugin, StringMap } from '../types'
 
-const pluginId = 'nexchange'
+const pluginIdCefi = 'nexchange'
+const pluginIdDefi = 'nexchangedefi'
 
+const NEXCHANGE_MODE_CEFI = 'cefi' as const
+const NEXCHANGE_MODE_DEFI = 'defi' as const
+
+type NexchangePluginMode =
+  | typeof NEXCHANGE_MODE_CEFI
+  | typeof NEXCHANGE_MODE_DEFI
+
+/** CeFi (custodial) n.exchange swap plugin metadata */
 export const swapInfo: EdgeSwapInfo = {
-  pluginId,
+  pluginId: pluginIdCefi,
   isDex: false,
   displayName: 'n.exchange',
+  supportEmail: 'support@n.exchange'
+}
+
+/** DeFi (NC-Bridge) n.exchange swap plugin metadata — same API v2 with `is_defi` on rate and order */
+export const swapInfoDefi: EdgeSwapInfo = {
+  pluginId: pluginIdDefi,
+  isDex: true,
+  displayName: 'n.exchange DeFi',
   supportEmail: 'support@n.exchange'
 }
 
@@ -166,6 +183,22 @@ const asOrderV2 = asObject({
 export function makeNexchangePlugin(
   opts: EdgeCorePluginOptions
 ): EdgeSwapPlugin {
+  return makeNexchangePluginInner(opts, NEXCHANGE_MODE_CEFI)
+}
+
+/** DeFi routing via NC-Bridge: [API v2 rate](https://api.n.exchange/docs/v2/) with `is_defi=true` and orders with `is_defi: true`. */
+export function makeNexchangeDefiPlugin(
+  opts: EdgeCorePluginOptions
+): EdgeSwapPlugin {
+  return makeNexchangePluginInner(opts, NEXCHANGE_MODE_DEFI)
+}
+
+function makeNexchangePluginInner(
+  opts: EdgeCorePluginOptions,
+  mode: NexchangePluginMode
+): EdgeSwapPlugin {
+  const activeSwapInfo: EdgeSwapInfo =
+    mode === NEXCHANGE_MODE_DEFI ? swapInfoDefi : swapInfo
   const { io, log } = opts
   const { apiKey, referralCode } = asInitOptions(opts.initOptions)
 
@@ -198,7 +231,7 @@ export function makeNexchangePlugin(
       log.warn('Nexchange response:', text)
 
       if (response.status === 404 && request != null) {
-        throw new SwapCurrencyError(swapInfo, request)
+        throw new SwapCurrencyError(activeSwapInfo, request)
       }
 
       if (response.status === 400) {
@@ -206,7 +239,7 @@ export function makeNexchangePlugin(
         if (
           errorData?.non_field_errors.includes("User's IP has risk.") === true
         ) {
-          throw new SwapPermissionError(swapInfo, 'geoRestriction')
+          throw new SwapPermissionError(activeSwapInfo, 'geoRestriction')
         }
       }
 
@@ -250,7 +283,7 @@ export function makeNexchangePlugin(
       ]
 
     if (fromMainnetCode == null || toMainnetCode == null) {
-      throw new SwapCurrencyError(swapInfo, request)
+      throw new SwapCurrencyError(activeSwapInfo, request)
     }
 
     const {
@@ -279,6 +312,9 @@ export function makeNexchangePlugin(
     params.append('from_network', fromMainnetCode)
     params.append('to_contract_address', toContractAddress ?? '')
     params.append('to_network', toMainnetCode)
+    if (mode === NEXCHANGE_MODE_DEFI) {
+      params.append('is_defi', 'true')
+    }
 
     const rateResponse = await fetchNexchange(
       `/rate/?${params.toString()}`,
@@ -295,7 +331,7 @@ export function makeNexchangePlugin(
     }
 
     if (rates.length === 0) {
-      throw new SwapCurrencyError(swapInfo, request)
+      throw new SwapCurrencyError(activeSwapInfo, request)
     }
     const rate = rates[0]
 
@@ -319,10 +355,10 @@ export function makeNexchangePlugin(
       )
 
       if (gt(quoteAmount, rate.max_deposit_amount)) {
-        throw new SwapAboveLimitError(swapInfo, maxFromNative)
+        throw new SwapAboveLimitError(activeSwapInfo, maxFromNative)
       }
       if (lt(quoteAmount, rate.min_deposit_amount)) {
-        throw new SwapBelowLimitError(swapInfo, minFromNative)
+        throw new SwapBelowLimitError(activeSwapInfo, minFromNative)
       }
     } else {
       // We're quoting based on withdraw amount (what we receive)
@@ -338,10 +374,10 @@ export function makeNexchangePlugin(
       )
 
       if (gt(quoteAmount, rate.max_withdraw_amount)) {
-        throw new SwapAboveLimitError(swapInfo, maxToNative, 'to')
+        throw new SwapAboveLimitError(activeSwapInfo, maxToNative, 'to')
       }
       if (lt(quoteAmount, rate.min_withdraw_amount)) {
-        throw new SwapBelowLimitError(swapInfo, minToNative, 'to')
+        throw new SwapBelowLimitError(activeSwapInfo, minToNative, 'to')
       }
     }
 
@@ -366,6 +402,7 @@ export function makeNexchangePlugin(
       withdraw_address: string
       refund_address: string
       rate_id: string
+      is_defi?: boolean
       deposit_amount?: string
       withdraw_amount?: string
     } = {
@@ -374,6 +411,9 @@ export function makeNexchangePlugin(
       withdraw_address: toAddress,
       refund_address: fromAddress,
       rate_id: rate.rate_id
+    }
+    if (mode === NEXCHANGE_MODE_DEFI) {
+      orderBody.is_defi = true
     }
 
     // Set amount based on quote direction
@@ -449,7 +489,7 @@ export function makeNexchangePlugin(
       },
       savedAction: {
         actionType: 'swap',
-        swapInfo,
+        swapInfo: activeSwapInfo,
         orderUri: ORDER_BASE_URL + order.unique_reference,
         orderId: order.unique_reference,
         isEstimate: false,
@@ -472,14 +512,14 @@ export function makeNexchangePlugin(
     return {
       request,
       spendInfo,
-      swapInfo,
+      swapInfo: activeSwapInfo,
       fromNativeAmount: amountExpectedFromNative,
       expirationDate
     }
   }
 
   const out: EdgeSwapPlugin = {
-    swapInfo,
+    swapInfo: activeSwapInfo,
     async fetchSwapQuote(
       req: EdgeSwapRequest,
       userSettings: Object | undefined,
@@ -487,11 +527,11 @@ export function makeNexchangePlugin(
     ): Promise<EdgeSwapQuote> {
       const request = convertRequest(req)
 
-      checkInvalidTokenIds(INVALID_TOKEN_IDS, request, swapInfo)
+      checkInvalidTokenIds(INVALID_TOKEN_IDS, request, activeSwapInfo)
       checkWhitelistedMainnetCodes(
         MAINNET_CODE_TRANSCRIPTION,
         request,
-        swapInfo
+        activeSwapInfo
       )
 
       const newRequest = await getMaxSwappable(
