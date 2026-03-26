@@ -48,9 +48,11 @@ const swapInfo: EdgeSwapInfo = {
 const BASE_URL = 'https://rpc-api.node0.mainnet.bridgeless.com'
 const ORDER_URL = 'https://tss1.mainnet.bridgeless.com'
 const AUTO_BOT_URL = 'https://autobot-wusa1.edge.app'
+const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000'
 
 const EDGE_PLUGINID_CHAINID_MAP: Record<string, string> = {
   bitcoin: '0',
+  bitcoincash: '5',
   zano: '2'
 }
 
@@ -137,7 +139,7 @@ export function makeBridgelessPlugin(
       wallet: EdgeCurrencyWallet,
       contractAddress: string
     ): Promise<EdgeTokenId> => {
-      if (contractAddress === '0x0000000000000000000000000000000000000000') {
+      if (contractAddress === ZERO_ADDRESS) {
         return null
       } else {
         const fakeToken: EdgeToken = {
@@ -158,7 +160,7 @@ export function makeBridgelessPlugin(
     let toTokenInfo: TokenInfo | undefined
     while (true) {
       const pageKeyStr = pageKey == null ? '' : `?pagination.key=${pageKey}`
-      const raw = await fetchBridgeless(fetch, `/tokens${pageKeyStr}`)
+      const raw = await fetchBridgeless(opts.io.fetch, `/tokens${pageKeyStr}`)
       const response = asBridgeTokens(raw)
 
       // Find a token object where both from and to infos are present
@@ -247,20 +249,10 @@ export function makeBridgelessPlugin(
       }
     }
 
-    let receiver: string | undefined
-    switch (request.toWallet.currencyInfo.pluginId) {
-      case 'bitcoin': {
-        receiver = toAddress
-        break
-      }
-      case 'zano': {
-        receiver = base16.encode(base58.decode(toAddress))
-        break
-      }
-      default: {
-        throw new SwapCurrencyError(swapInfo, request)
-      }
-    }
+    const receiver =
+      request.toWallet.currencyInfo.pluginId === 'zano'
+        ? base16.encode(base58.decode(toAddress))
+        : toAddress
 
     // chainId/txid/outputIndex
     // output index is 0 for both Bitcoin (output of actual deposit) and Zano (index of serviceEntries with deposit instructions)
@@ -291,7 +283,8 @@ export function makeBridgelessPlugin(
     }
 
     switch (request.fromWallet.currencyInfo.pluginId) {
-      case 'bitcoin': {
+      case 'bitcoin':
+      case 'bitcoincash': {
         const opReturn = `${receiver}${Buffer.from(
           `#${toChainId}`,
           'utf8'
