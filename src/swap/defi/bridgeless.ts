@@ -27,6 +27,7 @@ import {
   SwapBelowLimitError,
   SwapCurrencyError
 } from 'edge-core-js/types'
+import { ethers } from 'ethers'
 
 import {
   getMaxSwappable,
@@ -35,6 +36,7 @@ import {
 } from '../../util/swapHelpers'
 import { convertRequest, getAddress } from '../../util/utils'
 import { EdgeSwapRequestPlugin, MakeTxParams } from '../types'
+import { createEvmApprovalEdgeTransactions } from './defiUtils'
 
 const pluginId = 'bridgeless'
 
@@ -51,8 +53,11 @@ const AUTO_BOT_URL = 'https://autobot-wusa1.edge.app'
 const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000'
 
 const EDGE_PLUGINID_CHAINID_MAP: Record<string, string> = {
+  // base: '8453', // no swaps available on zano yet
+  binancesmartchain: '56',
   bitcoin: '0',
   bitcoincash: '5',
+  ethereum: '1',
   zano: '2'
 }
 
@@ -139,6 +144,45 @@ export const scaleNativeAmount = (
   }
 
   return whole
+}
+
+const BRIDGELESS_EVM_ABI = [
+  'function depositERC20(address token_, uint256 amount_, string receiver_, string network_, bool isWrapped_, uint16 referralId_)',
+  'function depositNative(string receiver_, string network_, uint16 referralId_) payable'
+]
+
+interface BridgelessTokenInfo {
+  address: string
+  is_wrapped: boolean
+}
+
+interface MakeBridgelessEvmSpendInfoParams {
+  fromAmount: string
+  fromTokenInfo: BridgelessTokenInfo
+  toChainId: string
+  receiver: string
+}
+
+const makeBridgelessEvmSpendInfo = ({
+  fromAmount,
+  fromTokenInfo,
+  toChainId,
+  receiver
+}: MakeBridgelessEvmSpendInfoParams): string => {
+  const iface = new ethers.utils.Interface(BRIDGELESS_EVM_ABI)
+  const tokenAddress = ethers.utils.getAddress(fromTokenInfo.address)
+  const isNativeToken = tokenAddress.toLowerCase() === ZERO_ADDRESS
+
+  return isNativeToken
+    ? iface.encodeFunctionData('depositNative', [receiver, toChainId, 0])
+    : iface.encodeFunctionData('depositERC20', [
+        tokenAddress,
+        fromAmount,
+        receiver,
+        toChainId,
+        fromTokenInfo.is_wrapped,
+        0
+      ])
 }
 
 export function makeBridgelessPlugin(
@@ -308,11 +352,6 @@ export function makeBridgelessPlugin(
       }
     }
 
-    const receiver =
-      request.toWallet.currencyInfo.pluginId === 'zano'
-        ? base16.encode(base58.decode(toAddress))
-        : toAddress
-
     // chainId/txid/outputIndex
     // output index is 0 for both Bitcoin (output of actual deposit) and Zano (index of serviceEntries with deposit instructions)
     // txid must be 0x prefixed
@@ -344,6 +383,10 @@ export function makeBridgelessPlugin(
     switch (request.fromWallet.currencyInfo.pluginId) {
       case 'bitcoin':
       case 'bitcoincash': {
+        const receiver =
+          request.toWallet.currencyInfo.pluginId === 'zano'
+            ? base16.encode(base58.decode(toAddress))
+            : toAddress
         const opReturn = `${receiver}${Buffer.from(
           `#${toChainId}`,
           'utf8'
@@ -369,6 +412,53 @@ export function makeBridgelessPlugin(
         return {
           request,
           spendInfo,
+          swapInfo,
+          fromNativeAmount: fromAmount
+        }
+      }
+      case 'binancesmartchain':
+      case 'ethereum': {
+        const data = makeBridgelessEvmSpendInfo({
+          fromAmount,
+          fromTokenInfo,
+          toChainId,
+          receiver: toAddress
+        })
+        const isNativeToken =
+          request.fromTokenId == null ||
+          fromTokenInfo.address.toLowerCase() === ZERO_ADDRESS
+        const preTxs = isNativeToken
+          ? []
+          : await createEvmApprovalEdgeTransactions({
+              request,
+              approvalAmount: fromAmount,
+              tokenContractAddress: fromTokenInfo.address,
+              recipientAddress: bridgeAddress
+            })
+
+        // For tokens, the nonce is the second log emitted from the transaction.
+        if (!isNativeToken) {
+          const orderId = `${fromChainId}/{{TXID}}/1`
+          savedAction.orderId = orderId
+          savedAction.orderUri = `${ORDER_URL}/check/${orderId}`
+        }
+        const spendInfo: EdgeSpendInfo = {
+          tokenId: request.fromTokenId,
+          spendTargets: [
+            {
+              nativeAmount: fromAmount,
+              publicAddress: bridgeAddress
+            }
+          ],
+          memos: [{ type: 'hex', value: data.replace(/^0x/, '') }],
+          assetAction,
+          savedAction
+        }
+
+        return {
+          request,
+          spendInfo,
+          preTxs,
           swapInfo,
           fromNativeAmount: fromAmount
         }
