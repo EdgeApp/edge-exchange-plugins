@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- added: Support Bitcoin Cash, Ethereum, and BNB Chain in Bridgeless swap plugin
+
 ## 2.43.0 (2026-03-10)
 
 - added: Xgram support

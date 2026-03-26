@@ -197,7 +197,12 @@ export function makeBridgelessPlugin(
       EDGE_PLUGINID_CHAINID_MAP[request.fromWallet.currencyInfo.pluginId]
     const toChainId =
       EDGE_PLUGINID_CHAINID_MAP[request.toWallet.currencyInfo.pluginId]
-    if (fromChainId == null || toChainId == null || fromChainId === toChainId) {
+    if (
+      fromChainId == null ||
+      toChainId == null ||
+      fromChainId === toChainId ||
+      (fromChainId !== '2' && toChainId !== '2') // Only use this plugin for swaps that involve the Zano blockchain
+    ) {
       throw new SwapCurrencyError(swapInfo, request)
     }
 
