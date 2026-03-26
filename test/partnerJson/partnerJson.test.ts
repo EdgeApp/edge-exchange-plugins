@@ -33,6 +33,10 @@ import {
   swapInfo as sideshiftSwapInfo
 } from '../../src/swap/central/sideshift'
 import {
+  MAINNET_CODE_TRANSCRIPTION as nexchangeDefiMainnetTranscription,
+  swapInfo as nexchangeDefiSwapInfo
+} from '../../src/swap/defi/nexchangeDefi'
+import {
   ChainCodeTickerMap,
   getChainAndTokenCodes
 } from '../../src/util/swapHelpers'
@@ -154,6 +158,18 @@ const nexchange = async (request: EdgeSwapRequest): Promise<Codes> => {
     nexchangeMainnetTranscription
   )
 }
+const nexchangedefi = async (request: EdgeSwapRequest): Promise<Codes> => {
+  const nexchangeChainCodeTickerMap = getChainCodeTickerMap(
+    nexchangeChainCodeTickerJson
+  )
+
+  return await getChainAndTokenCodes(
+    request,
+    nexchangeDefiSwapInfo,
+    nexchangeChainCodeTickerMap,
+    nexchangeDefiMainnetTranscription
+  )
+}
 const sideshift = async (request: EdgeSwapRequest): Promise<Codes> => {
   const sideshiftChainCodeTickerMap = getChainCodeTickerMap(
     sideshiftChainCodeTickerJson
@@ -208,6 +224,15 @@ describe(`swap btc to eth`, function () {
   })
   it('nexchange', async function () {
     const result = await nexchange(request)
+    return assert.deepEqual(result, {
+      fromMainnetCode: 'BTC',
+      fromCurrencyCode: 'BTC',
+      toMainnetCode: 'ETH',
+      toCurrencyCode: 'ETH'
+    })
+  })
+  it('nexchangedefi', async function () {
+    const result = await nexchangedefi(request)
     return assert.deepEqual(result, {
       fromMainnetCode: 'BTC',
       fromCurrencyCode: 'BTC',
@@ -274,6 +299,15 @@ describe(`swap btc to avax`, function () {
       toCurrencyCode: 'AVAX'
     })
   })
+  it('nexchangedefi', async function () {
+    const result = await nexchangedefi(request)
+    return assert.deepEqual(result, {
+      fromMainnetCode: 'BTC',
+      fromCurrencyCode: 'BTC',
+      toMainnetCode: 'AVAXC',
+      toCurrencyCode: 'AVAX'
+    })
+  })
   it('sideshift', async function () {
     const result = await sideshift(request)
     return assert.deepEqual(result, {
@@ -326,6 +360,15 @@ describe(`swap btc to usdt (avax c-chain)`, function () {
   })
   it('nexchange', async function () {
     const result = await nexchange(request)
+    return assert.deepEqual(result, {
+      fromMainnetCode: 'BTC',
+      fromCurrencyCode: 'BTC',
+      toMainnetCode: 'AVAXC',
+      toCurrencyCode: 'USDT'
+    })
+  })
+  it('nexchangedefi', async function () {
+    const result = await nexchangedefi(request)
     return assert.deepEqual(result, {
       fromMainnetCode: 'BTC',
       fromCurrencyCode: 'BTC',
