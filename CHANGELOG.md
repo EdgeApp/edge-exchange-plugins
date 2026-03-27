@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- added: changelly support
+
 ## 2.48.0 (2026-06-16)
 
 - added: (Rango) Sonic support
