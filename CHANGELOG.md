@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- added: changelly support
+
 ## 2.43.0 (2026-03-10)
 
 - added: Xgram support
