@@ -27,6 +27,7 @@ import {
   SwapBelowLimitError,
   SwapCurrencyError
 } from 'edge-core-js/types'
+import { ethers } from 'ethers'
 
 import {
   getMaxSwappable,
@@ -35,6 +36,7 @@ import {
 } from '../../util/swapHelpers'
 import { convertRequest, getAddress } from '../../util/utils'
 import { EdgeSwapRequestPlugin, MakeTxParams } from '../types'
+import { createEvmApprovalEdgeTransactions } from './defiUtils'
 
 const pluginId = 'bridgeless'
 
@@ -48,9 +50,14 @@ const swapInfo: EdgeSwapInfo = {
 const BASE_URL = 'https://rpc-api.node0.mainnet.bridgeless.com'
 const ORDER_URL = 'https://tss1.mainnet.bridgeless.com'
 const AUTO_BOT_URL = 'https://autobot-wusa1.edge.app'
+const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000'
 
 const EDGE_PLUGINID_CHAINID_MAP: Record<string, string> = {
+  // base: '8453', // only support btc for now
+  binancesmartchain: '56',
   bitcoin: '0',
+  bitcoincash: '5',
+  ethereum: '1',
   zano: '2'
 }
 
@@ -111,6 +118,73 @@ const fetchBridgeless = async (
   return json
 }
 
+export const scaleNativeAmount = (
+  amount: string,
+  fromDecimals: number,
+  toDecimals: number,
+  round: 'down' | 'up'
+): string => {
+  const diff = toDecimals - fromDecimals
+  if (diff === 0) return amount
+
+  if (diff > 0) {
+    return amount + '0'.repeat(diff)
+  }
+
+  const places = -diff
+  if (amount.length <= places) {
+    return round === 'up' && /[1-9]/.test(amount) ? '1' : '0'
+  }
+
+  const whole = amount.slice(0, -places)
+  const remainder = amount.slice(-places)
+
+  if (round === 'up' && /[1-9]/.test(remainder)) {
+    return add(whole, '1')
+  }
+
+  return whole
+}
+
+const BRIDGELESS_EVM_ABI = [
+  'function depositERC20(address token_, uint256 amount_, string receiver_, string network_, bool isWrapped_, uint16 referralId_)',
+  'function depositNative(string receiver_, string network_, uint16 referralId_) payable'
+]
+
+interface BridgelessTokenInfo {
+  address: string
+  is_wrapped: boolean
+}
+
+interface MakeBridgelessEvmSpendInfoParams {
+  fromAmount: string
+  fromTokenInfo: BridgelessTokenInfo
+  toChainId: string
+  receiver: string
+}
+
+const makeBridgelessEvmSpendInfo = ({
+  fromAmount,
+  fromTokenInfo,
+  toChainId,
+  receiver
+}: MakeBridgelessEvmSpendInfoParams): string => {
+  const iface = new ethers.utils.Interface(BRIDGELESS_EVM_ABI)
+  const tokenAddress = ethers.utils.getAddress(fromTokenInfo.address)
+  const isNativeToken = tokenAddress.toLowerCase() === ZERO_ADDRESS
+
+  return isNativeToken
+    ? iface.encodeFunctionData('depositNative', [receiver, toChainId, 0])
+    : iface.encodeFunctionData('depositERC20', [
+        tokenAddress,
+        fromAmount,
+        receiver,
+        toChainId,
+        fromTokenInfo.is_wrapped,
+        0
+      ])
+}
+
 export function makeBridgelessPlugin(
   opts: EdgeCorePluginOptions
 ): EdgeSwapPlugin {
@@ -123,7 +197,12 @@ export function makeBridgelessPlugin(
       EDGE_PLUGINID_CHAINID_MAP[request.fromWallet.currencyInfo.pluginId]
     const toChainId =
       EDGE_PLUGINID_CHAINID_MAP[request.toWallet.currencyInfo.pluginId]
-    if (fromChainId == null || toChainId == null || fromChainId === toChainId) {
+    if (
+      fromChainId == null ||
+      toChainId == null ||
+      fromChainId === toChainId ||
+      (fromChainId !== '2' && toChainId !== '2') // Only use this plugin for swaps that involve the Zano blockchain
+    ) {
       throw new SwapCurrencyError(swapInfo, request)
     }
 
@@ -137,7 +216,7 @@ export function makeBridgelessPlugin(
       wallet: EdgeCurrencyWallet,
       contractAddress: string
     ): Promise<EdgeTokenId> => {
-      if (contractAddress === '0x0000000000000000000000000000000000000000') {
+      if (contractAddress === ZERO_ADDRESS) {
         return null
       } else {
         const fakeToken: EdgeToken = {
@@ -158,7 +237,7 @@ export function makeBridgelessPlugin(
     let toTokenInfo: TokenInfo | undefined
     while (true) {
       const pageKeyStr = pageKey == null ? '' : `?pagination.key=${pageKey}`
-      const raw = await fetchBridgeless(fetch, `/tokens${pageKeyStr}`)
+      const raw = await fetchBridgeless(opts.io.fetch, `/tokens${pageKeyStr}`)
       const response = asBridgeTokens(raw)
 
       // Find a token object where both from and to infos are present
@@ -167,24 +246,33 @@ export function makeBridgelessPlugin(
         let toTokenInfoForToken: TokenInfo | undefined
         for (const info of token.info) {
           try {
-            const tokenId = await getTokenId(request.fromWallet, info.address)
-            if (
-              info.chain_id ===
-                EDGE_PLUGINID_CHAINID_MAP[
-                  request.fromWallet.currencyInfo.pluginId
-                ] &&
-              tokenId === request.fromTokenId
-            ) {
-              fromTokenInfoForToken = info
+            if (fromTokenInfoForToken == null) {
+              const tokenId = await getTokenId(request.fromWallet, info.address)
+              if (
+                info.chain_id ===
+                  EDGE_PLUGINID_CHAINID_MAP[
+                    request.fromWallet.currencyInfo.pluginId
+                  ] &&
+                tokenId === request.fromTokenId
+              ) {
+                fromTokenInfoForToken = info
+              }
             }
-            if (
-              info.chain_id ===
-                EDGE_PLUGINID_CHAINID_MAP[
-                  request.toWallet.currencyInfo.pluginId
-                ] &&
-              tokenId === request.toTokenId
-            ) {
-              toTokenInfoForToken = info
+          } catch (e) {
+            // ignore tokens that fail validation
+          }
+          try {
+            if (toTokenInfoForToken == null) {
+              const tokenId = await getTokenId(request.toWallet, info.address)
+              if (
+                info.chain_id ===
+                  EDGE_PLUGINID_CHAINID_MAP[
+                    request.toWallet.currencyInfo.pluginId
+                  ] &&
+                tokenId === request.toTokenId
+              ) {
+                toTokenInfoForToken = info
+              }
             }
           } catch (e) {
             // ignore tokens that fail validation
@@ -211,14 +299,13 @@ export function makeBridgelessPlugin(
       throw new SwapCurrencyError(swapInfo, request)
     }
 
+    const fromDecimals = parseInt(fromTokenInfo.decimals, 10)
+    const toDecimals = parseInt(toTokenInfo.decimals, 10)
+
     // The minimum amount is enforced by the amount of toToken received
     let fromAmount: string
     let toAmount: string
     if (request.quoteFor === 'to') {
-      fromAmount = ceil(
-        mul(request.nativeAmount, add('1', toTokenInfo.commission_rate)),
-        0
-      )
       toAmount = request.nativeAmount
 
       if (lt(toAmount, toTokenInfo.min_withdrawal_amount)) {
@@ -228,39 +315,52 @@ export function makeBridgelessPlugin(
           'to'
         )
       }
+
+      const grossToAmount = ceil(
+        mul(toAmount, add('1', toTokenInfo.commission_rate)),
+        0
+      )
+      fromAmount = scaleNativeAmount(
+        grossToAmount,
+        toDecimals,
+        fromDecimals,
+        'up'
+      )
     } else {
       fromAmount = request.nativeAmount
+      const bridgedToAmount = scaleNativeAmount(
+        fromAmount,
+        fromDecimals,
+        toDecimals,
+        'down'
+      )
       toAmount = ceil(
-        mul(request.nativeAmount, sub('1', toTokenInfo.commission_rate)),
+        mul(bridgedToAmount, sub('1', toTokenInfo.commission_rate)),
         0
       )
 
-      const minFromAmount = ceil(
+      const minGrossToAmount = ceil(
         mul(
           toTokenInfo.min_withdrawal_amount,
           add('1', toTokenInfo.commission_rate)
         ),
         0
       )
+      const minFromAmount = scaleNativeAmount(
+        minGrossToAmount,
+        toDecimals,
+        fromDecimals,
+        'up'
+      )
       if (lt(toAmount, toTokenInfo.min_withdrawal_amount)) {
         throw new SwapBelowLimitError(swapInfo, minFromAmount, 'from')
       }
     }
 
-    let receiver: string | undefined
-    switch (request.toWallet.currencyInfo.pluginId) {
-      case 'bitcoin': {
-        receiver = toAddress
-        break
-      }
-      case 'zano': {
-        receiver = base16.encode(base58.decode(toAddress))
-        break
-      }
-      default: {
-        throw new SwapCurrencyError(swapInfo, request)
-      }
-    }
+    const receiver =
+      request.toWallet.currencyInfo.pluginId === 'zano'
+        ? base16.encode(base58.decode(toAddress))
+        : toAddress
 
     // chainId/txid/outputIndex
     // output index is 0 for both Bitcoin (output of actual deposit) and Zano (index of serviceEntries with deposit instructions)
@@ -291,7 +391,8 @@ export function makeBridgelessPlugin(
     }
 
     switch (request.fromWallet.currencyInfo.pluginId) {
-      case 'bitcoin': {
+      case 'bitcoin':
+      case 'bitcoincash': {
         const opReturn = `${receiver}${Buffer.from(
           `#${toChainId}`,
           'utf8'
@@ -317,6 +418,53 @@ export function makeBridgelessPlugin(
         return {
           request,
           spendInfo,
+          swapInfo,
+          fromNativeAmount: fromAmount
+        }
+      }
+      case 'binancesmartchain':
+      case 'ethereum': {
+        const data = makeBridgelessEvmSpendInfo({
+          fromAmount,
+          fromTokenInfo,
+          toChainId,
+          receiver: toAddress
+        })
+        const isNativeToken =
+          request.fromTokenId == null ||
+          fromTokenInfo.address.toLowerCase() === ZERO_ADDRESS
+        const preTxs = isNativeToken
+          ? []
+          : await createEvmApprovalEdgeTransactions({
+              request,
+              approvalAmount: fromAmount,
+              tokenContractAddress: fromTokenInfo.address,
+              recipientAddress: bridgeAddress
+            })
+
+        // For tokens, the nonce is the second log emitted from the transaction.
+        if (!isNativeToken) {
+          const orderId = `${fromChainId}/{{TXID}}/1`
+          savedAction.orderId = orderId
+          savedAction.orderUri = `${ORDER_URL}/check/${orderId}`
+        }
+        const spendInfo: EdgeSpendInfo = {
+          tokenId: request.fromTokenId,
+          spendTargets: [
+            {
+              nativeAmount: fromAmount,
+              publicAddress: bridgeAddress
+            }
+          ],
+          memos: [{ type: 'hex', value: data.replace(/^0x/, '') }],
+          assetAction,
+          savedAction
+        }
+
+        return {
+          request,
+          spendInfo,
+          preTxs,
           swapInfo,
           fromNativeAmount: fromAmount
         }
