@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 2.44.0 (2026-03-28)
+
 - added: (Rango) SUI support
 
 ## 2.43.0 (2026-03-10)
