@@ -22,6 +22,7 @@ import {
   SwapBelowLimitError,
   SwapCurrencyError
 } from 'edge-core-js/types'
+import { base64 } from 'rfc4648'
 
 import { rango as rangoMapping } from '../../mappings/rango'
 import { div18 } from '../../util/biggystringplus'
@@ -210,6 +211,11 @@ const asCosmosTransaction = asObject({
   // expectedOutput: asOptional(asString) // Unused
 })
 
+const asSuiTransaction = asObject({
+  type: asValue('SUI'),
+  unsignedPtbBase64: asString
+})
+
 const asSwapResponse = asObject({
   resultType: asRoutingResultType,
   route: asEither(asSwapSimulationResult, asNull),
@@ -218,6 +224,7 @@ const asSwapResponse = asObject({
     asEvmTransaction,
     asSolanaTransaction,
     asCosmosTransaction,
+    asSuiTransaction,
     asNull
   ),
   // Common tracking fields that might be in the response
@@ -348,7 +355,10 @@ export function makeRangoPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
       referrerFee != null &&
       referrerFee !== ''
     ) {
-      referrer = { referrerAddress: referrerAddress.toLowerCase(), referrerFee }
+      referrer = {
+        referrerAddress: referrerAddress.toLowerCase(),
+        referrerFee
+      }
     }
 
     const swapParameters = {
@@ -552,6 +562,18 @@ export function makeRangoPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
 
     const preTxs: EdgeTransaction[] = []
     let spendInfo: EdgeSpendInfo
+    const providersStr = providers?.join(' -> ')
+    const metadataNotes = `DEX Providers: ${providersStr}`
+
+    const swapOrderBase = {
+      expirationDate: new Date(Date.now() + EXPIRATION_MS),
+      fromNativeAmount: nativeAmount,
+      metadataNotes,
+      minReceiveAmount: route.outputAmountMin,
+      preTxs,
+      request,
+      swapInfo
+    }
 
     switch (tx.type) {
       case 'SOLANA': {
@@ -606,7 +628,41 @@ export function makeRangoPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
 
         break
       }
+      case 'SUI': {
+        const { unsignedPtbBase64 } = asSuiTransaction(tx)
+        const unsignedTx = base64.parse(unsignedPtbBase64)
 
+        const makeTxParams: MakeTxParams = {
+          type: 'MakeTx',
+          unsignedTx,
+          metadata: {
+            assetAction: {
+              assetActionType: 'swap'
+            },
+            savedAction: {
+              actionType: 'swap',
+              swapInfo,
+              orderUri: `${orderUri}${toAddress}`,
+              isEstimate: true,
+              toAsset: {
+                pluginId: toWallet.currencyInfo.pluginId,
+                tokenId: toTokenId,
+                nativeAmount: route.outputAmount
+              },
+              fromAsset: {
+                pluginId: fromWallet.currencyInfo.pluginId,
+                tokenId: fromTokenId,
+                nativeAmount
+              },
+              payoutAddress: toAddress,
+              payoutWalletId: toWallet.id,
+              refundAddress: fromAddress
+            }
+          }
+        }
+
+        return { ...swapOrderBase, makeTxParams }
+      }
       case 'COSMOS': {
         const cosmosTransaction = asCosmosTransaction(tx)
         log(`COSMOS transaction:`, cosmosTransaction)
@@ -656,22 +712,9 @@ export function makeRangoPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
           txData: JSON.stringify(cosmosTransaction.data)
         }
 
-        const providersStr = providers?.join(' -> ')
-        const metadataNotes = `DEX Providers: ${providersStr}`
-
         // Return SwapOrder with makeTxParams directly (not spendInfo)
-        return {
-          expirationDate: new Date(Date.now() + EXPIRATION_MS),
-          fromNativeAmount: nativeAmount,
-          metadataNotes,
-          minReceiveAmount: route.outputAmountMin,
-          preTxs,
-          request,
-          makeTxParams,
-          swapInfo
-        }
+        return { ...swapOrderBase, makeTxParams }
       }
-
       default: {
         const evmTransaction = asEvmTransaction(tx)
         if (evmTransaction.txData == null) {
@@ -745,19 +788,7 @@ export function makeRangoPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
       }
     }
 
-    const providersStr = providers?.join(' -> ')
-    const metadataNotes = `DEX Providers: ${providersStr}`
-
-    return {
-      expirationDate: new Date(Date.now() + EXPIRATION_MS),
-      fromNativeAmount: nativeAmount,
-      metadataNotes,
-      minReceiveAmount: route.outputAmountMin,
-      preTxs,
-      request,
-      spendInfo,
-      swapInfo
-    }
+    return { ...swapOrderBase, spendInfo }
   }
 
   const out: EdgeSwapPlugin = {
