@@ -4,6 +4,10 @@
 
 - added: n.exchange DeFi swap plugin (`nexchangedefi`) — API v2 with `is_defi` on `/rate/` and `is_defi: true` on order creation (NC-Bridge flow; same chain mapping as CeFi n.exchange)
 
+## 2.44.0 (2026-03-28)
+
+- added: (Rango) SUI support
+
 ## 2.43.0 (2026-03-10)
 
 - added: Xgram support
