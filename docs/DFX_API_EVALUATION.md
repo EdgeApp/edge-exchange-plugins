@@ -1,6 +1,6 @@
 # DFX API — Edge Requirements Evaluation
 
-Evaluation of the [DFX API](https://github.com/AirshipApp/dfx-api) (`/Users/jontz/git/api`) against [API_REQUIREMENTS.md](https://github.com/EdgeApp/edge-exchange-plugins/blob/master/docs/API_REQUIREMENTS.md), assessed through the lens of what is needed to build a working `edge-exchange-plugins` swap/fiat plugin, display correct UX in `edge-react-gui`, and populate `StandardTx` records in `edge-reports-server`.
+Evaluation of the [DFX API](https://github.com/AirshipApp/dfx-api) against [API_REQUIREMENTS.md](https://github.com/EdgeApp/edge-exchange-plugins/blob/master/docs/API_REQUIREMENTS.md), assessed through the lens of what is needed to build a working `edge-exchange-plugins` swap/fiat plugin, display correct UX in `edge-react-gui`, and populate `StandardTx` records in `edge-reports-server`.
 
 **Date:** 2026-03-31
 
