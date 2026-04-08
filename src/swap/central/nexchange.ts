@@ -1,4 +1,4 @@
-import { gt, lt } from 'biggystring'
+import { floor, gt, lt } from 'biggystring'
 import {
   asArray,
   asDate,
@@ -404,16 +404,20 @@ export function makeNexchangePlugin(
     }
 
     // Calculate amounts
-    const amountExpectedFromNative = denominationToNative(
+    const amountExpectedFromNativeRaw = denominationToNative(
       request.fromWallet,
       order.deposit_amount,
       request.fromTokenId
     )
-    const amountExpectedToNative = denominationToNative(
+    const amountExpectedToNativeRaw = denominationToNative(
       request.toWallet,
       order.withdraw_amount,
       request.toTokenId
     )
+    // This provider may return more decimal places than the token supports.
+    // Native amounts must be integer atomic units, so round down only.
+    const amountExpectedFromNative = floor(amountExpectedFromNativeRaw, 0)
+    const amountExpectedToNative = floor(amountExpectedToNativeRaw, 0)
 
     const memos: EdgeMemo[] =
       order.deposit_address_extra_id == null ||
