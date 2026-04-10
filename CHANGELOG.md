@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- added: Support Bitcoin Cash, Ethereum, and BNB Chain in Bridgeless swap plugin
+
 ## 2.44.0 (2026-03-28)
 
 - added: (Rango) SUI support
