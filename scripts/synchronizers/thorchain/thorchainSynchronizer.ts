@@ -7,7 +7,7 @@ import { asThorchainPoolsResponse } from './thorchainTypes'
 
 // Fallback Midgard servers (try multiple endpoints)
 const MIDGARD_SERVERS = [
-  'https://midgard.ninerealms.com',
+  'https://gateway.liquify.com/chain/thorchain_midgard',
   'https://midgard.thorchain.info'
 ]
 

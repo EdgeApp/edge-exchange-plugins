@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- changed: Migrate Thorchain swap endpoints off NineRealms (thornode, tx tracker, Midgard sync fallback).
+
 ## 2.45.0 (2026-04-10)
 
 - added: Support Bitcoin Cash, Ethereum, and BNB Chain in Bridgeless swap plugin
