@@ -15,10 +15,11 @@ import {
 
 import { changelly as changellyMapping } from '../../mappings/changelly'
 import {
+  ChainCodeTickerMap,
   checkInvalidTokenIds,
   checkWhitelistedMainnetCodes,
   CurrencyPluginIdSwapChainCodeMap,
-  getCodesWithTranscription,
+  getChainAndTokenCodes,
   getMaxSwappable,
   InvalidTokenIds,
   makeSwapPluginQuote,
@@ -349,13 +350,9 @@ function createClient(
   }
 }
 
-const CACHE_TTL_MS = 1000 * 60 * 10
-
-const cache = {
-  map: new Map<string, CurrenciesResponse>(),
-  time: 0,
-  pending: undefined as Promise<void> | undefined
-}
+let chainCodeTickerMap: ChainCodeTickerMap = new Map()
+let lastUpdated = 0
+const EXPIRATION = 1000 * 60 * 60
 
 const pluginFactory = ({
   log,
@@ -372,37 +369,42 @@ const pluginFactory = ({
     supportEmail: 'support@changelly.com'
   }
 
-  const refreshCache = async (): Promise<void> => {
-    if (Date.now() - cache.time < CACHE_TTL_MS) return await Promise.resolve()
-    if (cache.pending != null) return await cache.pending
+  const fetchSupportedAssets = async (): Promise<void> => {
+    if (lastUpdated > Date.now() - EXPIRATION) return
 
-    cache.pending = client
-      .getCurrenciesFull()
-      .then((data) => {
-        if (isError(data) && data.error.code === -32600) {
-          throw new SwapPermissionError(swapInfo, 'noVerification')
-        }
-        if (isError(data)) {
-          throw new Error('Currencies result cannot be processed')
-        }
+    const data = await client.getCurrenciesFull()
 
-        const newMap = new Map<string, CurrenciesResponse>()
-        data.result.forEach((item) => {
-          if (!item.enabled) return
-          newMap.set(item.name, item)
-          newMap.set(item.ticker, item)
+    if (isError(data) && data.error.code === -32600) {
+      throw new SwapPermissionError(swapInfo, 'noVerification')
+    }
+
+    try {
+      if (isError(data)) {
+        throw new Error('Currencies result cannot be processed')
+      }
+
+      const chaincodeArray = Object.values(MAINNET_CODE_TRANSCRIPTION)
+      const out: ChainCodeTickerMap = new Map()
+      for (const asset of data.result) {
+        if (!asset.enabled) continue
+        if (!chaincodeArray.includes(asset.blockchain)) continue
+        const tokenCodes = out.get(asset.blockchain) ?? []
+        tokenCodes.push({
+          tokenCode: asset.ticker,
+          contractAddress:
+            asset.contractAddress === '' ? null : asset.contractAddress
         })
-        cache.map = newMap
-        cache.time = Date.now()
-      })
-      .finally(() => {
-        cache.pending = undefined
-      })
+        out.set(asset.blockchain, tokenCodes)
+      }
 
-    return await cache.pending
+      chainCodeTickerMap = out
+      lastUpdated = Date.now()
+    } catch (e) {
+      log.warn('Changelly: Error updating supported assets', e)
+    }
   }
 
-  refreshCache().catch((e) => {
+  fetchSupportedAssets().catch((e) => {
     log.warn('Changelly: Error refreshing cache', e)
   })
 
@@ -424,14 +426,14 @@ const pluginFactory = ({
     ])
 
     const {
-      fromCurrencyCode,
-      toCurrencyCode
-    } = getCodesWithTranscription(request, MAINNET_CODE_TRANSCRIPTION)
-
-    const fromTicker =
-      cache.map.get(fromCurrencyCode)?.ticker ?? fromCurrencyCode.toLowerCase()
-    const toTicker =
-      cache.map.get(toCurrencyCode)?.ticker ?? toCurrencyCode.toLowerCase()
+      fromCurrencyCode: fromTicker,
+      toCurrencyCode: toTicker
+    } = await getChainAndTokenCodes(
+      request,
+      swapInfo,
+      chainCodeTickerMap,
+      MAINNET_CODE_TRANSCRIPTION
+    )
 
     const quoteAmount = reverseQuote
       ? nativeToDenomination(
@@ -607,7 +609,7 @@ const pluginFactory = ({
     ): Promise<EdgeSwapQuote> {
       const request = convertRequest(req)
 
-      await refreshCache()
+      await fetchSupportedAssets()
 
       checkInvalidTokenIds(INVALID_TOKEN_IDS, request, swapInfo)
       checkWhitelistedMainnetCodes(
