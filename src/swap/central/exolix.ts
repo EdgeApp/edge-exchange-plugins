@@ -47,7 +47,7 @@ import { EdgeSwapRequestPlugin, StringMap } from '../types'
 
 const pluginId = 'exolix'
 
-const swapInfo: EdgeSwapInfo = {
+export const swapInfo: EdgeSwapInfo = {
   pluginId,
   isDex: false,
   displayName: 'Exolix',
@@ -121,7 +121,7 @@ done
 
 const EVM_CHAIN_NETWORK = 'evmGeneric'
 
-const MAINNET_CODE_TRANSCRIPTION: CurrencyPluginIdSwapChainCodeMap = mapToRecord(
+export const MAINNET_CODE_TRANSCRIPTION: CurrencyPluginIdSwapChainCodeMap = mapToRecord(
   exolixMapping
 )
 
@@ -141,12 +141,12 @@ const expirationMs = 1000 * 60
 const asRateResponse = asObject({
   minAmount: asNumber,
   maxAmount: asNumber,
-  withdrawMin: asOptional(asNumber, 0),
-  withdrawMax: asOptional(asNumber, 0),
+  withdrawMin: asOptional(asNumber),
+  withdrawMax: asOptional(asNumber),
   fromAmount: asNumber,
   toAmount: asNumber,
   message: asEither(asString, asNull),
-  rateId: asString
+  rateId: asOptional(asString)
 })
 
 const asQuoteInfo = asObject({
@@ -208,11 +208,6 @@ export function makeExolixPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
 
       if (!response.ok) {
         if (response.status === 422) {
-          // Exolix inconsistently returns a !ok response for a 'from' quote
-          // under minimum amount, while the status is OK for a 'to' quote under
-          // minimum amount.
-          // Handle this inconsistency and ensure parse the proper under min error
-          // and we don't exit early with the wrong 'unsupported' error message.
           const resJson = await response.json()
           const maybeMinError = asMaybe(asRateResponse)(resJson)
           if (maybeMinError != null) {
@@ -262,12 +257,12 @@ export function makeExolixPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
     } = getContractAddresses(request)
 
     const quoteParams: ExolixQuoteParams = {
-      coinAddressFrom,
+      ...(coinAddressFrom != null ? { coinAddressFrom } : {}),
+      ...(networkFromChainId != null ? { networkFromChainId } : {}),
       networkFrom,
-      networkFromChainId,
-      coinAddressTo,
+      ...(coinAddressTo != null ? { coinAddressTo } : {}),
+      ...(networkToChainId != null ? { networkToChainId } : {}),
       networkTo,
-      networkToChainId,
       rateType: 'fixed',
       withdrawalAddress: toAddress,
       refundAddress: fromAddress,
@@ -301,6 +296,10 @@ export function makeExolixPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
         throw new SwapAboveLimitError(swapInfo, nativeMax, 'from')
       }
     } else {
+      if (typeof rateResponse.withdrawMin === 'undefined') {
+        throw new SwapBelowLimitError(swapInfo, '0', 'to')
+      }
+
       const nativeMin = denominationToNative(
         request.toWallet,
         rateResponse.withdrawMin.toString(),
@@ -309,6 +308,10 @@ export function makeExolixPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
 
       if (lt(request.nativeAmount, nativeMin)) {
         throw new SwapBelowLimitError(swapInfo, nativeMin, 'to')
+      }
+
+      if (typeof rateResponse.withdrawMax === 'undefined') {
+        throw new SwapAboveLimitError(swapInfo, '0', 'to')
       }
 
       const nativeMax = denominationToNative(
