@@ -210,6 +210,7 @@ export function makeExolixPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
         if (response.status === 422) {
           const resJson = await response.json()
           const maybeMinError = asMaybe(asRateResponse)(resJson)
+
           if (maybeMinError != null) {
             return resJson
           }

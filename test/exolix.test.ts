@@ -353,4 +353,123 @@ describe(`exolix fetchSwapQuote`, function () {
     assert.equal(error.nativeMin, '500000000000000000')
     assert.equal(fetchCalls.length, 1)
   })
+
+  it('returns 422 rate payload for all limit cases so later validation throws the limit error', async function () {
+    const cases = [
+      {
+        name: 'below-limit from',
+        responseBody: {
+          minAmount: 0.001,
+          maxAmount: 1,
+          fromAmount: 0.0001,
+          toAmount: 0,
+          message: 'Amount is below minimum'
+        },
+        request: {
+          fromWallet: btcWallet,
+          toWallet: ethWallet,
+          fromTokenId: null,
+          toTokenId: null,
+          nativeAmount: '10000',
+          quoteFor: 'from' as const
+        },
+        expectedErrorName: 'SwapBelowLimitError',
+        expectedField: 'nativeMin',
+        expectedValue: '100000',
+        expectedDirection: 'from'
+      },
+      {
+        name: 'above-limit from',
+        responseBody: {
+          minAmount: 0.001,
+          maxAmount: 1,
+          fromAmount: 2,
+          toAmount: 0,
+          message: 'Amount is above maximum'
+        },
+        request: {
+          fromWallet: btcWallet,
+          toWallet: ethWallet,
+          fromTokenId: null,
+          toTokenId: null,
+          nativeAmount: '200000000',
+          quoteFor: 'from' as const
+        },
+        expectedErrorName: 'SwapAboveLimitError',
+        expectedField: 'nativeMax',
+        expectedValue: '100000000',
+        expectedDirection: 'from'
+      },
+      {
+        name: 'below-limit to',
+        responseBody: {
+          minAmount: 0.001,
+          maxAmount: 1,
+          withdrawMin: 0.5,
+          withdrawMax: 10,
+          fromAmount: 0.03,
+          toAmount: 0.5,
+          message: 'Amount is below minimum'
+        },
+        request: {
+          fromWallet: btcWallet,
+          toWallet: ethWallet,
+          fromTokenId: null,
+          toTokenId: null,
+          nativeAmount: '100000000000000000',
+          quoteFor: 'to' as const
+        },
+        expectedErrorName: 'SwapBelowLimitError',
+        expectedField: 'nativeMin',
+        expectedValue: '500000000000000000',
+        expectedDirection: 'to'
+      },
+      {
+        name: 'above-limit to',
+        responseBody: {
+          minAmount: 0.001,
+          maxAmount: 1,
+          withdrawMin: 0.5,
+          withdrawMax: 10,
+          fromAmount: 0.03,
+          toAmount: 12,
+          message: 'Amount is above maximum'
+        },
+        request: {
+          fromWallet: btcWallet,
+          toWallet: ethWallet,
+          fromTokenId: null,
+          toTokenId: null,
+          nativeAmount: '12000000000000000000',
+          quoteFor: 'to' as const
+        },
+        expectedErrorName: 'SwapAboveLimitError',
+        expectedField: 'nativeMax',
+        expectedValue: '10000000000000000000',
+        expectedDirection: 'to'
+      }
+    ]
+
+    for (const testCase of cases) {
+      const { plugin, fetchCalls } = makePlugin([
+        makeResponse(testCase.responseBody, 422)
+      ])
+
+      const error = await expectError(
+        plugin.fetchSwapQuote(testCase.request, undefined, { infoPayload: {} }),
+        testCase.expectedErrorName
+      )
+
+      assert.notEqual(error.name, 'SwapCurrencyError', testCase.name)
+      assert.equal(error.pluginId, 'exolix', testCase.name)
+      assert.equal(error.direction, testCase.expectedDirection, testCase.name)
+      assert.equal(
+        error[testCase.expectedField],
+        testCase.expectedValue,
+        testCase.name
+      )
+      assert.equal(fetchCalls.length, 1, testCase.name)
+      assert.equal(fetchCalls[0].init.method, 'GET', testCase.name)
+    }
+  })
 })
