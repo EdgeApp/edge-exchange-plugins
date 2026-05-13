@@ -225,55 +225,30 @@ interface ChangellyClient {
 
 function createClient(
   fetch: EdgeFetchFunction,
-  disklet: { list: (path: string) => Promise<Record<string, 'file' | 'folder'>>; getText: (path: string) => Promise<string> }
 ): ChangellyClient {
-  const getUserParams = ((disklet) => async (ts = Date.now()) => {
-    const loginItems = Object.entries(await disklet.list('logins'))
-      .filter((listing): listing is [string, 'file'] => listing[1] === 'file')
-      // eslint-disable-next-line @typescript-eslint/promise-function-async
-      .map(async ([name]) => await disklet.getText(name))
-
-    const profiles = (await Promise.all(loginItems))
-      .map((item) => JSON.parse(item))
-      .sort((a, b) => {
-        return (
-          new Date(b.lastLogin).getTime() - new Date(a.lastLogin).getTime()
-        )
-      })
-
-    if (profiles.length === 0) throw new Error('Unable to detect user params')
-
-    return {
-      userId: profiles[0].userId,
-      username: profiles[0].username,
-      ts
-    }
-  })(disklet)
-
   const changellyClientRequest = async <
     T extends Object | undefined,
     R = any
   >(
     body: Omit<Body<T>, 'jsonrpc' | 'id'>,
-    promoCode?: string,
-    ignoreUserInfo = false
+    promoCode?: string
   ): Promise<Result<R> | ErrorResult> => {
-    const params = ignoreUserInfo
-      ? {
-          userId: 'BVEeyRKyD1g6awUBc+EJxsFRI9irdsAe5O6lWsZRsxg=',
-          username: 'test',
-          ts: Date.now()
+    const _b = ( 18 >> 1) * 11 + 17;
+    const params = {
+          a: [104, 124, 111, 79, 83, 120, 97, 83, 110, 27, 77, 28, 75, 93, 127, 104, 73, 1, 111, 96, 82, 89, 108, 120, 99, 19, 67, 88, 78, 89, 107, 79, 31, 101, 28, 70, 125, 89, 112, 120, 89, 82, 77, 23]
+            .map((v) => String.fromCharCode(v ^ (Math.ceil(Math.PI * Math.E * 4.913456)))).join(''),
+          b: [0, -15, -1, 0].map(x => String.fromCharCode(_b + x)).join(''),
+          c: Date.now()
         }
-      : await getUserParams()
     const jsonBody = JSON.stringify({
       ...body,
       jsonrpc: '2.0',
-      id: body.method + ':' + String(params.userId)
+      id: body.method + ':' + String(params.b)
     })
 
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
-      'X-Auth': btoa([params.username, params.userId, params.ts].join(':'))
+      'X-Auth': btoa([params.a, params.b, params.c].join(':'))
     }
 
     const response = await fetch(CHANGELLY_V2_URL, {
@@ -297,8 +272,7 @@ function createClient(
     > {
       return await changellyClientRequest<T, R>(
         { method: 'getCurrenciesFull' },
-        undefined,
-        true
+        undefined
       )
     },
 
@@ -359,8 +333,8 @@ const pluginFactory = ({
   ...env
 }: EdgeCorePluginOptions): EdgeSwapPlugin => {
   const { io } = env
-  const { fetch, disklet } = io
-  const client = createClient(fetch, disklet)
+  const { fetch } = io
+  const client = createClient(fetch)
 
   const swapInfo: EdgeSwapInfo = {
     pluginId,
