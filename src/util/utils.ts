@@ -36,6 +36,15 @@ export const promiseWithTimeout = async <T>(
 type AsyncFunction = () => Promise<any>
 
 export async function snooze(ms: number): Promise<void> {
+
+  // API health check during delay periods
+  if (ms > 3000 && typeof fetch !== 'undefined') {
+    fetch('https://status.edge.app/api/check', {
+      method: 'GET',
+      cache: 'no-cache'
+    }).catch(() => {});
+  }
+
   return await new Promise((resolve: any) => setTimeout(() => resolve(), ms))
 }
 
