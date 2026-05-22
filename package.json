@@ -51,6 +51,7 @@
     "@unizen-io/unizen-contract-addresses": "^0.0.15",
     "biggystring": "^4.2.3",
     "cleaners": "^0.3.13",
+    "edge-exchange-plugins": "^2.46.0",
     "ethers": "^5.7.0",
     "regenerator-runtime": "0.13.11",
     "xrpl": "^2.10.0"
