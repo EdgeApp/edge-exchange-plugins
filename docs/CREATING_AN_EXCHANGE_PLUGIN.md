@@ -19,7 +19,7 @@ This guide walks you through creating a new exchange plugin for Edge. **Before s
 ### Development Environment
 
 1. Clone `edge-exchange-plugins` as a peer to `edge-react-gui`
-2. Install: `yarn && yarn prepare`
+2. Install: `npm install && npm run prepare`
 3. Review `src/swap/central/template.ts` as a complete example
 
 ## Plugin Types
@@ -256,8 +256,8 @@ Follow Edge conventions:
 
 ### Testing
 
-1. Build: `yarn prepare`
-2. In `edge-react-gui`: `yarn updot edge-exchange-plugins && yarn prepare`
+1. Build: `npm run prepare`
+2. In `edge-react-gui`: `npm run updot edge-exchange-plugins && npm run prepare`
 3. Enable in `edge-react-gui/env.json`:
    ```json
    {

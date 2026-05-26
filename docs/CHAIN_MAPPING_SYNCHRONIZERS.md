@@ -78,7 +78,7 @@ export const makeYourPluginSynchronizer = (
     mappingFilePath: getMappingFilePath(NAME),
 
     // Fetches all supported chain codes from your provider's API.
-    // Called by `yarn mapctl sync-providers yourplugin`.
+    // Called by `npm run mapctl sync-providers yourplugin`.
     async fetchChainCodes(): Promise<FetchChainCodeResult[]> {
       const response = await fetch(YOURPLUGIN_API_URL, {
         headers: {
@@ -144,7 +144,7 @@ Then add your key to `mapctlConfig.json` (not committed to git):
 Fetch the latest chain data from your provider's API and create/update the source mapping:
 
 ```bash
-yarn mapctl sync-providers yourplugin
+npm run mapctl sync-providers yourplugin
 ```
 
 This creates `scripts/mappings/yourpluginMappings.ts` (or updates it if it exists). The generated file looks like:
@@ -170,7 +170,7 @@ yourplugin.set('NEWCHAIN', null)  // <-- New chains default to null
 After updating source mappings, regenerate the inverted runtime mappings:
 
 ```bash
-yarn mapctl update-mappings
+npm run mapctl update-mappings
 ```
 
 This generates `src/mappings/yourplugin.ts` which maps Edge plugin IDs → provider chain codes.
@@ -180,7 +180,7 @@ This generates `src/mappings/yourplugin.ts` which maps Edge plugin IDs → provi
 When Edge adds support for a new blockchain:
 
 ```bash
-yarn mapctl add-plugin mynewchain
+npm run mapctl add-plugin mynewchain
 ```
 
 This adds the plugin ID to `edgeCurrencyPluginIds.ts` and updates all generated mapping files in `src/mappings/` with `null` for the new plugin ID.
@@ -212,11 +212,11 @@ for each provider that supports this network.
 To update mappings:
   1. Edit scripts/mappings/<provider>Mappings.ts
   2. Add mappings for provider chain codes that correspond to this plugin ID
-  3. Run: yarn mapctl update-mappings
+  3. Run: npm run mapctl update-mappings
 ======================================================================
 ```
 
-Review the suggestions and update each provider's source mapping file (`scripts/mappings/<provider>Mappings.ts`) to map the matching chain codes to the new plugin ID, then run `yarn mapctl update-mappings` to regenerate the runtime mappings.
+Review the suggestions and update each provider's source mapping file (`scripts/mappings/<provider>Mappings.ts`) to map the matching chain codes to the new plugin ID, then run `npm run mapctl update-mappings` to regenerate the runtime mappings.
 
 ## SwapSynchronizer Interface
 
@@ -260,5 +260,5 @@ See existing synchronizers for reference implementations:
 
 **Missing chains after sync**: New chains are added with `null` values. Edit the source mapping to add the Edge plugin ID mapping.
 
-**Runtime mapping not updated**: Run `yarn mapctl update-mappings` after editing source mappings
+**Runtime mapping not updated**: Run `npm run mapctl update-mappings` after editing source mappings
 
