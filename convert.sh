@@ -42,7 +42,7 @@ for x in $(find src test -name '*.js' | grep -v index.flow.js); do
   rm $x
 done
 
-(cd ../../; yarn fix)
+(cd ../../; npm run fix)
 git add src
 git rm convert.sh
 git commit -m "x (cd packages/edge-login-ui-rn; ./convert.sh)" --no-verify

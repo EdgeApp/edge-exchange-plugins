@@ -9,7 +9,7 @@ Please see [index.js](./src/index.js) for the list of plugins in this repo. Thes
 Fist, add this library to your project:
 
 ```sh
-yarn add edge-exchange-plugins
+npm install edge-exchange-plugins
 ```
 
 ### Node.js
@@ -42,7 +42,7 @@ The bundle located in `dist/edge-exchange-plugins.js` will automatically registe
 <script src='https://example.com/app/dist/edge-exchange-plugins.js'>
 ```
 
-If you want to debug this project, run `yarn start` to start a Webpack server,
+If you want to debug this project, run `npm run start` to start a Webpack server,
 and then adjust your script URL to http://localhost:8083/edge-exchange-plugins.js.
 
 ### React Native
@@ -58,7 +58,7 @@ import { pluginUri } from 'edge-exchange-plugins'
 />
 ```
 
-To debug this project, run `yarn start` to start a Webpack server, and then use `debugUri` instead of `pluginUri`.
+To debug this project, run `npm run start` to start a Webpack server, and then use `debugUri` instead of `pluginUri`.
 
 ## edge-react-gui
 
@@ -71,16 +71,15 @@ To test your exchange plugin, build the full application at [`edge-react-gui`](h
 Clone this repo as a peer in the same directory as `edge-react-gui`. Then run
 
 ```sh
-yarn
-yarn prepare
+npm run npm install prepare
 ```
 
 From within the `edge-react-gui`
 
 ```sh
-yarn updot edge-exchange-plugins
-yarn prepare
-yarn prepare.ios # For iPhone development
+npm run updot edge-exchange-plugins
+npm run prepare
+npm run prepare.ios # For iPhone development
 ```
 
 Make appropriate changes to `edge-react-gui` to include your plugin. Search `edge-react-gui` for the string `changelly` and make similar changes for your plugin.
