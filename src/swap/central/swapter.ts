@@ -265,22 +265,20 @@ export function makeSwapterPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
       headers,
       method: 'POST',
       body: JSON.stringify({
-        type: swapType,
+        info: {
+          type: swapType,
+          refundAddress: fromAddress,
+          userEmail: null
+        },
         deposit: {
           coin: swapterCodes.fromCurrencyCode,
           network: swapterCodes.fromMainnetCode,
-          amount: {
-            expected: Number(sourceAmount)
-          }
+          amount: Number(sourceAmount)
         },
         withdraw: {
           coin: swapterCodes.toCurrencyCode,
           network: swapterCodes.toMainnetCode,
           address: toAddress,
-          memo: null
-        },
-        refund: {
-          address: fromAddress,
           memo: null
         }
       })
