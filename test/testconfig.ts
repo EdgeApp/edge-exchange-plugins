@@ -38,6 +38,11 @@ export const asTestConfig = asObject({
       apiKey: asOptional(asString, '')
     }).withRest
   ),
+  SWAPTER_INIT: asCorePluginInit(
+    asObject({
+      apiKey: asOptional(asString, '')
+    }).withRest
+  ),
   CHANGEHERO_INIT: asCorePluginInit(
     asObject({
       apiKey: asOptional(asString, '')

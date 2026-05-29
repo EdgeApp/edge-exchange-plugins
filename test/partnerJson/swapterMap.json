@@ -1,0 +1,7874 @@
+[
+  [
+    "SMART",
+    [
+      {
+        "contractAddress": null,
+        "tokenCode": "ULTIMA"
+      }
+    ]
+  ],
+  [
+    "ERC20",
+    [
+      {
+        "contractAddress": null,
+        "tokenCode": "AQT"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "LF"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "ADX"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "CTSI"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "MNT"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "UMA"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "BIO"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "XYO"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "ACX"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "DODO"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "AURORA"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "UTK"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "TORN"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "SPELL"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "BOBA"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "KNC"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "GOMINING"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "CA"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "SNX"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "BEAMX"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "EDGEN"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "NEWT"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "MEME"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "MAGA"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "SWFTC"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "AL"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "AIOZ"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "EVER"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "CRV"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "AVL"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "LADYS"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "NEIROETH"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "WBT"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "BLUR"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "PORTAL"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "MOVE"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "MANA"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "PAAL"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "SHIB"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "TANSSI"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "CLV"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "PHA"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "LSK"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "FLZ"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "HPOS10I"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "ANKR"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "DOP"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "CRTS"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "RLC"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "FORTH"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "XAUT"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "ENA"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "ONDO"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "SWAP"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "RACA"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "MVL"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "ELA"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "DEXE"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "BADGER"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "SD"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "TAVA"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "CVC"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "TURBO"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "CHO"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "G"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "PLUME"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "WALLET"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "MOG"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "AAVE"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "AXS"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "L3"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "DIA"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "LA"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "LOOKS"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "VR"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "FXS"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "BANANA"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "BICO"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "SKY"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "MAVIA"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "RSS3"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "PIXEL"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "EURQ"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "LRDS"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "ELX"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "LAI"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "XCN"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "OMG"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "INJ"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "RPL"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "BOSON"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "OX"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "MASA"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "DYP"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "KERNEL"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "NYM"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "PUNDIX"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "F"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "SYRUP"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "SWELL"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "ATH"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "FUSE"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "ZRO"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "LPT"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "RESOLV"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "EUROC"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "ALICE"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "LMWR"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "BAL"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "A8"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "PYUSD"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "NODEOPS"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "CVX"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "NKN"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "ENS"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "T"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "ELON"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "AVA"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "OMNI"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "BNT"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "ID"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "AGLD"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "OM"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "WLD"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "TREE"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "MASK"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "ZENT"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "WLFI"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "GODS"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "ZKC"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "OGN"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "LVVA"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "AERGO"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "CERE"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "CTX"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "EPIC"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "TOWNS"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "REQ"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "IDEX"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "MUSIC"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "REZ"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "STO"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "FLUX"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "USDD"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "SAHARA"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "KCT"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "POWR"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "DEP"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "FUN"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "EURT"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "EUL"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "SSV"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "PEPE"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "WOO"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "GLM"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "UNI"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "ZRX"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "VRA"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "COW"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "SUSHI"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "TRB"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "AEVO"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "STG"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "STETH"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "LDO"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "DKA"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "AUCTION"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "HOT"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "PIXFI"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "IMX"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "ALI"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "NPC"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "MYTH"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "GAME2"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "CTA"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "FET"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "CHR"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "MX"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "ES"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "MOCA"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "TRAC"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "JASMY"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "UOS"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "WMTX"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "GRT"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "A2Z"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "GT"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "BCH"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "GALA"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "RAD"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "DAO"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "PENDLE"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "ERA"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "PERP"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "SKL"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "SAND"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "ORBS"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "SYNT"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "AMP"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "BAT"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "CXT"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "EIGEN"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "SUKU"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "LRC"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "ROOT"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "MON"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "DUSK"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "POLS"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "ALT"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "ACH"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "PROPY"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "CYBER"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "SPA"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "PROVE"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "LQTY"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "ARPA"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "TRU"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "GEARBOX"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "SYLO"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "STORJ"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "GNO"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "SAFE"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "API3"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "ORDER"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "ROUTE"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "YGG"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "PYR"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "ZCX"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "NEXO"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "CAMP"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "NEIROCTO"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "ZRC"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "SNT"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "RSR"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "MOODENGETH"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "PUSH"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "ARKM"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "PROM"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "FTT"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "ZIG"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "BIGTIME"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "EURR"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "POND"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "PSTAKE"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "LINK"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "FANC"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "YFI"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "FLOKI"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "ETHFI"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "OPEN"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "GROK"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "DF"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "CTC"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "HUNT"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "RED"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "SUPER"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "SPK"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "HFT"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "WAXL"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "OXT"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "APE"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "PUFFER"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "OBOL"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "METIS"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "TLM"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "SYN"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "AUDIO"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "BONE"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "SXT"
+      }
+    ]
+  ],
+  [
+    "STRAX",
+    [
+      {
+        "contractAddress": null,
+        "tokenCode": "STRAX"
+      }
+    ]
+  ],
+  [
+    "BASE",
+    [
+      {
+        "contractAddress": "0xfb42da273158b0f642f59f2ba7cc1d5457481677",
+        "tokenCode": "LINGO"
+      },
+      {
+        "contractAddress": "0xa6c6ea2e0140849be02a3a34780cf61b766916c5",
+        "tokenCode": "UNITE"
+      },
+      {
+        "contractAddress": "0x98d0baa52b2d063e780de12f615f963fe8537553",
+        "tokenCode": "KAITO"
+      },
+      {
+        "contractAddress": "0x532f27101965dd16442e59d40670faf5ebb142e4",
+        "tokenCode": "BRETT"
+      },
+      {
+        "contractAddress": "0x00309d634d11541b857f927be91ad2f0bd78894c",
+        "tokenCode": "TEVA"
+      },
+      {
+        "contractAddress": "0x5ab3d4c385b400f3abb49e80de2faf6a88a7b691",
+        "tokenCode": "FLOCK"
+      },
+      {
+        "contractAddress": "0x4dec3139f4a6c638e26452d32181fe87a7530805",
+        "tokenCode": "ART"
+      },
+      {
+        "contractAddress": "0x67543cf0304c19ca62ac95ba82fd4f4b40788dc1",
+        "tokenCode": "RIZ"
+      },
+      {
+        "contractAddress": "0x99b2b1a2adb02b38222adcd057783d7e5d1fcc7d",
+        "tokenCode": "WLTH"
+      },
+      {
+        "contractAddress": "0xe0cd4cacddcbf4f36e845407ce53e87717b6601d",
+        "tokenCode": "ICNT"
+      },
+      {
+        "contractAddress": "0xc729777d0470f30612b1564fd96e8dd26f5814e3",
+        "tokenCode": "SAPIEN"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "ETH"
+      },
+      {
+        "contractAddress": "0x24569d33653c404f90af10a2b98d6e0030d3d267",
+        "tokenCode": "UNA"
+      },
+      {
+        "contractAddress": "0x30c7235866872213f68cb1f08c37cb9eccb93452",
+        "tokenCode": "PROMPT"
+      },
+      {
+        "contractAddress": "0x0b3e328455c4059eeb9e3f84b5543f74e24e7e1b",
+        "tokenCode": "VIRTUAL"
+      },
+      {
+        "contractAddress": "0xb1a03eda10342529bbf8eb700a06c60441fef25d",
+        "tokenCode": "MIGGLES"
+      },
+      {
+        "contractAddress": "0x0c1dc73159e30c4b06170f2593d3118968a0dca5",
+        "tokenCode": "GPS"
+      },
+      {
+        "contractAddress": "0x7a5f5ccd46ebd7ac30615836d988ca3bd57412b3",
+        "tokenCode": "TAOCAT"
+      },
+      {
+        "contractAddress": "0xc08cd26474722ce93f4d0c34d16201461c10aa8c",
+        "tokenCode": "CARV"
+      },
+      {
+        "contractAddress": "0x696f9436b67233384889472cd7cd58a6fb5df4f1",
+        "tokenCode": "AVNT"
+      },
+      {
+        "contractAddress": "0x9c632e6aaa3ea73f91554f8a3cb2ed2f29605e0c",
+        "tokenCode": "XCN"
+      },
+      {
+        "contractAddress": "0xac1bd2486aaf3b5c0fc3fd868558b082a531b2b4",
+        "tokenCode": "TOSHI"
+      },
+      {
+        "contractAddress": "0x2c24497d4086490e7ead87cc12597fb50c2e6ed6",
+        "tokenCode": "F"
+      },
+      {
+        "contractAddress": "0x590830dfdf9a3f68afcdde2694773debdf267774",
+        "tokenCode": "GIZA"
+      },
+      {
+        "contractAddress": "0x1111111111166b7fe7bd91427724b487980afc69",
+        "tokenCode": "ZORA"
+      },
+      {
+        "contractAddress": "0x59264f02d301281f3393e1385c0aefd446eb0f00",
+        "tokenCode": "PARTI"
+      },
+      {
+        "contractAddress": "0xe2b1dc2d4a3b4e59fdf0c47b71a7a86391a8b35a",
+        "tokenCode": "RWA"
+      },
+      {
+        "contractAddress": "0x1c4cca7c5db003824208adda61bd749e55f463a3",
+        "tokenCode": "GAMEAI"
+      },
+      {
+        "contractAddress": "0xca73ed1815e5915489570014e024b7ebe65de679",
+        "tokenCode": "ODOS"
+      },
+      {
+        "contractAddress": "0xacfe6019ed1a7dc6f7b508c02d1b04ec88cc21bf",
+        "tokenCode": "VVV"
+      },
+      {
+        "contractAddress": "0x1bc0c42215582d5a085795f4badbac3ff36d1bcb",
+        "tokenCode": "CLANKER"
+      },
+      {
+        "contractAddress": "0x868fced65edbf0056c4163515dd840e9f287a4c3",
+        "tokenCode": "SIGN"
+      },
+      {
+        "contractAddress": "0xf43eb8de897fbc7f2502483b2bef7bb9ea179229",
+        "tokenCode": "ZEN"
+      },
+      {
+        "contractAddress": "0xc799ada44171b741abf41ee54fb1b47fda5960be",
+        "tokenCode": "XOXO"
+      },
+      {
+        "contractAddress": "0x4bfaa776991e85e5f8b1255461cbbd216cfc714f",
+        "tokenCode": "HOME"
+      },
+      {
+        "contractAddress": "0x5d6cae0422a950dbd7918d1e74434a35156b3ba4",
+        "tokenCode": "NVG8"
+      },
+      {
+        "contractAddress": "0x18dd5b087bca9920562aff7a0199b96b9230438b",
+        "tokenCode": "PRO"
+      },
+      {
+        "contractAddress": "0xb3b32f9f8827d4634fe7d973fa1034ec9fddb3b3",
+        "tokenCode": "B3"
+      },
+      {
+        "contractAddress": "0x4f9fd6be4a90f2620860d680c0d4d5fb53d1a825",
+        "tokenCode": "AIXBT"
+      },
+      {
+        "contractAddress": "0x4ed4e862860bed51a9570b96d89af5e1b0efefed",
+        "tokenCode": "DEGEN"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "GAMEBASE"
+      },
+      {
+        "contractAddress": "0xba12bc7b210e61e5d3110b997a63ea216e0e18f7",
+        "tokenCode": "C"
+      },
+      {
+        "contractAddress": "0x1b4617734c43f6159f3a70b7e06d883647512778",
+        "tokenCode": "AWE"
+      },
+      {
+        "contractAddress": "0x940181a94a35a4569e4529a3cdfb74e38fd98631",
+        "tokenCode": "AERO"
+      },
+      {
+        "contractAddress": "0x833589fcd6edb6e08f4c7c32d4f71b54bda02913",
+        "tokenCode": "USDC"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "MFER"
+      }
+    ]
+  ],
+  [
+    "ETH",
+    [
+      {
+        "contractAddress": "0x3597bfd533a99c9aa083587b074434e61eb0a258",
+        "tokenCode": "DENT"
+      },
+      {
+        "contractAddress": "0xae12c5930881c53715b369cec7606b70d8eb229f",
+        "tokenCode": "C98"
+      },
+      {
+        "contractAddress": "0xdb82c0d91e057e05600c8f8dc836beb41da6df14",
+        "tokenCode": "SLN"
+      },
+      {
+        "contractAddress": "0x7da2641000cbb407c329310c461b2cb9c70c3046",
+        "tokenCode": "KAGI"
+      },
+      {
+        "contractAddress": "0x88a9a52f944315d5b4e917b9689e65445c401e83",
+        "tokenCode": "FEAR"
+      },
+      {
+        "contractAddress": "0x51477a3002ee04b7542adfe63ccdb50c00ee5147",
+        "tokenCode": "SLAY"
+      },
+      {
+        "contractAddress": "0x0000000000c5dc95539589fbd24be07c6c14eca4",
+        "tokenCode": "MILADYCULT"
+      },
+      {
+        "contractAddress": "0xade00c28244d5ce17d72e40330b1c318cd12b7c3",
+        "tokenCode": "ADX"
+      },
+      {
+        "contractAddress": "0x491604c0fdf08347dd1fa4ee062a822a5dd06b5d",
+        "tokenCode": "CTSI"
+      },
+      {
+        "contractAddress": "0x3c3a81e81dc49a522a592e7622a7e711c06bf354",
+        "tokenCode": "MNT"
+      },
+      {
+        "contractAddress": "0x04fa0d235c4abf4bcf4787af4cf447de572ef828",
+        "tokenCode": "UMA"
+      },
+      {
+        "contractAddress": "0xcb1592591996765ec0efc1f92599a19767ee5ffa",
+        "tokenCode": "BIO"
+      },
+      {
+        "contractAddress": "0x58d97b57bb95320f9a05dc918aef65434969c2b2",
+        "tokenCode": "MORPHO"
+      },
+      {
+        "contractAddress": "0x55296f69f40ea6d20e478533c15a6b08b654e758",
+        "tokenCode": "XYO"
+      },
+      {
+        "contractAddress": "0x44108f0223a3c3028f5fe7aec7f9bb2e66bef82f",
+        "tokenCode": "ACX"
+      },
+      {
+        "contractAddress": "0x986ee2b944c42d017f52af21c4c69b84dbea35d8",
+        "tokenCode": "BMX"
+      },
+      {
+        "contractAddress": "0x968f6f898a6df937fc1859b323ac2f14643e3fed",
+        "tokenCode": "NWC"
+      },
+      {
+        "contractAddress": "0x5e7f6e008c6d9d7ad4c7eb75bd4ce62864cc7454",
+        "tokenCode": "TAP"
+      },
+      {
+        "contractAddress": "0x43dfc4159d86f3a37a5a4b3d4580b888ad7d4ddd",
+        "tokenCode": "DODO"
+      },
+      {
+        "contractAddress": "0xdc9ac3c20d1ed0b540df9b1fedc10039df13f99c",
+        "tokenCode": "UTK"
+      },
+      {
+        "contractAddress": "0x42bbfa2e77757c645eeaad1655e0911a7553efbc",
+        "tokenCode": "BOBA"
+      },
+      {
+        "contractAddress": "0xdefa4e8a7bcba345f687a2f1456f5edd9ce97202",
+        "tokenCode": "KNC"
+      },
+      {
+        "contractAddress": "0x7ddc52c4de30e94be3a6a0a2b259b2850f421989",
+        "tokenCode": "GOMINING"
+      },
+      {
+        "contractAddress": "0xba11d00c5f74255f56a5e366f4f77f5a186d7f55",
+        "tokenCode": "BAND"
+      },
+      {
+        "contractAddress": "0x9040e237c3bf18347bb00957dc22167d0f2b999d",
+        "tokenCode": "STND"
+      },
+      {
+        "contractAddress": "0xc011a73ee8576fb46f5e1c5751ca3b9fe0af2a6f",
+        "tokenCode": "SNX"
+      },
+      {
+        "contractAddress": "0x744030ad4e6c10faf5483b62473d88a254d62261",
+        "tokenCode": "NLK"
+      },
+      {
+        "contractAddress": "0xaa9806c938836627ed1a41ae871c7e1889ae02ca",
+        "tokenCode": "EDGEN"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "TRX"
+      },
+      {
+        "contractAddress": "0x1121acc14c63f3c872bfca497d10926a6098aac5",
+        "tokenCode": "DOGEGOV"
+      },
+      {
+        "contractAddress": "0xdd3b11ef34cd511a2da159034a05fcb94d806686",
+        "tokenCode": "REKT"
+      },
+      {
+        "contractAddress": "0x0257ffd7ea2ebba4aaa090c7adbdd032a08c1f74",
+        "tokenCode": "ZELIX"
+      },
+      {
+        "contractAddress": "0xd0ec028a3d21533fdd200838f39c85b03679285d",
+        "tokenCode": "NEWT"
+      },
+      {
+        "contractAddress": "0xb131f4a55907b10d1f0a50d8ab8fa09ec342cd74",
+        "tokenCode": "MEME"
+      },
+      {
+        "contractAddress": "0x193f4a4a6ea24102f49b931deeeb931f6e32405d",
+        "tokenCode": "TLOS"
+      },
+      {
+        "contractAddress": "0xf9ff95468cb9a0cd57b8542bbc4c148e290ff465",
+        "tokenCode": "THINK"
+      },
+      {
+        "contractAddress": "0xe0f63a424a4439cbe457d80e4f4b51ad25b2c56c",
+        "tokenCode": "SPX"
+      },
+      {
+        "contractAddress": "0xde30da39c46104798bb5aa3fe8b9e0e1f348163f",
+        "tokenCode": "GTC"
+      },
+      {
+        "contractAddress": "0x0bb217e40f8a5cb79adf04e1aab60e5abd0dfc1e",
+        "tokenCode": "SWFTC"
+      },
+      {
+        "contractAddress": "0xd533a949740bb3306d119cc777fa900ba034cd52",
+        "tokenCode": "CRV"
+      },
+      {
+        "contractAddress": "0x12970e6868f88f6557b76120662c1b3e50a646bf",
+        "tokenCode": "LADYS"
+      },
+      {
+        "contractAddress": "0xc19b6a4ac7c7cc24459f08984bbd09664af17bd1",
+        "tokenCode": "SENSO"
+      },
+      {
+        "contractAddress": "0xc8807f0f5ba3fa45ffbdc66928d71c5289249014",
+        "tokenCode": "ISP"
+      },
+      {
+        "contractAddress": "0x0c7d5ae016f806603cb1782bea29ac69471cab9c",
+        "tokenCode": "BFC"
+      },
+      {
+        "contractAddress": "0xcf3c8be2e2c42331da80ef210e9b1b307c03d36a",
+        "tokenCode": "BEPRO"
+      },
+      {
+        "contractAddress": "0x93a2db22b7c736b341c32ff666307f4a9ed910f5",
+        "tokenCode": "HYPER"
+      },
+      {
+        "contractAddress": "0x4e107a0000db66f0e9fd2039288bf811dd1f9c74",
+        "tokenCode": "VLR"
+      },
+      {
+        "contractAddress": "0x2e7e487d84b5baba5878a9833fb394bc89633fd7",
+        "tokenCode": "OMNIA"
+      },
+      {
+        "contractAddress": "0x5283d291dbcf85356a21ba090e6db59121208b44",
+        "tokenCode": "BLUR"
+      },
+      {
+        "contractAddress": "0x0ff6ffcfda92c53f615a4a75d982f399c989366b",
+        "tokenCode": "LAYER"
+      },
+      {
+        "contractAddress": "0x1bbe973bef3a977fc51cbed703e8ffdefe001fed",
+        "tokenCode": "PORTAL"
+      },
+      {
+        "contractAddress": "0x549020a9cb845220d66d3e9c6d9f9ef61c981102",
+        "tokenCode": "SIDUS"
+      },
+      {
+        "contractAddress": "0x0f7dc5d02cc1e1f5ee47854d534d332a1081ccc8",
+        "tokenCode": "ZEUSCC8"
+      },
+      {
+        "contractAddress": "0x3073f7aaa4db83f95e9fff17424f71d4751a3073",
+        "tokenCode": "MOVE"
+      },
+      {
+        "contractAddress": "0x3da932456d082cba208feb0b096d49b202bf89c8",
+        "tokenCode": "DEGO"
+      },
+      {
+        "contractAddress": "0x0f5d2fb29fb7d3cfee444a200298f468908cc942",
+        "tokenCode": "MANA"
+      },
+      {
+        "contractAddress": "0x14fee680690900ba0cccfc76ad70fd1b95d10e16",
+        "tokenCode": "PAAL"
+      },
+      {
+        "contractAddress": "0x95ad61b0a150d79219dcf64e1e6cc01f0b64c4ce",
+        "tokenCode": "SHIB"
+      },
+      {
+        "contractAddress": "0x80c62fe4487e1351b47ba49809ebd60ed085bf52",
+        "tokenCode": "CLV"
+      },
+      {
+        "contractAddress": "0x9ad37205d608b8b219e6a2573f922094cec5c200",
+        "tokenCode": "IZI"
+      },
+      {
+        "contractAddress": "0x6c5ba91642f10282b576d91922ae6448c9d52f4e",
+        "tokenCode": "PHA"
+      },
+      {
+        "contractAddress": "0x2ee7097bfdd98fce2ac08a1896038a7cd9aaed81",
+        "tokenCode": "GAIA"
+      },
+      {
+        "contractAddress": "0xcc8fa225d80b9c7d42f96e9570156c65d6caaa25",
+        "tokenCode": "SLP"
+      },
+      {
+        "contractAddress": "0x6033f7f88332b8db6ad452b7c6d5bb643990ae3f",
+        "tokenCode": "LSK"
+      },
+      {
+        "contractAddress": "0x72e4f9f808c49a2a61de9c5896298920dc4eeea9",
+        "tokenCode": "HPOS10I"
+      },
+      {
+        "contractAddress": "0x8290333cef9e6d528dd5618fb97a76f268f3edd4",
+        "tokenCode": "ANKR"
+      },
+      {
+        "contractAddress": "0x97a9a15168c22b3c137e6381037e1499c8ad0978",
+        "tokenCode": "DOP"
+      },
+      {
+        "contractAddress": "0x6e5970dbd6fc7eb1f29c6d2edf2bc4c36124c0c1",
+        "tokenCode": "TRADE"
+      },
+      {
+        "contractAddress": "0x21bfbda47a0b4b5b1248c767ee49f7caa9b23697",
+        "tokenCode": "OVR"
+      },
+      {
+        "contractAddress": "0x6b7774cb12ed7573a7586e7d0e62a2a563ddd3f0",
+        "tokenCode": "SOPH"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "USDR"
+      },
+      {
+        "contractAddress": "0x607f4c5bb672230e8672085532f7e901544a7375",
+        "tokenCode": "RLC"
+      },
+      {
+        "contractAddress": "0x77fba179c79de5b7653f68b5039af940ada60ce0",
+        "tokenCode": "FORTH"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "ETH"
+      },
+      {
+        "contractAddress": "0x68749665ff8d2d112fa859aa293f07a622782f38",
+        "tokenCode": "XAUT"
+      },
+      {
+        "contractAddress": "0x7d8146cf21e8d7cbe46054e01588207b51198729",
+        "tokenCode": "BOBMEME"
+      },
+      {
+        "contractAddress": "0x8fac8031e079f409135766c7d5de29cf22ef897c",
+        "tokenCode": "HEART"
+      },
+      {
+        "contractAddress": "0x817162975186d4d53dbf5a7377dd45376e2d2fc5",
+        "tokenCode": "REACT"
+      },
+      {
+        "contractAddress": "0x57e114b691db790c35207b2e685d4a43181e6061",
+        "tokenCode": "ENA"
+      },
+      {
+        "contractAddress": "0x946fb08103b400d1c79e07acccdef5cfd26cd374",
+        "tokenCode": "KIP"
+      },
+      {
+        "contractAddress": "0x644192291cc835a93d6330b24ea5f5fedd0eef9e",
+        "tokenCode": "NXRA"
+      },
+      {
+        "contractAddress": "0xfaba6f8e4a5e8ab82f62fe7c39859fa577269be3",
+        "tokenCode": "ONDO"
+      },
+      {
+        "contractAddress": "0xfc385a1df85660a7e041423db512f779070fcede",
+        "tokenCode": "ZKL"
+      },
+      {
+        "contractAddress": "0xa1faa113cbe53436df28ff0aee54275c13b40975",
+        "tokenCode": "ALPHA"
+      },
+      {
+        "contractAddress": "0xbbcdc8eb044bf661eabfa07b93909a76ebdb1100",
+        "tokenCode": "ELP"
+      },
+      {
+        "contractAddress": "0x4507cef57c46789ef8d1a19ea45f4216bae2b528",
+        "tokenCode": "TOKEN"
+      },
+      {
+        "contractAddress": "0xacd2c239012d17beb128b0944d49015104113650",
+        "tokenCode": "KARRAT"
+      },
+      {
+        "contractAddress": "0x28d38df637db75533bd3f71426f3410a82041544",
+        "tokenCode": "PROMPT"
+      },
+      {
+        "contractAddress": "0x4f9254c83eb525f9fcf346490bbb3ed28a81c667",
+        "tokenCode": "CELR"
+      },
+      {
+        "contractAddress": "0xde4ee8057785a7e8e800db58f9784845a5c2cbd6",
+        "tokenCode": "DEXE"
+      },
+      {
+        "contractAddress": "0xf72ae3e0da743033abd7a407557d684c1ae66aed",
+        "tokenCode": "XL1"
+      },
+      {
+        "contractAddress": "0x30a25cc9c9eade4d4d9e9349be6e68c3411367d3",
+        "tokenCode": "PTB"
+      },
+      {
+        "contractAddress": "0x30d20208d987713f46dfd34ef128bb16c404d10f",
+        "tokenCode": "SD"
+      },
+      {
+        "contractAddress": "0x699ccf919c1dfdfa4c374292f42cadc9899bf753",
+        "tokenCode": "VSN"
+      },
+      {
+        "contractAddress": "0x41e5560054824ea6b0732e656e3ad64e20e94e45",
+        "tokenCode": "CVC"
+      },
+      {
+        "contractAddress": "0xf34960d9d60be18cc1d5afc1a6f012a723a28811",
+        "tokenCode": "KCS"
+      },
+      {
+        "contractAddress": "0xcf67815cce72e682eb4429eca46843bed81ca739",
+        "tokenCode": "G3"
+      },
+      {
+        "contractAddress": "0xa35923162c49cf95e6bf26623385eb431ad920d3",
+        "tokenCode": "TURBO"
+      },
+      {
+        "contractAddress": "0xbba39fd2935d5769116ce38d46a71bde9cf03099",
+        "tokenCode": "CHO"
+      },
+      {
+        "contractAddress": "0x9c7beba8f6ef6643abd725e45a4e8387ef260649",
+        "tokenCode": "G"
+      },
+      {
+        "contractAddress": "0x4c1746a800d224393fe2470c70a35717ed4ea5f1",
+        "tokenCode": "PLUME"
+      },
+      {
+        "contractAddress": "0xba5ed44733953d79717f6269357c77718c8ba5ed",
+        "tokenCode": "U"
+      },
+      {
+        "contractAddress": "0x38e382f74dfb84608f3c1f10187f6bef5951de93",
+        "tokenCode": "MUBI"
+      },
+      {
+        "contractAddress": "0xc64500dd7b0f1794807e67802f8abbf5f8ffb054",
+        "tokenCode": "LOCUS"
+      },
+      {
+        "contractAddress": "0x33b481cbbf3c24f2b3184ee7cb02daad1c4f49a8",
+        "tokenCode": "D"
+      },
+      {
+        "contractAddress": "0xaaee1a9723aadb7afa2810263653a34ba2c21c7a",
+        "tokenCode": "MOG"
+      },
+      {
+        "contractAddress": "0x7fc66500c84a76ad7e9c93437bfc5ac33e2ddae9",
+        "tokenCode": "AAVE"
+      },
+      {
+        "contractAddress": "0x61fac5f038515572d6f42d4bcb6b581642753d50",
+        "tokenCode": "IN"
+      },
+      {
+        "contractAddress": "0x0000000000085d4780b73119b644ae5ecd22b376",
+        "tokenCode": "TUSD"
+      },
+      {
+        "contractAddress": "0xbb0e17ef65f82ab018d8edd776e8dd940327b28b",
+        "tokenCode": "AXS"
+      },
+      {
+        "contractAddress": "0x46f84dc6564cdd93922f7bfb88b03d35308d87c9",
+        "tokenCode": "VENOM"
+      },
+      {
+        "contractAddress": "0x88909d489678dd17aa6d9609f89b0419bf78fd9a",
+        "tokenCode": "L3"
+      },
+      {
+        "contractAddress": "0xc9eb61ffb66d5815d643bbb8195e17c49687ae1e",
+        "tokenCode": "MIND"
+      },
+      {
+        "contractAddress": "0xd46ba6d942050d489dbd938a2c909a5d5039a161",
+        "tokenCode": "AMPL"
+      },
+      {
+        "contractAddress": "0x84ca8bc7997272c7cfb4d0cd3d55cd942b3c9419",
+        "tokenCode": "DIA"
+      },
+      {
+        "contractAddress": "0xc00e94cb662c3520282e6f5717214004a7f26888",
+        "tokenCode": "COMP"
+      },
+      {
+        "contractAddress": "0x0fc2a55d5bd13033f1ee0cdd11f60f7efe66f467",
+        "tokenCode": "LA"
+      },
+      {
+        "contractAddress": "0xf4d2888d29d722226fafa5d9b24f9164c092421e",
+        "tokenCode": "LOOKS"
+      },
+      {
+        "contractAddress": "0x8e870d67f660d95d5be530380d0ec0bd388289e1",
+        "tokenCode": "USDP"
+      },
+      {
+        "contractAddress": "0xb7b37b81d4497ab317fc9d4a370cf243043d6bbe",
+        "tokenCode": "VAIX"
+      },
+      {
+        "contractAddress": "0xa130e3a33a4d84b04c3918c4e5762223ae252f80",
+        "tokenCode": "SWASH"
+      },
+      {
+        "contractAddress": "0x7d5121505149065b562c789a0145ed750e6e8cdd",
+        "tokenCode": "VR"
+      },
+      {
+        "contractAddress": "0x3432b6a60d23ca0dfca7761b7ab56459d9c964d0",
+        "tokenCode": "FXS"
+      },
+      {
+        "contractAddress": "0xd13cfd3133239a3c73a9e535a5c4dadee36b395c",
+        "tokenCode": "VAI"
+      },
+      {
+        "contractAddress": "0xfeac2eae96899709a43e252b6b92971d32f9c0f9",
+        "tokenCode": "ANYONE"
+      },
+      {
+        "contractAddress": "0x111111111117dc0aa78b770fa6a738034120c302",
+        "tokenCode": "1INCH"
+      },
+      {
+        "contractAddress": "0x41545f8b9472d758bb669ed8eaeeecd7a9c4ec29",
+        "tokenCode": "FORT"
+      },
+      {
+        "contractAddress": "0x38e68a37e401f7271568cecaac63c6b1e19130b4",
+        "tokenCode": "BANANA"
+      },
+      {
+        "contractAddress": "0x4eddb15a0abfa2c349e8065af9214e942d9a6d36",
+        "tokenCode": "XYRO"
+      },
+      {
+        "contractAddress": "0xf17e65822b568b3903685a7c9f496cf7656cc6c2",
+        "tokenCode": "BICO"
+      },
+      {
+        "contractAddress": "0x56072c95faa701256059aa122697b133aded9279",
+        "tokenCode": "SKY"
+      },
+      {
+        "contractAddress": "0x24fcfc492c1393274b6bcd568ac9e225bec93584",
+        "tokenCode": "MAVIA"
+      },
+      {
+        "contractAddress": "0xc5d27f27f08d1fd1e3ebbaa50b3442e6c0d50439",
+        "tokenCode": "APP"
+      },
+      {
+        "contractAddress": "0x3429d03c6f7521aec737a0bbf2e5ddcef2c3ae31",
+        "tokenCode": "PIXEL"
+      },
+      {
+        "contractAddress": "0xd0a6053f087e87a25dc60701ba6e663b1a548e85",
+        "tokenCode": "LRDS"
+      },
+      {
+        "contractAddress": "0x3506424f91fd33084466f402d5d97f05f8e3b4af",
+        "tokenCode": "CHZ"
+      },
+      {
+        "contractAddress": "0xa0b73e1ff0b80914ab6fe0444e65848c4c34450b",
+        "tokenCode": "CRO"
+      },
+      {
+        "contractAddress": "0x1c00c3e03c3a10a0c1d9b6d1a42e797d7cb4147a",
+        "tokenCode": "ARCA"
+      },
+      {
+        "contractAddress": "0xa2120b9e674d3fc3875f415a7df52e382f141225",
+        "tokenCode": "ATA"
+      },
+      {
+        "contractAddress": "0x4bdcb66b968060d9390c1d12bd29734496205581",
+        "tokenCode": "ACQ"
+      },
+      {
+        "contractAddress": "0xa2cd3d43c775978a96bdbf12d733d5a1ed94fb18",
+        "tokenCode": "XCN"
+      },
+      {
+        "contractAddress": "0xa02c49da76a085e4e1ee60a6b920ddbc8db599f4",
+        "tokenCode": "TREAT"
+      },
+      {
+        "contractAddress": "0xd528cf2e081f72908e086f8800977df826b5a483",
+        "tokenCode": "PBX"
+      },
+      {
+        "contractAddress": "0xd26114cd6ee289accf82350c8d8487fedb8a0c07",
+        "tokenCode": "OMG"
+      },
+      {
+        "contractAddress": "0xd33526068d116ce69f19a9ee46f0bd304f21a51f",
+        "tokenCode": "RPL"
+      },
+      {
+        "contractAddress": "0x9695e0114e12c0d3a3636fab5a18e6b737529023",
+        "tokenCode": "DFYN"
+      },
+      {
+        "contractAddress": "0xc477d038d5420c6a9e0b031712f61c5120090de9",
+        "tokenCode": "BOSON"
+      },
+      {
+        "contractAddress": "0x944824290cc12f31ae18ef51216a223ba4063092",
+        "tokenCode": "MASA"
+      },
+      {
+        "contractAddress": "0x39b46b212bdf15b42b166779b9d1787a68b9d0c3",
+        "tokenCode": "DYP"
+      },
+      {
+        "contractAddress": "0x3f80b1c54ae920be41a77f8b902259d48cf24ccf",
+        "tokenCode": "KERNEL"
+      },
+      {
+        "contractAddress": "0x728f30fa2f100742c7949d1961804fa8e0b1387d",
+        "tokenCode": "GHX"
+      },
+      {
+        "contractAddress": "0x61dbbbb552dc893ab3aad09f289f811e67cef285",
+        "tokenCode": "SKATE"
+      },
+      {
+        "contractAddress": "0x525a8f6f3ba4752868cde25164382bfbae3990e1",
+        "tokenCode": "NYM"
+      },
+      {
+        "contractAddress": "0x0fd10b9899882a6f2fcb5c371e17e70fdee00c38",
+        "tokenCode": "PUNDIX"
+      },
+      {
+        "contractAddress": "0x643c4e15d7d62ad0abec4a9bd4b001aa3ef52d66",
+        "tokenCode": "SYRUP"
+      },
+      {
+        "contractAddress": "0x0a6e7ba5042b38349e437ec6db6214aec7b35676",
+        "tokenCode": "SWELL"
+      },
+      {
+        "contractAddress": "0xbe0ed4138121ecfc5c0e56b40517da27e6c5226b",
+        "tokenCode": "ATH"
+      },
+      {
+        "contractAddress": "0x3b9be07d622accaed78f479bc0edabfd6397e320",
+        "tokenCode": "LSS"
+      },
+      {
+        "contractAddress": "0x06904a21f2db805487fcbdc3b3fe9607daaa5d54",
+        "tokenCode": "MNRY"
+      },
+      {
+        "contractAddress": "0x6985884c4392d348587b19cb9eaaf157f13271cd",
+        "tokenCode": "ZRO"
+      },
+      {
+        "contractAddress": "0x58b6a8a3302369daec383334672404ee733ab239",
+        "tokenCode": "LPT"
+      },
+      {
+        "contractAddress": "0xb4b9dc1c77bdbb135ea907fd5a08094d98883a35",
+        "tokenCode": "SWEAT"
+      },
+      {
+        "contractAddress": "0x259338656198ec7a76c729514d3cb45dfbf768a1",
+        "tokenCode": "RESOLV"
+      },
+      {
+        "contractAddress": "0xbef26bd568e421d6708cca55ad6e35f8bfa0c406",
+        "tokenCode": "BCUT"
+      },
+      {
+        "contractAddress": "0xf2c88757f8d03634671208935974b60a2a28bdb3",
+        "tokenCode": "SHELL"
+      },
+      {
+        "contractAddress": "0x467bccd9d29f223bce8043b84e8c8b282827790f",
+        "tokenCode": "TEL"
+      },
+      {
+        "contractAddress": "0x66761fa41377003622aee3c7675fc7b5c1c2fac5",
+        "tokenCode": "CPOOL"
+      },
+      {
+        "contractAddress": "0xac51066d7bec65dc4589368da368b212745d63e8",
+        "tokenCode": "ALICE"
+      },
+      {
+        "contractAddress": "0x628a3b2e302c7e896acc432d2d0dd22b6cb9bc88",
+        "tokenCode": "LMWR"
+      },
+      {
+        "contractAddress": "0xd01409314acb3b245cea9500ece3f6fd4d70ea30",
+        "tokenCode": "LTO"
+      },
+      {
+        "contractAddress": "0x908ddb096bfb3acb19e2280aad858186ea4935c4",
+        "tokenCode": "ESE"
+      },
+      {
+        "contractAddress": "0xba100000625a3754423978a60c9317c58a424e3d",
+        "tokenCode": "BAL"
+      },
+      {
+        "contractAddress": "0x6c3ea9036406852006290770bedfcaba0e23a0e8",
+        "tokenCode": "PYUSD"
+      },
+      {
+        "contractAddress": "0xf920e4f3fbef5b3ad0a25017514b769bdc4ac135",
+        "tokenCode": "BAX"
+      },
+      {
+        "contractAddress": "0x8806926ab68eb5a7b909dcaf6fdbe5d93271d6e2",
+        "tokenCode": "UQC"
+      },
+      {
+        "contractAddress": "0x4e3fbd56cd56c3e72c1403e103b45db9da5b9d2b",
+        "tokenCode": "CVX"
+      },
+      {
+        "contractAddress": "0x5cf04716ba20127f1e2297addcf4b5035000c9eb",
+        "tokenCode": "NKN"
+      },
+      {
+        "contractAddress": "0x2a3bff78b79a009976eea096a51a948a3dc00e34",
+        "tokenCode": "WILD"
+      },
+      {
+        "contractAddress": "0xc18360217d8f7ab5e7c516566761ea12ce7f9d72",
+        "tokenCode": "ENS"
+      },
+      {
+        "contractAddress": "0xcdf7028ceab81fa0c6971208e83fa7872994bee5",
+        "tokenCode": "T"
+      },
+      {
+        "contractAddress": "0x761d38e5ddf6ccf6cf7c55759d5210750b5d60f3",
+        "tokenCode": "ELON"
+      },
+      {
+        "contractAddress": "0x8de5b80a0c1b02fe4976851d030b36122dbb8624",
+        "tokenCode": "VANRY"
+      },
+      {
+        "contractAddress": "0x745407c86df8db893011912d3ab28e68b62e49b0",
+        "tokenCode": "MAHA"
+      },
+      {
+        "contractAddress": "0xa6c0c097741d55ecd9a3a7def3a8253fd022ceb9",
+        "tokenCode": "AVA"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "CFX"
+      },
+      {
+        "contractAddress": "0xf091867ec603a6628ed83d274e835539d82e9cc8",
+        "tokenCode": "ZETA"
+      },
+      {
+        "contractAddress": "0x36e66fbbce51e4cd5bd3c62b637eb411b18949d4",
+        "tokenCode": "OMNI"
+      },
+      {
+        "contractAddress": "0x6b66ccd1340c479b07b390d326eadcbb84e726ba",
+        "tokenCode": "SEAM"
+      },
+      {
+        "contractAddress": "0x2dff88a56767223a5529ea5960da7a3f5f766406",
+        "tokenCode": "ID"
+      },
+      {
+        "contractAddress": "0x32353a6c91143bfd6c7d363b546e62a9a2489a20",
+        "tokenCode": "AGLD"
+      },
+      {
+        "contractAddress": "0x3593d125a4f7849a1b059e64f4517a86dd60c95d",
+        "tokenCode": "OM"
+      },
+      {
+        "contractAddress": "0x4a220e6096b25eadb88358cb44068a3248254675",
+        "tokenCode": "QNT"
+      },
+      {
+        "contractAddress": "0x45804880de22913dafe09f4980848ece6ecbaf78",
+        "tokenCode": "PAXG"
+      },
+      {
+        "contractAddress": "0x163f8c2467924be0ae7b5347228cabf260318753",
+        "tokenCode": "WLD"
+      },
+      {
+        "contractAddress": "0x77146784315ba81904d654466968e3a7c196d1f3",
+        "tokenCode": "TREE"
+      },
+      {
+        "contractAddress": "0x52498f8d9791736f1d6398fe95ba3bd868114d10",
+        "tokenCode": "NETVR"
+      },
+      {
+        "contractAddress": "0x69af81e73a73b40adf4f3d4223cd9b1ece623074",
+        "tokenCode": "MASK"
+      },
+      {
+        "contractAddress": "0x27702a26126e0b3702af63ee09ac4d1a084ef628",
+        "tokenCode": "ALEPH"
+      },
+      {
+        "contractAddress": "0xda5e1988097297dcdc1f90d4dfe7909e847cbef6",
+        "tokenCode": "WLFI"
+      },
+      {
+        "contractAddress": "0xccc8cb5229b0ac8069c51fd58367fd1e622afd97",
+        "tokenCode": "GODS"
+      },
+      {
+        "contractAddress": "0xc4441c2be5d8fa8126822b9929ca0b81ea0de38e",
+        "tokenCode": "USUAL"
+      },
+      {
+        "contractAddress": "0x7f792db54b0e580cdc755178443f0430cf799aca",
+        "tokenCode": "VOLT"
+      },
+      {
+        "contractAddress": "0xfc1c93a2507975e98b9d0e9260ded61a00152bf1",
+        "tokenCode": "NAVI"
+      },
+      {
+        "contractAddress": "0x000006c2a22ff4a44ff1f5d0f2ed65f781f55555",
+        "tokenCode": "ZKC"
+      },
+      {
+        "contractAddress": "0x8207c1ffc5b6804f6024322ccf34f29c3541ae26",
+        "tokenCode": "OGN"
+      },
+      {
+        "contractAddress": "0x6243558a24cc6116abe751f27e6d7ede50abfc76",
+        "tokenCode": "LVVA"
+      },
+      {
+        "contractAddress": "0x91af0fbb28aba7e31403cb457106ce79397fd4e6",
+        "tokenCode": "AERGO"
+      },
+      {
+        "contractAddress": "0x2da719db753dfa10a62e140f436e1d67f2ddb0d6",
+        "tokenCode": "CERE"
+      },
+      {
+        "contractAddress": "0x06a01a4d579479dd5d884ebf61a31727a3d8d442",
+        "tokenCode": "SKEY"
+      },
+      {
+        "contractAddress": "0x94314a14df63779c99c0764a30e0cd22fa78fc0e",
+        "tokenCode": "EPIC"
+      },
+      {
+        "contractAddress": "0xd1d2eb1b1e90b638588728b4130137d262c87cae",
+        "tokenCode": "GALAX"
+      },
+      {
+        "contractAddress": "0x7a58c0be72be218b41c608b7fe7c5bb630736c71",
+        "tokenCode": "PEOPLE"
+      },
+      {
+        "contractAddress": "0x000000fa00b200406de700041cfc6b19bbfb4d13",
+        "tokenCode": "TOWNS"
+      },
+      {
+        "contractAddress": "0xe7c6bf469e97eeb0bfb74c8dbff5bd47d4c1c98a",
+        "tokenCode": "HSK"
+      },
+      {
+        "contractAddress": "0x6226e00bcac68b0fe55583b90a1d727c14fab77f",
+        "tokenCode": "MTV"
+      },
+      {
+        "contractAddress": "0x8f8221afbb33998d8584a2b05749ba73c37a938a",
+        "tokenCode": "REQ"
+      },
+      {
+        "contractAddress": "0xcc6f1e1b87cfcbe9221808d2d85c501aab0b5192",
+        "tokenCode": "DMAIL"
+      },
+      {
+        "contractAddress": "0x8b9b95292f890df47fff5ac9cbe93d5fc242bd51",
+        "tokenCode": "BEFI"
+      },
+      {
+        "contractAddress": "0x464ebe77c293e473b48cfe96ddcf88fcf7bfdac0",
+        "tokenCode": "KRL"
+      },
+      {
+        "contractAddress": "0x1776e1f26f98b1a5df9cd347953a26dd3cb46671",
+        "tokenCode": "NMR"
+      },
+      {
+        "contractAddress": "0x3b50805453023a91a8bf641e279401a0b23fa6f9",
+        "tokenCode": "REZ"
+      },
+      {
+        "contractAddress": "0xc328a59e7321747aebbc49fd28d1b32c1af8d3b2",
+        "tokenCode": "PHIL"
+      },
+      {
+        "contractAddress": "0x1d88713b483a8e45cff0e5cd7c2e15e5fab4534d",
+        "tokenCode": "STO"
+      },
+      {
+        "contractAddress": "0x2d8ea194902bc55431420bd26be92b0782dce91d",
+        "tokenCode": "ZND"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "DAI"
+      },
+      {
+        "contractAddress": "0xfdffb411c4a70aa7c95d5c981a6fb4da867e1111",
+        "tokenCode": "SAHARA"
+      },
+      {
+        "contractAddress": "0x8d0d000ee44948fc98c9b98a4fa4921476f08b0d",
+        "tokenCode": "USD1"
+      },
+      {
+        "contractAddress": "0x4dc26fc5854e7648a064a4abd590bbe71724c277",
+        "tokenCode": "ANIME"
+      },
+      {
+        "contractAddress": "0xa31b1767e09f842ecfd4bc471fe44f830e3891aa",
+        "tokenCode": "ROOBEE"
+      },
+      {
+        "contractAddress": "0x429f0d8233e517f9acf6f0c8293bf35804063a83",
+        "tokenCode": "POWER"
+      },
+      {
+        "contractAddress": "0xd9fcd98c322942075a5c3860693e9f4f03aae07b",
+        "tokenCode": "EUL"
+      },
+      {
+        "contractAddress": "0x4da0c48376c277cdbd7fc6fdc6936dee3e4adf75",
+        "tokenCode": "EPIK"
+      },
+      {
+        "contractAddress": "0x9d65ff81a3c488d585bbfb0bfe3c7707c7917f54",
+        "tokenCode": "SSV"
+      },
+      {
+        "contractAddress": "0xb056c38f6b7dc4064367403e26424cd2c60655e1",
+        "tokenCode": "CEEK"
+      },
+      {
+        "contractAddress": "0xec5483804e637d45cde22fa0869656b64b5ab1ab",
+        "tokenCode": "ACE"
+      },
+      {
+        "contractAddress": "0x6982508145454ce325ddbe47a25d4ec3d2311933",
+        "tokenCode": "PEPE"
+      },
+      {
+        "contractAddress": "0x4691937a7508860f876c9c0a2a617e7d9e945d4b",
+        "tokenCode": "WOO"
+      },
+      {
+        "contractAddress": "0x7dd9c5cba05e151c895fde1cf355c9a1d5da6429",
+        "tokenCode": "GLM"
+      },
+      {
+        "contractAddress": "0x4d4574f50dd8b9dbe623cf329dcc78d76935e610",
+        "tokenCode": "ZEUSETH"
+      },
+      {
+        "contractAddress": "0x71ab77b7dbb4fa7e017bc15090b2163221420282",
+        "tokenCode": "HIGH"
+      },
+      {
+        "contractAddress": "0x57240c3e140f98abe315ca8e0213c7a77f34a334",
+        "tokenCode": "RDO"
+      },
+      {
+        "contractAddress": "0x1f9840a85d5af5bf1d1762f925bdaddc4201f984",
+        "tokenCode": "UNI"
+      },
+      {
+        "contractAddress": "0xe41d2489571d322189246dafa5ebde1f4699f498",
+        "tokenCode": "ZRX"
+      },
+      {
+        "contractAddress": "0xf411903cbc70a74d22900a5de66a2dda66507255",
+        "tokenCode": "VRA"
+      },
+      {
+        "contractAddress": "0xdef1ca1fb7fbcdc777520aa7f396b4e015f497ab",
+        "tokenCode": "COW"
+      },
+      {
+        "contractAddress": "0x6b3595068778dd592e39a122f4f5a5cf09c90fe2",
+        "tokenCode": "SUSHI"
+      },
+      {
+        "contractAddress": "0x88df592f8eb5d7bd38bfef7deb0fbc02cf3778a0",
+        "tokenCode": "TRB"
+      },
+      {
+        "contractAddress": "0xae6e307c3fe9e922e5674dbd7f830ed49c014c6b",
+        "tokenCode": "CREDI"
+      },
+      {
+        "contractAddress": "0xcccccccccc33d538dbc2ee4feab0a7a1ff4e8a94",
+        "tokenCode": "CFG"
+      },
+      {
+        "contractAddress": "0xb528edbef013aff855ac3c50b381f253af13b997",
+        "tokenCode": "AEVO"
+      },
+      {
+        "contractAddress": "0xaf5191b0de278c7286d6c7cc6ab6bb8a73ba2cd6",
+        "tokenCode": "STG"
+      },
+      {
+        "contractAddress": "0x455e53cbb86018ac2b8092fdcd39d8444affc3f6",
+        "tokenCode": "POL"
+      },
+      {
+        "contractAddress": "0xf8e57ac2730d3088d98b79209739b0d5ba085a03",
+        "tokenCode": "OPAI"
+      },
+      {
+        "contractAddress": "0xcf5104d094e3864cfcbda43b82e1cefd26a016eb",
+        "tokenCode": "H"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "CBK"
+      },
+      {
+        "contractAddress": "0x95af4af910c28e8ece4512bfe46f1f33687424ce",
+        "tokenCode": "MANYU"
+      },
+      {
+        "contractAddress": "0x80d55c03180349fff4a229102f62328220a96444",
+        "tokenCode": "OPUL"
+      },
+      {
+        "contractAddress": "0x5a98fcbea516cf06857215779fd812ca3bef1b32",
+        "tokenCode": "LDO"
+      },
+      {
+        "contractAddress": "0xac57de9c1a09fec648e93eb98875b212db0d460b",
+        "tokenCode": "BABYDOGE"
+      },
+      {
+        "contractAddress": "0xa9b1eb5908cfc3cdf91f9b8b3a74108598009096",
+        "tokenCode": "AUCTION"
+      },
+      {
+        "contractAddress": "0x0921799cb1d702148131024d18fcde022129dc73",
+        "tokenCode": "LL"
+      },
+      {
+        "contractAddress": "0xf57e7e7c23978c3caec3c3548e3d615c346e79ff",
+        "tokenCode": "IMX"
+      },
+      {
+        "contractAddress": "0x2653891204f463fb2a2f4f412564b19e955166ae",
+        "tokenCode": "NGL"
+      },
+      {
+        "contractAddress": "0xa0ef786bf476fe0810408caba05e536ac800ff86",
+        "tokenCode": "MYRIA"
+      },
+      {
+        "contractAddress": "0x8ed97a637a790be1feff5e888d43629dc05408f6",
+        "tokenCode": "NPC"
+      },
+      {
+        "contractAddress": "0x90685e300a4c4532efcefe91202dfe1dfd572f47",
+        "tokenCode": "CTA"
+      },
+      {
+        "contractAddress": "0x9e3b5582b22e3835896368017baff6d942a41cd9",
+        "tokenCode": "H1"
+      },
+      {
+        "contractAddress": "0xaea46a60368a7bd060eec7df8cba43b7ef41ad85",
+        "tokenCode": "FET"
+      },
+      {
+        "contractAddress": "0x8a2279d4a90b6fe1c4b30fa660cc9f926797baa2",
+        "tokenCode": "CHR"
+      },
+      {
+        "contractAddress": "0x7659ce147d0e714454073a5dd7003544234b6aa0",
+        "tokenCode": "XCAD"
+      },
+      {
+        "contractAddress": "0xc71b5f631354be6853efe9c3ab6b9590f8302e81",
+        "tokenCode": "ZKJ"
+      },
+      {
+        "contractAddress": "0x6055dc6ff1077eebe5e6d2ba1a1f53d7ef8430de",
+        "tokenCode": "ES"
+      },
+      {
+        "contractAddress": "0xf944e35f95e819e752f3ccb5faf40957d311e8c5",
+        "tokenCode": "MOCA"
+      },
+      {
+        "contractAddress": "0x1c9922314ed1415c95b9fd453c3818fd41867d0b",
+        "tokenCode": "TOWER"
+      },
+      {
+        "contractAddress": "0xaa7a9ca87d3694b5755f213b5d04094b8d0f0a6f",
+        "tokenCode": "TRAC"
+      },
+      {
+        "contractAddress": "0x6b9f031d718dded0d681c20cb754f97b3bb81b78",
+        "tokenCode": "GEEQ"
+      },
+      {
+        "contractAddress": "0x7420b4b9a0110cdc71fb720908340c03f9bc03ec",
+        "tokenCode": "JASMY"
+      },
+      {
+        "contractAddress": "0xd13c7342e1ef687c5ad21b27c2b65d772cab5c8c",
+        "tokenCode": "UOS"
+      },
+      {
+        "contractAddress": "0x7448c7456a97769f6cd04f1e83a4a23ccdc46abd",
+        "tokenCode": "MAV"
+      },
+      {
+        "contractAddress": "0xdbb5cf12408a3ac17d668037ce289f9ea75439d7",
+        "tokenCode": "WMTX"
+      },
+      {
+        "contractAddress": "0xc944e90c64b2c07662a292be6244bdf05cda44a7",
+        "tokenCode": "GRT"
+      },
+      {
+        "contractAddress": "0x08dcb9b5989fb09ef80e85567ec1f49577a70d29",
+        "tokenCode": "A2Z"
+      },
+      {
+        "contractAddress": "0x0828096494ad6252f0f853abfc5b6ec9dfe9fdad",
+        "tokenCode": "TST"
+      },
+      {
+        "contractAddress": "0x0f51bb10119727a7e5ea3538074fb341f56b09ad",
+        "tokenCode": "DAO"
+      },
+      {
+        "contractAddress": "0x808507121b80c02388fad14726482e061b8da827",
+        "tokenCode": "PENDLE"
+      },
+      {
+        "contractAddress": "0xe2ad0bf751834f2fbdc62a41014f84d67ca1de2a",
+        "tokenCode": "ERA"
+      },
+      {
+        "contractAddress": "0xbc396689893d065f41bc2c6ecbee5e0085233447",
+        "tokenCode": "PERP"
+      },
+      {
+        "contractAddress": "0x00c83aecc790e8a4453e5dd3b0b4b3680501a7a7",
+        "tokenCode": "SKL"
+      },
+      {
+        "contractAddress": "0xee2a03aa6dacf51c18679c516ad5283d8e7c2637",
+        "tokenCode": "NEIRO"
+      },
+      {
+        "contractAddress": "0x3845badade8e6dff049820680d1f14bd3903a5d0",
+        "tokenCode": "SAND"
+      },
+      {
+        "contractAddress": "0xff56cc6b1e6ded347aa0b7676c85ab0b3d08b0fa",
+        "tokenCode": "ORBS"
+      },
+      {
+        "contractAddress": "0xda987c655ebc38c801db64a8608bc1aa56cd9a31",
+        "tokenCode": "SYNT"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "USDQ"
+      },
+      {
+        "contractAddress": "0xff20817765cb7f73d4bde2e66e067e58d11095c2",
+        "tokenCode": "AMP"
+      },
+      {
+        "contractAddress": "0x0d8775f648430679a709e98d2b0cb6250d2887ef",
+        "tokenCode": "BAT"
+      },
+      {
+        "contractAddress": "0xf8f173e20e15f3b6cb686fb64724d370689de083",
+        "tokenCode": "HEI"
+      },
+      {
+        "contractAddress": "0x7abc8a5768e6be61a6c693a6e4eacb5b60602c4d",
+        "tokenCode": "CXT"
+      },
+      {
+        "contractAddress": "0xec53bf9167f50cdeb3ae105f56099aaab9061f83",
+        "tokenCode": "EIGEN"
+      },
+      {
+        "contractAddress": "0x0763fdccf1ae541a5961815c0872a8c5bc6de4d7",
+        "tokenCode": "SUKU"
+      },
+      {
+        "contractAddress": "0xbbbbca6a901c926f240b89eacb641d8aec7aeafd",
+        "tokenCode": "LRC"
+      },
+      {
+        "contractAddress": "0xa3d4bee77b05d4a0c943877558ce21a763c4fa29",
+        "tokenCode": "ROOT"
+      },
+      {
+        "contractAddress": "0x675b68aa4d9c2d3bb3f0397048e62e6b7192079c",
+        "tokenCode": "FUEL"
+      },
+      {
+        "contractAddress": "0xe7dee4823ee18f1347f1cf7997f70b94efde2e1f",
+        "tokenCode": "FORM"
+      },
+      {
+        "contractAddress": "0xc555d625828c4527d477e595ff1dd5801b4a600e",
+        "tokenCode": "MON"
+      },
+      {
+        "contractAddress": "0x940a2db1b7008b6c776d4faaca729d6d4a4aa551",
+        "tokenCode": "DUSK"
+      },
+      {
+        "contractAddress": "0x83e6f1e41cdd28eaceb20cb649155049fac3d5aa",
+        "tokenCode": "POLS"
+      },
+      {
+        "contractAddress": "0x06450dee7fd2fb8e39061434babcfc05599a6fb8",
+        "tokenCode": "XEN"
+      },
+      {
+        "contractAddress": "0xed04915c23f00a313a544955524eb7dbd823143d",
+        "tokenCode": "ACH"
+      },
+      {
+        "contractAddress": "0x14778860e937f509e651192a90589de711fb88a9",
+        "tokenCode": "CYBER"
+      },
+      {
+        "contractAddress": "0x10dea67478c5f8c5e2d90e5e9b26dbe60c54d800",
+        "tokenCode": "TAIKO"
+      },
+      {
+        "contractAddress": "0xb4a3b0faf0ab53df58001804dda5bfc6a3d59008",
+        "tokenCode": "SPA"
+      },
+      {
+        "contractAddress": "0x6dea81c8171d0ba574754ef6f8b412f2ed88c54d",
+        "tokenCode": "LQTY"
+      },
+      {
+        "contractAddress": "0x8db036f007841c21b97eff7dfc2c187241d59baf",
+        "tokenCode": "KONG"
+      },
+      {
+        "contractAddress": "0xba50933c268f567bdc86e1ac131be072c6b0b71a",
+        "tokenCode": "ARPA"
+      },
+      {
+        "contractAddress": "0x23894dc9da6c94ecb439911caf7d337746575a72",
+        "tokenCode": "JAM"
+      },
+      {
+        "contractAddress": "0x4c19596f5aaff459fa38b0f7ed92f11ae6543784",
+        "tokenCode": "TRU"
+      },
+      {
+        "contractAddress": "0x826180541412d574cf1336d22c0c0a287822678a",
+        "tokenCode": "FLIP"
+      },
+      {
+        "contractAddress": "0x485d17a6f1b8780392d53d64751824253011a260",
+        "tokenCode": "TIME"
+      },
+      {
+        "contractAddress": "0xf477ac7719e2e659001455cdda0cc8f3ad10b604",
+        "tokenCode": "AUTOS"
+      },
+      {
+        "contractAddress": "0xf293d23bf2cdc05411ca0eddd588eb1977e8dcd4",
+        "tokenCode": "SYLO"
+      },
+      {
+        "contractAddress": "0xb64ef51c888972c908cfacf59b47c1afbc0ab8ac",
+        "tokenCode": "STORJ"
+      },
+      {
+        "contractAddress": "0x5afe3855358e112b5647b952709e6165e1c1eeee",
+        "tokenCode": "SAFE"
+      },
+      {
+        "contractAddress": "0x22514ffb0d7232a56f0c24090e7b68f179faa940",
+        "tokenCode": "QORPO"
+      },
+      {
+        "contractAddress": "0x0b38210ea11411557c13457d4da7dc6ea731b88a",
+        "tokenCode": "API3"
+      },
+      {
+        "contractAddress": "0xabd4c63d2616a5201454168269031355f4764337",
+        "tokenCode": "ORDER"
+      },
+      {
+        "contractAddress": "0x25f8087ead173b73d6e8b84329989a8eea16cf73",
+        "tokenCode": "YGG"
+      },
+      {
+        "contractAddress": "0x430ef9263e76dae63c84292c3409d61c598e9682",
+        "tokenCode": "PYR"
+      },
+      {
+        "contractAddress": "0x7636d8722fdf7cd34232a915e48e96aa3eb386bf",
+        "tokenCode": "SFI"
+      },
+      {
+        "contractAddress": "0xc52c326331e9ce41f04484d3b5e5648158028804",
+        "tokenCode": "ZCX"
+      },
+      {
+        "contractAddress": "0x157a6df6b74f4e5e45af4e4615fde7b49225a662",
+        "tokenCode": "ISLAND"
+      },
+      {
+        "contractAddress": "0x51cb253744189f11241becb29bedd3f1b5384fdb",
+        "tokenCode": "DMTR"
+      },
+      {
+        "contractAddress": "0x2260fac5e5542a773aa44fbcfedf7c193bc2c599",
+        "tokenCode": "WBTC"
+      },
+      {
+        "contractAddress": "0x812ba41e071c7b7fa4ebcfb62df5f45f6fa853ee",
+        "tokenCode": "NEIROCTO"
+      },
+      {
+        "contractAddress": "0xfd418e42783382e86ae91e445406600ba144d162",
+        "tokenCode": "ZRC"
+      },
+      {
+        "contractAddress": "0x226bb599a12c826476e3a771454697ea52e9e220",
+        "tokenCode": "PRO"
+      },
+      {
+        "contractAddress": "0x320623b8e4ff03373931769a31fc52a4e78b5d70",
+        "tokenCode": "RSR"
+      },
+      {
+        "contractAddress": "0xf418588522d5dd018b425e472991e52ebbeeeeee",
+        "tokenCode": "PUSH"
+      },
+      {
+        "contractAddress": "0xfca59cd816ab1ead66534d82bc21e7515ce441cf",
+        "tokenCode": "RARI"
+      },
+      {
+        "contractAddress": "0x6e2a43be0b1d33b726f0ca3b8de60b3482b8b050",
+        "tokenCode": "ARKM"
+      },
+      {
+        "contractAddress": "0xfc82bb4ba86045af6f327323a46e80412b91b27d",
+        "tokenCode": "PROM"
+      },
+      {
+        "contractAddress": "0x50d1c9771902476076ecfc8b2a83ad6b9355a4c9",
+        "tokenCode": "FTT"
+      },
+      {
+        "contractAddress": "0xd47bdf574b4f76210ed503e0efe81b58aa061f3d",
+        "tokenCode": "TRVL"
+      },
+      {
+        "contractAddress": "0xbf2179859fc6d5bee9bf9158632dc51678a4100e",
+        "tokenCode": "ELF"
+      },
+      {
+        "contractAddress": "0x505b5eda5e25a67e1c24a2bf1a527ed9eb88bf04",
+        "tokenCode": "CWEB"
+      },
+      {
+        "contractAddress": "0xf94e7d0710709388bce3161c32b4eea56d3f91cc",
+        "tokenCode": "DSYNC"
+      },
+      {
+        "contractAddress": "0x249e38ea4102d0cf8264d3701f1a0e39c4f2dc3b",
+        "tokenCode": "UFO"
+      },
+      {
+        "contractAddress": "0x64bc2ca1be492be7185faa2c8835d9b824c8a194",
+        "tokenCode": "BIGTIME"
+      },
+      {
+        "contractAddress": "0x767fe9edc9e0df98e07454847909b5e959d7ca0e",
+        "tokenCode": "ILV"
+      },
+      {
+        "contractAddress": "0xd98f75b1a3261dab9eed4956c93f33749027a964",
+        "tokenCode": "SHR"
+      },
+      {
+        "contractAddress": "0x8457ca5040ad67fdebbcc8edce889a335bc0fbfb",
+        "tokenCode": "KALT"
+      },
+      {
+        "contractAddress": "0x57b946008913b82e4df85f501cbaed910e58d26c",
+        "tokenCode": "POND"
+      },
+      {
+        "contractAddress": "0xfb5c6815ca3ac72ce9f5006869ae67f18bf77006",
+        "tokenCode": "PSTAKE"
+      },
+      {
+        "contractAddress": "0x514910771af9ca656af840dff83e8264ecf986ca",
+        "tokenCode": "LINK"
+      },
+      {
+        "contractAddress": "0x4c9edd5852cd905f086c759e8383e09bff1e68b3",
+        "tokenCode": "USDE"
+      },
+      {
+        "contractAddress": "0x2791bfd60d232150bff86b39b7146c0eaaa2ba81",
+        "tokenCode": "BIFI"
+      },
+      {
+        "contractAddress": "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48",
+        "tokenCode": "USDC"
+      },
+      {
+        "contractAddress": "0x243c9be13faba09f945ccc565547293337da0ad7",
+        "tokenCode": "TRUF"
+      },
+      {
+        "contractAddress": "0x4b9278b94a1112cad404048903b8d343a810b07e",
+        "tokenCode": "HIFI"
+      },
+      {
+        "contractAddress": "0x0bc529c00c6401aef6d220be8c6ea1667f6ad93e",
+        "tokenCode": "YFI"
+      },
+      {
+        "contractAddress": "0x72dd4b6bd852a3aa172be4d6c5a6dbec588cf131",
+        "tokenCode": "NGC"
+      },
+      {
+        "contractAddress": "0x73624d2def952c77a1f3b5ad995eef53e49639ec",
+        "tokenCode": "PNDR"
+      },
+      {
+        "contractAddress": "0x5732046a883704404f284ce41ffadd5b007fd668",
+        "tokenCode": "BLZ"
+      },
+      {
+        "contractAddress": "0xcf0c122c6b73ff809c693db761e7baebe62b6a2e",
+        "tokenCode": "FLOKI"
+      },
+      {
+        "contractAddress": "0xfe0c30065b384f05761f15d0cc899d4f9f9cc0eb",
+        "tokenCode": "ETHFI"
+      },
+      {
+        "contractAddress": "0xa227cc36938f0c9e09ce0e64dfab226cad739447",
+        "tokenCode": "OPEN"
+      },
+      {
+        "contractAddress": "0x8fc17671d853341d9e8b001f5fc3c892d09cb53a",
+        "tokenCode": "BLOCK"
+      },
+      {
+        "contractAddress": "0x5a666c7d92e5fa7edcb6390e4efd6d0cdd69cf37",
+        "tokenCode": "MARSH"
+      },
+      {
+        "contractAddress": "0xa3ee21c306a700e682abcdfe9baa6a08f3820419",
+        "tokenCode": "CTC"
+      },
+      {
+        "contractAddress": "0xd8912c10681d8b21fd3742244f44658dba12264e",
+        "tokenCode": "PLU"
+      },
+      {
+        "contractAddress": "0xd9016a907dc0ecfa3ca425ab20b6b785b42f2373",
+        "tokenCode": "GMEE"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "SEI"
+      },
+      {
+        "contractAddress": "0xd478161c952357f05f0292b56012cd8457f1cfbf",
+        "tokenCode": "POLK"
+      },
+      {
+        "contractAddress": "0x2f714d7b9a035d4ce24af8d9b6091c07e37f43fb",
+        "tokenCode": "NODE"
+      },
+      {
+        "contractAddress": "0xe53ec727dbdeb9e2d5456c3be40cff031ab40a55",
+        "tokenCode": "SUPER"
+      },
+      {
+        "contractAddress": "0xc20059e0317de91738d13af027dfc4a50781b066",
+        "tokenCode": "SPK"
+      },
+      {
+        "contractAddress": "0xb3999f658c0391d94a37f7ff328f3fec942bcadc",
+        "tokenCode": "HFT"
+      },
+      {
+        "contractAddress": "0xd9c2d319cd7e6177336b0a9c93c21cb48d84fb54",
+        "tokenCode": "HAPI"
+      },
+      {
+        "contractAddress": "0x16cda4028e9e872a38acb903176719299beaed87",
+        "tokenCode": "MARS4"
+      },
+      {
+        "contractAddress": "0x467719ad09025fcc6cf6f8311755809d45a5e5f3",
+        "tokenCode": "WAXL"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "BTC"
+      },
+      {
+        "contractAddress": "0xc43c6bfeda065fe2c4c11765bf838789bd0bb5de",
+        "tokenCode": "REDSTONE"
+      },
+      {
+        "contractAddress": "0xb7109df1a93f8fe2b8162c6207c9b846c1c68090",
+        "tokenCode": "MAX"
+      },
+      {
+        "contractAddress": "0x5ee3188a3f8adee1d736edd4ae85000105c88f66",
+        "tokenCode": "PEN"
+      },
+      {
+        "contractAddress": "0x8f693ca8d21b157107184d29d398a8d082b38b76",
+        "tokenCode": "DATA"
+      },
+      {
+        "contractAddress": "0x4575f41308ec1483f3d399aa9a2826d74da13deb",
+        "tokenCode": "OXT"
+      },
+      {
+        "contractAddress": "0x408e41876cccdc0f92210600ef50372656052a38",
+        "tokenCode": "REN"
+      },
+      {
+        "contractAddress": "0x4d224452801aced8b2f0aebe155379bb5d594381",
+        "tokenCode": "APE"
+      },
+      {
+        "contractAddress": "0x4d1c297d39c5c1277964d0e3f8aa901493664530",
+        "tokenCode": "PUFFER"
+      },
+      {
+        "contractAddress": "0xdac17f958d2ee523a2206206994597c13d831ec7",
+        "tokenCode": "USDT"
+      },
+      {
+        "contractAddress": "0x186ef81fd8e77eec8bffc3039e7ec41d5fc0b457",
+        "tokenCode": "INSP"
+      },
+      {
+        "contractAddress": "0x3157874a7508fcf972379d24590c6806522b784f",
+        "tokenCode": "PFVS"
+      },
+      {
+        "contractAddress": "0x9e32b13ce7f2e80a01932b42553652e053d6ed8e",
+        "tokenCode": "METIS"
+      },
+      {
+        "contractAddress": "0x888888848b652b3e3a0f34c96e00eec0f3a23f72",
+        "tokenCode": "TLM"
+      },
+      {
+        "contractAddress": "0x0f2d719407fdbeff09d87557abb7232601fd9f29",
+        "tokenCode": "SYN"
+      },
+      {
+        "contractAddress": "0x18aaa7115705e8be94bffebde57af9bfc265b998",
+        "tokenCode": "AUDIO"
+      },
+      {
+        "contractAddress": "0x0305f515fa978cf87226cf8a9776d25bcfb2cc0b",
+        "tokenCode": "PEPE2"
+      },
+      {
+        "contractAddress": "0xe6bfd33f52d82ccb5b37e16d3dd81f9ffdabb195",
+        "tokenCode": "SXT"
+      },
+      {
+        "contractAddress": "0x557b933a7c2c45672b610f8954a3deb39a51a8ca",
+        "tokenCode": "REVV"
+      }
+    ]
+  ],
+  [
+    "SOLANA",
+    [
+      {
+        "contractAddress": null,
+        "tokenCode": "MELANIA"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "FRAG"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "BONK"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "MYRO"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "MOODENG"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "AVAAI"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "ORCA"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "UFD"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "BMT"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "WEN"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "TRUMP"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "LAYER"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "POPCAT"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "ALCH"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "SLERF"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "SNS"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "AI16Z"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "BOME"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "RIF"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "IO"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "MPLX"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "MOONPIG"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "BUZZ"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "VINE"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "SWARMS"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "URO"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "RAY"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "SWTCH"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "ACTSOL"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "ZBCN"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "PYTH"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "DARK"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "GRIFFAIN"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "DIO"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "ZEREBRO"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "PONKE"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "FARTCOIN"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "GME"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "GHIBLI"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "SOON"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "SAROS"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "WIF"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "PRCL"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "TNSR"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "MAY"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "PNUT"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "ARC"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "MEW"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "PENGU"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "ANI"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "GRIFT"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "SOL"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "DBR"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "JTO"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "DRIFT"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "GOR"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "GRASS"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "HOUSE"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "MANEKI"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "ME"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "ZEUS"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "LIKE"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "CHILLGUY"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "BILLY"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "ACS"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "GMT"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "GORK"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "GOAT"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "MNDE"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "LLJEFFY"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "MICHI"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "JUP"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "PIPPIN"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "W"
+      }
+    ]
+  ],
+  [
+    "SOL",
+    [
+      {
+        "contractAddress": "FUAfBo2jgks6gB4Z4LfZkqSZgzNucisEHqnNebaRxM1P",
+        "tokenCode": "MELANIA"
+      },
+      {
+        "contractAddress": "43VWkd99HjqkhFTZbWBpMpRhjG469nWa7x7uEsgSH7We",
+        "tokenCode": "STNK"
+      },
+      {
+        "contractAddress": "SonicxvLud67EceaEzCLRnMTBqzYUUYNr93DBkBdDES",
+        "tokenCode": "SONIC"
+      },
+      {
+        "contractAddress": "BFgdzMkTPdKKJeTipv2njtDEwhKxkgFueJQfJGt1jups",
+        "tokenCode": "URANUS"
+      },
+      {
+        "contractAddress": "8nKP8Vc72pRZB6bhCy8D1UYf6ZjwYT859i6awyinpump",
+        "tokenCode": "BABYSHARK"
+      },
+      {
+        "contractAddress": "FRAGMEWj2z65qM62zqKhNtwNFskdfKs4ekDUDX3b4VD5",
+        "tokenCode": "FRAG"
+      },
+      {
+        "contractAddress": "mb1eu7TzEc71KxDpsmsKoucSSuuoGLv1drys1oP2jh6",
+        "tokenCode": "MOBILE"
+      },
+      {
+        "contractAddress": "DezXAZ8z7PnrnRJjz3wXBoRgixCa6xjnB7YaB1pPB263",
+        "tokenCode": "BONK"
+      },
+      {
+        "contractAddress": "HhJpBhRRn4g56VsyLuT8DL5Bv31HkXqsrahTTUCZeZg4",
+        "tokenCode": "MYRO"
+      },
+      {
+        "contractAddress": "ED5nyyWEzpPPiWimP8vYm7sD7TD3LAt3Q3gRTWHzPJBY",
+        "tokenCode": "MOODENG"
+      },
+      {
+        "contractAddress": "DKu9kykSfbN5LBfFXtNNDPaX35o4Fv6vJ9FKk7pZpump",
+        "tokenCode": "AVAAI"
+      },
+      {
+        "contractAddress": "orcaEKTdK7LKz57vaAYr9QeNsVEPfiu6QeMU1kektZE",
+        "tokenCode": "ORCA"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "TRX"
+      },
+      {
+        "contractAddress": "Ey59PH7Z4BFU4HjyKnyMdWt5GGN76KazTAwQihoUXRnk",
+        "tokenCode": "LAUNCHCOIN"
+      },
+      {
+        "contractAddress": "HUMA1821qVDKta3u2ovmfDQeW2fSQouSKE8fkF44wvGw",
+        "tokenCode": "HUMA"
+      },
+      {
+        "contractAddress": "WENWENvqqNya429ubCdR81ZmD69brwQaaBYY6p3LCpk",
+        "tokenCode": "WEN"
+      },
+      {
+        "contractAddress": "6p6xgHyF7AeE6TZkSmFsko444wqoP15icUSqi2jfGiPN",
+        "tokenCode": "TRUMP"
+      },
+      {
+        "contractAddress": "7GCihgDB8fe6KNjn2MYtkzZcRjQy3t9GHdC8uHYmW2hr",
+        "tokenCode": "POPCAT"
+      },
+      {
+        "contractAddress": "HAPPYwgFcjEJDzRtfWE6tiHE9zGdzpNky2FvjPHsvvGZ",
+        "tokenCode": "HAPPY"
+      },
+      {
+        "contractAddress": "Hjw6bEcHtbHGpQr8onG3izfJY5DJiWdt7uk2BfdSpump",
+        "tokenCode": "SNAI"
+      },
+      {
+        "contractAddress": "4vMsoUT2BWatFweudnQM1xedRLfJgJ7hswhcpz4xgBTy",
+        "tokenCode": "HONEY"
+      },
+      {
+        "contractAddress": "LAYER4xPpTCb3QL8S9u41EAhAX7mhBn8Q6xMTwY2Yzc",
+        "tokenCode": "SOLAYER"
+      },
+      {
+        "contractAddress": "9PR7nCP9DpcUotnDPVLUBUZKu5WAYkwrCUx9wDnSpump",
+        "tokenCode": "BAN"
+      },
+      {
+        "contractAddress": "HHjoYwUp5aU6pnrvN4s2pwEErwXNZKhxKGYjRJMoBjLw",
+        "tokenCode": "PIP"
+      },
+      {
+        "contractAddress": "7BgBvyjrZX1YKz4oh9mjb8ZScatkkwb8DzFx7LoiVkM3",
+        "tokenCode": "SLERF"
+      },
+      {
+        "contractAddress": "HeLp6NuQkmYB4pYWo2zYs22mESHXPQYzXbB8n4V98jwC",
+        "tokenCode": "AI16Z"
+      },
+      {
+        "contractAddress": "1Qf8gESP4i6CFNWerUSDdLKJ9U1LpqTYvjJ2MM4pain",
+        "tokenCode": "PAIN"
+      },
+      {
+        "contractAddress": "8ZHE4ow1a2jjxuoMfyExuNamQNALv5ekZhsBn5nMDf5e",
+        "tokenCode": "MORI"
+      },
+      {
+        "contractAddress": "HgBRWfYxEfvPhtqkaeymCQtHCrKE46qQ43pKe8HCpump",
+        "tokenCode": "BERT"
+      },
+      {
+        "contractAddress": "63LfDmNb3MQ8mw9MtZ2To9bEA2M71kZUUGq5tiJxcqj9",
+        "tokenCode": "GIGA"
+      },
+      {
+        "contractAddress": "Hax9LTgsQkze1YFychnBLtFH8gYbQKtKfWKKg2SP6gdD",
+        "tokenCode": "TAI"
+      },
+      {
+        "contractAddress": "NeonTjSjsuo3rexg9o6vHuMXw62f9V7zvmu8M8Zut44",
+        "tokenCode": "NEON"
+      },
+      {
+        "contractAddress": "ukHH6c7mMyiWCf1b9pnWe25TSpkDDt3H5pQZgZ74J82",
+        "tokenCode": "BOME"
+      },
+      {
+        "contractAddress": "BZLbGTNCSFfoth2GYDtwr7e4imWzpR5jqcUuGEwr646K",
+        "tokenCode": "IO"
+      },
+      {
+        "contractAddress": "FRySi8LPkuByB7VPSCCggxpewFUeeJiwEGRKKuhwpKcX",
+        "tokenCode": "NATIX"
+      },
+      {
+        "contractAddress": "CBdCxKo9QavR9hfShgpEBG3zekorAeD7W1jfq2o3pump",
+        "tokenCode": "LUCE"
+      },
+      {
+        "contractAddress": "METAewgxyPbgwsseH8T16a39CQ5VyVxZi9zXiDPY18m",
+        "tokenCode": "MPLX"
+      },
+      {
+        "contractAddress": "EchesyfXePKdLtoiZSL8pBe8Myagyy8ZRqsACNCFGnvp",
+        "tokenCode": "FIDA"
+      },
+      {
+        "contractAddress": "9DHe3pycTuymFk4H4bbPoAJ4hQrr2kaLDF6J6aAKpump",
+        "tokenCode": "BUZZ"
+      },
+      {
+        "contractAddress": "6AJcP7wuLwmRYLBNbi825wgguaPsWzPBEHcHndpRpump",
+        "tokenCode": "VINE"
+      },
+      {
+        "contractAddress": "HKJHsYJHMVK5VRyHHk5GhvzY9tBAAtPvDkZfDH6RLDTd",
+        "tokenCode": "READY"
+      },
+      {
+        "contractAddress": "74SBV4zDXxTRgv1pEMoECskKBkZHc2yGPnc7GYVepump",
+        "tokenCode": "SWARMS"
+      },
+      {
+        "contractAddress": "RoamA1USA8xjvpTJZ6RvvxyDRzNh6GCA1zVGKSiMVkn",
+        "tokenCode": "ROAM"
+      },
+      {
+        "contractAddress": "5gs8nf4wojB5EXgDUWNLwXpknzgV2YWDhveAeBZpVLbp",
+        "tokenCode": "XTAG"
+      },
+      {
+        "contractAddress": "98mb39tPFKQJ4Bif8iVg9mYb9wsfPZgpgN1sxoVTpump",
+        "tokenCode": "LLM"
+      },
+      {
+        "contractAddress": "4k3Dyjzvzp8eMZWUXbBCjEvwSkkk59S5iCNLY3QrkX6R",
+        "tokenCode": "RAY"
+      },
+      {
+        "contractAddress": "BLDiYcvm3CLcgZ7XUBPgz6idSAkNmWY6MBbm8Xpjpump",
+        "tokenCode": "TRISIG"
+      },
+      {
+        "contractAddress": "GJtJuWD9qYcCkrwMBmtY1tpapV1sKfB2zUv9Q4aqpump",
+        "tokenCode": "RIFSOL"
+      },
+      {
+        "contractAddress": "SW1TCHLmRGTfW5xZknqQdpdarB8PD95sJYWpNp9TbFx",
+        "tokenCode": "SWTCH"
+      },
+      {
+        "contractAddress": "CN162nCPpq3DxPCyKLbAvEJeB1aCxsnVTEG4ZU8vpump",
+        "tokenCode": "A47"
+      },
+      {
+        "contractAddress": "GJAFwWjJ3vnTsrQVabjBVK2TYB1YtRCQXRDfDgUnpump",
+        "tokenCode": "ACTSOL"
+      },
+      {
+        "contractAddress": "ZBCNpuD7YMXzTHB2fhGkGi78MNsHGLRXUhRewNRm9RU",
+        "tokenCode": "ZBCN"
+      },
+      {
+        "contractAddress": "DvjbEsdca43oQcw2h3HW1CT7N3x5vRcr3QrvTUHnXvgV",
+        "tokenCode": "DOOD"
+      },
+      {
+        "contractAddress": "HZ1JovNiVvGrGNiiYvEozEVgZ58xaU3RKwX8eACQBCt3",
+        "tokenCode": "PYTH"
+      },
+      {
+        "contractAddress": "8BtoThi2ZoXnF7QQK1Wjmh2JuBw9FjVvhnGMVZ2vpump",
+        "tokenCode": "DARK"
+      },
+      {
+        "contractAddress": "KENJSUYLASHUMfHyy5o4Hp2FdNqZg1AsUPhfH2kYvEP",
+        "tokenCode": "GRIFFAIN"
+      },
+      {
+        "contractAddress": "C29ebrgYjYoJPMGPnPSGY1q3mMGk4iDSqnQeQQA7moon",
+        "tokenCode": "NOBODY"
+      },
+      {
+        "contractAddress": "KMNo3nJsBXfcpJTVhZcXLW7RmTwTt4GVFE7suUBo9sS",
+        "tokenCode": "KMNO"
+      },
+      {
+        "contractAddress": "8x5VqbHA8D7NkD52uNuS5nnt3PwA8pLD34ymskeSo2Wn",
+        "tokenCode": "ZEREBRO"
+      },
+      {
+        "contractAddress": "5z3EqYQo9HiCEs3R84RCDMu2n7anpDMxRhdK8PSWmrRC",
+        "tokenCode": "PONKE"
+      },
+      {
+        "contractAddress": "9BB6NFEcjBCtnNLFko2FqVQBq8HHM13kCyYcdQbgpump",
+        "tokenCode": "FARTCOIN"
+      },
+      {
+        "contractAddress": "hntyVP6YFm1Hg25TN9WGLqM12b8TQmcknKrdu1oxWux",
+        "tokenCode": "HNT"
+      },
+      {
+        "contractAddress": "A8C3xuqscfmyLrte3VmTqrAq8kgMASius9AFNANwpump",
+        "tokenCode": "FWOG"
+      },
+      {
+        "contractAddress": "C3DwDjT17gDvvCYC2nsdGHxDHVmQRdhKfpAdqQ29pump",
+        "tokenCode": "RFC"
+      },
+      {
+        "contractAddress": "octo82drBEdm8CSDaEKBymVn86TBtgmPnDdmE64PTqJ",
+        "tokenCode": "OTK"
+      },
+      {
+        "contractAddress": "5UUH9RTDiSpq6HKS6bp4NdU9PNJpXRXuiw6ShBTBhgH2",
+        "tokenCode": "TROLL"
+      },
+      {
+        "contractAddress": "SarosY6Vscao718M4A778z4CGtvcwcGef5M9MEH1LGL",
+        "tokenCode": "SAROS"
+      },
+      {
+        "contractAddress": "EKpQGSJtjMFqKZ9KQanSqYXRcF8fBopzLHYxdM65zcjm",
+        "tokenCode": "WIF"
+      },
+      {
+        "contractAddress": "USD1ttGY1N17NEEHLmELoaybftRBUSErhqYiQzvEmuB",
+        "tokenCode": "USD1"
+      },
+      {
+        "contractAddress": "rndrizKT3MK1iimdxRdWabcF7Zg7AR5T4nud4EkHBof",
+        "tokenCode": "RENDER"
+      },
+      {
+        "contractAddress": "PRTLSwfLzpVGSAQiUfXEenJkq1cwTsEcsn1hPL9zwwg",
+        "tokenCode": "PORTALS"
+      },
+      {
+        "contractAddress": "4LLbsb5ReP3yEtYzmXewyGjcir5uXtKFURtaEUVC2AHs",
+        "tokenCode": "PRCL"
+      },
+      {
+        "contractAddress": "TNSRxcUxoT9xBG3de7PiJyTDYu7kskLqcpddxnEJAS6",
+        "tokenCode": "TNSR"
+      },
+      {
+        "contractAddress": "Jambjx1oJoZNBZiqbiF9TqgatEZPdyfvYa9WVsKNzUh",
+        "tokenCode": "J"
+      },
+      {
+        "contractAddress": "EcQCUYv57C4V6RoPxkVUiDwtX1SP8y8FP5AEToYL8Az",
+        "tokenCode": "WLKN"
+      },
+      {
+        "contractAddress": "7EYnhQoR9YM3N7UoaKRoA44Uy8JeaZV3qyouov87awMs",
+        "tokenCode": "SILLY"
+      },
+      {
+        "contractAddress": "CNvitvFnSM5ed6K28RUNSaAjqqz5tX1rA5HgaBN9pump",
+        "tokenCode": "FRED"
+      },
+      {
+        "contractAddress": "2qEHjDLDLbuBgRYvsxhc5D6uDWAivNFZGan56P1tpump",
+        "tokenCode": "PNUT"
+      },
+      {
+        "contractAddress": "5evN2exivZXJfLaA1KhHfiJKWfwH8znqyH36w1SFz89Y",
+        "tokenCode": "MIRAI"
+      },
+      {
+        "contractAddress": "69RX85eQoEsnZvXGmLNjYcWgVkp9r2JjahVm99KbJETU",
+        "tokenCode": "HOLO"
+      },
+      {
+        "contractAddress": "ASRRjA1R4RHVk5H9QKKm1jaQqMkxvv6nh5EypPrvwmxQ",
+        "tokenCode": "ASRR"
+      },
+      {
+        "contractAddress": "MEW1gQWJ3nEXg2qgERiKu7FAFj79PHvQVREQUzScPP5",
+        "tokenCode": "MEW"
+      },
+      {
+        "contractAddress": "2zMMhcVQEXDtdE6vsFS7S7D5oUodfJHE8vd1gnBouauv",
+        "tokenCode": "PENGU"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "ANI"
+      },
+      {
+        "contractAddress": "GekTNfm84QfyP2GdAHZ5AgACBRd69aNmgA5FDhZupump",
+        "tokenCode": "GRIFT"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "SOL"
+      },
+      {
+        "contractAddress": "DBRiDgJAMsM95moTzJs7M9LnkGErpbv9v6CUR1DXnUu5",
+        "tokenCode": "DBR"
+      },
+      {
+        "contractAddress": "PAWSxhjTyNJELywYiYTxCN857utnYmWXu7Q59Vgn6ZQ",
+        "tokenCode": "PAWS"
+      },
+      {
+        "contractAddress": "ZEXy1pqteRu3n13kdyh4LwPQknkFk3GzmMYMuNadWPo",
+        "tokenCode": "ZEX"
+      },
+      {
+        "contractAddress": "CLoUDKc4Ane7HeQcPpE3YHnznRxhMimJ4MyaUqyHFzAu",
+        "tokenCode": "CLOUD"
+      },
+      {
+        "contractAddress": "XLnpFRQ3rSWupCRjuQfx74mgVoT3ezVJKE1CogRZxhH",
+        "tokenCode": "XLAB"
+      },
+      {
+        "contractAddress": "FeR8VBqNRSUD5NtXAj2n3j1dAHkZHfyDktKuLXD4pump",
+        "tokenCode": "JELLYJELLY"
+      },
+      {
+        "contractAddress": "jtojtomepa8beP8AuQc6eXt5FriJwfFMwQx2v2f9mCL",
+        "tokenCode": "JTO"
+      },
+      {
+        "contractAddress": "STREAMribRwybYpMmSYoCsQUdr6MZNXEqHgm7p1gu9M",
+        "tokenCode": "STREAM"
+      },
+      {
+        "contractAddress": "Dz9mQ9NzkBcCsuGPFJ3r1bS4wgqKMHBPiVuniW8Mbonk",
+        "tokenCode": "USELESS"
+      },
+      {
+        "contractAddress": "DriFtupJYLTosbwoN8koMbEYSx54aFAVLddWsbksjwg7",
+        "tokenCode": "DRIFT"
+      },
+      {
+        "contractAddress": "ZxBon4vcf3DVcrt63fJU52ywYm9BKZC6YuXDhb3fomo",
+        "tokenCode": "FOMO"
+      },
+      {
+        "contractAddress": "Grass7B4RdKfBCjTKgSqnXkqjwiGvQyFbuSCUJr3XXjs",
+        "tokenCode": "GRASS"
+      },
+      {
+        "contractAddress": "DitHyRMQiSDhn5cnKMJV2CDDt6sVct96YrECiM49pump",
+        "tokenCode": "HOUSE"
+      },
+      {
+        "contractAddress": "25hAyBQfoDhfWx9ay6rarbgvWGwDdNqcHsXS3jQ3mTDJ",
+        "tokenCode": "MANEKI"
+      },
+      {
+        "contractAddress": "AujTJJ7aMS8LDo3bFzoyXDwT3jBALUbu4VZhzZdTZLmG",
+        "tokenCode": "BEER"
+      },
+      {
+        "contractAddress": "MEFNBXixkEbait3xn9bkm8WsJzXtVsaJEn4c8Sam21u",
+        "tokenCode": "ME"
+      },
+      {
+        "contractAddress": "ZEUS1aR7aX8DFFJf5QjWj2ftDDdNTroMNGo8YoQm3Gq",
+        "tokenCode": "ZEUS"
+      },
+      {
+        "contractAddress": "61V8vBaqAGMpgDQi4JcAwo1dmBGHsyhzodcPqnEVpump",
+        "tokenCode": "ARCSOL"
+      },
+      {
+        "contractAddress": "3bRTivrVsitbmCTGtqwp7hxXPsybkjn4XLNtPsHqa3zR",
+        "tokenCode": "LIKE"
+      },
+      {
+        "contractAddress": "Df6yfrKC8kZE3KNkrHERKzAetSxbrWeniQfyJY4Jpump",
+        "tokenCode": "CHILLGUY"
+      },
+      {
+        "contractAddress": "pumpCmXqMfrsAkQ5r49WcJnRayYRqmXz6ae8H7H9Dfn",
+        "tokenCode": "PUMP"
+      },
+      {
+        "contractAddress": "5MAYDfq5yxtudAhtfyuMBuHZjgAbaS9tbEyEQYAhDS5y",
+        "tokenCode": "ACS"
+      },
+      {
+        "contractAddress": "HtTYHz1Kf3rrQo6AqDLmss7gq5WrkWAaXn3tupUZbonk",
+        "tokenCode": "KORI"
+      },
+      {
+        "contractAddress": "7i5KKsX2weiTkry7jA4ZwSuXGhs5eJBEjY8vVxR4pfRx",
+        "tokenCode": "GMT"
+      },
+      {
+        "contractAddress": "38PgzpJYu2HkiYvV8qePFakB8tuobPdGm2FFEn7Dpump",
+        "tokenCode": "GORK"
+      },
+      {
+        "contractAddress": "AFbX8oGjGpmVFywbVouvhQSRmiW2aR1mohfahi4Y2AdB",
+        "tokenCode": "GST"
+      },
+      {
+        "contractAddress": "B89Hd5Juz7JP2dxCZXFJWk4tMTcbw7feDhuWGb3kq5qE",
+        "tokenCode": "NC"
+      },
+      {
+        "contractAddress": "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
+        "tokenCode": "USDC"
+      },
+      {
+        "contractAddress": "CzLSujWBLFsSjncfkh59rUFqvafWcY5tzedWJSuypump",
+        "tokenCode": "GOAT"
+      },
+      {
+        "contractAddress": "MNDEFzGvMt87ueuHvVU9VcTqsAP5b3fTGPsHuuPA5ey",
+        "tokenCode": "MNDE"
+      },
+      {
+        "contractAddress": "5mbK36SZ7J19An8jFochhQS4of8g6BwUjbeCSxBSoWdp",
+        "tokenCode": "MICHI"
+      },
+      {
+        "contractAddress": "CKaKtYvz6dKPyMvYq9Rh3UBrnNqYZAyd7iF4hJtjUvks",
+        "tokenCode": "GARI"
+      },
+      {
+        "contractAddress": "AvoecWraqX969kfXUF5XCCDz59sjRjiDa1KUDyj225t8",
+        "tokenCode": "MINT"
+      },
+      {
+        "contractAddress": "JUPyiwrYJFskUPiHa7hkeR8VUtAeFoSYbKedZNsDvCN",
+        "tokenCode": "JUP"
+      },
+      {
+        "contractAddress": "haioZJAWTMaR4SFhZRwFBBejnGDPiwLTqrDiKpwH31h",
+        "tokenCode": "HAIO"
+      },
+      {
+        "contractAddress": "85VBFQZC9TZkfaptBWjvUw7YbZjy52A6mjtPGjstQAmQ",
+        "tokenCode": "W"
+      },
+      {
+        "contractAddress": "Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB",
+        "tokenCode": "USDT"
+      },
+      {
+        "contractAddress": "DrZ26cKJDksVRWib3DVVsjo9eeXccc7hKhDJviiYEEZY",
+        "tokenCode": "YZY"
+      }
+    ]
+  ],
+  [
+    "CAP20",
+    [
+      {
+        "contractAddress": null,
+        "tokenCode": "OG"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "ATM"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "JUV"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "ARG"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "PSG"
+      }
+    ]
+  ],
+  [
+    "STEEM",
+    [
+      {
+        "contractAddress": null,
+        "tokenCode": "SBD"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "STEEM"
+      }
+    ]
+  ],
+  [
+    "BSC",
+    [
+      {
+        "contractAddress": "0x443cab9583b83eaa7a712c9d64525e57e2a7eb3f",
+        "tokenCode": "XTM"
+      },
+      {
+        "contractAddress": "0xaec945e04baf28b135fa7c640f624f8d90f1c3a6",
+        "tokenCode": "C98"
+      },
+      {
+        "contractAddress": "0x5dbde81fce337ff4bcaaee4ca3466c00aecae274",
+        "tokenCode": "AGT"
+      },
+      {
+        "contractAddress": "0xb994882a1b9bd98a71dd6ea5f61577c42848b0e8",
+        "tokenCode": "WOD"
+      },
+      {
+        "contractAddress": "0xd5369a3cac0f4448a9a96bb98af9c887c92fc37b",
+        "tokenCode": "BUBB"
+      },
+      {
+        "contractAddress": "0x617cab4aaae1f8dfb3ee138698330776a1e1b324",
+        "tokenCode": "ARTY"
+      },
+      {
+        "contractAddress": "0x7e975d85714b11d862c7cffee3c88d565a139eb7",
+        "tokenCode": "BOMB"
+      },
+      {
+        "contractAddress": "0xbab528425edb1e0e36d3719bc3307d9c8cce8888",
+        "tokenCode": "MOOLAH"
+      },
+      {
+        "contractAddress": "0x998305efdc264b9674178899fffbb44a47134a76",
+        "tokenCode": "GMRX"
+      },
+      {
+        "contractAddress": "0xa0a2ee912caf7921eaabc866c6ef6fec8f7e90a4",
+        "tokenCode": "DPR"
+      },
+      {
+        "contractAddress": "0xd41fdb03ba84762dd66a0af1a6c8540ff1ba5dfb",
+        "tokenCode": "SFP"
+      },
+      {
+        "contractAddress": "0x89af13a10b32f1b2f8d1588f93027f69b6f4e27e",
+        "tokenCode": "GAFI"
+      },
+      {
+        "contractAddress": "0x103071da56e7cd95b415320760d6a0ddc4da1ca5",
+        "tokenCode": "XTER"
+      },
+      {
+        "contractAddress": "0x799a290f9cc4085a0ce5b42b5f2c30193a7a872b",
+        "tokenCode": "ELDE"
+      },
+      {
+        "contractAddress": "0x656842617576232f829f05efb43bc9eb1c82b364",
+        "tokenCode": "OFN"
+      },
+      {
+        "contractAddress": "0x7ddc52c4de30e94be3a6a0a2b259b2850f421989",
+        "tokenCode": "GOMINING"
+      },
+      {
+        "contractAddress": "0x9573c88ae3e37508f87649f87c4dd5373c9f31e0",
+        "tokenCode": "MONI"
+      },
+      {
+        "contractAddress": "0x516f8a1fb458ebdcfd0f544ff85c69c1c0ebc31d",
+        "tokenCode": "SDM"
+      },
+      {
+        "contractAddress": "0x193f4a4a6ea24102f49b931deeeb931f6e32405d",
+        "tokenCode": "TLOS"
+      },
+      {
+        "contractAddress": "0x59e69094398afbea632f8bd63033bdd2443a3be1",
+        "tokenCode": "MONKY"
+      },
+      {
+        "contractAddress": "0x7d814b9ed370ec0a502edc3267393bf62d891b62",
+        "tokenCode": "BMT"
+      },
+      {
+        "contractAddress": "0x1865dc79a9e4b5751531099057d7ee801033d268",
+        "tokenCode": "LKI"
+      },
+      {
+        "contractAddress": "0x33d08d8c7a168333a85285a68c0042b39fc3741d",
+        "tokenCode": "AIOZ"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "BNB"
+      },
+      {
+        "contractAddress": "0x3c6256f234ba638e5883c46b3fedb00ea2e66b8a",
+        "tokenCode": "MGT"
+      },
+      {
+        "contractAddress": "0x19ed254efa5e061d28d84650891a3db2a9940c16",
+        "tokenCode": "SUP"
+      },
+      {
+        "contractAddress": "0xc9d23ed2adb0f551369946bd377f8644ce1ca5c4",
+        "tokenCode": "HYPER"
+      },
+      {
+        "contractAddress": "0x997a58129890bbda032231a52ed1ddc845fc18e1",
+        "tokenCode": "SIREN"
+      },
+      {
+        "contractAddress": "0xfebe8c1ed424dbf688551d4e2267e7a53698f0aa",
+        "tokenCode": "VINU"
+      },
+      {
+        "contractAddress": "0xf06ce11836851d71e74e4ffefa7b73fcc8a27786",
+        "tokenCode": "LAY3R"
+      },
+      {
+        "contractAddress": "0x965f527d9159dce6288a2219db51fc6eef120dd1",
+        "tokenCode": "BSW"
+      },
+      {
+        "contractAddress": "0x496cc0b4ee12aa2ac4c42e93067484e7ff50294b",
+        "tokenCode": "MTS"
+      },
+      {
+        "contractAddress": "0x40b8129b786d766267a7a118cf8c07e31cdb6fde",
+        "tokenCode": "UB"
+      },
+      {
+        "contractAddress": "0x23d3f4eaaa515403c6765bb623f287a8cca28f2b",
+        "tokenCode": "BROCCOLI"
+      },
+      {
+        "contractAddress": "0x595e21b20e78674f8a64c1566a20b2b316bc3511",
+        "tokenCode": "BULLA"
+      },
+      {
+        "contractAddress": "0x4be63a9b26ee89b9a3a13fd0aa1d0b2427c135f8",
+        "tokenCode": "XCV"
+      },
+      {
+        "contractAddress": "0x2170ed0880ac9a755fd29b2688956bd959f933f8",
+        "tokenCode": "ETH"
+      },
+      {
+        "contractAddress": "0x9aa52de273b5855f25247c312054b086345e4027",
+        "tokenCode": "OPAD"
+      },
+      {
+        "contractAddress": "0x5845684b49aef79a5c0f887f50401c247dca7ac6",
+        "tokenCode": "CYC"
+      },
+      {
+        "contractAddress": "0x783c3f003f172c6ac5ac700218a357d2d66ee2a2",
+        "tokenCode": "B2"
+      },
+      {
+        "contractAddress": "0xa1faa113cbe53436df28ff0aee54275c13b40975",
+        "tokenCode": "ALPHA"
+      },
+      {
+        "contractAddress": "0x8fff93e810a2edaafc326edee51071da9d398e83",
+        "tokenCode": "BRISE"
+      },
+      {
+        "contractAddress": "0x12bb890508c125661e03b09ec06e404bc9289040",
+        "tokenCode": "RACA"
+      },
+      {
+        "contractAddress": "0x4507cef57c46789ef8d1a19ea45f4216bae2b528",
+        "tokenCode": "TOKEN"
+      },
+      {
+        "contractAddress": "0x3ab1a5f76e12202d1ad1548a08a799501581da4e",
+        "tokenCode": "DIN"
+      },
+      {
+        "contractAddress": "0x6e88056e8376ae7709496ba64d37fa2f8015ce3e",
+        "tokenCode": "DEXE"
+      },
+      {
+        "contractAddress": "0xdce40c14d5956f8b8ba912402ba73b4d4d599612",
+        "tokenCode": "PZP"
+      },
+      {
+        "contractAddress": "0x6587eff07d9ae00f05fae2a3a032b2c1a1dfce41",
+        "tokenCode": "FREEDOG"
+      },
+      {
+        "contractAddress": "0x9840652dc04fb9db2c43853633f0f62be6f00f98",
+        "tokenCode": "CGPT"
+      },
+      {
+        "contractAddress": "0x3dc8e2d80b6215a1bccae4d38715c3520581e77c",
+        "tokenCode": "EPT"
+      },
+      {
+        "contractAddress": "0xad8c787992428cd158e451aab109f724b6bc36de",
+        "tokenCode": "ASP"
+      },
+      {
+        "contractAddress": "0xeceb87cf00dcbf2d4e2880223743ff087a995ad9",
+        "tokenCode": "NUM"
+      },
+      {
+        "contractAddress": "0x49f1d4db3ea1a64390e990c6debeac88eac007ca",
+        "tokenCode": "ITHACA"
+      },
+      {
+        "contractAddress": "0x899357e54c2c4b014ea50a9a7bf140ba6df2ec73",
+        "tokenCode": "PRAI"
+      },
+      {
+        "contractAddress": "0x0e7779e698052f8fe56c415c3818fcf89de9ac6d",
+        "tokenCode": "ULTI"
+      },
+      {
+        "contractAddress": "0xcf10117b30c7a5fc7c77b611bfc2555610dd4b3a",
+        "tokenCode": "NOTAI"
+      },
+      {
+        "contractAddress": "0x5f78f4bfcb2b43bc174fe16a69a13945cefa2978",
+        "tokenCode": "XR"
+      },
+      {
+        "contractAddress": "0xf7de7e8a6bd59ed41a4b5fe50278b3b7f31384df",
+        "tokenCode": "RDNT"
+      },
+      {
+        "contractAddress": "0xd955c9ba56fb1ab30e34766e252a97ccce3d31a6",
+        "tokenCode": "XPIN"
+      },
+      {
+        "contractAddress": "0xa2120b9e674d3fc3875f415a7df52e382f141225",
+        "tokenCode": "ATA"
+      },
+      {
+        "contractAddress": "0x7324c7c0d95cebc73eea7e85cbaac0dbdf88a05b",
+        "tokenCode": "XCN"
+      },
+      {
+        "contractAddress": "0x0df0587216a4a1bb7d5082fdc491d93d2dd4b413",
+        "tokenCode": "CHEEMS"
+      },
+      {
+        "contractAddress": "0x9025daa1fe2d27700187e0eac670818945f94c2e",
+        "tokenCode": "STAGE"
+      },
+      {
+        "contractAddress": "0xbdeae1ca48894a1759a8374d63925f21f2ee2639",
+        "tokenCode": "EDU"
+      },
+      {
+        "contractAddress": "0x0a73d885cdd66adf69c6d64c0609e55c527db2be",
+        "tokenCode": "K"
+      },
+      {
+        "contractAddress": "0x332e78c687c3fcd91494c6b13f0fc685b2a57434",
+        "tokenCode": "VISION"
+      },
+      {
+        "contractAddress": "0xabe8e5cabe24cb36df9540088fd7ce1175b9bc52",
+        "tokenCode": "SOLV"
+      },
+      {
+        "contractAddress": "0x003d87d02a2a01e9e8a20f507c83e15dd83a33d1",
+        "tokenCode": "GTAI"
+      },
+      {
+        "contractAddress": "0x2c3a8ee94ddd97244a93bc48298f97d2c412f7db",
+        "tokenCode": "AKE"
+      },
+      {
+        "contractAddress": "0xf2c88757f8d03634671208935974b60a2a28bdb3",
+        "tokenCode": "SHELL"
+      },
+      {
+        "contractAddress": "0x0203d275d2a65030889af45ed91d472be3948b92",
+        "tokenCode": "FURY"
+      },
+      {
+        "contractAddress": "0xac51066d7bec65dc4589368da368b212745d63e8",
+        "tokenCode": "ALICE"
+      },
+      {
+        "contractAddress": "0xf2b51cc1850fed939658317a22d73d3482767591",
+        "tokenCode": "NXPC"
+      },
+      {
+        "contractAddress": "0x94a8b4ee5cd64c79d0ee816f467ea73009f51aa0",
+        "tokenCode": "RIO"
+      },
+      {
+        "contractAddress": "0x9d1d4de9cd93203147fac3bc0262a78e3a0e96bb",
+        "tokenCode": "PBUX"
+      },
+      {
+        "contractAddress": "0xff7d6a96ae471bbcd7713af9cb1feeb16cf56b41",
+        "tokenCode": "BR"
+      },
+      {
+        "contractAddress": "0xd5eaaac47bd1993d661bc087e15dfb079a7f3c19",
+        "tokenCode": "KOMA"
+      },
+      {
+        "contractAddress": "0x6ae9701b9c423f40d54556c9a443409d79ce170a",
+        "tokenCode": "POLC"
+      },
+      {
+        "contractAddress": "0xfa35e2250e376c23955247383dc32c79082e7fcc",
+        "tokenCode": "FST"
+      },
+      {
+        "contractAddress": "0x2dff88a56767223a5529ea5960da7a3f5f766406",
+        "tokenCode": "ID"
+      },
+      {
+        "contractAddress": "0x6d106c0b8d2f47c5465bdbd58d1be253762cbbc1",
+        "tokenCode": "DEFI"
+      },
+      {
+        "contractAddress": "0xfe723495f73714426493384eb5e49aa5b827e1d5",
+        "tokenCode": "MORE"
+      },
+      {
+        "contractAddress": "0x86bb94ddd16efc8bc58e6b056e8df71d9e666429",
+        "tokenCode": "TSTBSC"
+      },
+      {
+        "contractAddress": "0x7f792db54b0e580cdc755178443f0430cf799aca",
+        "tokenCode": "VOLT"
+      },
+      {
+        "contractAddress": "0xa8d3dee6671c4fdac4743a1eb1f276eabd4ba302",
+        "tokenCode": "ZKWASM"
+      },
+      {
+        "contractAddress": "0x6bf62ca91e397b5a7d1d6bce97d9092065d7a510",
+        "tokenCode": "CROSS"
+      },
+      {
+        "contractAddress": "0xad68eb09abf00041aa47e2d1f7a96242bf5be00b",
+        "tokenCode": "YAMA"
+      },
+      {
+        "contractAddress": "0xcaae2a2f939f51d97cdfa9a86e79e3f085b799f3",
+        "tokenCode": "TUT"
+      },
+      {
+        "contractAddress": "0xcc6f1e1b87cfcbe9221808d2d85c501aab0b5192",
+        "tokenCode": "DMAIL"
+      },
+      {
+        "contractAddress": "0x6397de0f9aedc0f7a8fa8b438dde883b9c201010",
+        "tokenCode": "SIN"
+      },
+      {
+        "contractAddress": "0x59264f02d301281f3393e1385c0aefd446eb0f00",
+        "tokenCode": "PARTI"
+      },
+      {
+        "contractAddress": "0xe55d97a97ae6a17706ee281486e98a84095d8aaf",
+        "tokenCode": "AIPAD"
+      },
+      {
+        "contractAddress": "0xcd1679f117e81defc4f0009311ddc23fc1ae4a5e",
+        "tokenCode": "MAIGA"
+      },
+      {
+        "contractAddress": "0xdaf1695c41327b61b9b9965ac6a5843a3198cf07",
+        "tokenCode": "STO"
+      },
+      {
+        "contractAddress": "0xb9e1fd5a02d3a33b25a14d661414e6ed6954a721",
+        "tokenCode": "SOON"
+      },
+      {
+        "contractAddress": "0xe0a441d23cedb44822dfc8562e4d8d39c6b7f946",
+        "tokenCode": "SGC"
+      },
+      {
+        "contractAddress": "0x8d0d000ee44948fc98c9b98a4fa4921476f08b0d",
+        "tokenCode": "USD1"
+      },
+      {
+        "contractAddress": "0x5d3a12c42e5372b2cc3264ab3cdcf660a1555238",
+        "tokenCode": "ARIA"
+      },
+      {
+        "contractAddress": "0xe0f94ac5462997d2bc57287ac3a3ae4c31345d66",
+        "tokenCode": "CEEK"
+      },
+      {
+        "contractAddress": "0x04756126f044634c9a0f0e985e60c88a51acc206",
+        "tokenCode": "CSIX"
+      },
+      {
+        "contractAddress": "0xd86e6ef14b96d942ef0abf0720c549197ea8c528",
+        "tokenCode": "RDO"
+      },
+      {
+        "contractAddress": "0x8b194370825e37b33373e74a41009161808c1488",
+        "tokenCode": "VELVET"
+      },
+      {
+        "contractAddress": "0xe3225e11cab122f1a126a28997788e5230838ab9",
+        "tokenCode": "XNY"
+      },
+      {
+        "contractAddress": "0x5c85d6c6825ab4032337f11ee92a72df936b46f6",
+        "tokenCode": "MUBARAK"
+      },
+      {
+        "contractAddress": "0x3ecb529752dec6c6ab08fd83e425497874e21d49",
+        "tokenCode": "PINGPONG"
+      },
+      {
+        "contractAddress": "0x868fced65edbf0056c4163515dd840e9f287a4c3",
+        "tokenCode": "SIGN"
+      },
+      {
+        "contractAddress": "0x0669538fcdef9a73cd37938eba8c79e652bb93aa",
+        "tokenCode": "SCPT"
+      },
+      {
+        "contractAddress": "0xc748673057861a797275cd8a068abb95a902e8de",
+        "tokenCode": "BABYDOGE"
+      },
+      {
+        "contractAddress": "0x1a5d7e4c3a7f940b240b7357a4bfed30d17f9497",
+        "tokenCode": "HOLO"
+      },
+      {
+        "contractAddress": "0xc335df7c25b72eec661d5aa32a7c2b7b2a1d1874",
+        "tokenCode": "ICE"
+      },
+      {
+        "contractAddress": "0xa026ad2ceda16ca5fc28fd3c72f99e2c332c8a26",
+        "tokenCode": "XCAD"
+      },
+      {
+        "contractAddress": "0x8263cd1601fe73c066bf49cc09841f35348e3be0",
+        "tokenCode": "ALU"
+      },
+      {
+        "contractAddress": "0xce7c3b5e058c196a0eaaa21f8e4bf8c2c07c2935",
+        "tokenCode": "BOOM"
+      },
+      {
+        "contractAddress": "0x69a87c8788d4a48c1362b3b357d0e6b59c11d93f",
+        "tokenCode": "OBI"
+      },
+      {
+        "contractAddress": "0x44a21b3577924dcd2e9c81a3347d204c36a55466",
+        "tokenCode": "EGO"
+      },
+      {
+        "contractAddress": "0xc0041ef357b183448b235a8ea73ce4e4ec8c265f",
+        "tokenCode": "COOKIE"
+      },
+      {
+        "contractAddress": "0x2d5f3b0722acd35fbb749cb936dfdd93247bbc95",
+        "tokenCode": "BABYBNB"
+      },
+      {
+        "contractAddress": "0xda67fbf4e6fa4bb78f62533b7264e1b13295fdf3",
+        "tokenCode": "CELB"
+      },
+      {
+        "contractAddress": "0xc27a719105a987b4c34116223cae8bd8f4b5def4",
+        "tokenCode": "KACE"
+      },
+      {
+        "contractAddress": "0x287880ea252b52b63cc5f40a2d3e5a44aa665a76",
+        "tokenCode": "ALPINE"
+      },
+      {
+        "contractAddress": "0x9558a9254890b2a8b057a789f413631b9084f4a3",
+        "tokenCode": "AIN"
+      },
+      {
+        "contractAddress": "0xd6b48ccf41a62eb3891e58d0f006b19b01d50cca",
+        "tokenCode": "SERAPH"
+      },
+      {
+        "contractAddress": "0x2b72867c32cf673f7b02d208b26889fed353b1f8",
+        "tokenCode": "SQR"
+      },
+      {
+        "contractAddress": "0xdf296ea217aec7e118fafa9b2ce20d0cfccd2eaf",
+        "tokenCode": "BUN"
+      },
+      {
+        "contractAddress": "0x1e3dbc0aad9671fdd31e58b2fcc6cf1ca9947994",
+        "tokenCode": "WAI"
+      },
+      {
+        "contractAddress": "0x0f0df6cb17ee5e883eddfef9153fc6036bdb4e37",
+        "tokenCode": "BAS"
+      },
+      {
+        "contractAddress": "0x4b0f1812e5df2a09796481ff14017e6005508003",
+        "tokenCode": "TWT"
+      },
+      {
+        "contractAddress": "0x503fa24b7972677f00c4618e5fbe237780c1df53",
+        "tokenCode": "KILO"
+      },
+      {
+        "contractAddress": "0x54523d5fb56803bac758e8b10b321748a77ae9e9",
+        "tokenCode": "DREAMS"
+      },
+      {
+        "contractAddress": "0xbfe78de7d1c51e0868501d5fa3e88e674c79acdd",
+        "tokenCode": "LOT"
+      },
+      {
+        "contractAddress": "0x9cfae8067322394e34e6b734c4a3f72acc4a7fe5",
+        "tokenCode": "DGC"
+      },
+      {
+        "contractAddress": "0x3019bf2a2ef8040c242c9a4c5c4bd4c81678b2a1",
+        "tokenCode": "GMT"
+      },
+      {
+        "contractAddress": "0x8457ca5040ad67fdebbcc8edce889a335bc0fbfb",
+        "tokenCode": "KALT"
+      },
+      {
+        "contractAddress": "0x99aa29ac023057951781dc5d1784e9a4c362ce23",
+        "tokenCode": "CWS"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "USDC"
+      },
+      {
+        "contractAddress": "0xfb5b838b6cfeedc2873ab27866079ac55363d37e",
+        "tokenCode": "FLOKI"
+      },
+      {
+        "contractAddress": "0xc07e1300dc138601fa6b0b59f8d0fa477e690589",
+        "tokenCode": "Q"
+      },
+      {
+        "contractAddress": "0x477bc8d23c634c154061869478bce96be6045d12",
+        "tokenCode": "SFUND"
+      },
+      {
+        "contractAddress": "0xfceb31a79f71ac9cbdcf853519c1b12d379edc46",
+        "tokenCode": "LISTA"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "BTC"
+      },
+      {
+        "contractAddress": "0x0c78d4605c2972e5f989de9019de1fb00c5d3462",
+        "tokenCode": "CESS"
+      },
+      {
+        "contractAddress": "0x6894cde390a3f51155ea41ed24a33a4827d3063d",
+        "tokenCode": "CAT"
+      },
+      {
+        "contractAddress": "0x780207b8c0fdc32cf60e957415bfa1f2d4d9718c",
+        "tokenCode": "CAS"
+      },
+      {
+        "contractAddress": "0x0e09fabb73bd3ade0a17ecc321fd13a19e81ce82",
+        "tokenCode": "CAKE"
+      },
+      {
+        "contractAddress": "0x55d398326f99059ff775485246999027b3197955",
+        "tokenCode": "USDT"
+      },
+      {
+        "contractAddress": "0x2d060ef4d6bf7f9e5edde373ab735513c0e4f944",
+        "tokenCode": "AITECH"
+      },
+      {
+        "contractAddress": "0xf4b385849f2e817e92bffbfb9aeb48f950ff4444",
+        "tokenCode": "EGL1"
+      },
+      {
+        "contractAddress": "0x2222227e22102fe3322098e4cbfe18cfebd57c95",
+        "tokenCode": "TLM"
+      },
+      {
+        "contractAddress": "0xa3cfb853339b77f385b994799b015cb04b208fe6",
+        "tokenCode": "POP"
+      }
+    ]
+  ],
+  [
+    "ARBITRUM",
+    [
+      {
+        "contractAddress": null,
+        "tokenCode": "UXLINK"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "ANIME"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "ARB"
+      }
+    ]
+  ],
+  [
+    "ARB",
+    [
+      {
+        "contractAddress": "0x1a6b3a62391eccaaa992ade44cd4afe6bec8cff1",
+        "tokenCode": "UXLINK"
+      },
+      {
+        "contractAddress": "0x11e969e9b3f89cb16d686a03cd8508c9fc0361af",
+        "tokenCode": "LAVA"
+      },
+      {
+        "contractAddress": "0x59062301fb510f4ea2417b67404cb16d31e604ba",
+        "tokenCode": "LOGX"
+      },
+      {
+        "contractAddress": "0xfc5a1a6eb076a2c7ad06ed22c90d7e710e35ad0a",
+        "tokenCode": "GMX"
+      },
+      {
+        "contractAddress": "0x539bde0d7dbd336b79148aa742883198bbf60342",
+        "tokenCode": "MAGIC"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "ETH"
+      },
+      {
+        "contractAddress": "0x077574441c4f8763a37a2cfee2ecb444aa60a15e",
+        "tokenCode": "RCADE"
+      },
+      {
+        "contractAddress": "0xc24a365a870821eb83fd216c9596edd89479d8d7",
+        "tokenCode": "G3"
+      },
+      {
+        "contractAddress": "0x3082cc23568ea640225c2467653db90e9250aaa0",
+        "tokenCode": "RDNT"
+      },
+      {
+        "contractAddress": "0x7a10f506e4c7658e6ad15fdf0443d450b7fa80d7",
+        "tokenCode": "EYWA"
+      },
+      {
+        "contractAddress": "0x619c82392cb6e41778b7d088860fea8447941f4c",
+        "tokenCode": "AFG"
+      },
+      {
+        "contractAddress": "0x6985884c4392d348587b19cb9eaaf157f13271cd",
+        "tokenCode": "ZRO"
+      },
+      {
+        "contractAddress": "0xaf7e3f16d747e77e927dc94287f86eb95a64d83d",
+        "tokenCode": "VEMP"
+      },
+      {
+        "contractAddress": "0x94fcd9c18f99538c0f7c61c5500ca79f0d5c4dab",
+        "tokenCode": "KIMA"
+      },
+      {
+        "contractAddress": "0x37a645648df29205c6261289983fb04ecd70b4b3",
+        "tokenCode": "ANIME"
+      },
+      {
+        "contractAddress": "0x3d9907f9a368ad0a51be60f7da3b97cf940982d8",
+        "tokenCode": "GRAIL"
+      },
+      {
+        "contractAddress": "0x1337420ded5adb9980cfc35f8f2b054ea86f8ab1",
+        "tokenCode": "SQD"
+      },
+      {
+        "contractAddress": "0x5f8a7c646511a790c53f171891e5d469ca884ede",
+        "tokenCode": "SLING"
+      },
+      {
+        "contractAddress": "0x912ce59144191c1204e64559fe8253a0e49e6548",
+        "tokenCode": "ARB"
+      },
+      {
+        "contractAddress": "0x7e7a7c916c19a45769f6bdaf91087f93c6c12f78",
+        "tokenCode": "EGP"
+      },
+      {
+        "contractAddress": "0x1114982539a2bfb84e8b9e4e320bbc04532a9e44",
+        "tokenCode": "TRN"
+      },
+      {
+        "contractAddress": "0x9623063377ad1b27544c965ccd7342f7ea7e88c7",
+        "tokenCode": "GRT"
+      },
+      {
+        "contractAddress": "0xe16e2548a576ad448fb014bbe85284d7f3542df5",
+        "tokenCode": "MOZ"
+      },
+      {
+        "contractAddress": "0x0c880f6761f1af8d9aa9c466984b80dab9a8c9e8",
+        "tokenCode": "PENDLE"
+      },
+      {
+        "contractAddress": "0xdadeca1167fe47499e53eb50f261103630974905",
+        "tokenCode": "NRN"
+      },
+      {
+        "contractAddress": "0x5575552988a3a80504bbaeb1311674fcfd40ad4b",
+        "tokenCode": "SPA"
+      },
+      {
+        "contractAddress": "0x4cb9a7ae498cedcbb5eae9f25736ae7d428c9d66",
+        "tokenCode": "XAI"
+      },
+      {
+        "contractAddress": "0xaf88d065e77c8cc2239327c5edb3a432268e5831",
+        "tokenCode": "USDC"
+      },
+      {
+        "contractAddress": "0xb59c8912c83157a955f9d715e556257f432c35d7",
+        "tokenCode": "TRUF"
+      },
+      {
+        "contractAddress": "0x1cd9a56c8c2ea913c70319a44da75e99255aa46f",
+        "tokenCode": "OBT"
+      },
+      {
+        "contractAddress": "0x374c5fb7979d5fdbaad2d95409e235e5cbdfd43c",
+        "tokenCode": "MLK"
+      },
+      {
+        "contractAddress": "0xf18e4466f26b4ca55bbab890b314a54976e45b17",
+        "tokenCode": "G7"
+      },
+      {
+        "contractAddress": "0xfd086bc7cd5c481dcc9c85ebe478a1c0b69fcbb9",
+        "tokenCode": "USDT"
+      }
+    ]
+  ],
+  [
+    "AVAXCCHAIN",
+    [
+      {
+        "contractAddress": null,
+        "tokenCode": "COQ"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "AVAX"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "NXPC"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "JOE"
+      }
+    ]
+  ],
+  [
+    "AVAX_C",
+    [
+      {
+        "contractAddress": "0x420fca0121dc28039145009570975747295f2329",
+        "tokenCode": "COQ"
+      },
+      {
+        "contractAddress": "0x62edc0692bd897d2295872a9ffcac5425011c661",
+        "tokenCode": "GMX"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "AVAX"
+      },
+      {
+        "contractAddress": "0xf3e5914ca1f678e0a3a38031b5514682e3450919",
+        "tokenCode": "QUILL"
+      },
+      {
+        "contractAddress": "0xd1c3f94de7e5b45fa4edbba472491a9f4b166fc4",
+        "tokenCode": "XAVA"
+      },
+      {
+        "contractAddress": "0x5e0e90e268bc247cc850c789a0db0d5c7621fb59",
+        "tokenCode": "NXPC"
+      },
+      {
+        "contractAddress": "0x97f2624d5f99a953ae5574ea57d3268785941de4",
+        "tokenCode": "COLS"
+      },
+      {
+        "contractAddress": "0xd402298a793948698b9a63311404fbbee944eafd",
+        "tokenCode": "SHRAP"
+      },
+      {
+        "contractAddress": "0x8729438eb15e2c8b576fcc6aecda6a148776c0f5",
+        "tokenCode": "QI"
+      },
+      {
+        "contractAddress": "0xb97ef9ef8734c71904d8002f8b6bc66dd9c48a6e",
+        "tokenCode": "USDC"
+      },
+      {
+        "contractAddress": "0x9702230a8ea53601f5cd2dc00fdbc13d4df4a8c7",
+        "tokenCode": "USDT"
+      },
+      {
+        "contractAddress": "0x714f020c54cc9d104b6f4f6998c63ce2a31d1888",
+        "tokenCode": "FITFI"
+      }
+    ]
+  ],
+  [
+    "VELONEW",
+    [
+      {
+        "contractAddress": null,
+        "tokenCode": "VELO"
+      }
+    ]
+  ],
+  [
+    "XLM",
+    [
+      {
+        "contractAddress": "GDM4RQUQQUVSKQA7S6EM7XBZP3FCGH4Q7CL6TABQ7B2BEJ5ERARM2M5M",
+        "tokenCode": "VELO"
+      },
+      {
+        "contractAddress": "GAAPUOQWOZAG3PENRN7FEPYWXVGJBJVBL6EUE2ZHN5TSY7WBXQDO7AY2",
+        "tokenCode": "NWC"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "XLM"
+      }
+    ]
+  ],
+  [
+    "BEP20",
+    [
+      {
+        "contractAddress": null,
+        "tokenCode": "ARTY"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "BANK"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "XTER"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "BANANAS31"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "VINU"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "BSW"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "KT"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "BROCCOLI"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "BULLA"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "SOPH"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "B2"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "CGPT"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "EPT"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "MBOX"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "XR"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "DCK"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "SOLV"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "GTAI"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "SHELL"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "FURY"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "SKYAI"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "NXPC"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "XVS"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "PBUX"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "AIC"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "TUT"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "PARTI"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "RTF"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "ACE"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "CSIX"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "MUBARAK"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "BABYDOGE"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "ICE"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "ALU"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "BAKE"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "FHE"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "TST"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "COOKIE"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "PHB"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "MCRT"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "DONKEY"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "SFUND"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "LISTA"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "BOBBSC"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "CAT"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "CAKE"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "AI"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "AITECH"
+      }
+    ]
+  ],
+  [
+    "POLYGON",
+    [
+      {
+        "contractAddress": null,
+        "tokenCode": "WIFI"
+      },
+      {
+        "contractAddress": "0xa26df7f21d752bcd3a413ba496485d87d65eef8f",
+        "tokenCode": "IDEA"
+      },
+      {
+        "contractAddress": "0xb5c064f955d8e7f38fe0460c556a72987494ee17",
+        "tokenCode": "QUICK"
+      },
+      {
+        "contractAddress": "0x229b1b6c23ff8953d663c4cbb519717e323a0a84",
+        "tokenCode": "BLOK"
+      },
+      {
+        "contractAddress": "0x692ac1e363ae34b6b489148152b12e2785a3d8d6",
+        "tokenCode": "TRADE"
+      },
+      {
+        "contractAddress": "0xf0949dd87d2531d665010d6274f06a357669457a",
+        "tokenCode": "RMV"
+      },
+      {
+        "contractAddress": "0x5f2f8818002dc64753daedf4a6cb2ccb757cd220",
+        "tokenCode": "WSDM"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "APEPE"
+      },
+      {
+        "contractAddress": "0xe3f2b1b2229c0333ad17d03f179b87500e7c5e01",
+        "tokenCode": "AEG"
+      },
+      {
+        "contractAddress": "0xdf7837de1f2fa4631d716cf2502f8b230f1dcc32",
+        "tokenCode": "TEL"
+      },
+      {
+        "contractAddress": "0x311434160d7537be358930def317afb606c0d737",
+        "tokenCode": "NAKA"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "POL"
+      },
+      {
+        "contractAddress": "0xa3c322ad15218fbfaed26ba7f616249f7705d945",
+        "tokenCode": "MV"
+      },
+      {
+        "contractAddress": "0x22e3f02f86bc8ea0d73718a2ae8851854e62adc5",
+        "tokenCode": "FLAME"
+      },
+      {
+        "contractAddress": "0x9dbfc1cbf7a1e711503a29b4b5f9130ebeccac96",
+        "tokenCode": "UPO"
+      },
+      {
+        "contractAddress": "0xd0258a3fd00f38aa8090dfee343f10a9d4d30d3f",
+        "tokenCode": "VOXEL"
+      },
+      {
+        "contractAddress": "0xe5417af564e4bfda1c483642db72007871397896",
+        "tokenCode": "GNS"
+      },
+      {
+        "contractAddress": "0xc2132d05d31c914a87c6611c10748aeb04b58e8f",
+        "tokenCode": "USDT"
+      }
+    ]
+  ],
+  [
+    "TON",
+    [
+      {
+        "contractAddress": "EQAQZEf6A-BfN8wYVnjdyPWpCXwkTSjhfF5ZWP7AjReM4eEI",
+        "tokenCode": "BOMB"
+      },
+      {
+        "contractAddress": "EQCvxJy4eG8hyHBFsZ7eePxrRsUQSFE_jpptRAYBmcG_DOGS",
+        "tokenCode": "DOGS"
+      },
+      {
+        "contractAddress": "EQA3AshPEVly8wQ6mZincrKC_CkJSKXqqjyg0VMsVjF_CATS",
+        "tokenCode": "CATS"
+      },
+      {
+        "contractAddress": "EQDDhgqmuh16lpAaTvAqzQ-zo7_HqjrUNJxmIhFeXwVUSUAe",
+        "tokenCode": "MISSION"
+      },
+      {
+        "contractAddress": "EQA2kCVNwVsil2EM2mB0SkXytxCqQjS4mttjDpnXmwG9T6bO",
+        "tokenCode": "STON"
+      },
+      {
+        "contractAddress": "EQAJ8uWd7EBqsmpSWaRdf_I-8R8-XHwh3gsNKhy-UrdrPcUo",
+        "tokenCode": "HMSTR"
+      },
+      {
+        "contractAddress": "EQD-cvR0Nz6XAyRBvbhz-abTrRC6sI5tvHvvpeQraV9UAAD7",
+        "tokenCode": "CATI"
+      },
+      {
+        "contractAddress": "EQAvlWFDxGF2lXm67y4yzC17wYKD9A0guwPkMs1gOsM__NOT",
+        "tokenCode": "NOT"
+      },
+      {
+        "contractAddress": "EQB4zZusHsbU2vVTPqjhlokIOoiZhEdCMT703CWEzhTOo__X",
+        "tokenCode": "X"
+      },
+      {
+        "contractAddress": "EQCuPm01HldiduQ55xaBF_1kaW_WAUy5DHey8suqzU_MAJOR",
+        "tokenCode": "MAJOR"
+      },
+      {
+        "contractAddress": "EQBZ_cafPyDr5KUTs0aNxh0ZTDhkpEZONmLJA2SNGlLm4Cko",
+        "tokenCode": "REDO"
+      },
+      {
+        "contractAddress": "EQDWXjnVWheFemaAaFn-Cp4nDehvGllrXOZ8wqHm8sDEwn_c",
+        "tokenCode": "DUCK"
+      },
+      {
+        "contractAddress": "EQB-vc00g9PeUWLptSAH4g1J5kYS7WTgtVEfhI6oKdQtRudE",
+        "tokenCode": "CLAY"
+      },
+      {
+        "contractAddress": "EQCAj5oiRRrXokYsg_B-e0KG9xMwh5upr5I8HQzErm0_BLUM",
+        "tokenCode": "BLUM"
+      },
+      {
+        "contractAddress": "EQC2CUQqMJuVkO_ioXE9MvW9ckNBuxqFB7Xce7BgwFnWagem",
+        "tokenCode": "GOATS"
+      },
+      {
+        "contractAddress": "EQDol2oVpmBznAL6vQpF51QW3p0PKV7ag4VEtex8_MeMHASH",
+        "tokenCode": "MEMHASH"
+      },
+      {
+        "contractAddress": "EQCxE6mUtQJKFnGfaROTKOt1lZbDiiX1kCixRv7Nw2Id_sDs",
+        "tokenCode": "USDT"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "TON"
+      }
+    ]
+  ],
+  [
+    "Mantle",
+    [
+      {
+        "contractAddress": null,
+        "tokenCode": "MNT"
+      }
+    ]
+  ],
+  [
+    "LUNA",
+    [
+      {
+        "contractAddress": null,
+        "tokenCode": "LUNA"
+      }
+    ]
+  ],
+  [
+    "TERRA",
+    [
+      {
+        "contractAddress": "uluna",
+        "tokenCode": "LUNA"
+      }
+    ]
+  ],
+  [
+    "XNO",
+    [
+      {
+        "contractAddress": null,
+        "tokenCode": "XNO"
+      }
+    ]
+  ],
+  [
+    "NANO",
+    [
+      {
+        "contractAddress": null,
+        "tokenCode": "XNO"
+      }
+    ]
+  ],
+  [
+    "DYDX",
+    [
+      {
+        "contractAddress": null,
+        "tokenCode": "DYDX"
+      }
+    ]
+  ],
+  [
+    "dYdX",
+    [
+      {
+        "contractAddress": "adydx",
+        "tokenCode": "DYDX"
+      }
+    ]
+  ],
+  [
+    "RONIN",
+    [
+      {
+        "contractAddress": null,
+        "tokenCode": "RONIN"
+      }
+    ]
+  ],
+  [
+    "Ronin",
+    [
+      {
+        "contractAddress": null,
+        "tokenCode": "RONIN"
+      },
+      {
+        "contractAddress": "0xb4562fdefd5ed58f7705ce9386d54ee9b53831d1",
+        "tokenCode": "PFVS"
+      }
+    ]
+  ],
+  [
+    "OPTIMISM",
+    [
+      {
+        "contractAddress": null,
+        "tokenCode": "VELODROME"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "OP"
+      }
+    ]
+  ],
+  [
+    "WEMIX",
+    [
+      {
+        "contractAddress": null,
+        "tokenCode": "WEMIX"
+      }
+    ]
+  ],
+  [
+    "KCC",
+    [
+      {
+        "contractAddress": "0x8724f9fb7b3f1bb6f2c90b3ad3fd6b3c20a06429",
+        "tokenCode": "DODO"
+      },
+      {
+        "contractAddress": "0x73b6086955c820370a18002f60e9b51fb67d7e1a",
+        "tokenCode": "SHIB"
+      },
+      {
+        "contractAddress": "0xf55af137a98607f7ed2efefa4cd2dfe70e4253b1",
+        "tokenCode": "ETH"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "KCS"
+      },
+      {
+        "contractAddress": "0xe76e97c157658004ee22e01c03a5e21a4655a2fd",
+        "tokenCode": "AAVE"
+      },
+      {
+        "contractAddress": "0x16c4106966ce30e06e806a7c40eefb46d84ce7e5",
+        "tokenCode": "COMP"
+      },
+      {
+        "contractAddress": "0x69a7169f9da9bba04b982e49ffd8d6a16c70c590",
+        "tokenCode": "USDP"
+      },
+      {
+        "contractAddress": "0x6e8ce0519b7e4d691bace464099547e5fc17679c",
+        "tokenCode": "CHZ"
+      },
+      {
+        "contractAddress": "0x652d253b7ca91810a4a05acfc39729387c5090c0",
+        "tokenCode": "CRO"
+      },
+      {
+        "contractAddress": "0x791630c11c7159a748d8c2267a66780b3ddc40a7",
+        "tokenCode": "QNT"
+      },
+      {
+        "contractAddress": "0x2ca48b4eea5a731c2b54e7c3944dbdb87c0cfb6f",
+        "tokenCode": "MJT"
+      },
+      {
+        "contractAddress": "0xb49dd3edb98fbe82a01dfcb556cd016964baf5a3",
+        "tokenCode": "GRT"
+      },
+      {
+        "contractAddress": "0x47841910329aaa6b88d5e9dcde9000195151dc72",
+        "tokenCode": "LINK"
+      },
+      {
+        "contractAddress": "0xfa93c12cd345c658bc4644d1d4e1b9615952258c",
+        "tokenCode": "BTC"
+      },
+      {
+        "contractAddress": "0x0039f574ee5cc39bdd162e9a88e3eb1f111baf48",
+        "tokenCode": "USDT"
+      }
+    ]
+  ],
+  [
+    "TRX",
+    [
+      {
+        "contractAddress": null,
+        "tokenCode": "USDJ"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "TRX"
+      },
+      {
+        "contractAddress": "TFczxzPhnThNSqr5by8tvxsdCFRRz6cPNq",
+        "tokenCode": "NFT"
+      },
+      {
+        "contractAddress": "TVj7RNVHy6thbM7BWdSe9G6gXwKhjhdNZS",
+        "tokenCode": "KLV"
+      },
+      {
+        "contractAddress": "TUPM7K8REVzD2UdV4R5fe5M8XbnR2DdoJ6",
+        "tokenCode": "HTX"
+      },
+      {
+        "contractAddress": "TSSMHYeV2uE9qYH95DqyoCuNCzEL1NvU3S",
+        "tokenCode": "SUN"
+      },
+      {
+        "contractAddress": "TXL6rJbvmjD46zeN1JssfgxvSo99qC8MRT",
+        "tokenCode": "SUNDOG"
+      },
+      {
+        "contractAddress": "TCFLL5dx5ZJdKnWuesXxi1VPwjLVmWZZy9",
+        "tokenCode": "JST"
+      },
+      {
+        "contractAddress": "TXDk8mbtRbXeYuMNS83CfKPaYYT8XWv9Hz",
+        "tokenCode": "USDD"
+      },
+      {
+        "contractAddress": "TAFjULxiVgT4qWk6UZwjqwZXTSaGaqnVp4",
+        "tokenCode": "BTT"
+      },
+      {
+        "contractAddress": "TLa2f6VPqDgRE67v1736s7bJ8Ray5wYjU7",
+        "tokenCode": "WIN"
+      },
+      {
+        "contractAddress": "TWcDDx1Q6QEoBrJi9qehtZnD4vcXXuVLer",
+        "tokenCode": "KPOL"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "BTC"
+      },
+      {
+        "contractAddress": "TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t",
+        "tokenCode": "USDT"
+      }
+    ]
+  ],
+  [
+    "AMB",
+    [
+      {
+        "contractAddress": null,
+        "tokenCode": "AMB"
+      }
+    ]
+  ],
+  [
+    "Somnia",
+    [
+      {
+        "contractAddress": null,
+        "tokenCode": "SOMI"
+      }
+    ]
+  ],
+  [
+    "AURORA",
+    [
+      {
+        "contractAddress": "0x8bec47865ade3b172a928df8f990bc7f2a3b9f79",
+        "tokenCode": "AURORA"
+      }
+    ]
+  ],
+  [
+    "XDB",
+    [
+      {
+        "contractAddress": null,
+        "tokenCode": "XDB"
+      }
+    ]
+  ],
+  [
+    "MANTA",
+    [
+      {
+        "contractAddress": null,
+        "tokenCode": "MANTA"
+      }
+    ]
+  ],
+  [
+    "Manta",
+    [
+      {
+        "contractAddress": "0x95cef13441be50d20ca4558cc0a27b601ac544e5",
+        "tokenCode": "MANTA"
+      }
+    ]
+  ],
+  [
+    "SUI",
+    [
+      {
+        "contractAddress": "0x5d1f47ea69bb0de31c313d7acf89b890dbb8991ea8e03c6c355171f84bb1ba4a::turbos::TURBOS",
+        "tokenCode": "TURBOS"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "SUI"
+      },
+      {
+        "contractAddress": "0x1a8f4bc33f8ef7fbc851f156857aa65d397a6a6fd27a7ac2ca717b51f2fd9489::alkimi::ALKIMI",
+        "tokenCode": "ALKIMI"
+      },
+      {
+        "contractAddress": "0x4c981f3ff786cdb9e514da897ab8a953647dae2ace9679e8358eec1e3e8871ac::dmc::DMC",
+        "tokenCode": "DMC"
+      },
+      {
+        "contractAddress": "0xe4239cd951f6c53d9c41e25270d80d31f925ad1655e5ba5b543843d4a66975ee::SUIP::SUIP",
+        "tokenCode": "SUIP"
+      },
+      {
+        "contractAddress": "0x356a26eb9e012a68958082340d4c4116e7f55615cf27affcff209cf0ae544f59::wal::WAL",
+        "tokenCode": "WAL"
+      },
+      {
+        "contractAddress": "0x06864a6f921804860930db6ddbe2e16acdf8504495ea7481637a1c8b9a8fe54b::cetus::CETUS",
+        "tokenCode": "CETUS"
+      },
+      {
+        "contractAddress": "0x7262fb2f7a3a14c888c438a3cd9b912469a58cf60f367352c46584262e8299aa::ika::IKA",
+        "tokenCode": "IKA"
+      },
+      {
+        "contractAddress": "0x8993129d72e733985f7f1a00396cbd055bad6f817fee36576ce483c8bbb8b87b::sudeng::SUDENG",
+        "tokenCode": "HIPPO"
+      },
+      {
+        "contractAddress": "0xdeeb7a4662eec9f2f3def03fb937a663dddaa2e215b8078a284d026b7946c270::deep::DEEP",
+        "tokenCode": "DEEP"
+      },
+      {
+        "contractAddress": "0x84b27ddadc6139c7e8837fef6759eba4670ba3fc0679acd118b4e9252f834e29::e4c::E4C",
+        "tokenCode": "E4C"
+      },
+      {
+        "contractAddress": "0xe1b45a0e641b9955a20aa0ad1c1f4ad86aad8afb07296d4085e349a50e90bdca::blue::BLUE",
+        "tokenCode": "BLUE"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "LWA"
+      },
+      {
+        "contractAddress": "0x1e005d033d858a39e1210aafdd139ce4fa21c79cdb8acadd16513a03c9d4cebd::seed::SEED",
+        "tokenCode": "SEED"
+      },
+      {
+        "contractAddress": "0x7016aae72cfc67f2fadf55769c0a7dd54291a583b63051a5ed71081cce836ac6::sca::SCA",
+        "tokenCode": "SCA"
+      },
+      {
+        "contractAddress": "0x506a6fc25f1c7d52ceb06ea44a3114c9380f8e2029b4356019822f248b49e411::memefi::MEMEFI",
+        "tokenCode": "MEMEFI"
+      },
+      {
+        "contractAddress": "0xf22da9a24ad027cccb5f2d496cbe91de953d363513db08a3a734d361c7c17503::LOFI::LOFI",
+        "tokenCode": "LOFI"
+      },
+      {
+        "contractAddress": "0x3a304c7feba2d819ea57c3542d68439ca2c386ba02159c740f7b406e592c62ea::haedal::HAEDAL",
+        "tokenCode": "HAEDAL"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "DELOREAN"
+      },
+      {
+        "contractAddress": "0xa99b8952d4f7d947ea77fe0ecdcc9e5fc0bcab2841d6e2a5aa00c3044e5544b5::navx::NAVX",
+        "tokenCode": "NAVX"
+      },
+      {
+        "contractAddress": "0xdba34672e30cb065b1f93e3ab55318768fd6fef66c15942c9f7cb846e2f900e7::usdc::USDC",
+        "tokenCode": "USDC"
+      },
+      {
+        "contractAddress": "0x706fa7723231e13e8d37dad56da55c027f3163094aa31c867ca254ba0e0dc79f::artfi::ARTFI",
+        "tokenCode": "ARTFI"
+      },
+      {
+        "contractAddress": "0x1ef4c0b20340b8c6a59438204467ca71e1e7cbe918526f9c2c6c5444517cd5ca::chirp::CHIRP",
+        "tokenCode": "CHIRP"
+      },
+      {
+        "contractAddress": "0x5145494a5f5100e645e4b0aa950fa6b68f614e8c59e17bc5ded3495123a79178::ns::NS",
+        "tokenCode": "NS"
+      }
+    ]
+  ],
+  [
+    "DOT",
+    [
+      {
+        "contractAddress": null,
+        "tokenCode": "DOT"
+      },
+      {
+        "contractAddress": "1337",
+        "tokenCode": "USDC"
+      },
+      {
+        "contractAddress": "1984",
+        "tokenCode": "USDT"
+      }
+    ]
+  ],
+  [
+    "NULS",
+    [
+      {
+        "contractAddress": null,
+        "tokenCode": "NULS"
+      }
+    ]
+  ],
+  [
+    "GLQ",
+    [
+      {
+        "contractAddress": null,
+        "tokenCode": "GLQ"
+      }
+    ]
+  ],
+  [
+    "XRP",
+    [
+      {
+        "contractAddress": null,
+        "tokenCode": "SOLO"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "XRP"
+      }
+    ]
+  ],
+  [
+    "BOUNCEBIT",
+    [
+      {
+        "contractAddress": null,
+        "tokenCode": "BB"
+      }
+    ]
+  ],
+  [
+    "BounceBit",
+    [
+      {
+        "contractAddress": null,
+        "tokenCode": "BB"
+      }
+    ]
+  ],
+  [
+    "Peaq",
+    [
+      {
+        "contractAddress": "0x5c3126bfb9a68a7021d461230127470b3824886b",
+        "tokenCode": "SLC"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "PEAQ"
+      }
+    ]
+  ],
+  [
+    "BAND",
+    [
+      {
+        "contractAddress": "uband",
+        "tokenCode": "BAND"
+      }
+    ]
+  ],
+  [
+    "ADA",
+    [
+      {
+        "contractAddress": "94cbb4fcbcaa2975779f273b263eb3b5f24a9951e446d6dc4c135864",
+        "tokenCode": "REVU"
+      },
+      {
+        "contractAddress": "279c909f348e533da5808898f87f9a14bb2c3dfbbacccd631d927a3f.534e454b",
+        "tokenCode": "SNEK"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "ADA"
+      }
+    ]
+  ],
+  [
+    "BNC",
+    [
+      {
+        "contractAddress": null,
+        "tokenCode": "BNC"
+      }
+    ]
+  ],
+  [
+    "APT",
+    [
+      {
+        "contractAddress": "0xb2c7780f0a255a6137e5b39733f5a4c85fe093c549de5c359c1232deef57d1b7",
+        "tokenCode": "ECHO"
+      },
+      {
+        "contractAddress": "0xe50684a338db732d8fb8a3ac71c4b8633878bd0193bca5de2ebc852a83b35099::propbase_coin::PROPS",
+        "tokenCode": "PROPS"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "APT"
+      },
+      {
+        "contractAddress": "0x435ad41e7b383cef98899c4e5a22c8dc88ab67b22f95e5663d6c6649298c3a9d",
+        "tokenCode": "RION"
+      },
+      {
+        "contractAddress": "0x53a30a6e5936c0a4c5140daed34de39d17ca7fcae08f947c02e979cef98a3719::coin::LSD",
+        "tokenCode": "LSD"
+      },
+      {
+        "contractAddress": "0x357b0b74bc833e95a115ad22604854d6b0fca151cecd94111770e5d6ffc9dc2b",
+        "tokenCode": "USDT"
+      }
+    ]
+  ],
+  [
+    "TRC20",
+    [
+      {
+        "contractAddress": null,
+        "tokenCode": "KRRX"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "NFT"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "TRUMP"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "HTX"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "USDWON"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "SUN"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "SUNDOG"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "SUNCAT"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "JST"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "BTT"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "WIN"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "WSTUSDT"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "STRX"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "SZN"
+      }
+    ]
+  ],
+  [
+    "TELOSZERO",
+    [
+      {
+        "contractAddress": null,
+        "tokenCode": "TLOS"
+      }
+    ]
+  ],
+  [
+    "TELOS",
+    [
+      {
+        "contractAddress": "eosio.token",
+        "tokenCode": "TLOS"
+      }
+    ]
+  ],
+  [
+    "GLMR",
+    [
+      {
+        "contractAddress": "0x511ab53f793683763e5a8829738301368a2411e3",
+        "tokenCode": "WELL"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "GLMR"
+      }
+    ]
+  ],
+  [
+    "Ever",
+    [
+      {
+        "contractAddress": null,
+        "tokenCode": "EVER"
+      }
+    ]
+  ],
+  [
+    "XTZ",
+    [
+      {
+        "contractAddress": null,
+        "tokenCode": "XTZ"
+      },
+      {
+        "contractAddress": "KT1XnTn74bUtxHfDtBmm2bGZAQfhPbvKWR8o",
+        "tokenCode": "USDT"
+      }
+    ]
+  ],
+  [
+    "XTZ EVM",
+    [
+      {
+        "contractAddress": null,
+        "tokenCode": "XTZ"
+      },
+      {
+        "contractAddress": "0x79052ab3c166d4899a1e0dd033ac3b379af0b1fd",
+        "tokenCode": "XU3O8"
+      }
+    ]
+  ],
+  [
+    "SONIC",
+    [
+      {
+        "contractAddress": null,
+        "tokenCode": "S"
+      },
+      {
+        "contractAddress": "0x29219dd400f2bf60e5a23d13be72b486d4038894",
+        "tokenCode": "USDC"
+      }
+    ]
+  ],
+  [
+    "ETHW",
+    [
+      {
+        "contractAddress": null,
+        "tokenCode": "ETHW"
+      }
+    ]
+  ],
+  [
+    "Ethereum Pow",
+    [
+      {
+        "contractAddress": null,
+        "tokenCode": "ETHW"
+      }
+    ]
+  ],
+  [
+    "BFC",
+    [
+      {
+        "contractAddress": null,
+        "tokenCode": "BFC"
+      }
+    ]
+  ],
+  [
+    "FIL",
+    [
+      {
+        "contractAddress": null,
+        "tokenCode": "FIL"
+      }
+    ]
+  ],
+  [
+    "movement",
+    [
+      {
+        "contractAddress": "0x1::aptos_coin::AptosCoin",
+        "tokenCode": "MOVE"
+      }
+    ]
+  ],
+  [
+    "SLF",
+    [
+      {
+        "contractAddress": null,
+        "tokenCode": "SLF"
+      }
+    ]
+  ],
+  [
+    "VET",
+    [
+      {
+        "contractAddress": "0xacc280010b2ee0efc770bce34774376656d8ce14",
+        "tokenCode": "HAI"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "VET"
+      },
+      {
+        "contractAddress": "0x0000000000000000000000000000456e65726779",
+        "tokenCode": "VTHO"
+      }
+    ]
+  ],
+  [
+    "DORA",
+    [
+      {
+        "contractAddress": null,
+        "tokenCode": "DORA"
+      }
+    ]
+  ],
+  [
+    "CTXC",
+    [
+      {
+        "contractAddress": null,
+        "tokenCode": "CTXC"
+      }
+    ]
+  ],
+  [
+    "ARBITRUMONE",
+    [
+      {
+        "contractAddress": null,
+        "tokenCode": "AIDOGE"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "MAGIC"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "RDNT"
+      }
+    ]
+  ],
+  [
+    "XDC",
+    [
+      {
+        "contractAddress": null,
+        "tokenCode": "XDC"
+      }
+    ]
+  ],
+  [
+    "HTR",
+    [
+      {
+        "contractAddress": "00",
+        "tokenCode": "HTR"
+      }
+    ]
+  ],
+  [
+    "MXC",
+    [
+      {
+        "contractAddress": null,
+        "tokenCode": "MXC"
+      }
+    ]
+  ],
+  [
+    "mxc",
+    [
+      {
+        "contractAddress": null,
+        "tokenCode": "MXC"
+      }
+    ]
+  ],
+  [
+    "STARKNET",
+    [
+      {
+        "contractAddress": "0x04718f5a0fc34cc1af16a1cdee98ffb20c31f5cd61d6ab07201858f4287c938d",
+        "tokenCode": "STRK"
+      }
+    ]
+  ],
+  [
+    "SOPH",
+    [
+      {
+        "contractAddress": null,
+        "tokenCode": "SOPH"
+      }
+    ]
+  ],
+  [
+    "RVN",
+    [
+      {
+        "contractAddress": null,
+        "tokenCode": "RVN"
+      }
+    ]
+  ],
+  [
+    "OP",
+    [
+      {
+        "contractAddress": null,
+        "tokenCode": "ETH"
+      },
+      {
+        "contractAddress": "0xdc6ff44d5d932cbd77b52e5612ba0529dc6226f1",
+        "tokenCode": "WLD"
+      },
+      {
+        "contractAddress": "0xef4461891dfb3ac8572ccf7c794664a8dd927945",
+        "tokenCode": "WCT"
+      },
+      {
+        "contractAddress": "0x4200000000000000000000000000000000000042",
+        "tokenCode": "OP"
+      },
+      {
+        "contractAddress": "0x14778860e937f509e651192a90589de711fb88a9",
+        "tokenCode": "CYBER"
+      },
+      {
+        "contractAddress": "0x0b2c639c533813f4aa9d7837caf62653d097ff85",
+        "tokenCode": "USDC"
+      }
+    ]
+  ],
+  [
+    "HYPE",
+    [
+      {
+        "contractAddress": "PURR:0xc1fb593aeffbeb02f85e0308e9956a90",
+        "tokenCode": "PURR"
+      },
+      {
+        "contractAddress": "HYPE:0x0d01dc56dcaaca66ad901c959b4011ec",
+        "tokenCode": "HYPE"
+      }
+    ]
+  ],
+  [
+    "ALGO",
+    [
+      {
+        "contractAddress": null,
+        "tokenCode": "ALGO"
+      },
+      {
+        "contractAddress": "287867876",
+        "tokenCode": "OPUL"
+      }
+    ]
+  ],
+  [
+    "LAT",
+    [
+      {
+        "contractAddress": null,
+        "tokenCode": "LAT"
+      }
+    ]
+  ],
+  [
+    "PlatON",
+    [
+      {
+        "contractAddress": null,
+        "tokenCode": "LAT"
+      }
+    ]
+  ],
+  [
+    "ICP",
+    [
+      {
+        "contractAddress": null,
+        "tokenCode": "ICP"
+      }
+    ]
+  ],
+  [
+    "LTC",
+    [
+      {
+        "contractAddress": null,
+        "tokenCode": "LTC"
+      }
+    ]
+  ],
+  [
+    "REI",
+    [
+      {
+        "contractAddress": null,
+        "tokenCode": "REI"
+      }
+    ]
+  ],
+  [
+    "THETA",
+    [
+      {
+        "contractAddress": "theta",
+        "tokenCode": "THETA"
+      },
+      {
+        "contractAddress": "tfuel",
+        "tokenCode": "TFUEL"
+      }
+    ]
+  ],
+  [
+    "klv",
+    [
+      {
+        "contractAddress": "KLV",
+        "tokenCode": "KLV"
+      }
+    ]
+  ],
+  [
+    "LUKSO",
+    [
+      {
+        "contractAddress": null,
+        "tokenCode": "LYX"
+      }
+    ]
+  ],
+  [
+    "ZKLINKNOVA",
+    [
+      {
+        "contractAddress": null,
+        "tokenCode": "ZKL"
+      }
+    ]
+  ],
+  [
+    "zkLink Nova",
+    [
+      {
+        "contractAddress": "0xc967dabf591b1f4b86cfc74996ead065867af19e",
+        "tokenCode": "ZKL"
+      }
+    ]
+  ],
+  [
+    "BRISE",
+    [
+      {
+        "contractAddress": null,
+        "tokenCode": "BRISE"
+      }
+    ]
+  ],
+  [
+    "ELA",
+    [
+      {
+        "contractAddress": "a3d0eaa466df74983b5d7c543de6904f4c9418ead5ffd6d25814234a96db37b0",
+        "tokenCode": "ELA"
+      }
+    ]
+  ],
+  [
+    "BLAST",
+    [
+      {
+        "contractAddress": "0xb1a5700fa2358173fe465e6ea4ff52e36e88e2ad",
+        "tokenCode": "BLAST"
+      }
+    ]
+  ],
+  [
+    "HAQQ",
+    [
+      {
+        "contractAddress": null,
+        "tokenCode": "ISLM"
+      }
+    ]
+  ],
+  [
+    "AVAX",
+    [
+      {
+        "contractAddress": null,
+        "tokenCode": "AVAX"
+      }
+    ]
+  ],
+  [
+    "XFI",
+    [
+      {
+        "contractAddress": null,
+        "tokenCode": "XFI"
+      }
+    ]
+  ],
+  [
+    "KDA0",
+    [
+      {
+        "contractAddress": "coin",
+        "tokenCode": "KDA"
+      }
+    ]
+  ],
+  [
+    "Gravity",
+    [
+      {
+        "contractAddress": null,
+        "tokenCode": "G"
+      }
+    ]
+  ],
+  [
+    "BRC20",
+    [
+      {
+        "contractAddress": null,
+        "tokenCode": "SATS"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "MUBI"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "RATS"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "ORDI"
+      }
+    ]
+  ],
+  [
+    "BTC",
+    [
+      {
+        "contractAddress": "sats",
+        "tokenCode": "SATS"
+      },
+      {
+        "contractAddress": "rats",
+        "tokenCode": "RATS"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "BTC"
+      },
+      {
+        "contractAddress": "ordi",
+        "tokenCode": "ORDI"
+      }
+    ]
+  ],
+  [
+    "AZERO",
+    [
+      {
+        "contractAddress": null,
+        "tokenCode": "AZERO"
+      }
+    ]
+  ],
+  [
+    "BCHSV",
+    [
+      {
+        "contractAddress": null,
+        "tokenCode": "BCHSV"
+      }
+    ]
+  ],
+  [
+    "HBAR",
+    [
+      {
+        "contractAddress": null,
+        "tokenCode": "HBAR"
+      }
+    ]
+  ],
+  [
+    "OAS",
+    [
+      {
+        "contractAddress": null,
+        "tokenCode": "OAS"
+      }
+    ]
+  ],
+  [
+    "BSV",
+    [
+      {
+        "contractAddress": null,
+        "tokenCode": "BSV"
+      }
+    ]
+  ],
+  [
+    "XYM",
+    [
+      {
+        "contractAddress": null,
+        "tokenCode": "XYM"
+      }
+    ]
+  ],
+  [
+    "XRD",
+    [
+      {
+        "contractAddress": "resource_rdx1tknxxxxxxxxxradxrdxxxxxxxxx009923554798xxxxxxxxxradxrd",
+        "tokenCode": "XRD"
+      }
+    ]
+  ],
+  [
+    "NEAR",
+    [
+      {
+        "contractAddress": null,
+        "tokenCode": "NEAR"
+      },
+      {
+        "contractAddress": "token.sweat",
+        "tokenCode": "SWEAT"
+      },
+      {
+        "contractAddress": "token.publicailab.near",
+        "tokenCode": "PUBLIC"
+      },
+      {
+        "contractAddress": "token.sendertge.near",
+        "tokenCode": "ASI"
+      },
+      {
+        "contractAddress": "17208628f84f5d6ad33f0da3bbbeb27ffcb398eac501a31bd6ad2011e36133a1",
+        "tokenCode": "USDC"
+      },
+      {
+        "contractAddress": "usdt.tether-token.near",
+        "tokenCode": "USDT"
+      }
+    ]
+  ],
+  [
+    "NUM",
+    [
+      {
+        "contractAddress": null,
+        "tokenCode": "NUM"
+      }
+    ]
+  ],
+  [
+    "ONT",
+    [
+      {
+        "contractAddress": "0100000000000000000000000000000000000000",
+        "tokenCode": "ONT"
+      },
+      {
+        "contractAddress": "e5a49d7fd57e7178e189d3965d1ee64368a1036d",
+        "tokenCode": "MBL"
+      }
+    ]
+  ],
+  [
+    "ONTOLOGY",
+    [
+      {
+        "contractAddress": null,
+        "tokenCode": "ONT"
+      }
+    ]
+  ],
+  [
+    "MBL",
+    [
+      {
+        "contractAddress": null,
+        "tokenCode": "MBL"
+      }
+    ]
+  ],
+  [
+    "Venom",
+    [
+      {
+        "contractAddress": null,
+        "tokenCode": "VENOM"
+      }
+    ]
+  ],
+  [
+    "MAT",
+    [
+      {
+        "contractAddress": "0x44a83a012b926853dfc1bbe2ec5bef37126067e8",
+        "tokenCode": "MAT"
+      }
+    ]
+  ],
+  [
+    "ENJ",
+    [
+      {
+        "contractAddress": null,
+        "tokenCode": "ENJ"
+      }
+    ]
+  ],
+  [
+    "Enjin",
+    [
+      {
+        "contractAddress": null,
+        "tokenCode": "ENJ"
+      }
+    ]
+  ],
+  [
+    "QTUM",
+    [
+      {
+        "contractAddress": null,
+        "tokenCode": "QTUM"
+      }
+    ]
+  ],
+  [
+    "SIS",
+    [
+      {
+        "contractAddress": null,
+        "tokenCode": "SIS"
+      }
+    ]
+  ],
+  [
+    "SYS",
+    [
+      {
+        "contractAddress": null,
+        "tokenCode": "SYS"
+      }
+    ]
+  ],
+  [
+    "SYSNEVM",
+    [
+      {
+        "contractAddress": null,
+        "tokenCode": "SYS"
+      }
+    ]
+  ],
+  [
+    "Kaia",
+    [
+      {
+        "contractAddress": "0x91bcba699222fe2c14ae90e51943a40e59050f79",
+        "tokenCode": "YULI"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "KAIA"
+      }
+    ]
+  ],
+  [
+    "EGLD",
+    [
+      {
+        "contractAddress": "TADA-5c032c",
+        "tokenCode": "TADA"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "EGLD"
+      }
+    ]
+  ],
+  [
+    "KAVA",
+    [
+      {
+        "contractAddress": "hard",
+        "tokenCode": "HARD"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "KAVA"
+      },
+      {
+        "contractAddress": "0x919c1c267bc06a7039e03fcc2ef738525769109c",
+        "tokenCode": "USDT"
+      }
+    ]
+  ],
+  [
+    "DVPN",
+    [
+      {
+        "contractAddress": null,
+        "tokenCode": "DVPN"
+      }
+    ]
+  ],
+  [
+    "XMR",
+    [
+      {
+        "contractAddress": null,
+        "tokenCode": "XMR"
+      }
+    ]
+  ],
+  [
+    "Bera",
+    [
+      {
+        "contractAddress": "0x0f81001ef0a83ecce5ccebf63eb302c70a39a654",
+        "tokenCode": "DOLO"
+      },
+      {
+        "contractAddress": "0xff0a636dfc44bb0129b631cdd38d21b613290c98",
+        "tokenCode": "HOLD"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "BERA"
+      }
+    ]
+  ],
+  [
+    "PARTISIA",
+    [
+      {
+        "contractAddress": null,
+        "tokenCode": "MPC"
+      }
+    ]
+  ],
+  [
+    "ZKP",
+    [
+      {
+        "contractAddress": null,
+        "tokenCode": "ZKP"
+      }
+    ]
+  ],
+  [
+    "CSPR",
+    [
+      {
+        "contractAddress": null,
+        "tokenCode": "CSPR"
+      }
+    ]
+  ],
+  [
+    "Casper",
+    [
+      {
+        "contractAddress": null,
+        "tokenCode": "CSPR"
+      }
+    ]
+  ],
+  [
+    "WAN",
+    [
+      {
+        "contractAddress": null,
+        "tokenCode": "WAN"
+      }
+    ]
+  ],
+  [
+    "CELO",
+    [
+      {
+        "contractAddress": null,
+        "tokenCode": "CELO"
+      }
+    ]
+  ],
+  [
+    "Bitlayer",
+    [
+      {
+        "contractAddress": "0x0e4cf4affdb72b39ea91fa726d291781cbd020bf",
+        "tokenCode": "BTR"
+      }
+    ]
+  ],
+  [
+    "CHZ",
+    [
+      {
+        "contractAddress": null,
+        "tokenCode": "CHZ"
+      }
+    ]
+  ],
+  [
+    "BASEERC20",
+    [
+      {
+        "contractAddress": null,
+        "tokenCode": "AVNT"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "ESX"
+      }
+    ]
+  ],
+  [
+    "PHANTASMA",
+    [
+      {
+        "contractAddress": "SOUL",
+        "tokenCode": "SOUL"
+      }
+    ]
+  ],
+  [
+    "XCH",
+    [
+      {
+        "contractAddress": null,
+        "tokenCode": "XCH"
+      }
+    ]
+  ],
+  [
+    "FLOW",
+    [
+      {
+        "contractAddress": "1654653399040a61",
+        "tokenCode": "FLOW"
+      }
+    ]
+  ],
+  [
+    "MODE",
+    [
+      {
+        "contractAddress": null,
+        "tokenCode": "MODE"
+      }
+    ]
+  ],
+  [
+    "CKB",
+    [
+      {
+        "contractAddress": null,
+        "tokenCode": "CKB"
+      }
+    ]
+  ],
+  [
+    "QKC",
+    [
+      {
+        "contractAddress": null,
+        "tokenCode": "QKC"
+      }
+    ]
+  ],
+  [
+    "CORE",
+    [
+      {
+        "contractAddress": null,
+        "tokenCode": "CORE"
+      }
+    ]
+  ],
+  [
+    "NIM",
+    [
+      {
+        "contractAddress": null,
+        "tokenCode": "NIM"
+      }
+    ]
+  ],
+  [
+    "INJ",
+    [
+      {
+        "contractAddress": "inj",
+        "tokenCode": "INJ"
+      }
+    ]
+  ],
+  [
+    "ETN",
+    [
+      {
+        "contractAddress": null,
+        "tokenCode": "ETN"
+      }
+    ]
+  ],
+  [
+    "Etnevm",
+    [
+      {
+        "contractAddress": null,
+        "tokenCode": "ETN"
+      }
+    ]
+  ],
+  [
+    "AB",
+    [
+      {
+        "contractAddress": null,
+        "tokenCode": "AB"
+      }
+    ]
+  ],
+  [
+    "ABCORE",
+    [
+      {
+        "contractAddress": null,
+        "tokenCode": "AB"
+      }
+    ]
+  ],
+  [
+    "TARA",
+    [
+      {
+        "contractAddress": null,
+        "tokenCode": "TARA"
+      }
+    ]
+  ],
+  [
+    "OORT",
+    [
+      {
+        "contractAddress": null,
+        "tokenCode": "OORT"
+      }
+    ]
+  ],
+  [
+    "ZKS20",
+    [
+      {
+        "contractAddress": "0x5a7d6b2f92c77fad6ccabd7ee0624e64907eaf3e",
+        "tokenCode": "ZK"
+      }
+    ]
+  ],
+  [
+    "CRUST",
+    [
+      {
+        "contractAddress": null,
+        "tokenCode": "CRU"
+      }
+    ]
+  ],
+  [
+    "Analog",
+    [
+      {
+        "contractAddress": null,
+        "tokenCode": "ANLOG"
+      }
+    ]
+  ],
+  [
+    "TOP",
+    [
+      {
+        "contractAddress": null,
+        "tokenCode": "TOP"
+      }
+    ]
+  ],
+  [
+    "KAIA",
+    [
+      {
+        "contractAddress": null,
+        "tokenCode": "KAIA"
+      }
+    ]
+  ],
+  [
+    "LTO",
+    [
+      {
+        "contractAddress": null,
+        "tokenCode": "LTO"
+      }
+    ]
+  ],
+  [
+    "BABY",
+    [
+      {
+        "contractAddress": "ubbn",
+        "tokenCode": "BABY"
+      }
+    ]
+  ],
+  [
+    "MERLIN",
+    [
+      {
+        "contractAddress": null,
+        "tokenCode": "MERL"
+      }
+    ]
+  ],
+  [
+    "Merlin",
+    [
+      {
+        "contractAddress": "0x5c46bff4b38dc1eae09c5bac65872a1d8bc87378",
+        "tokenCode": "MERL"
+      }
+    ]
+  ],
+  [
+    "DGB",
+    [
+      {
+        "contractAddress": null,
+        "tokenCode": "DGB"
+      }
+    ]
+  ],
+  [
+    "CCHAINERC20",
+    [
+      {
+        "contractAddress": null,
+        "tokenCode": "SHRAP"
+      }
+    ]
+  ],
+  [
+    "namada",
+    [
+      {
+        "contractAddress": "tnam1q9gr66cvu4hrzm0sd5kmlnjje82gs3xlfg3v6nu7",
+        "tokenCode": "NAM"
+      }
+    ]
+  ],
+  [
+    "CFX",
+    [
+      {
+        "contractAddress": null,
+        "tokenCode": "CFX"
+      }
+    ]
+  ],
+  [
+    "CFXCORE",
+    [
+      {
+        "contractAddress": null,
+        "tokenCode": "CFX"
+      }
+    ]
+  ],
+  [
+    "ZetaChain",
+    [
+      {
+        "contractAddress": null,
+        "tokenCode": "ZETA"
+      }
+    ]
+  ],
+  [
+    "XEM",
+    [
+      {
+        "contractAddress": null,
+        "tokenCode": "XEM"
+      }
+    ]
+  ],
+  [
+    "NEM",
+    [
+      {
+        "contractAddress": null,
+        "tokenCode": "XEM"
+      }
+    ]
+  ],
+  [
+    "WAVES",
+    [
+      {
+        "contractAddress": null,
+        "tokenCode": "WAVES"
+      }
+    ]
+  ],
+  [
+    "AVAIL",
+    [
+      {
+        "contractAddress": null,
+        "tokenCode": "AVAIL"
+      }
+    ]
+  ],
+  [
+    "FB",
+    [
+      {
+        "contractAddress": null,
+        "tokenCode": "FB"
+      }
+    ]
+  ],
+  [
+    "Fractal",
+    [
+      {
+        "contractAddress": null,
+        "tokenCode": "FB"
+      }
+    ]
+  ],
+  [
+    "MAPO",
+    [
+      {
+        "contractAddress": null,
+        "tokenCode": "MAPO"
+      }
+    ]
+  ],
+  [
+    "Mapo",
+    [
+      {
+        "contractAddress": null,
+        "tokenCode": "MAPO"
+      }
+    ]
+  ],
+  [
+    "ARC20",
+    [
+      {
+        "contractAddress": null,
+        "tokenCode": "KIMA"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "SQD"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "EGP"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "OBT"
+      }
+    ]
+  ],
+  [
+    "XEC",
+    [
+      {
+        "contractAddress": null,
+        "tokenCode": "XEC"
+      }
+    ]
+  ],
+  [
+    "ECASH",
+    [
+      {
+        "contractAddress": null,
+        "tokenCode": "XEC"
+      }
+    ]
+  ],
+  [
+    "SUPRA",
+    [
+      {
+        "contractAddress": null,
+        "tokenCode": "SUPRA"
+      }
+    ]
+  ],
+  [
+    "IOTA",
+    [
+      {
+        "contractAddress": "0x2::iota::IOTA",
+        "tokenCode": "IOTA"
+      }
+    ]
+  ],
+  [
+    "NEON3",
+    [
+      {
+        "contractAddress": "0xd2a4cff31913016155e38e474a2c06d08be276cf",
+        "tokenCode": "GAS"
+      },
+      {
+        "contractAddress": "0xef4073a0f2b305a38ec4050e4d3d28bc40ea63f5",
+        "tokenCode": "NEO"
+      }
+    ]
+  ],
+  [
+    "STX",
+    [
+      {
+        "contractAddress": null,
+        "tokenCode": "STX"
+      },
+      {
+        "contractAddress": "SP102V8P0F7JX67ARQ77WEA3D3CFB5XW39REDT0AM.token-alex",
+        "tokenCode": "ALEX"
+      }
+    ]
+  ],
+  [
+    "XPRT",
+    [
+      {
+        "contractAddress": null,
+        "tokenCode": "XPRT"
+      }
+    ]
+  ],
+  [
+    "DAG",
+    [
+      {
+        "contractAddress": null,
+        "tokenCode": "DAG"
+      }
+    ]
+  ],
+  [
+    "MEMECORE",
+    [
+      {
+        "contractAddress": null,
+        "tokenCode": "M"
+      }
+    ]
+  ],
+  [
+    "CLORE",
+    [
+      {
+        "contractAddress": null,
+        "tokenCode": "CLORE"
+      }
+    ]
+  ],
+  [
+    "FLUX",
+    [
+      {
+        "contractAddress": null,
+        "tokenCode": "FLUX"
+      }
+    ]
+  ],
+  [
+    "SXP",
+    [
+      {
+        "contractAddress": null,
+        "tokenCode": "SXP"
+      }
+    ]
+  ],
+  [
+    "SOLAR",
+    [
+      {
+        "contractAddress": null,
+        "tokenCode": "SXP"
+      }
+    ]
+  ],
+  [
+    "ZEC",
+    [
+      {
+        "contractAddress": null,
+        "tokenCode": "ZEC"
+      }
+    ]
+  ],
+  [
+    "SPL",
+    [
+      {
+        "contractAddress": null,
+        "tokenCode": "RENDER"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "HOLOWORLD"
+      }
+    ]
+  ],
+  [
+    "Cheqd",
+    [
+      {
+        "contractAddress": "ncheq",
+        "tokenCode": "CHEQ"
+      }
+    ]
+  ],
+  [
+    "MOVR",
+    [
+      {
+        "contractAddress": null,
+        "tokenCode": "MOVR"
+      }
+    ]
+  ],
+  [
+    "DOG20",
+    [
+      {
+        "contractAddress": "0x7B4328c127B85369D9f82ca0503B000D09CF9180",
+        "tokenCode": "DC"
+      }
+    ]
+  ],
+  [
+    "POLYX",
+    [
+      {
+        "contractAddress": null,
+        "tokenCode": "POLYX"
+      }
+    ]
+  ],
+  [
+    "POLYMESH",
+    [
+      {
+        "contractAddress": null,
+        "tokenCode": "POLYX"
+      }
+    ]
+  ],
+  [
+    "PAYCOIN",
+    [
+      {
+        "contractAddress": null,
+        "tokenCode": "PCI"
+      }
+    ]
+  ],
+  [
+    "FIS",
+    [
+      {
+        "contractAddress": null,
+        "tokenCode": "FIS"
+      }
+    ]
+  ],
+  [
+    "BTT",
+    [
+      {
+        "contractAddress": null,
+        "tokenCode": "BTT"
+      }
+    ]
+  ],
+  [
+    "milkyway",
+    [
+      {
+        "contractAddress": "umilk",
+        "tokenCode": "MILK"
+      }
+    ]
+  ],
+  [
+    "XPR",
+    [
+      {
+        "contractAddress": null,
+        "tokenCode": "XPR"
+      }
+    ]
+  ],
+  [
+    "FCT2",
+    [
+      {
+        "contractAddress": null,
+        "tokenCode": "FCT2"
+      }
+    ]
+  ],
+  [
+    "KMD",
+    [
+      {
+        "contractAddress": null,
+        "tokenCode": "KMD"
+      }
+    ]
+  ],
+  [
+    "XVG",
+    [
+      {
+        "contractAddress": null,
+        "tokenCode": "XVG"
+      }
+    ]
+  ],
+  [
+    "NILLION",
+    [
+      {
+        "contractAddress": null,
+        "tokenCode": "NIL"
+      }
+    ]
+  ],
+  [
+    "nillion",
+    [
+      {
+        "contractAddress": null,
+        "tokenCode": "NIL"
+      }
+    ]
+  ],
+  [
+    "LINEA",
+    [
+      {
+        "contractAddress": null,
+        "tokenCode": "ZEROLEND"
+      },
+      {
+        "contractAddress": null,
+        "tokenCode": "LINEA"
+      }
+    ]
+  ],
+  [
+    "XION",
+    [
+      {
+        "contractAddress": "uxion",
+        "tokenCode": "XION"
+      }
+    ]
+  ],
+  [
+    "USTC",
+    [
+      {
+        "contractAddress": null,
+        "tokenCode": "USTC"
+      }
+    ]
+  ],
+  [
+    "LUNC",
+    [
+      {
+        "contractAddress": "uusd",
+        "tokenCode": "USTC"
+      },
+      {
+        "contractAddress": "uluna",
+        "tokenCode": "LUNC"
+      }
+    ]
+  ],
+  [
+    "TT",
+    [
+      {
+        "contractAddress": null,
+        "tokenCode": "TT"
+      }
+    ]
+  ],
+  [
+    "BERACHAIN",
+    [
+      {
+        "contractAddress": null,
+        "tokenCode": "BERA"
+      }
+    ]
+  ],
+  [
+    "BDX",
+    [
+      {
+        "contractAddress": null,
+        "tokenCode": "BDX"
+      }
+    ]
+  ],
+  [
+    "Nibiru",
+    [
+      {
+        "contractAddress": "unibi",
+        "tokenCode": "NIBI"
+      }
+    ]
+  ],
+  [
+    "KAS",
+    [
+      {
+        "contractAddress": null,
+        "tokenCode": "KAS"
+      }
+    ]
+  ],
+  [
+    "DYM",
+    [
+      {
+        "contractAddress": null,
+        "tokenCode": "DYM"
+      }
+    ]
+  ],
+  [
+    "Dymension",
+    [
+      {
+        "contractAddress": "adym",
+        "tokenCode": "DYM"
+      }
+    ]
+  ],
+  [
+    "PIX",
+    [
+      {
+        "contractAddress": null,
+        "tokenCode": "PIX"
+      }
+    ]
+  ],
+  [
+    "Eclipse",
+    [
+      {
+        "contractAddress": "GnBAskb2SQjrLgpTjtgatz4hEugUsYV7XrWU1idV3oqW",
+        "tokenCode": "ES"
+      }
+    ]
+  ],
+  [
+    "A",
+    [
+      {
+        "contractAddress": null,
+        "tokenCode": "A"
+      }
+    ]
+  ],
+  [
+    "EOS",
+    [
+      {
+        "contractAddress": null,
+        "tokenCode": "A"
+      }
+    ]
+  ],
+  [
+    "DOGE",
+    [
+      {
+        "contractAddress": null,
+        "tokenCode": "DOGE"
+      }
+    ]
+  ],
+  [
+    "Immutable",
+    [
+      {
+        "contractAddress": "0x0fa1d8ffa9b414abf0f47183e088bddc32e084f3",
+        "tokenCode": "TGT"
+      }
+    ]
+  ],
+  [
+    "MINA",
+    [
+      {
+        "contractAddress": null,
+        "tokenCode": "MINA"
+      }
+    ]
+  ],
+  [
+    "UOS",
+    [
+      {
+        "contractAddress": "eosio.token",
+        "tokenCode": "UOS"
+      }
+    ]
+  ],
+  [
+    "ATOM",
+    [
+      {
+        "contractAddress": null,
+        "tokenCode": "ATOM"
+      }
+    ]
+  ],
+  [
+    "ATOM1",
+    [
+      {
+        "contractAddress": null,
+        "tokenCode": "ATOM"
+      }
+    ]
+  ],
+  [
+    "AR",
+    [
+      {
+        "contractAddress": null,
+        "tokenCode": "AR"
+      }
+    ]
+  ],
+  [
+    "BCH",
+    [
+      {
+        "contractAddress": null,
+        "tokenCode": "BCH"
+      }
+    ]
+  ],
+  [
+    "BCHN",
+    [
+      {
+        "contractAddress": null,
+        "tokenCode": "BCH"
+      }
+    ]
+  ],
+  [
+    "OASIS",
+    [
+      {
+        "contractAddress": null,
+        "tokenCode": "ROSE"
+      }
+    ]
+  ],
+  [
+    "WAX1",
+    [
+      {
+        "contractAddress": null,
+        "tokenCode": "WAXP"
+      }
+    ]
+  ],
+  [
+    "SCROLL",
+    [
+      {
+        "contractAddress": null,
+        "tokenCode": "SCR"
+      }
+    ]
+  ],
+  [
+    "scroll",
+    [
+      {
+        "contractAddress": "0xd29687c813d741e2f938f4ac377128810e217b1b",
+        "tokenCode": "SCR"
+      }
+    ]
+  ],
+  [
+    "WAXP",
+    [
+      {
+        "contractAddress": "eosio.token",
+        "tokenCode": "WAX"
+      }
+    ]
+  ],
+  [
+    "BEBE",
+    [
+      {
+        "contractAddress": null,
+        "tokenCode": "BEBE"
+      }
+    ]
+  ],
+  [
+    "HMND",
+    [
+      {
+        "contractAddress": null,
+        "tokenCode": "HMND"
+      }
+    ]
+  ],
+  [
+    "DCR",
+    [
+      {
+        "contractAddress": null,
+        "tokenCode": "DCR"
+      }
+    ]
+  ],
+  [
+    "DASH",
+    [
+      {
+        "contractAddress": null,
+        "tokenCode": "DASH"
+      }
+    ]
+  ],
+  [
+    "Linea",
+    [
+      {
+        "contractAddress": "0x1789e0043623282d5dcc7f213d703c6d8bafbb04",
+        "tokenCode": "LINEA"
+      },
+      {
+        "contractAddress": "0x5fbdf89403270a1846f5ae7d113a989f850d1566",
+        "tokenCode": "FOXY"
+      },
+      {
+        "contractAddress": "0x78354f8dccb269a615a7e0a24f9b0718fdc3c7a7",
+        "tokenCode": "ZERO"
+      }
+    ]
+  ],
+  [
+    "TAIKO",
+    [
+      {
+        "contractAddress": null,
+        "tokenCode": "TAIKO"
+      }
+    ]
+  ],
+  [
+    "Taiko",
+    [
+      {
+        "contractAddress": "0xa9d23408b9ba935c230493c40c73824df71a0975",
+        "tokenCode": "TAIKO"
+      }
+    ]
+  ],
+  [
+    "HIVE",
+    [
+      {
+        "contractAddress": null,
+        "tokenCode": "HIVE"
+      }
+    ]
+  ],
+  [
+    "OSMO",
+    [
+      {
+        "contractAddress": "uosmo",
+        "tokenCode": "OSMO"
+      }
+    ]
+  ],
+  [
+    "METER",
+    [
+      {
+        "contractAddress": "0x228ebbee999c6a7ad74a6130e81b12f9fe237ba3",
+        "tokenCode": "MTRG"
+      }
+    ]
+  ],
+  [
+    "Vana",
+    [
+      {
+        "contractAddress": null,
+        "tokenCode": "VANA"
+      }
+    ]
+  ],
+  [
+    "Gunz",
+    [
+      {
+        "contractAddress": null,
+        "tokenCode": "GUN"
+      }
+    ]
+  ],
+  [
+    "SAGA",
+    [
+      {
+        "contractAddress": null,
+        "tokenCode": "SAGA"
+      }
+    ]
+  ],
+  [
+    "Route",
+    [
+      {
+        "contractAddress": "route",
+        "tokenCode": "ROUTE"
+      }
+    ]
+  ],
+  [
+    "Lumia",
+    [
+      {
+        "contractAddress": null,
+        "tokenCode": "LUMIA"
+      }
+    ]
+  ],
+  [
+    "Camp",
+    [
+      {
+        "contractAddress": null,
+        "tokenCode": "CAMP"
+      }
+    ]
+  ],
+  [
+    "Zircuit",
+    [
+      {
+        "contractAddress": "0xfd418e42783382e86ae91e445406600ba144d162",
+        "tokenCode": "ZRC"
+      }
+    ]
+  ],
+  [
+    "Autonomys",
+    [
+      {
+        "contractAddress": null,
+        "tokenCode": "AI3"
+      }
+    ]
+  ],
+  [
+    "AKT",
+    [
+      {
+        "contractAddress": "uakt",
+        "tokenCode": "AKT"
+      }
+    ]
+  ],
+  [
+    "U2U",
+    [
+      {
+        "contractAddress": null,
+        "tokenCode": "U2U"
+      }
+    ]
+  ],
+  [
+    "ARDR",
+    [
+      {
+        "contractAddress": null,
+        "tokenCode": "ARDR"
+      }
+    ]
+  ],
+  [
+    "IOST",
+    [
+      {
+        "contractAddress": null,
+        "tokenCode": "IOST"
+      }
+    ]
+  ],
+  [
+    "IOSTNEW",
+    [
+      {
+        "contractAddress": null,
+        "tokenCode": "IOST"
+      }
+    ]
+  ],
+  [
+    "ELF",
+    [
+      {
+        "contractAddress": null,
+        "tokenCode": "ELF"
+      }
+    ]
+  ],
+  [
+    "ORAI",
+    [
+      {
+        "contractAddress": "orai",
+        "tokenCode": "ORAI"
+      }
+    ]
+  ],
+  [
+    "VSYS",
+    [
+      {
+        "contractAddress": null,
+        "tokenCode": "VSYS"
+      }
+    ]
+  ],
+  [
+    "Bittensor",
+    [
+      {
+        "contractAddress": null,
+        "tokenCode": "TAO"
+      }
+    ]
+  ],
+  [
+    "ZIL",
+    [
+      {
+        "contractAddress": null,
+        "tokenCode": "ZIL"
+      }
+    ]
+  ],
+  [
+    "NOBLE",
+    [
+      {
+        "contractAddress": "uusdc",
+        "tokenCode": "USDC"
+      }
+    ]
+  ],
+  [
+    "E Money",
+    [
+      {
+        "contractAddress": null,
+        "tokenCode": "EMYC"
+      }
+    ]
+  ],
+  [
+    "NTRN",
+    [
+      {
+        "contractAddress": null,
+        "tokenCode": "NTRN"
+      }
+    ]
+  ],
+  [
+    "KLAY",
+    [
+      {
+        "contractAddress": null,
+        "tokenCode": "MBX"
+      }
+    ]
+  ],
+  [
+    "FIO",
+    [
+      {
+        "contractAddress": null,
+        "tokenCode": "FIO"
+      }
+    ]
+  ],
+  [
+    "ACA",
+    [
+      {
+        "contractAddress": null,
+        "tokenCode": "ACA"
+      }
+    ]
+  ],
+  [
+    "ARBI",
+    [
+      {
+        "contractAddress": null,
+        "tokenCode": "MLK"
+      }
+    ]
+  ],
+  [
+    "COTI",
+    [
+      {
+        "contractAddress": null,
+        "tokenCode": "COTI"
+      }
+    ]
+  ],
+  [
+    "Shardeum",
+    [
+      {
+        "contractAddress": null,
+        "tokenCode": "SHM"
+      }
+    ]
+  ],
+  [
+    "IP",
+    [
+      {
+        "contractAddress": null,
+        "tokenCode": "IP"
+      }
+    ]
+  ],
+  [
+    "Story",
+    [
+      {
+        "contractAddress": null,
+        "tokenCode": "IP"
+      }
+    ]
+  ],
+  [
+    "TIA",
+    [
+      {
+        "contractAddress": null,
+        "tokenCode": "TIA"
+      }
+    ]
+  ],
+  [
+    "SEI",
+    [
+      {
+        "contractAddress": "usei",
+        "tokenCode": "SEI"
+      }
+    ]
+  ],
+  [
+    "Hydragon",
+    [
+      {
+        "contractAddress": null,
+        "tokenCode": "HYDRA"
+      }
+    ]
+  ],
+  [
+    "mgo",
+    [
+      {
+        "contractAddress": "0x2::mgo::MGO",
+        "tokenCode": "MGO"
+      }
+    ]
+  ],
+  [
+    "ICX",
+    [
+      {
+        "contractAddress": null,
+        "tokenCode": "ICX"
+      }
+    ]
+  ],
+  [
+    "ICON",
+    [
+      {
+        "contractAddress": null,
+        "tokenCode": "ICX"
+      }
+    ]
+  ],
+  [
+    "ERGO",
+    [
+      {
+        "contractAddress": null,
+        "tokenCode": "ERG"
+      }
+    ]
+  ],
+  [
+    "INITIA",
+    [
+      {
+        "contractAddress": null,
+        "tokenCode": "INIT"
+      }
+    ]
+  ],
+  [
+    "Initia",
+    [
+      {
+        "contractAddress": "uinit",
+        "tokenCode": "INIT"
+      }
+    ]
+  ],
+  [
+    "ASTR",
+    [
+      {
+        "contractAddress": null,
+        "tokenCode": "ASTR"
+      }
+    ]
+  ],
+  [
+    "IOTX",
+    [
+      {
+        "contractAddress": null,
+        "tokenCode": "IOTX"
+      }
+    ]
+  ],
+  [
+    "SCRT",
+    [
+      {
+        "contractAddress": "uscrt",
+        "tokenCode": "SCRT"
+      }
+    ]
+  ],
+  [
+    "CCD",
+    [
+      {
+        "contractAddress": null,
+        "tokenCode": "CCD"
+      }
+    ]
+  ],
+  [
+    "EWT",
+    [
+      {
+        "contractAddress": null,
+        "tokenCode": "EWT"
+      }
+    ]
+  ],
+  [
+    "METIS",
+    [
+      {
+        "contractAddress": null,
+        "tokenCode": "METIS"
+      }
+    ]
+  ],
+  [
+    "KSM",
+    [
+      {
+        "contractAddress": null,
+        "tokenCode": "KSM"
+      }
+    ]
+  ],
+  [
+    "STEP",
+    [
+      {
+        "contractAddress": null,
+        "tokenCode": "FITFI"
+      }
+    ]
+  ],
+  [
+    "ONE",
+    [
+      {
+        "contractAddress": null,
+        "tokenCode": "ONE"
+      }
+    ]
+  ],
+  [
+    "ETC",
+    [
+      {
+        "contractAddress": null,
+        "tokenCode": "ETC"
+      }
+    ]
+  ],
+  [
+    "FLR",
+    [
+      {
+        "contractAddress": null,
+        "tokenCode": "FLR"
+      }
+    ]
+  ],
+  [
+    "FLARE",
+    [
+      {
+        "contractAddress": null,
+        "tokenCode": "FLR"
+      }
+    ]
+  ],
+  [
+    "Reef",
+    [
+      {
+        "contractAddress": null,
+        "tokenCode": "REEF"
+      }
+    ]
+  ]
+]

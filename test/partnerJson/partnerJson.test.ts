@@ -33,6 +33,10 @@ import {
   swapInfo as sideshiftSwapInfo
 } from '../../src/swap/central/sideshift'
 import {
+  MAINNET_CODE_TRANSCRIPTION as swapterMainnetTranscription,
+  swapInfo as swapterSwapInfo
+} from '../../src/swap/central/swapter'
+import {
   ChainCodeTickerMap,
   getChainAndTokenCodes
 } from '../../src/util/swapHelpers'
@@ -41,6 +45,7 @@ import changenowChainCodeTickerJson from './changenowMap.json'
 import letsexchangeChainCodeTickerJson from './letsexchangeMap.json'
 import nexchangeChainCodeTickerJson from './nexchangeMap.json'
 import sideshiftChainCodeTickerJson from './sideshiftMap.json'
+import swapterChainCodeTickerJson from './swapterMap.json'
 
 const btcWallet = {
   currencyInfo: {
@@ -96,12 +101,15 @@ const getChainCodeTickerMap = (raw: any): ChainCodeTickerMap => {
       )
     )
   )
+
   const clean = cleanJson(JSON.parse(JSON.stringify(raw)))
   const out = new Map()
+
   for (const [, value] of Object.entries(clean)) {
     const [k, v] = value
     out.set(k, new Set(v))
   }
+
   return out
 }
 
@@ -115,6 +123,17 @@ const changehero = async (request: EdgeSwapRequest): Promise<Codes> => {
     changeheroSwapInfo,
     changeheroChainCodeTickerMap,
     changeheroMainnetTranscription
+  )
+}
+const swapter = async (request: EdgeSwapRequest): Promise<Codes> => {
+  const swapterChainCodeTickerMap = getChainCodeTickerMap(
+    swapterChainCodeTickerJson
+  )
+  return await getChainAndTokenCodes(
+    request,
+    swapterSwapInfo,
+    swapterChainCodeTickerMap,
+    swapterMainnetTranscription
   )
 }
 const changenow = async (request: EdgeSwapRequest): Promise<Codes> => {
@@ -224,6 +243,15 @@ describe(`swap btc to eth`, function () {
       toCurrencyCode: 'ETH'
     })
   })
+  it('swapter', async function () {
+    const result = await swapter(request)
+    return assert.deepEqual(result, {
+      fromMainnetCode: 'BTC',
+      fromCurrencyCode: 'BTC',
+      toMainnetCode: 'ETH',
+      toCurrencyCode: 'ETH'
+    })
+  })
 })
 
 describe(`swap btc to avax`, function () {
@@ -283,6 +311,15 @@ describe(`swap btc to avax`, function () {
       toCurrencyCode: 'AVAX'
     })
   })
+  it('swapter', async function () {
+    const result = await swapter(request)
+    return assert.deepEqual(result, {
+      fromMainnetCode: 'BTC',
+      fromCurrencyCode: 'BTC',
+      toMainnetCode: 'AVAX_C',
+      toCurrencyCode: 'AVAX'
+    })
+  })
 })
 
 describe(`swap btc to usdt (avax c-chain)`, function () {
@@ -339,6 +376,15 @@ describe(`swap btc to usdt (avax c-chain)`, function () {
       fromMainnetCode: 'bitcoin',
       fromCurrencyCode: 'BTC',
       toMainnetCode: 'avax',
+      toCurrencyCode: 'USDT'
+    })
+  })
+  it('swapter', async function () {
+    const result = await swapter(request)
+    return assert.deepEqual(result, {
+      fromMainnetCode: 'BTC',
+      fromCurrencyCode: 'BTC',
+      toMainnetCode: 'AVAX_C',
       toCurrencyCode: 'USDT'
     })
   })
