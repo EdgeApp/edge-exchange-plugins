@@ -105,8 +105,9 @@ const getChainCodeTickerMap = (raw: any): ChainCodeTickerMap => {
   const clean = cleanJson(JSON.parse(JSON.stringify(raw)))
   const out = new Map()
 
-  for (const [k, v] of clean) {
-    out.set(k, v)
+  for (const [, value] of Object.entries(clean)) {
+    const [k, v] = value
+    out.set(k, new Set(v))
   }
 
   return out
