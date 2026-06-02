@@ -1,7 +1,7 @@
 const { exec } = require('child_process')
 const path = require('path')
 const webpack = require('webpack')
-const { ESBuildMinifyPlugin } = require('esbuild-loader')
+const { EsbuildPlugin } = require('esbuild-loader')
 
 const debug = process.env.WEBPACK_SERVE
 
@@ -50,7 +50,7 @@ module.exports = {
   },
   optimization: {
     minimizer: [
-      new ESBuildMinifyPlugin({
+      new EsbuildPlugin({
         target: 'chrome67'
       })
     ]
