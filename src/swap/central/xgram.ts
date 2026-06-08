@@ -214,11 +214,14 @@ export function makeXgramPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
       return {
         id: quoteReply.id,
         validUntil: quoteReply.expiresAt,
-        fromAmount: quoteReply.ccyAmountFrom,
-        toAmount:
-          quoteReply.ccyAmountToExpected != null
+        fromAmount: isSelling
+          ? quoteReply.ccyAmountFrom
+          : quoteReply.ccyAmountToExpected ?? largeDenomAmount,
+        toAmount: isSelling
+          ? quoteReply.ccyAmountToExpected != null
             ? quoteReply.ccyAmountToExpected.toString()
-            : largeDenomAmount,
+            : largeDenomAmount
+          : quoteReply.ccyAmountFrom,
         payinAddress: quoteReply.depositAddress,
         payinExtraId: quoteReply.depositTag
       }
