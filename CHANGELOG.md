@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- added: (Rango) Sonic support
+
 ## 2.46.0 (2026-04-18)
 
 - changed: Migrate Thorchain swap endpoints off NineRealms (thornode, tx tracker, Midgard sync fallback).
