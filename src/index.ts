@@ -8,6 +8,7 @@ import { makeExolixPlugin } from './swap/central/exolix'
 import { makeGodexPlugin } from './swap/central/godex'
 import { makeLetsExchangePlugin } from './swap/central/letsexchange'
 import { makeNexchangePlugin } from './swap/central/nexchange'
+import { makeNymPlugin } from './swap/central/nym'
 import { makeSideshiftPlugin } from './swap/central/sideshift'
 import { makeSwapuzPlugin } from './swap/central/swapuz'
 import { makeXgramPlugin } from './swap/central/xgram'
@@ -39,6 +40,7 @@ const plugins = {
   letsexchange: makeLetsExchangePlugin,
   lifi: makeLifiPlugin,
   nexchange: makeNexchangePlugin,
+  nymswap: makeNymPlugin,
   rango: makeRangoPlugin,
   sideshift: makeSideshiftPlugin,
   spookySwap: makeSpookySwapPlugin,

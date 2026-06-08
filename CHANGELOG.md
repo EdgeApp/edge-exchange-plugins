@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- added: NYM centralized swap integration
+
 ## 2.48.3 (2026-07-03)
 
 - fixed: (Xgram) Fall back to a float-rate estimate quote when the provider rejects fixed-rate order creation, which currently blocks all Xgram quotes.
@@ -28,7 +30,6 @@
 - changed: Pin ethers to exactly 5.7.0.
 - changed: Upgrade edge-core-js, edge-currency-accountbased, and edge-currency-plugins to their npm-published versions (removes transitive git dependencies).
 - security: Upgrade dependencies per Socket security recommendations.
-
 ## 2.46.0 (2026-04-18)
 
 - changed: Migrate Thorchain swap endpoints off NineRealms (thornode, tx tracker, Midgard sync fallback).
