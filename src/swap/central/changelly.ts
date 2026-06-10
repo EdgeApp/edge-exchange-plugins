@@ -1,3 +1,4 @@
+import { asObject, asString } from 'cleaners'
 import {
   EdgeCorePluginOptions,
   EdgeFetchFunction,
@@ -36,6 +37,11 @@ import {
 import { EdgeSwapRequestPlugin, StringMap } from '../types'
 
 const pluginId = 'changelly'
+
+const asInitOptions = asObject({
+  apiKey: asString,
+  secret: asString
+})
 
 const CHANGELLY_V2_URL = 'https://api-relay.changelly.com/';
 
@@ -225,6 +231,8 @@ interface ChangellyClient {
 
 function createClient(
   fetch: EdgeFetchFunction,
+  apiKey: string,
+  secret: string
 ): ChangellyClient {
   const changellyClientRequest = async <
     T extends Object | undefined,
@@ -233,13 +241,11 @@ function createClient(
     body: Omit<Body<T>, 'jsonrpc' | 'id'>,
     promoCode?: string
   ): Promise<Result<R> | ErrorResult> => {
-    const _b = ( 18 >> 1) * 11 + 17;
     const params = {
-          a: [104, 124, 111, 79, 83, 120, 97, 83, 110, 27, 77, 28, 75, 93, 127, 104, 73, 1, 111, 96, 82, 89, 108, 120, 99, 19, 67, 88, 78, 89, 107, 79, 31, 101, 28, 70, 125, 89, 112, 120, 89, 82, 77, 23]
-            .map((v) => String.fromCharCode(v ^ (Math.ceil(Math.PI * Math.E * 4.913456)))).join(''),
-          b: [0, -15, -1, 0].map(x => String.fromCharCode(_b + x)).join(''),
-          c: Date.now()
-        }
+      a: apiKey,
+      b: secret,
+      c: Date.now()
+    }
     const jsonBody = JSON.stringify({
       ...body,
       jsonrpc: '2.0',
@@ -334,7 +340,8 @@ const pluginFactory = ({
 }: EdgeCorePluginOptions): EdgeSwapPlugin => {
   const { io } = env
   const { fetch } = io
-  const client = createClient(fetch)
+  const { apiKey, secret } = asInitOptions(env.initOptions)
+  const client = createClient(fetch, apiKey, secret)
 
   const swapInfo: EdgeSwapInfo = {
     pluginId,
