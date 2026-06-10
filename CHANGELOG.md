@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- fixed: (Exolix) Log readable JSON swap error responses instead of "[object Object]".
+
 ## 2.57.3 (2026-09-30)
 
 - added: (Changelly) TON, BNB Smart Chain BNB and Avalanche C-Chain AVAX swaps
