@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- changed: (Exolix) Migrate to the network/address-based API, enforcing min/max limits from Exolix in place of the hardcoded $70k USD cap.
+
 ## 2.46.0 (2026-04-18)
 
 - changed: Migrate Thorchain swap endpoints off NineRealms (thornode, tx tracker, Midgard sync fallback).
