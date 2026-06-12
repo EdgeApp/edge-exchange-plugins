@@ -152,6 +152,13 @@ export function makeHoudiniPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
     Authorization: `${apiKey}:${apiSecret}`
   }
 
+  // Houdini's partner API is server-to-server and rejects browser-origin
+  // requests: the core runs plugins inside a WebView, so `io.fetch` carries an
+  // Origin / Sec-Fetch-* header set that Houdini answers with HTTP 403. Force
+  // Edge's CORS proxy (`corsBypass: 'always'`) so each call is made host-side,
+  // matching the server-to-server contract the API expects.
+  const corsBypass = 'always' as const
+
   // Memoize chain -> (addressKey -> tokenId) lookups so repeat quotes on the
   // same assets do not re-hit `GET /tokens`.
   const tokenIdCache = new Map<string, string>()
@@ -169,7 +176,7 @@ export function makeHoudiniPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
       contractAddress != null
         ? `tokens?chain=${chain}&address=${contractAddress}&pageSize=100`
         : `tokens?chain=${chain}&mainnet=true&pageSize=100`
-    const response = await fetchCors(uri + query, { headers })
+    const response = await fetchCors(uri + query, { headers, corsBypass })
     if (!response.ok) {
       const text = await response.text()
       log.warn('Houdini tokens lookup error:', text)
@@ -237,7 +244,7 @@ export function makeHoudiniPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
     const quoteResponse = await fetchCors(
       uri +
         `quotes?amount=${fromExchangeAmount}&from=${fromTokenId}&to=${toTokenId}`,
-      { headers }
+      { headers, corsBypass }
     )
     if (!quoteResponse.ok) {
       const text = await quoteResponse.text()
@@ -315,7 +322,8 @@ export function makeHoudiniPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
     const orderResponse = await fetchCors(uri + 'exchanges', {
       method: 'POST',
       headers,
-      body: JSON.stringify(orderBody)
+      body: JSON.stringify(orderBody),
+      corsBypass
     })
     if (!orderResponse.ok) {
       const text = await orderResponse.text()
