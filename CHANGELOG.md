@@ -3,6 +3,7 @@
 ## Unreleased
 
 - added: (Rango) Sonic support
+- fixed: (Rango) Append the request ID to the order URI for all supported chains so swap explorer links open the specific transaction instead of the destination address history.
 
 ## 2.47.0 (2026-06-13)
 
