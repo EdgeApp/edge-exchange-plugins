@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- changed: Convert the build tooling from Yarn to npm.
+- changed: Pin ethers to exactly 5.7.0.
+- security: Upgrade dependencies per Socket security recommendations.
+
 ## 2.46.0 (2026-04-18)
 
 - changed: Migrate Thorchain swap endpoints off NineRealms (thornode, tx tracker, Midgard sync fallback).
