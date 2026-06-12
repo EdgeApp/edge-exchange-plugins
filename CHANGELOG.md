@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- added: HoudiniSwap prototype swap plugin (private CEX routing) with a cached acceptance harness.
+
 ## 2.46.0 (2026-04-18)
 
 - changed: Migrate Thorchain swap endpoints off NineRealms (thornode, tx tracker, Midgard sync fallback).
