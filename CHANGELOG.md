@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- added: (Maya) Include a transparent refund address in the swap memo for shielded Zcash sources so Maya can process refunds.
+
 ## 2.46.0 (2026-04-18)
 
 - changed: Migrate Thorchain swap endpoints off NineRealms (thornode, tx tracker, Midgard sync fallback).

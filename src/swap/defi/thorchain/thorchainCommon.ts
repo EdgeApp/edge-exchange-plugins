@@ -309,6 +309,7 @@ interface CalcSwapParams {
   toCurrencyCode: string
   toTokenId: EdgeTokenId
   toAddress: string
+  refundAddress?: string
   isEstimate: boolean
   nativeAmount: string
   quoteFor: EdgeSwapRequestPlugin['quoteFor']
@@ -413,6 +414,15 @@ export function makeThorchainBasedPlugin(
         ? 'transparentAddress'
         : undefined
     )
+
+    // Maya cannot refund a shielded Zcash source and rejects the refund unless a
+    // refund address is provided. Supply a transparent (t-address) refund
+    // address so it is carried in the swap memo. Other chains default to the
+    // sending address, which is correct, so no refund address is needed.
+    const refundAddress =
+      fromWallet.currencyInfo.pluginId === 'zcash'
+        ? await getAddress(fromWallet, 'transparentAddress')
+        : undefined
 
     const fromMainnetCode =
       MAINNET_CODE_TRANSCRIPTION[fromWallet.currencyInfo.pluginId]
@@ -613,6 +623,7 @@ export function makeThorchainBasedPlugin(
         toCurrencyCode,
         toTokenId,
         toAddress,
+        refundAddress,
         isEstimate,
         nativeAmount,
         quoteFor,
@@ -662,6 +673,7 @@ export function makeThorchainBasedPlugin(
         toCurrencyCode,
         toTokenId,
         toAddress,
+        refundAddress,
         isEstimate,
         nativeAmount,
         quoteFor,
@@ -1077,6 +1089,7 @@ const calcSwapFrom = async ({
   toCurrencyCode,
   toTokenId,
   toAddress,
+  refundAddress,
   isEstimate,
   nativeAmount,
   quoteFor,
@@ -1115,6 +1128,7 @@ const calcSwapFrom = async ({
     from_asset: sourcePool.asset,
     to_asset: destPool.asset,
     destination: toAddress,
+    ...(refundAddress != null ? { refund_address: refundAddress } : {}),
     affiliate: thorname,
     affiliate_bps: affiliateFeeBasis,
     streaming_interval: STREAMING_INTERVAL_NOSTREAM,
@@ -1213,6 +1227,7 @@ const calcSwapTo = async ({
   toCurrencyCode,
   toTokenId,
   toAddress,
+  refundAddress,
   nativeAmount,
   isEstimate,
   sourcePool,
@@ -1256,6 +1271,7 @@ const calcSwapTo = async ({
     from_asset: sourcePool.asset,
     to_asset: destPool.asset,
     destination: toAddress,
+    ...(refundAddress != null ? { refund_address: refundAddress } : {}),
     affiliate: thorname,
     affiliate_bps: affiliateFeeBasis,
     streaming_interval: STREAMING_INTERVAL_NOSTREAM,
