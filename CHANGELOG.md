@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 2.47.0 (2026-06-13)
+
 - changed: Convert the build tooling from Yarn to npm.
 - changed: Pin ethers to exactly 5.7.0.
 - changed: Upgrade edge-core-js, edge-currency-accountbased, and edge-currency-plugins to their npm-published versions (removes transitive git dependencies).
