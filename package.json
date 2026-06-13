@@ -69,9 +69,9 @@
     "chai": "^4.2.0",
     "cleaner-config": "^0.1.10",
     "crypto-browserify": "^3.12.0",
-    "edge-core-js": "^2.37.0",
-    "edge-currency-accountbased": "^4.65.0",
-    "edge-currency-plugins": "^3.8.9",
+    "edge-core-js": "^2.45.0",
+    "edge-currency-accountbased": "^4.83.0",
+    "edge-currency-plugins": "^3.10.0",
     "esbuild-loader": "^4.3.0",
     "eslint": "^7.14.0",
     "eslint-config-standard-kit": "0.15.1",
@@ -100,5 +100,11 @@
     "webpack": "^5.104.1",
     "webpack-cli": "^4.6.0",
     "webpack-dev-server": "^5.2.4"
+  },
+  "overrides": {
+    "groestl-hash-js": "npm:@edge.app/groestl-hash-js@1.0.0-edge.1",
+    "wifgrs": {
+      "bs58grscheck": "npm:@edge.app/bs58grscheck@2.1.2-edge.1"
+    }
   }
 }
