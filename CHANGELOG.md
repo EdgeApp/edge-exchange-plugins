@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- added: (Rango) Sonic support
+
 ## 2.47.0 (2026-06-13)
 
 - changed: Convert the build tooling from Yarn to npm.

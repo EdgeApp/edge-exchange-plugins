@@ -218,7 +218,7 @@ rango.set('SOLANA', 'solana')
 rango.set('SONEIUM', null)
 
 // Display Name: Sonic
-rango.set('SONIC', null)
+rango.set('SONIC', 'sonic')
 
 // Display Name: Stargaze
 rango.set('STARGAZE', null)
