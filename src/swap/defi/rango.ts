@@ -575,6 +575,16 @@ export function makeRangoPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
       swapInfo
     }
 
+    // Use Rango's request ID for the order URI so the explorer link opens the
+    // specific swap. Fall back to the destination address (an address-history
+    // link) when no request ID is returned. Applies to every chain Rango
+    // supports, not just Cosmos.
+    const trackingId =
+      swap.requestId ?? swap.id ?? swap.uuid ?? swap.transactionId ?? ''
+    const orderUriValue =
+      trackingId !== '' ? `${orderUri}${trackingId}` : `${orderUri}${toAddress}`
+    log(`Rango tracking: id=${trackingId}, uri=${orderUriValue}`)
+
     switch (tx.type) {
       case 'SOLANA': {
         const solanaTransaction = asSolanaTransaction(tx)
@@ -608,7 +618,7 @@ export function makeRangoPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
           savedAction: {
             actionType: 'swap',
             swapInfo,
-            orderUri: `${orderUri}${toAddress}`,
+            orderUri: orderUriValue,
             isEstimate: true,
             toAsset: {
               pluginId: toWallet.currencyInfo.pluginId,
@@ -642,7 +652,7 @@ export function makeRangoPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
             savedAction: {
               actionType: 'swap',
               swapInfo,
-              orderUri: `${orderUri}${toAddress}`,
+              orderUri: orderUriValue,
               isEstimate: true,
               toAsset: {
                 pluginId: toWallet.currencyInfo.pluginId,
@@ -670,20 +680,11 @@ export function makeRangoPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
           throw new SwapCurrencyError(swapInfo, request)
         }
 
-        // Use requestId/id/uuid/transactionId for tracking if available
-        const trackingId =
-          swap.requestId ?? swap.id ?? swap.uuid ?? swap.transactionId ?? ''
-        const trackingUri =
-          trackingId !== ''
-            ? `${orderUri}${trackingId}`
-            : `${orderUri}${toAddress}`
-        log(`Rango tracking: id=${trackingId}, uri=${trackingUri}`)
-
         // Create the saved action for the swap
         const savedAction = {
           actionType: 'swap' as const,
           swapInfo,
-          orderUri: trackingUri,
+          orderUri: orderUriValue,
           isEstimate: true,
           toAsset: {
             pluginId: toWallet.currencyInfo.pluginId,
@@ -768,7 +769,7 @@ export function makeRangoPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
           savedAction: {
             actionType: 'swap',
             swapInfo,
-            orderUri: `${orderUri}${toAddress}`,
+            orderUri: orderUriValue,
             isEstimate: true,
             toAsset: {
               pluginId: toWallet.currencyInfo.pluginId,
