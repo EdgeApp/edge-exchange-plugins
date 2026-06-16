@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- added: (Maya) Include a transparent refund address in the swap memo for shielded Zcash sources so Maya can process refunds.
+
 ## 2.52.2 (2026-07-27)
 
 - fixed: Maya swaps spending RUNE now send to Maya's inbound address instead of depositing into THORChain's own state machine, which misrouted the swap (THORChain read Maya's `=:d:` DASH memo as an unparseable DOGE swap and the deposit failed).
