@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- added: (Maya) Include a transparent refund address in the swap memo for shielded Zcash sources so Maya can process refunds.
+
 ## 2.48.0 (2026-06-16)
 
 - added: (Rango) Sonic support

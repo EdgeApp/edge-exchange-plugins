@@ -414,6 +414,18 @@ export function makeThorchainBasedPlugin(
         : undefined
     )
 
+    // Maya cannot refund a shielded Zcash source and rejects the refund unless a
+    // transparent (t-address) refund address is carried in the swap memo. Other
+    // chains default to the sending address, which is correct, so no refund
+    // address is needed. The refund is injected into the ZEC swap memo below
+    // (see the zcash branch); it is deliberately NOT passed to the quote
+    // endpoint, because appending it overflows Zcash's 80-char transparent-memo
+    // limit and the quote endpoint would reject it.
+    const refundAddress =
+      fromWallet.currencyInfo.pluginId === 'zcash'
+        ? await getAddress(fromWallet, 'transparentAddress')
+        : undefined
+
     const fromMainnetCode =
       MAINNET_CODE_TRANSCRIPTION[fromWallet.currencyInfo.pluginId]
     const toMainnetCode =
@@ -845,6 +857,23 @@ export function makeThorchainBasedPlugin(
         fromNativeAmount,
         fromCurrencyCode
       )
+
+      // Maya cannot refund a shielded Zcash source without a transparent refund
+      // address, carried in the swap memo as `DESTADDR/REFUNDADDR`. It cannot be
+      // sent to the quote endpoint: appending it overflows Zcash's 80-char
+      // transparent-memo limit and the quote is rejected. The ZEC swap sends its
+      // memo in the shielded note (not the transparent memo), which is not bound
+      // by that limit, so inject the refund into the memo here, after the quote
+      // was fetched without it.
+      if (refundAddress != null) {
+        // Memo shape is `=:ASSET:DESTADDR:...`; append the refund to the
+        // destination field so it becomes `DESTADDR/REFUNDADDR`.
+        const memoFields = memo.split(':')
+        if (memoFields.length > 2) {
+          memoFields[2] = `${memoFields[2]}/${refundAddress}`
+          memo = memoFields.join(':')
+        }
+      }
 
       // Debug logging for Maya ZEC ZIP-321 construction
       log(
