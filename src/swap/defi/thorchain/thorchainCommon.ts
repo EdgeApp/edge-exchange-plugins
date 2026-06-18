@@ -714,7 +714,6 @@ export function makeThorchainBasedPlugin(
     } = calcResponse
     let { memo } = calcResponse
 
-    let ethNativeAmount = fromNativeAmount
     let publicAddress = thorAddress
     const preTxs: EdgeTransaction[] = []
     let memoType: EdgeMemo['type']
@@ -758,9 +757,6 @@ export function makeThorchainBasedPlugin(
             `Missing sourceTokenContractAddress for ${fromMainnetCode}`
           )
         assetAddress = sourceTokenContractAddress
-
-        // Token transactions send no ETH (or other EVM mainnet coin)
-        ethNativeAmount = '0'
 
         const approvalTxs = await createEvmApprovalEdgeTransactions({
           request,
@@ -920,7 +916,13 @@ export function makeThorchainBasedPlugin(
       ],
       spendTargets: [
         {
-          nativeAmount: ethNativeAmount,
+          // The amount spent from the wallet, always denominated in the
+          // from-asset. For EVM token swaps this is the token amount even though
+          // the router contract call sends zero parent-currency value (the
+          // currency engine forces value to 0 for token contract calls). Using
+          // the token amount here keeps the pending transaction metadata
+          // (amount, fiat, percent) correct instead of showing 0.
+          nativeAmount: fromNativeAmount,
           publicAddress
         }
       ],

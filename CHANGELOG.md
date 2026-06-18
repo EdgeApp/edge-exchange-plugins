@@ -3,6 +3,7 @@
 ## Unreleased
 
 - added: Changelly swap provider
+- fixed: (Thorchain/Maya) Show the correct from-amount in pending swap transaction metadata for EVM token swaps (e.g. USDT to ETH) instead of 0.
 
 ## 2.49.0 (2026-07-11)
 
