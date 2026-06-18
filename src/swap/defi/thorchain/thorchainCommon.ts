@@ -43,6 +43,7 @@ import {
   fetchInfo,
   fetchWaterfall,
   getAddress,
+  getTokenMultiplier,
   makeQueryParams,
   nativeToDenomination,
   promiseWithTimeout,
@@ -60,6 +61,20 @@ export const EVM_SEND_GAS = '80000'
 export const EVM_TOKEN_SEND_GAS = '80000'
 export const THOR_LIMIT_UNITS = '100000000'
 export const AFFILIATE_FEE_BASIS_DEFAULT = '50'
+
+// Thornode normalizes every asset's amount to THOR_LIMIT_UNITS (1e8) in its
+// quote API. Mayanode instead expresses amounts in each asset's own native
+// precision (e.g. CACAO is 1e10, BTC is 1e8). Resolve the multiplier that
+// converts between an asset's exchange-denominated amount and the units the
+// node API expects for this swap.
+const getNodeLimitUnits = (
+  swapInfo: EdgeSwapInfo,
+  wallet: EdgeCurrencyWallet,
+  tokenId: EdgeTokenId
+): string =>
+  swapInfo.pluginId === 'mayaprotocol'
+    ? getTokenMultiplier(wallet, tokenId)
+    : THOR_LIMIT_UNITS
 const NATIVE_IN_GWEI = '1000000000'
 const STREAMING_INTERVAL_DEFAULT = 10
 const STREAMING_QUANTITY_DEFAULT = 10
@@ -768,7 +783,7 @@ export function makeThorchainBasedPlugin(
       memo = memo.replace(/^0x/, '')
     } else if (
       fromWallet.currencyInfo.pluginId === 'thorchainrune' ||
-      fromWallet.currencyInfo.pluginId === 'cacao'
+      fromWallet.currencyInfo.pluginId === 'mayachain'
     ) {
       const chainPrefix =
         fromWallet.currencyInfo.pluginId === 'thorchainrune' ? 'THOR' : 'MAYA'
@@ -778,7 +793,10 @@ export function makeThorchainBasedPlugin(
           {
             amount: fromNativeAmount,
             asset: `${chainPrefix}.${fromCurrencyCode}`,
-            decimals: THOR_LIMIT_UNITS
+            // The deposit amount is in the source asset's native precision, so
+            // tag it with that asset's multiplier. For RUNE this equals
+            // THOR_LIMIT_UNITS (1e8); CACAO needs its own 1e10 multiplier.
+            decimals: getTokenMultiplier(fromWallet, fromTokenId)
           }
         ],
         memo,
@@ -996,7 +1014,7 @@ export function makeThorchainBasedPlugin(
       if (
         quoteFor === 'max' &&
         (fromWallet.currencyInfo.pluginId === 'thorchainrune' ||
-          fromWallet.currencyInfo.pluginId === 'cacao') &&
+          fromWallet.currencyInfo.pluginId === 'mayachain') &&
         request.fromTokenId == null
       ) {
         // fetchSwapQuoteInner has unique logic to handle 'max' quotes but
@@ -1089,14 +1107,19 @@ const calcSwapFrom = async ({
   streamingInterval,
   streamingQuantity
 }: CalcSwapParams): Promise<CalcSwapResponse> => {
-  // Max quotes start with getting a quote for 10 RUNE
-  const fromNativeAmount =
-    quoteFor === 'max' &&
+  // Max quotes start by probing the rate with a small fixed amount that must
+  // clear the provider's minimum. 10 RUNE works for Thorchain; CACAO is lower
+  // value and 10-decimal, so probe with ~1000 CACAO to stay above Maya's min.
+  const isNativeDeposit =
     (fromWallet.currencyInfo.pluginId === 'thorchainrune' ||
-      fromWallet.currencyInfo.pluginId === 'cacao') &&
+      fromWallet.currencyInfo.pluginId === 'mayachain') &&
     fromTokenId == null
-      ? '1000000000'
-      : nativeAmount
+  const maxSeedAmount =
+    fromWallet.currencyInfo.pluginId === 'mayachain'
+      ? mul('1000', getTokenMultiplier(fromWallet, fromTokenId))
+      : '1000000000'
+  const fromNativeAmount =
+    quoteFor === 'max' && isNativeDeposit ? maxSeedAmount : nativeAmount
 
   // Get exchange rate from source to destination asset
   const fromExchangeAmount = nativeToDenomination(
@@ -1107,7 +1130,10 @@ const calcSwapFrom = async ({
 
   log(`fromExchangeAmount: ${fromExchangeAmount}`)
 
-  const fromThorAmountDecimal = mul(fromExchangeAmount, THOR_LIMIT_UNITS)
+  const fromLimitUnits = getNodeLimitUnits(swapInfo, fromWallet, fromTokenId)
+  const toLimitUnits = getNodeLimitUnits(swapInfo, toWallet, toTokenId)
+
+  const fromThorAmountDecimal = mul(fromExchangeAmount, fromLimitUnits)
   const fromThorAmount = round(fromThorAmountDecimal, 0)
 
   const noStreamParams = {
@@ -1164,7 +1190,7 @@ const calcSwapFrom = async ({
 
   log(`toThorAmountWithSpread = limit: ${toThorAmountWithSpread}`)
 
-  const toExchangeAmount = div18(toThorAmountWithSpread, THOR_LIMIT_UNITS)
+  const toExchangeAmount = div18(toThorAmountWithSpread, toLimitUnits)
   log(`toExchangeAmount: ${toExchangeAmount}`)
 
   const toNativeAmountFloat = denominationToNative(
@@ -1233,7 +1259,10 @@ const calcSwapTo = async ({
     toTokenId
   )
 
-  const requestedToThorAmount = mul(toExchangeAmount, THOR_LIMIT_UNITS)
+  const fromLimitUnits = getNodeLimitUnits(swapInfo, fromWallet, fromTokenId)
+  const toLimitUnits = getNodeLimitUnits(swapInfo, toWallet, toTokenId)
+
+  const requestedToThorAmount = mul(toExchangeAmount, toLimitUnits)
 
   log(`toExchangeAmount: ${toExchangeAmount}`)
 
@@ -1247,7 +1276,7 @@ const calcSwapTo = async ({
   )
 
   const requestedFromThorAmount = round(
-    mul(requestedFromExchangeAmount, THOR_LIMIT_UNITS),
+    mul(requestedFromExchangeAmount, fromLimitUnits),
     0
   )
 
@@ -1316,7 +1345,7 @@ const calcSwapTo = async ({
 
   log(`fromThorAmountWithSpread = limit: ${fromThorAmountWithSpread}`)
 
-  const fromExchangeAmount = div18(fromThorAmountWithSpread, THOR_LIMIT_UNITS)
+  const fromExchangeAmount = div18(fromThorAmountWithSpread, fromLimitUnits)
   log(`fromExchangeAmount: ${fromExchangeAmount}`)
 
   const fromNativeAmountFloat = denominationToNative(

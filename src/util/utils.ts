@@ -299,7 +299,7 @@ export async function findMinimumSwapAmount({
   return lastWorkingAmount
 }
 
-function getTokenMultiplier(
+export function getTokenMultiplier(
   wallet: EdgeCurrencyWallet,
   tokenId: EdgeTokenId
 ): string {
