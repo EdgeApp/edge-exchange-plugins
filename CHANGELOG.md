@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- fixed: (Thorchain/Maya) Show the correct from-amount in pending swap transaction metadata for EVM token swaps (e.g. USDT to ETH) instead of 0.
+
 ## 2.48.0 (2026-06-16)
 
 - added: (Rango) Sonic support
