@@ -2,7 +2,7 @@ import { EdgeCurrencyPluginId } from '../../src/util/edgeCurrencyPluginIds'
 
 export const xgram = new Map<string, EdgeCurrencyPluginId | null>()
 // WARNING: Not included by the synchronizer synchronization
-xgram.set('ada', 'cardano')
+xgram.set('ADA', 'cardano')
 
 // WARNING: Not included by the synchronizer synchronization
 xgram.set('ALGO', 'algorand')

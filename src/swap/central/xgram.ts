@@ -76,7 +76,7 @@ const ccyAmountLimitRegex = /ccyAmount must be ([><])\s*([\d.]+)/
 export function makeXgramPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
   const { io } = opts
 
-  const fetchCors = io.fetch
+  const { fetchCors = io.fetch } = io
   const { apiKey } = asInitOptions(opts.initOptions)
 
   const headers = {
@@ -142,11 +142,14 @@ export function makeXgramPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
         }
       )
 
-      if (!orderResponse.ok) {
-        throw new Error('Xgram create order failed')
-      }
-
-      const orderResponseJson = await orderResponse.json()
+      // Parse the body even on a non-OK status: Xgram returns structured
+      // limit/region/currency errors with 4xx codes, and surfacing those
+      // (below) gives the user a real message instead of a generic failure.
+      const orderResponseJson = await orderResponse.json().catch(() => {
+        throw new Error(
+          `Xgram create order failed: HTTP ${orderResponse.status}`
+        )
+      })
       const quoteFor = request.quoteFor === 'from' ? 'from' : 'to'
       const quoteReply = asXgramQuoteReply(orderResponseJson)
 
@@ -214,11 +217,14 @@ export function makeXgramPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
       return {
         id: quoteReply.id,
         validUntil: quoteReply.expiresAt,
-        fromAmount: quoteReply.ccyAmountFrom,
-        toAmount:
-          quoteReply.ccyAmountToExpected != null
+        fromAmount: isSelling
+          ? quoteReply.ccyAmountFrom
+          : quoteReply.ccyAmountToExpected ?? largeDenomAmount,
+        toAmount: isSelling
+          ? quoteReply.ccyAmountToExpected != null
             ? quoteReply.ccyAmountToExpected.toString()
-            : largeDenomAmount,
+            : largeDenomAmount
+          : quoteReply.ccyAmountFrom,
         payinAddress: quoteReply.depositAddress,
         payinExtraId: quoteReply.depositTag
       }
