@@ -217,6 +217,14 @@ export function makeXgramPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
       return {
         id: quoteReply.id,
         validUntil: quoteReply.expiresAt,
+        // The two Xgram endpoints label the amounts oppositely, so the
+        // reverse branch reads the "to" field into fromAmount and the "from"
+        // field into toAmount. Forward (sell) quotes come from `newExchange`,
+        // where ccyAmountFrom is the send side and ccyAmountToExpected is the
+        // receive side. Reverse (buy) quotes come from `newRevExchange`, which
+        // fixes the destination amount and inverts the fields: there
+        // ccyAmountFrom is the receive (to) side and ccyAmountToExpected is the
+        // send (from) side. Map each field to the correct side per direction.
         fromAmount: isSelling
           ? quoteReply.ccyAmountFrom
           : quoteReply.ccyAmountToExpected ?? largeDenomAmount,
