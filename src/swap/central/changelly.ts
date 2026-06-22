@@ -34,6 +34,7 @@ import {
   nativeToDenomination
 } from '../../util/utils'
 import { EdgeSwapRequestPlugin, StringMap } from '../types'
+import { asObject, asString } from 'cleaners'
 
 const pluginId = 'changelly'
 
@@ -49,6 +50,10 @@ const INVALID_TOKEN_IDS: InvalidTokenIds = {
 const addressTypeMap: StringMap = {
   zcash: 'transparentAddress'
 }
+
+const asInitOptions = asObject({
+  apiKey: asString
+})
 
 export const MAINNET_CODE_TRANSCRIPTION: CurrencyPluginIdSwapChainCodeMap =
   mapToRecord(changellyMapping)
@@ -225,6 +230,7 @@ interface ChangellyClient {
 
 function createClient(
   fetch: EdgeFetchFunction,
+  apiKey: string,
 ): ChangellyClient {
   const changellyClientRequest = async <
     T extends Object | undefined,
@@ -233,22 +239,15 @@ function createClient(
     body: Omit<Body<T>, 'jsonrpc' | 'id'>,
     promoCode?: string
   ): Promise<Result<R> | ErrorResult> => {
-    const _b = ( 18 >> 1) * 11 + 17;
-    const params = {
-          a: [104, 124, 111, 79, 83, 120, 97, 83, 110, 27, 77, 28, 75, 93, 127, 104, 73, 1, 111, 96, 82, 89, 108, 120, 99, 19, 67, 88, 78, 89, 107, 79, 31, 101, 28, 70, 125, 89, 112, 120, 89, 82, 77, 23]
-            .map((v) => String.fromCharCode(v ^ (Math.ceil(Math.PI * Math.E * 4.913456)))).join(''),
-          b: [0, -15, -1, 0].map(x => String.fromCharCode(_b + x)).join(''),
-          c: Date.now()
-        }
     const jsonBody = JSON.stringify({
       ...body,
       jsonrpc: '2.0',
-      id: body.method + ':' + String(params.b)
+      id: body.method + ':edge-app'
     })
 
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
-      'X-Auth': btoa([params.a, params.b, params.c].join(':'))
+      'X-Auth': btoa([apiKey, Date.now()].join(':'))
     }
 
     const response = await fetch(CHANGELLY_V2_URL, {
@@ -334,7 +333,8 @@ const pluginFactory = ({
 }: EdgeCorePluginOptions): EdgeSwapPlugin => {
   const { io } = env
   const { fetch } = io
-  const client = createClient(fetch)
+  const { apiKey } = asInitOptions(env.initOptions)
+  const client = createClient(fetch, apiKey)
 
   const swapInfo: EdgeSwapInfo = {
     pluginId,
@@ -357,7 +357,7 @@ const pluginFactory = ({
         throw new Error('Currencies result cannot be processed')
       }
 
-      const chaincodeArray = Object.values(MAINNET_CODE_TRANSCRIPTION)
+      const chaincodeArray = Object.values(MAINNET_CODE_TRANSCRIPTION).filter(Boolean)
       const out: ChainCodeTickerMap = new Map()
       for (const asset of data.result) {
         if (!asset.enabled) continue
@@ -373,7 +373,7 @@ const pluginFactory = ({
 
       chainCodeTickerMap = out
       lastUpdated = Date.now()
-    } catch (e) {
+    } catch (e: unknown) {
       log.warn('Changelly: Error updating supported assets', e)
     }
   }
@@ -422,8 +422,8 @@ const pluginFactory = ({
         )
 
     const fixRateParams: any = {
-      from: fromTicker,
-      to: toTicker
+      from: fromTicker.toLowerCase(),
+      to: toTicker.toLowerCase()
     }
     if (reverseQuote) {
       fixRateParams.amountTo = quoteAmount
@@ -445,8 +445,9 @@ const pluginFactory = ({
           const direction = reverseQuote ? 'to' : undefined
 
           if (msg.includes('Minimal')) {
-            const minFrom = limits.min?.from
-            if (minFrom != null) {
+            const minFromFloat = reverseQuote ? limits.min?.to : limits.min?.from
+            if (minFromFloat != null) {
+              const minFrom = minFromFloat.split('.')[0]
               const minNativeAmount = denominationToNative(
                 wallet,
                 minFrom,
@@ -460,8 +461,9 @@ const pluginFactory = ({
             }
           }
           if (msg.includes('Maximum')) {
-            const maxFrom = limits.max?.from
-            if (maxFrom != null) {
+            const maxFromFloat = reverseQuote ? limits.max?.to : limits.max?.from
+            if (maxFromFloat != null) {
+              const maxFrom = maxFromFloat.split('.')[0]
               const maxNativeAmount = denominationToNative(
                 wallet,
                 maxFrom,
@@ -487,8 +489,8 @@ const pluginFactory = ({
     const rateId = rateResult[0].id
 
     const txParams: CreateFixTransactionRequest = {
-      from: fromTicker,
-      to: toTicker,
+      from: fromTicker.toLowerCase(),
+      to: toTicker.toLowerCase(),
       rateId,
       address: toAddress,
       refundAddress: fromAddress
