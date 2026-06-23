@@ -76,7 +76,7 @@ const ccyAmountLimitRegex = /ccyAmount must be ([><])\s*([\d.]+)/
 export function makeXgramPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
   const { io } = opts
 
-  const fetchCors = io.fetch
+  const { fetchCors = io.fetch } = io
   const { apiKey } = asInitOptions(opts.initOptions)
 
   const headers = {
@@ -142,11 +142,14 @@ export function makeXgramPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
         }
       )
 
-      if (!orderResponse.ok) {
-        throw new Error('Xgram create order failed')
-      }
-
-      const orderResponseJson = await orderResponse.json()
+      // Parse the body even on a non-OK status: Xgram returns structured
+      // limit/region/currency errors with 4xx codes, and surfacing those
+      // (below) gives the user a real message instead of a generic failure.
+      const orderResponseJson = await orderResponse.json().catch(() => {
+        throw new Error(
+          `Xgram create order failed: HTTP ${orderResponse.status}`
+        )
+      })
       const quoteFor = request.quoteFor === 'from' ? 'from' : 'to'
       const quoteReply = asXgramQuoteReply(orderResponseJson)
 
@@ -214,11 +217,22 @@ export function makeXgramPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
       return {
         id: quoteReply.id,
         validUntil: quoteReply.expiresAt,
-        fromAmount: quoteReply.ccyAmountFrom,
-        toAmount:
-          quoteReply.ccyAmountToExpected != null
+        // The two Xgram endpoints label the amounts oppositely, so the
+        // reverse branch reads the "to" field into fromAmount and the "from"
+        // field into toAmount. Forward (sell) quotes come from `newExchange`,
+        // where ccyAmountFrom is the send side and ccyAmountToExpected is the
+        // receive side. Reverse (buy) quotes come from `newRevExchange`, which
+        // fixes the destination amount and inverts the fields: there
+        // ccyAmountFrom is the receive (to) side and ccyAmountToExpected is the
+        // send (from) side. Map each field to the correct side per direction.
+        fromAmount: isSelling
+          ? quoteReply.ccyAmountFrom
+          : quoteReply.ccyAmountToExpected ?? largeDenomAmount,
+        toAmount: isSelling
+          ? quoteReply.ccyAmountToExpected != null
             ? quoteReply.ccyAmountToExpected.toString()
-            : largeDenomAmount,
+            : largeDenomAmount
+          : quoteReply.ccyAmountFrom,
         payinAddress: quoteReply.depositAddress,
         payinExtraId: quoteReply.depositTag
       }
