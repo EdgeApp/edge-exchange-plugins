@@ -5,6 +5,7 @@
 - fixed: (Xgram) Map send and receive amounts correctly for reverse "to" quotes, which previously swapped them.
 - fixed: (Xgram) Prefer the CORS-capable fetch when available, and parse the create-order response body on non-OK HTTP status so limit, region, and unsupported-currency errors surface to the user instead of a generic failure.
 - fixed: (Xgram) Uppercase the Cardano network code to match the other network identifiers.
+- fixed: (Maya) CACAO source swaps (e.g. CACAO to BTC) no longer fail with "amount below min limit" / "Invalid publicAddress". Two issues are addressed: the native deposit path now matches the Maya chain by its real pluginId `mayachain` (it was checking a non-existent `cacao`), and Maya quote amounts now use each asset's native precision (CACAO is 1e10) instead of Thornode's universal 1e8, so amounts are no longer under-scaled 100x.
 
 ## 2.48.0 (2026-06-16)
 
