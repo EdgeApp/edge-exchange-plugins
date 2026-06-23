@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 2.48.1 (2026-06-23)
+
 - fixed: (Xgram) Map send and receive amounts correctly for reverse "to" quotes, which previously swapped them.
 - fixed: (Xgram) Prefer the CORS-capable fetch when available, and parse the create-order response body on non-OK HTTP status so limit, region, and unsupported-currency errors surface to the user instead of a generic failure.
 - fixed: (Xgram) Uppercase the Cardano network code to match the other network identifiers.
