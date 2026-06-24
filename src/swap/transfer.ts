@@ -22,7 +22,7 @@ const swapInfo: EdgeSwapInfo = {
   pluginId,
   displayName: 'Transfer',
   orderUri: undefined,
-  supportEmail: 'support@edge.com'
+  supportEmail: 'support@edge.app'
 }
 
 export function makeTransferPlugin(
