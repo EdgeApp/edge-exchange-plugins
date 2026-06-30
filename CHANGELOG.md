@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 2.48.2 (2026-06-29)
+
 - fixed: Correct the support email (support@edge.com → support@edge.app) for the Bridgeless, Cosmos IBC, Fantom/Sonic Upgrade, and Transfer swap plugins.
 
 ## 2.48.1 (2026-06-23)
