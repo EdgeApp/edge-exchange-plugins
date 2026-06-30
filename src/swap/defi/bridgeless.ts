@@ -44,7 +44,7 @@ const swapInfo: EdgeSwapInfo = {
   pluginId,
   displayName: 'Bridgeless',
   isDex: true,
-  supportEmail: 'support@edge.com'
+  supportEmail: 'support@edge.app'
 }
 
 const BASE_URL = 'https://rpc-api.node0.mainnet.bridgeless.com'

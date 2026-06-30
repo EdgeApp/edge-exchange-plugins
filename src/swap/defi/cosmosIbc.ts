@@ -22,7 +22,7 @@ const swapInfo: EdgeSwapInfo = {
   displayName: 'Cosmos IBC',
   orderUri: undefined,
   isDex: true,
-  supportEmail: 'support@edge.com'
+  supportEmail: 'support@edge.app'
 }
 
 export function makeCosmosIbcPlugin(
