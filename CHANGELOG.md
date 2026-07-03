@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 2.48.3 (2026-07-03)
+
 - fixed: (Xgram) Fall back to a float-rate estimate quote when the provider rejects fixed-rate order creation, which currently blocks all Xgram quotes.
 
 ## 2.48.2 (2026-06-29)
