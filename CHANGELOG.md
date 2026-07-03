@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- added: HoudiniSwap swap plugin: privacy-routed CEX swaps with forward and reverse (receive-amount) quotes, swap-to-address destinations with destination-tag support for memo chains, and a cached-fixture acceptance suite. Honors `EdgeSwapRequest.privacy`, so a request that does not demand privacy may also take Houdini's standard routes, which are the only ones served between the 10 USD standard floor and the 25 USD private floor. Rate-limited calls back off behind the window the API reports and fail as a rate limit rather than as an unavailable route. Only the exact-out path reports a fixed rate, since that is the only path the provider serves fixed rates on. Token lookups are memoized including misses, so a chain the provider lists but serves no native coin for costs one lookup per session rather than one per quote; a lookup the provider failed to answer is not cached, since a rate limit says nothing about whether the chain is served.
+- changed: `checkInvalidTokenIds` takes an `allowSameAsset` option, for a privacy provider whose main flow is routing an asset to itself.
+
 ## 2.48.2 (2026-06-29)
 
 - fixed: Correct the support email (support@edge.com → support@edge.app) for the Bridgeless, Cosmos IBC, Fantom/Sonic Upgrade, and Transfer swap plugins.

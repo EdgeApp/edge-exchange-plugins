@@ -28,6 +28,15 @@ export interface EdgeSwapRequestPlugin {
   quoteFor: 'from' | 'max' | 'to'
   fromCurrencyCode: string
   toCurrencyCode: string
+
+  /**
+   * Route privacy requirement, carried through from `EdgeSwapRequest`.
+   * `'required'` means the caller needs a route that keeps the sender
+   * unlinkable to the recipient, and a plugin that cannot offer one must
+   * decline rather than answer with a transparent route. Declared here because
+   * the installed `edge-core-js` types predate the field.
+   */
+  privacy?: 'required'
 }
 
 export const asNumberString = (raw: any): string => {
