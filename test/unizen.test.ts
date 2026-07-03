@@ -87,7 +87,7 @@ describe(`unizen makeSpendParams`, function () {
     )
 
     assert.deepEqual(spendParams, {
-      customNetworkFee: { gasPrice: '1' },
+      customNetworkFee: { gasPrice: '1.05' },
       networkFeeOption: 'custom',
       destinationAddress: '0x880E0cE34F48c0cbC68BF3E745F17175BA8c650e',
       expirationDate: new Date('2024-12-20T22:36:28.000Z'),
@@ -114,7 +114,7 @@ describe(`unizen makeSpendParams`, function () {
     )
 
     assert.deepEqual(spendParams, {
-      customNetworkFee: { gasPrice: '7' },
+      customNetworkFee: { gasPrice: '8.224647235' },
       networkFeeOption: 'custom',
       destinationAddress: '0xBE2A77399Cde40EfbBc4e89207332c4a4079c83D',
       expirationDate: new Date('2024-12-20T22:38:57.000Z'),
@@ -168,7 +168,7 @@ describe(`unizen makeSpendParams`, function () {
     )
 
     assert.deepEqual(spendParams, {
-      customNetworkFee: { gasPrice: '1' },
+      customNetworkFee: { gasPrice: '1.05' },
       networkFeeOption: 'custom',
       destinationAddress: '0xf12f7b4238e85322b1b2362122d333c96851c223',
       expirationDate: new Date('2024-12-20T02:06:13.000Z'),

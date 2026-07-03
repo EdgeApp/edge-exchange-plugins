@@ -45,7 +45,10 @@ import {
   MakeTxParams,
   StringMap
 } from '../types'
-import { createEvmApprovalEdgeTransactions, WEI_MULTIPLIER } from './defiUtils'
+import {
+  bufferSwapGasPrice,
+  createEvmApprovalEdgeTransactions
+} from './defiUtils'
 
 const pluginId = 'lifi'
 const swapInfo: EdgeSwapInfo = {
@@ -448,7 +451,7 @@ export function makeLifiPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
         const transactionRequest = asTransactionRequest(transactionRequestRaw)
         const { data, gasLimit, gasPrice } = transactionRequest
         const gasPriceDecimal = hexToDecimal(gasPrice)
-        const gasPriceGwei = div18(gasPriceDecimal, WEI_MULTIPLIER)
+        const gasPriceGwei = bufferSwapGasPrice(gasPriceDecimal)
 
         if (sendingToken) {
           const approvalTxs = await createEvmApprovalEdgeTransactions({

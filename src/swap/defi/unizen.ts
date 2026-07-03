@@ -1,5 +1,5 @@
 import contracts from '@unizen-io/unizen-contract-addresses/production.json'
-import { div } from 'biggystring'
+import { mul } from 'biggystring'
 import {
   asArray,
   asMaybe,
@@ -31,7 +31,11 @@ import {
 import { convertRequest, getAddress } from '../../util/utils'
 import { EdgeSwapRequestPlugin, StringMap } from '../types'
 import { getTokenAddress } from './0x/util'
-import { createEvmApprovalEdgeTransactions, WEI_MULTIPLIER } from './defiUtils'
+import {
+  bufferSwapGasPrice,
+  createEvmApprovalEdgeTransactions,
+  WEI_MULTIPLIER
+} from './defiUtils'
 
 const pluginId = 'unizen'
 const swapInfo: EdgeSwapInfo = {
@@ -62,10 +66,10 @@ interface QuoteSpendParams extends SwapNetworkFees {
 }
 
 const makeEvmFees = (rate: string, units: string = 'wei'): SwapNetworkFees => {
-  const multiplier = units === 'wei' ? WEI_MULTIPLIER : 1
+  const rateWei = units === 'wei' ? rate : mul(rate, WEI_MULTIPLIER)
   return {
     customNetworkFee: {
-      gasPrice: div(rate, multiplier)
+      gasPrice: bufferSwapGasPrice(rateWei)
     },
     networkFeeOption: 'custom'
   }
