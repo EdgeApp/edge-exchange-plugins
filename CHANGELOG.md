@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- fixed: (Xgram) Fall back to a float-rate estimate quote when the provider rejects fixed-rate order creation, which currently blocks all Xgram quotes.
+
 ## 2.48.2 (2026-06-29)
 
 - fixed: Correct the support email (support@edge.com → support@edge.app) for the Bridgeless, Cosmos IBC, Fantom/Sonic Upgrade, and Transfer swap plugins.

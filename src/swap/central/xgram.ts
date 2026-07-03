@@ -70,8 +70,14 @@ const addressTypeMap: StringMap = {
   zcash: 'transparentAddress'
 }
 
-const swapType = 'fixed' as const
+type XgramRateType = 'fixed' | 'float'
 const ccyAmountLimitRegex = /ccyAmount must be ([><])\s*([\d.]+)/
+
+const isTypedSwapError = (error: unknown): boolean =>
+  error instanceof SwapAboveLimitError ||
+  error instanceof SwapBelowLimitError ||
+  error instanceof SwapCurrencyError ||
+  error instanceof SwapPermissionError
 
 export function makeXgramPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
   const { io } = opts
@@ -120,7 +126,8 @@ export function makeXgramPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
 
     async function createOrder(
       isSelling: boolean,
-      largeDenomAmount: string
+      largeDenomAmount: string,
+      rateType: XgramRateType
     ): Promise<XgramResponse> {
       const createExchangeUrl = isSelling ? newExchange : newRevExchange
 
@@ -128,7 +135,7 @@ export function makeXgramPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
         toAddress: String(toAddress),
         refundAddress: String(fromAddress),
         ccyAmount: largeDenomAmount,
-        type: swapType,
+        type: rateType,
         fromContractAddress: fromContractAddress ?? '',
         toContractAddress: toContractAddress ?? '',
         fromNetwork,
@@ -245,6 +252,21 @@ export function makeXgramPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
         isSelling ? request.fromTokenId : request.toTokenId
       )
 
+      // Xgram intermittently rejects every fixed-rate creation provider-side
+      // with a generic "Error while creating exchange", so fall back to a
+      // float-rate order when the fixed-rate attempt fails. Typed swap errors
+      // (limits, unsupported pair, geo restriction) apply to both rate types
+      // and are rethrown without a retry. Float orders lock no rate, so the
+      // resulting quote is flagged as an estimate.
+      let order: XgramResponse
+      let isEstimate = false
+      try {
+        order = await createOrder(isSelling, largeDenomAmount, 'fixed')
+      } catch (error: unknown) {
+        if (isTypedSwapError(error)) throw error
+        order = await createOrder(isSelling, largeDenomAmount, 'float')
+        isEstimate = true
+      }
       const {
         fromAmount,
         toAmount,
@@ -252,7 +274,7 @@ export function makeXgramPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
         payinExtraId,
         id,
         validUntil
-      } = await createOrder(isSelling, largeDenomAmount)
+      } = order
 
       const fromNativeAmount = denominationToNative(
         request.fromWallet,
@@ -293,7 +315,7 @@ export function makeXgramPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
           swapInfo,
           orderId: id,
           orderUri: orderUri + id,
-          isEstimate: false,
+          isEstimate,
           toAsset: {
             pluginId: request.toWallet.currencyInfo.pluginId,
             tokenId: request.toTokenId,
