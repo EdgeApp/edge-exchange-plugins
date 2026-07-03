@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- added: HoudiniSwap swap plugin: privacy-routed CEX swaps with forward and reverse (receive-amount) quotes, swap-to-address destinations with destination-tag support for memo chains, and a cached-fixture acceptance suite.
+
 ## 2.48.2 (2026-06-29)
 
 - fixed: Correct the support email (support@edge.com → support@edge.app) for the Bridgeless, Cosmos IBC, Fantom/Sonic Upgrade, and Transfer swap plugins.

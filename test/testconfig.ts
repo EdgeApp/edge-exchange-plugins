@@ -65,6 +65,12 @@ export const asTestConfig = asObject({
       apiKey: asOptional(asString, '')
     }).withRest
   ),
+  HOUDINI_INIT: asCorePluginInit(
+    asObject({
+      apiKey: asOptional(asString, ''),
+      apiSecret: asOptional(asString, '')
+    }).withRest
+  ),
   LIFI_INIT: asCorePluginInit(
     asObject({
       affiliateFeeBasis: asOptional(asString, '50'),
