@@ -26,6 +26,7 @@
 - changed: Pin ethers to exactly 5.7.0.
 - changed: Upgrade edge-core-js, edge-currency-accountbased, and edge-currency-plugins to their npm-published versions (removes transitive git dependencies).
 - security: Upgrade dependencies per Socket security recommendations.
+- fixed: (Exolix) Log readable JSON swap error responses instead of "[object Object]".
 
 ## 2.46.0 (2026-04-18)
 

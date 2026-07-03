@@ -174,7 +174,7 @@ export function makeExolixPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
             return resJson
           }
 
-          log.warn(`Error retrieving Exolix quote: ${String(resJson)}`)
+          log.warn(`Error retrieving Exolix quote: ${JSON.stringify(resJson)}`)
           throw new SwapCurrencyError(swapInfo, request)
         }
         throw new Error(`Exolix returned error code ${response.status}`)
