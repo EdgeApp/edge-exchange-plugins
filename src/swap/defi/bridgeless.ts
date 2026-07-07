@@ -7,6 +7,7 @@ import {
   asNull,
   asNumber,
   asObject,
+  asOptional,
   asString
 } from 'cleaners'
 import {
@@ -53,7 +54,7 @@ const AUTO_BOT_URL = 'https://autobot-wusa1.edge.app'
 const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000'
 
 const EDGE_PLUGINID_CHAINID_MAP: Record<string, string> = {
-  // base: '8453', // no swaps available on zano yet
+  // base: '8453', // disabled: its only bridgeable asset (wrapped BTC) has no activity on Base yet
   binancesmartchain: '56',
   bitcoin: '0',
   bitcoincash: '5',
@@ -103,6 +104,17 @@ const asBridgeChain = asObject({
 const asBridgeTokens = asObject({
   tokens: asArray(asToken),
   pagination: asPagination
+})
+
+const asReferral = asObject({
+  referral: asObject({
+    commission_rate: asString
+  })
+})
+
+const asInitOptions = asObject({
+  // Bridgeless referral id (uint16). When omitted, deposits carry no referral.
+  referralId: asOptional(asNumber)
 })
 
 const fetchBridgeless = async (
@@ -161,33 +173,42 @@ interface MakeBridgelessEvmSpendInfoParams {
   fromTokenInfo: BridgelessTokenInfo
   toChainId: string
   receiver: string
+  referralId: number
 }
 
 const makeBridgelessEvmSpendInfo = ({
   fromAmount,
   fromTokenInfo,
   toChainId,
-  receiver
+  receiver,
+  referralId
 }: MakeBridgelessEvmSpendInfoParams): string => {
   const iface = new ethers.utils.Interface(BRIDGELESS_EVM_ABI)
   const tokenAddress = ethers.utils.getAddress(fromTokenInfo.address)
   const isNativeToken = tokenAddress.toLowerCase() === ZERO_ADDRESS
 
   return isNativeToken
-    ? iface.encodeFunctionData('depositNative', [receiver, toChainId, 0])
+    ? iface.encodeFunctionData('depositNative', [
+        receiver,
+        toChainId,
+        referralId
+      ])
     : iface.encodeFunctionData('depositERC20', [
         tokenAddress,
         fromAmount,
         receiver,
         toChainId,
         fromTokenInfo.is_wrapped,
-        0
+        referralId
       ])
 }
 
 export function makeBridgelessPlugin(
   opts: EdgeCorePluginOptions
 ): EdgeSwapPlugin {
+  // Referral id (uint16) applied to every deposit type. 0 means no referral.
+  const referralId = asInitOptions(opts.initOptions ?? {}).referralId ?? 0
+
   const fetchSwapQuoteInner = async (
     request: EdgeSwapRequestPlugin
   ): Promise<SwapOrder> => {
@@ -302,6 +323,20 @@ export function makeBridgelessPlugin(
     const fromDecimals = parseInt(fromTokenInfo.decimals, 10)
     const toDecimals = parseInt(toTokenInfo.decimals, 10)
 
+    // A registered referral id adds its own commission on top of the token's
+    // bridge commission, so include it in the quoted amounts.
+    let commissionRate = toTokenInfo.commission_rate
+    if (referralId !== 0) {
+      const referralRaw = await fetchBridgeless(
+        opts.io.fetch,
+        `/referrals/${referralId}`
+      )
+      commissionRate = add(
+        commissionRate,
+        asReferral(referralRaw).referral.commission_rate
+      )
+    }
+
     // The minimum amount is enforced by the amount of toToken received
     let fromAmount: string
     let toAmount: string
@@ -316,10 +351,7 @@ export function makeBridgelessPlugin(
         )
       }
 
-      const grossToAmount = ceil(
-        mul(toAmount, add('1', toTokenInfo.commission_rate)),
-        0
-      )
+      const grossToAmount = ceil(mul(toAmount, add('1', commissionRate)), 0)
       fromAmount = scaleNativeAmount(
         grossToAmount,
         toDecimals,
@@ -334,16 +366,10 @@ export function makeBridgelessPlugin(
         toDecimals,
         'down'
       )
-      toAmount = ceil(
-        mul(bridgedToAmount, sub('1', toTokenInfo.commission_rate)),
-        0
-      )
+      toAmount = ceil(mul(bridgedToAmount, sub('1', commissionRate)), 0)
 
       const minGrossToAmount = ceil(
-        mul(
-          toTokenInfo.min_withdrawal_amount,
-          add('1', toTokenInfo.commission_rate)
-        ),
+        mul(toTokenInfo.min_withdrawal_amount, add('1', commissionRate)),
         0
       )
       const minFromAmount = scaleNativeAmount(
@@ -388,14 +414,21 @@ export function makeBridgelessPlugin(
     switch (request.fromWallet.currencyInfo.pluginId) {
       case 'bitcoin':
       case 'bitcoincash': {
-        const receiver =
-          request.toWallet.currencyInfo.pluginId === 'zano'
-            ? base16.encode(base58.decode(toAddress))
-            : toAddress
-        const opReturn = `${receiver}${Buffer.from(
-          `#${toChainId}`,
-          'utf8'
-        ).toString('hex')}`
+        // Bridgeless BTC/BCH deposit memo (documented format):
+        //   [len(chainId)][chainId][referralId uint16 BE][addrEncByte][addrBytes]
+        // Bitcoin/BCH deposits only ever bridge to Zano here, so the address
+        // encoding byte is 0x04 (Base58) and the address bytes are the decoded
+        // Zano receiver address.
+        const chainIdBytes = Buffer.from(toChainId, 'utf8')
+        const referralBuf = Buffer.alloc(2)
+        referralBuf.writeUInt16BE(referralId)
+        const opReturn = Buffer.concat([
+          Buffer.from([chainIdBytes.length]),
+          chainIdBytes,
+          referralBuf,
+          Buffer.from([0x04]),
+          Buffer.from(base58.decode(toAddress))
+        ]).toString('hex')
 
         const spendInfo: EdgeSpendInfo = {
           otherParams: {
@@ -427,7 +460,8 @@ export function makeBridgelessPlugin(
           fromAmount,
           fromTokenInfo,
           toChainId,
-          receiver: toAddress
+          receiver: toAddress,
+          referralId
         })
         const isNativeToken =
           request.fromTokenId == null ||
@@ -469,9 +503,12 @@ export function makeBridgelessPlugin(
         }
       }
       case 'zano': {
+        // Only include referral_id when a referral is configured, keeping the
+        // no-referral burn body byte-identical to the previous format.
         const bodyData = {
           dst_add: toAddress,
           dst_net_id: toChainId,
+          ...(referralId !== 0 ? { referral_id: referralId } : {}),
           uniform_padding: '    '
         }
         const jsonString: string = JSON.stringify(bodyData)
