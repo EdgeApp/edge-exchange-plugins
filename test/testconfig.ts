@@ -43,6 +43,12 @@ export const asTestConfig = asObject({
       apiKey: asOptional(asString, '')
     }).withRest
   ),
+  CHANGELLY_INIT: asCorePluginInit(
+    asObject({
+      apiKey: asOptional(asString, ''),
+      partnerId: asOptional(asString, '')
+    }).withRest
+  ),
   ETHEREUM_INIT: asCorePluginInit(asEvmApiKeys),
   ETHEREUM_POW_INIT: asCorePluginInit(asEvmApiKeys),
   EXOLIX_INIT: asCorePluginInit(
