@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- added: Changelly swap provider
+
 ## 2.49.0 (2026-07-11)
 
 - added: NYM centralized swap integration
