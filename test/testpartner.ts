@@ -96,6 +96,7 @@ async function main(): Promise<void> {
       bitcoincash: true,
       ethereum: config.ETHEREUM_INIT,
       avalanche: config.AVALANCHE_INIT,
+      changelly: config.CHANGELLY_INIT,
       lifi: config.LIFI_INIT,
       polygon: config.POLYGON_INIT,
       piratechain: true,
