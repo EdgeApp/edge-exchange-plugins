@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- added: (Bridgeless) Solana (native SOL) and TON (native) swaps to and from Zano, including referral id support.
 - fixed: (Bridgeless) A configured referral id no longer inflates the quoted commission. The referral reward is paid out of the bridge's fixed commission, so quotes always use the token's commission rate.
 
 ## 2.51.1 (2026-07-16)

@@ -1,4 +1,5 @@
 import { base16, base58 } from '@scure/base'
+import { beginCell } from '@ton/core'
 import { add, ceil, lt, mul, sub } from 'biggystring'
 import {
   asArray,
@@ -30,6 +31,7 @@ import {
 } from 'edge-core-js/types'
 import { ethers } from 'ethers'
 
+import { borshString, borshU64 } from '../../util/borsh'
 import {
   getMaxSwappable,
   makeSwapPluginQuote,
@@ -59,6 +61,8 @@ const EDGE_PLUGINID_CHAINID_MAP: Record<string, string> = {
   bitcoin: '0',
   bitcoincash: '5',
   ethereum: '1',
+  solana: '4',
+  ton: '3',
   zano: '2'
 }
 
@@ -196,6 +200,17 @@ const makeBridgelessEvmSpendInfo = ({
         referralId
       ])
 }
+
+// Bridgeless Solana bridge program (reverse-engineered from on-chain deposits).
+const SOLANA_BRIDGE_PROGRAM_ID = '8Jcah8Td4prNTrAvK1L3utWW6t87y1kDYTau7K4k9uDL'
+const SOLANA_BRIDGE_CONFIG = '8c6uRQbVKo6mt9QYdfFx4dH3T1iJ4ZVGxqZSS18L3M4D'
+const SOLANA_SYSTEM_PROGRAM = '11111111111111111111111111111111'
+const SOLANA_BRIDGE_ID = '1' // mainnet bridge id
+// Anchor discriminator: sha256('global:deposit_native').slice(0, 8)
+const SOLANA_DEPOSIT_NATIVE_DISCRIMINATOR = '0d9e0ddf5fd51c06'
+
+// Bridgeless TON MsgDepositNative message opcode.
+const TON_DEPOSIT_NATIVE_OP = 0x5386a723
 
 export function makeBridgelessPlugin(
   opts: EdgeCorePluginOptions
@@ -534,6 +549,106 @@ export function makeBridgelessPlugin(
           fromNativeAmount: fromAmount
         }
       }
+      case 'solana': {
+        // Only native SOL deposits are supported until the bridge program's
+        // `deposit_spl` flow is implemented.
+        if (request.fromTokenId != null) {
+          throw new SwapCurrencyError(swapInfo, request)
+        }
+        // Native SOL deposit via the bridge program's `deposit_native`
+        // instruction. args: (bridgeId, amount, chainId, receiver, referralId)
+        const sender = await getAddress(request.fromWallet)
+        const referralBuf = Buffer.alloc(2)
+        referralBuf.writeUInt16LE(referralId)
+        const data = Buffer.concat([
+          Buffer.from(SOLANA_DEPOSIT_NATIVE_DISCRIMINATOR, 'hex'),
+          borshString(SOLANA_BRIDGE_ID),
+          borshU64(fromAmount),
+          borshString(toChainId),
+          borshString(toAddress),
+          referralBuf
+        ])
+
+        const solanaRequest = {
+          instructions: [
+            {
+              programId: SOLANA_BRIDGE_PROGRAM_ID,
+              keys: [
+                {
+                  pubkey: SOLANA_BRIDGE_CONFIG,
+                  isSigner: false,
+                  isWritable: true
+                },
+                { pubkey: sender, isSigner: true, isWritable: true },
+                {
+                  pubkey: SOLANA_SYSTEM_PROGRAM,
+                  isSigner: false,
+                  isWritable: false
+                }
+              ],
+              data: data.toString('base64')
+            }
+          ],
+          nativeAmount: fromAmount,
+          tokenId: request.fromTokenId
+        }
+
+        const makeTxParams: MakeTxParams = {
+          type: 'MakeTx',
+          unsignedTx: new TextEncoder().encode(JSON.stringify(solanaRequest)),
+          metadata: { assetAction, savedAction }
+        }
+
+        return {
+          request,
+          makeTxParams,
+          swapInfo,
+          fromNativeAmount: fromAmount
+        }
+      }
+      case 'ton': {
+        // Only native TON deposits are supported (no jetton deposits yet).
+        if (request.fromTokenId != null) {
+          throw new SwapCurrencyError(swapInfo, request)
+        }
+        // Native TON deposit: an internal message to the bridge contract whose
+        // body is MsgDepositNative(op, referralId, ref(receiver), ref(network)).
+        const receiverBuf = Buffer.alloc(127)
+        const receiverBytes = Buffer.from(toAddress, 'ascii')
+        if (receiverBytes.length > receiverBuf.length) {
+          throw new SwapCurrencyError(swapInfo, request)
+        }
+        receiverBytes.copy(receiverBuf)
+        const networkBuf = Buffer.alloc(32)
+        Buffer.from(toChainId, 'ascii').copy(networkBuf)
+
+        const body = beginCell()
+          .storeUint(TON_DEPOSIT_NATIVE_OP, 32)
+          .storeUint(referralId, 16)
+          .storeRef(beginCell().storeBuffer(receiverBuf).endCell())
+          .storeRef(beginCell().storeBuffer(networkBuf).endCell())
+          .endCell()
+
+        const tonRequest = {
+          toAddress: bridgeAddress,
+          amount: fromAmount,
+          bodyBoc: Buffer.from(body.toBoc()).toString('base64'),
+          bounce: true
+        }
+
+        const makeTxParams: MakeTxParams = {
+          type: 'MakeTx',
+          unsignedTx: new TextEncoder().encode(JSON.stringify(tonRequest)),
+          metadata: { assetAction, savedAction }
+        }
+
+        return {
+          request,
+          makeTxParams,
+          swapInfo,
+          fromNativeAmount: fromAmount
+        }
+      }
       default: {
         throw new SwapCurrencyError(swapInfo, request)
       }
@@ -569,7 +684,11 @@ export function makeBridgelessPlugin(
             savedAction.actionType === 'swap' &&
             savedAction.orderId != null
           ) {
-            const txHash = txid.startsWith('0x') ? txid : `0x${txid}`
+            // Hex txids (EVM/UTXO/Zano/TON) are 0x-prefixed for the bridge's
+            // order tracking; Solana signatures are base58 and used as-is.
+            const isHexTxid = /^(0x)?[0-9a-fA-F]{64}$/.test(txid)
+            const txHash =
+              isHexTxid && !txid.startsWith('0x') ? `0x${txid}` : txid
             savedAction.orderId = savedAction.orderId.replace(
               '{{TXID}}',
               txHash
