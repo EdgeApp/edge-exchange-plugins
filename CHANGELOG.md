@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 2.49.0 (2026-07-11)
+
 - added: NYM centralized swap integration
 
 ## 2.48.3 (2026-07-03)
