@@ -368,7 +368,9 @@ export function makeChangellyPlugin({
       const chaincodeArray = Object.values(MAINNET_CODE_TRANSCRIPTION).filter(Boolean)
       const out: ChainCodeTickerMap = new Map()
       for (const asset of data.result) {
-        if (!asset.enabled) continue
+        // Quotes go through the fix-rate API exclusively, so an asset without
+        // fixRateEnabled would surface as swappable and fail at quote time.
+        if (!asset.enabled || !asset.fixRateEnabled) continue
         if (!chaincodeArray.includes(asset.blockchain)) continue
         const tokenCodes = out.get(asset.blockchain) ?? []
         tokenCodes.push({
