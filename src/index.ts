@@ -3,6 +3,7 @@ import 'regenerator-runtime/runtime'
 import type { EdgeCorePlugins } from 'edge-core-js/types'
 
 import { makeChangeHeroPlugin } from './swap/central/changehero'
+import { makeChangellyPlugin } from './swap/central/changelly'
 import { makeChangeNowPlugin } from './swap/central/changenow'
 import { makeExolixPlugin } from './swap/central/exolix'
 import { makeGodexPlugin } from './swap/central/godex'
@@ -33,6 +34,7 @@ const plugins = {
   // Swap plugins:
   bridgeless: makeBridgelessPlugin,
   changehero: makeChangeHeroPlugin,
+  changelly: makeChangellyPlugin,
   changenow: makeChangeNowPlugin,
   cosmosibc: makeCosmosIbcPlugin,
   exolix: makeExolixPlugin,
