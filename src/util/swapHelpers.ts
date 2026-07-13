@@ -269,8 +269,16 @@ export const getMaxSwappable = async <T extends any[]>(
     requestCopy.nativeAmount = maxAmount
     return requestCopy
   } else {
-    // Fallback: Use full balance for makeTx paths
+    // Fallback for makeTx paths: engines that build custom transactions can
+    // report the true spendable max (balance minus fees); otherwise use the
+    // full balance.
     let maxAmount = balance
+    if (
+      'makeTxParams' in swapOrder &&
+      fromWallet.otherMethods?.getMaxTx != null
+    ) {
+      maxAmount = await fromWallet.otherMethods.getMaxTx(swapOrder.makeTxParams)
+    }
     if (fromCurrencyCode === fromWallet.currencyInfo.currencyCode) {
       for (const preTx of swapOrder.preTxs ?? []) {
         maxAmount = sub(maxAmount, preTx.networkFee)
