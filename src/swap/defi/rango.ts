@@ -25,7 +25,6 @@ import {
 import { base64 } from 'rfc4648'
 
 import { rango as rangoMapping } from '../../mappings/rango'
-import { div18 } from '../../util/biggystringplus'
 import {
   getMaxSwappable,
   makeSwapPluginQuote,
@@ -50,9 +49,9 @@ import {
   StringMap
 } from '../types'
 import {
+  bufferSwapGasPrice,
   createEvmApprovalEdgeTransactions,
-  decodeEvmApprovalData,
-  WEI_MULTIPLIER
+  decodeEvmApprovalData
 } from './defiUtils'
 
 const swapInfo: EdgeSwapInfo = {
@@ -739,7 +738,7 @@ export function makeRangoPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
               : undefined,
           gasPrice:
             evmTransaction.gasPrice != null
-              ? div18(evmTransaction.gasPrice, WEI_MULTIPLIER)
+              ? bufferSwapGasPrice(evmTransaction.gasPrice)
               : undefined,
           maxFeePerGas: evmTransaction.maxFeePerGas ?? undefined,
           maxPriorityFeePerGas: evmTransaction.maxPriorityFeePerGas ?? undefined

@@ -1,3 +1,4 @@
+import { div, mul, round } from 'biggystring'
 import { asMaybe, asObject, asString } from 'cleaners'
 import {
   EdgeCurrencyConfig,
@@ -233,3 +234,30 @@ export const getDepositWithExpiryData = async (params: {
 }
 
 export const WEI_MULTIPLIER = '1000000000'
+
+export const SWAP_GAS_PRICE_BUFFER_MULTIPLIER = '1.05'
+
+/**
+ * Swap providers quote a gas price at quote time, but the network base fee can
+ * rise before we sign the transaction, causing it to be rejected as below the
+ * network minimum (`Gas price X wei below minimum Y wei`). Apply a small buffer
+ * to the provider-supplied gas price to absorb that drift.
+ *
+ * The buffer is applied in wei and rounded to an integer wei value, so the
+ * returned gwei string never carries more than 9 decimal places. The engine
+ * multiplies `customNetworkFee.gasPrice` back to wei, and a fractional wei
+ * amount corrupts the transaction's hex encoding.
+ *
+ * Note the buffer is real spend, not free headroom: the engine derives the
+ * EIP-1559 tip as `maxFeePerGas - baseFee`, so the entire buffered value is
+ * paid. Keep the multiplier modest.
+ *
+ * @param gasPriceWei provider-quoted gas price, in wei
+ * @returns buffered gas price, in gwei
+ */
+export const bufferSwapGasPrice = (gasPriceWei: string): string =>
+  div(
+    round(mul(gasPriceWei, SWAP_GAS_PRICE_BUFFER_MULTIPLIER), 0),
+    WEI_MULTIPLIER,
+    18
+  )
