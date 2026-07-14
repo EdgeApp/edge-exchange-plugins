@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 2.51.0 (2026-07-13)
+
 - added: (Bridgeless) Optional `referralId` init option, included in EVM, Zano, and Bitcoin/BCH deposit payloads to attribute referral revenue.
 - changed: (Bridgeless) Bitcoin/BCH deposits now encode the destination using the documented bridge memo format (chain id, referral id, and Base58-encoded receiver).
 - fixed: (Bridgeless) Quoted amounts now include the referral's additional commission (fetched from the bridge's referral registry) when a referral id is configured.
