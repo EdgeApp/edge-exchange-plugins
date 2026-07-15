@@ -62,17 +62,18 @@ export const EVM_TOKEN_SEND_GAS = '80000'
 export const THOR_LIMIT_UNITS = '100000000'
 export const AFFILIATE_FEE_BASIS_DEFAULT = '50'
 
-// Thornode normalizes every asset's amount to THOR_LIMIT_UNITS (1e8) in its
-// quote API. Mayanode instead expresses amounts in each asset's own native
-// precision (e.g. CACAO is 1e10, BTC is 1e8). Resolve the multiplier that
-// converts between an asset's exchange-denominated amount and the units the
-// node API expects for this swap.
-const getNodeLimitUnits = (
+// Both nodes normalize bridged assets to THOR_LIMIT_UNITS (1e8) in their quote
+// APIs, regardless of the asset's own precision. Mayanode's only exception is
+// MAYAChain's own assets, which it expresses in their native precision (CACAO
+// is 1e10, MAYA is 1e4). Resolve the multiplier that converts between an
+// asset's exchange-denominated amount and the units the node API expects.
+export const getNodeLimitUnits = (
   swapInfo: EdgeSwapInfo,
   wallet: EdgeCurrencyWallet,
   tokenId: EdgeTokenId
 ): string =>
-  swapInfo.pluginId === 'mayaprotocol'
+  swapInfo.pluginId === 'mayaprotocol' &&
+  wallet.currencyInfo.pluginId === 'mayachain'
     ? getTokenMultiplier(wallet, tokenId)
     : THOR_LIMIT_UNITS
 const NATIVE_IN_GWEI = '1000000000'
