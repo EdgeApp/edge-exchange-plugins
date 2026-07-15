@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- fixed: (Maya) Quote assets on external chains in 1e8 units, restoring quotes that regressed in 2.48.1. Maya stopped quoting any non-1e8-precision asset (e.g. USDT and ETH on Ethereum, ADA), either dropping itself from the quote list or returning a near-zero receive amount.
+
 ## 2.51.0 (2026-07-13)
 
 - added: (Bridgeless) Optional `referralId` init option, included in EVM, Zano, and Bitcoin/BCH deposit payloads to attribute referral revenue.
