@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- added: Swapter swap provider
+
 ## 2.52.0 (2026-07-17)
 
 - added: (Bridgeless) Solana (native SOL) and TON (native) swaps to and from Zano, including referral id support.
