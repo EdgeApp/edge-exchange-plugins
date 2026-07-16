@@ -106,12 +106,6 @@ const asBridgeTokens = asObject({
   pagination: asPagination
 })
 
-const asReferral = asObject({
-  referral: asObject({
-    commission_rate: asString
-  })
-})
-
 const asInitOptions = asObject({
   // Bridgeless referral id (uint16). When omitted, deposits carry no referral.
   referralId: asOptional(asNumber)
@@ -323,19 +317,10 @@ export function makeBridgelessPlugin(
     const fromDecimals = parseInt(fromTokenInfo.decimals, 10)
     const toDecimals = parseInt(toTokenInfo.decimals, 10)
 
-    // A registered referral id adds its own commission on top of the token's
-    // bridge commission, so include it in the quoted amounts.
-    let commissionRate = toTokenInfo.commission_rate
-    if (referralId !== 0) {
-      const referralRaw = await fetchBridgeless(
-        opts.io.fetch,
-        `/referrals/${referralId}`
-      )
-      commissionRate = add(
-        commissionRate,
-        asReferral(referralRaw).referral.commission_rate
-      )
-    }
+    // A referral id does not change what the user is charged: the bridge
+    // always takes the token's commission_rate, and the referral reward is
+    // paid out of that commission by Bridgeless.
+    const commissionRate = toTokenInfo.commission_rate
 
     // The minimum amount is enforced by the amount of toToken received
     let fromAmount: string

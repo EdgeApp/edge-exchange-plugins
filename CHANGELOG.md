@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- fixed: (Bridgeless) A configured referral id no longer inflates the quoted commission. The referral reward is paid out of the bridge's fixed commission, so quotes always use the token's commission rate.
+
 ## 2.51.1 (2026-07-16)
 
 - fixed: (Maya) Quote amounts for assets bridged from other chains are no longer scaled by the asset's own precision, which gave wrong estimates and metadata (a Dash to USDT quote was overestimated 100x).
