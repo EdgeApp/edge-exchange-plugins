@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 2.51.1 (2026-07-16)
+
 - fixed: (Maya) Quote amounts for assets bridged from other chains are no longer scaled by the asset's own precision, which gave wrong estimates and metadata (a Dash to USDT quote was overestimated 100x).
 
 ## 2.51.0 (2026-07-13)
