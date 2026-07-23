@@ -8,8 +8,10 @@ import { describe, it } from 'mocha'
 
 import {
   getNodeLimitUnits,
+  getPool,
   isProviderNativeDeposit
 } from '../src/swap/defi/thorchain/thorchainCommon'
+import { EdgeSwapRequestPlugin } from '../src/swap/types'
 
 const mayaSwapInfo: EdgeSwapInfo = {
   pluginId: 'mayaprotocol',
@@ -149,5 +151,99 @@ describe(`isProviderNativeDeposit`, function () {
   it('external chains never deposit', function () {
     assert.equal(isProviderNativeDeposit(mayaSwapInfo, dashWallet), false)
     assert.equal(isProviderNativeDeposit(thorSwapInfo, ethWallet), false)
+  })
+})
+
+// Only the fields SwapCurrencyError reads:
+const fakeRequest = ({
+  fromWallet: {
+    currencyConfig: { currencyInfo: { pluginId: 'thorchainrune' } }
+  },
+  toWallet: { currencyConfig: { currencyInfo: { pluginId: 'dash' } } },
+  fromTokenId: null,
+  toTokenId: null
+} as unknown) as EdgeSwapRequestPlugin
+
+// Real prices from midgard.mayachain.info. Maya lists a THOR.RUNE pool but no
+// MAYA.CACAO pool, since it prices everything in CACAO.
+const mayaPools = [
+  { asset: 'BTC.BTC', assetPrice: '545667.63', assetPriceUSD: '65051.66' },
+  {
+    asset: 'THOR.RUNE',
+    assetPrice: '3.578525528664948',
+    assetPriceUSD: '0.42'
+  },
+  { asset: 'DASH.DASH', assetPrice: '276.94', assetPriceUSD: '33.01' },
+  { asset: 'MAYA.MAYA', assetPrice: '1234.5', assetPriceUSD: '147.2' }
+]
+
+// Real shape from THORChain's midgard: no THOR.RUNE pool (everything is priced
+// in RUNE), but THOR-native tokens do get their own pools.
+const thorPools = [
+  { asset: 'BTC.BTC', assetPrice: '152503.1', assetPriceUSD: '65051.66' },
+  { asset: 'THOR.TCY', assetPrice: '0.0189', assetPriceUSD: '0.008' },
+  {
+    asset: 'ETH.USDC-0XA0B86991C6218B36C1D19D4A2E9EB0CE3606EB48',
+    assetPrice: '2.34',
+    assetPriceUSD: '1.00'
+  }
+]
+
+describe(`getPool`, function () {
+  // Maya treats RUNE as an ordinary bridged asset with a real pool. Pricing it
+  // as a base asset (assetPrice '1') put the 'to' quote out by the whole
+  // RUNE/CACAO ratio — ~3.58x here.
+  it('maya prices RUNE from its real pool, not as a base asset', function () {
+    const pool = getPool(fakeRequest, mayaSwapInfo, 'THOR', 'RUNE', mayaPools)
+    assert.equal(pool.asset, 'THOR.RUNE')
+    assert.equal(pool.assetPrice, '3.578525528664948')
+  })
+
+  // THORChain lists no pool for its own base asset, so it still gets a
+  // synthetic one priced at 1.
+  it('thorchain synthesizes a RUNE pool priced at 1', function () {
+    const pool = getPool(fakeRequest, thorSwapInfo, 'THOR', 'RUNE', thorPools)
+    assert.equal(pool.asset, 'THOR.RUNE')
+    assert.equal(pool.assetPrice, '1')
+  })
+
+  it('maya synthesizes a CACAO pool priced at 1', function () {
+    const pool = getPool(fakeRequest, mayaSwapInfo, 'MAYA', 'CACAO', mayaPools)
+    assert.equal(pool.asset, 'MAYA.CACAO')
+    assert.equal(pool.assetPrice, '1')
+  })
+
+  it('uses the real pool for a provider-native token', function () {
+    const thorTcy = getPool(fakeRequest, thorSwapInfo, 'THOR', 'TCY', thorPools)
+    assert.equal(thorTcy.assetPrice, '0.0189')
+    const mayaMaya = getPool(
+      fakeRequest,
+      mayaSwapInfo,
+      'MAYA',
+      'MAYA',
+      mayaPools
+    )
+    assert.equal(mayaMaya.assetPrice, '1234.5')
+  })
+
+  it('matches a token pool despite its contract-address suffix', function () {
+    const pool = getPool(fakeRequest, thorSwapInfo, 'ETH', 'USDC', thorPools)
+    assert.equal(pool.assetPrice, '2.34')
+  })
+
+  it('throws for an asset with no pool', function () {
+    assert.throws(
+      () => getPool(fakeRequest, mayaSwapInfo, 'LTC', 'LTC', mayaPools),
+      /does not support/
+    )
+  })
+
+  // CACAO is not a base asset to THORChain, so it must not be synthesized
+  // there — it would price CACAO at 1 RUNE.
+  it('does not synthesize another protocol base asset', function () {
+    assert.throws(
+      () => getPool(fakeRequest, thorSwapInfo, 'MAYA', 'CACAO', thorPools),
+      /does not support/
+    )
   })
 })

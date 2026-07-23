@@ -1058,8 +1058,17 @@ export function makeThorchainBasedPlugin(
 }
 
 /**
- * Create a fake pool for native base tokens (RUNE/CACAO) that don't have
- * their own pools. Uses BTC pool to derive USD price.
+ * Each provider's own base asset. A provider prices every pool in this asset,
+ * so it never lists a pool for the asset itself.
+ */
+const PROVIDER_BASE_ASSET: { [swapPluginId: string]: string } = {
+  thorchain: 'THOR.RUNE',
+  mayaprotocol: 'MAYA.CACAO'
+}
+
+/**
+ * Create a fake pool for a provider's own base asset, which has no pool of its
+ * own. Its price in itself is 1; the BTC pool supplies the USD price.
  */
 const createNativePool = (
   request: EdgeSwapRequestPlugin,
@@ -1079,29 +1088,30 @@ const createNativePool = (
   }
 }
 
-const getPool = (
+export const getPool = (
   request: EdgeSwapRequestPlugin,
   swapInfo: EdgeSwapInfo,
   mainnetCode: string,
   tokenCode: string,
   pools: Pool[]
 ): Pool => {
-  // Handle native base tokens that don't have their own pools
-  if (mainnetCode === 'THOR' && tokenCode === 'RUNE') {
-    return createNativePool(request, swapInfo, 'THOR.RUNE', pools)
-  }
-  if (mainnetCode === 'MAYA' && tokenCode === 'CACAO') {
-    return createNativePool(request, swapInfo, 'MAYA.CACAO', pools)
-  }
+  const wantedAsset = `${mainnetCode}.${tokenCode}`
 
   const pool = pools.find(pool => {
     const [asset] = pool.asset.split('-')
-    return asset === `${mainnetCode}.${tokenCode}`
+    return asset === wantedAsset
   })
-  if (pool == null) {
-    throw new SwapCurrencyError(swapInfo, request)
+  if (pool != null) return pool
+
+  // Only the provider's OWN base asset is missing a pool. Another protocol's
+  // base asset is an ordinary bridged asset here, with a real pool: Maya lists
+  // THOR.RUNE, and pricing it as a base asset (1 CACAO per RUNE instead of the
+  // pool's rate) skewed 'to' quotes by the whole RUNE/CACAO ratio.
+  if (PROVIDER_BASE_ASSET[swapInfo.pluginId] === wantedAsset) {
+    return createNativePool(request, swapInfo, wantedAsset, pools)
   }
-  return pool
+
+  throw new SwapCurrencyError(swapInfo, request)
 }
 
 const calcSwapFrom = async ({
