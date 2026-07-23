@@ -6,7 +6,10 @@ import {
 } from 'edge-core-js/types'
 import { describe, it } from 'mocha'
 
-import { getNodeLimitUnits } from '../src/swap/defi/thorchain/thorchainCommon'
+import {
+  getNodeLimitUnits,
+  isProviderNativeDeposit
+} from '../src/swap/defi/thorchain/thorchainCommon'
 
 const mayaSwapInfo: EdgeSwapInfo = {
   pluginId: 'mayaprotocol',
@@ -66,6 +69,7 @@ const dashWallet = makeFakeWallet('dash', 'DASH', '100000000')
 const mayachainWallet = makeFakeWallet('mayachain', 'CACAO', '10000000000', [
   { tokenId: 'mayatokenid', currencyCode: 'MAYA', multiplier: '10000' }
 ])
+const thorchainruneWallet = makeFakeWallet('thorchainrune', 'RUNE', '100000000')
 
 describe(`getNodeLimitUnits`, function () {
   // Mayanode normalizes bridged assets to 1e8 no matter their own precision,
@@ -111,5 +115,39 @@ describe(`getNodeLimitUnits`, function () {
       getNodeLimitUnits(thorSwapInfo, mayachainWallet, null),
       '100000000'
     )
+  })
+})
+
+describe(`isProviderNativeDeposit`, function () {
+  // The MsgDeposit path only applies on the provider's own protocol chain.
+  it('thorchain deposits RUNE', function () {
+    assert.equal(
+      isProviderNativeDeposit(thorSwapInfo, thorchainruneWallet),
+      true
+    )
+  })
+
+  it('maya deposits CACAO', function () {
+    assert.equal(isProviderNativeDeposit(mayaSwapInfo, mayachainWallet), true)
+  })
+
+  // RUNE is an external asset to Maya. It must be sent to Maya's inbound
+  // address like any other chain — depositing it hands Maya's memo to
+  // THORChain, which misparses it (e.g. `=:d:<dashAddr>` becomes a DOGE swap
+  // with an unparseable address).
+  it('maya must NOT deposit RUNE', function () {
+    assert.equal(
+      isProviderNativeDeposit(mayaSwapInfo, thorchainruneWallet),
+      false
+    )
+  })
+
+  it('thorchain must NOT deposit CACAO', function () {
+    assert.equal(isProviderNativeDeposit(thorSwapInfo, mayachainWallet), false)
+  })
+
+  it('external chains never deposit', function () {
+    assert.equal(isProviderNativeDeposit(mayaSwapInfo, dashWallet), false)
+    assert.equal(isProviderNativeDeposit(thorSwapInfo, ethWallet), false)
   })
 })
