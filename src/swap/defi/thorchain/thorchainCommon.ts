@@ -76,6 +76,27 @@ export const getNodeLimitUnits = (
   wallet.currencyInfo.pluginId === 'mayachain'
     ? getTokenMultiplier(wallet, tokenId)
     : THOR_LIMIT_UNITS
+
+/** Each provider's own protocol chain, by swap pluginId */
+const PROVIDER_NATIVE_PLUGIN_ID: { [swapPluginId: string]: string } = {
+  thorchain: 'thorchainrune',
+  mayaprotocol: 'mayachain'
+}
+
+// The MsgDeposit path only applies when spending an asset native to the swap
+// provider's own protocol chain: RUNE (or THOR-chain tokens) via THORChain,
+// CACAO (or MAYA-chain tokens) via Maya. An asset from the *other* protocol's
+// chain — e.g. RUNE swapped through Maya — is just another external asset to
+// that provider and must be sent to the quote's inbound address. Depositing it
+// instead hands the memo to the wrong protocol: THORChain executes Maya's
+// `=:d:<dashAddr>` as a DOGE swap and fails to parse the DASH address.
+export const isProviderNativeDeposit = (
+  swapInfo: EdgeSwapInfo,
+  fromWallet: EdgeCurrencyWallet
+): boolean =>
+  PROVIDER_NATIVE_PLUGIN_ID[swapInfo.pluginId] ===
+  fromWallet.currencyInfo.pluginId
+
 const NATIVE_IN_GWEI = '1000000000'
 const STREAMING_INTERVAL_DEFAULT = 10
 const STREAMING_QUANTITY_DEFAULT = 10
@@ -778,10 +799,7 @@ export function makeThorchainBasedPlugin(
         memo
       })
       memo = memo.replace(/^0x/, '')
-    } else if (
-      fromWallet.currencyInfo.pluginId === 'thorchainrune' ||
-      fromWallet.currencyInfo.pluginId === 'mayachain'
-    ) {
+    } else if (isProviderNativeDeposit(swapInfo, fromWallet)) {
       const chainPrefix =
         fromWallet.currencyInfo.pluginId === 'thorchainrune' ? 'THOR' : 'MAYA'
       const makeTxParams: MakeTxParams = {
@@ -893,7 +911,8 @@ export function makeThorchainBasedPlugin(
       // Set publicAddress for spendTargets
       publicAddress = thorAddress
     } else {
-      // For UTXO chains, we send the memo as text which gets
+      // For UTXO chains and bank sends to the provider's inbound address
+      // (e.g. RUNE swapped through Maya), we send the memo as text which gets
       // encoded by the plugins
       memoType = 'text'
 
@@ -1016,12 +1035,12 @@ export function makeThorchainBasedPlugin(
       let swapOrder
       if (
         quoteFor === 'max' &&
-        (fromWallet.currencyInfo.pluginId === 'thorchainrune' ||
-          fromWallet.currencyInfo.pluginId === 'mayachain') &&
+        isProviderNativeDeposit(swapInfo, fromWallet) &&
         request.fromTokenId == null
       ) {
         // fetchSwapQuoteInner has unique logic to handle 'max' quotes but
-        // only when sending RUNE or CACAO
+        // only for the provider's own deposit path (RUNE via THORChain,
+        // CACAO via Maya)
         swapOrder = await fetchSwapQuoteInner(request, true)
       } else {
         const newRequest = await getMaxSwappable(
@@ -1039,8 +1058,17 @@ export function makeThorchainBasedPlugin(
 }
 
 /**
- * Create a fake pool for native base tokens (RUNE/CACAO) that don't have
- * their own pools. Uses BTC pool to derive USD price.
+ * Each provider's own base asset. A provider prices every pool in this asset,
+ * so it never lists a pool for the asset itself.
+ */
+const PROVIDER_BASE_ASSET: { [swapPluginId: string]: string } = {
+  thorchain: 'THOR.RUNE',
+  mayaprotocol: 'MAYA.CACAO'
+}
+
+/**
+ * Create a fake pool for a provider's own base asset, which has no pool of its
+ * own. Its price in itself is 1; the BTC pool supplies the USD price.
  */
 const createNativePool = (
   request: EdgeSwapRequestPlugin,
@@ -1060,29 +1088,30 @@ const createNativePool = (
   }
 }
 
-const getPool = (
+export const getPool = (
   request: EdgeSwapRequestPlugin,
   swapInfo: EdgeSwapInfo,
   mainnetCode: string,
   tokenCode: string,
   pools: Pool[]
 ): Pool => {
-  // Handle native base tokens that don't have their own pools
-  if (mainnetCode === 'THOR' && tokenCode === 'RUNE') {
-    return createNativePool(request, swapInfo, 'THOR.RUNE', pools)
-  }
-  if (mainnetCode === 'MAYA' && tokenCode === 'CACAO') {
-    return createNativePool(request, swapInfo, 'MAYA.CACAO', pools)
-  }
+  const wantedAsset = `${mainnetCode}.${tokenCode}`
 
   const pool = pools.find(pool => {
     const [asset] = pool.asset.split('-')
-    return asset === `${mainnetCode}.${tokenCode}`
+    return asset === wantedAsset
   })
-  if (pool == null) {
-    throw new SwapCurrencyError(swapInfo, request)
+  if (pool != null) return pool
+
+  // Only the provider's OWN base asset is missing a pool. Another protocol's
+  // base asset is an ordinary bridged asset here, with a real pool: Maya lists
+  // THOR.RUNE, and pricing it as a base asset (1 CACAO per RUNE instead of the
+  // pool's rate) skewed 'to' quotes by the whole RUNE/CACAO ratio.
+  if (PROVIDER_BASE_ASSET[swapInfo.pluginId] === wantedAsset) {
+    return createNativePool(request, swapInfo, wantedAsset, pools)
   }
-  return pool
+
+  throw new SwapCurrencyError(swapInfo, request)
 }
 
 const calcSwapFrom = async ({
@@ -1114,9 +1143,7 @@ const calcSwapFrom = async ({
   // clear the provider's minimum. 10 RUNE works for Thorchain; CACAO is lower
   // value and 10-decimal, so probe with ~1000 CACAO to stay above Maya's min.
   const isNativeDeposit =
-    (fromWallet.currencyInfo.pluginId === 'thorchainrune' ||
-      fromWallet.currencyInfo.pluginId === 'mayachain') &&
-    fromTokenId == null
+    isProviderNativeDeposit(swapInfo, fromWallet) && fromTokenId == null
   const maxSeedAmount =
     fromWallet.currencyInfo.pluginId === 'mayachain'
       ? mul('1000', getTokenMultiplier(fromWallet, fromTokenId))

@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- fixed: Maya swaps spending RUNE now send to Maya's inbound address instead of depositing into THORChain's own state machine, which misrouted the swap (THORChain read Maya's `=:d:` DASH memo as an unparseable DOGE swap and the deposit failed).
+- fixed: Maya quotes now price RUNE from Maya's real THOR.RUNE pool instead of treating it as Maya's own base asset, which skewed destination-amount quotes by the RUNE/CACAO ratio.
+
 ## 2.52.0 (2026-07-17)
 
 - added: (Bridgeless) Solana (native SOL) and TON (native) swaps to and from Zano, including referral id support.
