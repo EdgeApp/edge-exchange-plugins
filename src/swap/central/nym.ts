@@ -303,6 +303,14 @@ export function makeNymPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
         }
       ],
       networkFeeOption: 'high',
+      // This spend is never broadcast: it exists only so `getMaxSpendable` can
+      // price the network fee before the real order (and its payin address)
+      // exists. Its target is the user's own from-chain address, which engines
+      // that compare the spend target against their own public key reject with
+      // `SpendToSelfError` (every EVM chain, where the public key *is* the
+      // address). That threw out of `getMaxSwappable` and failed every max
+      // swap from an EVM wallet. The real order below keeps all checks.
+      skipChecks: true,
       assetAction: {
         assetActionType: 'swap'
       }

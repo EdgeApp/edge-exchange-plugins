@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- fixed: (NYM) Max swaps from EVM wallets no longer fail with "No enabled exchanges support". The fee-estimation probe targets the user's own address, which the engine rejected as a spend to self.
+
 ## 2.52.0 (2026-07-17)
 
 - added: (Bridgeless) Solana (native SOL) and TON (native) swaps to and from Zano, including referral id support.
