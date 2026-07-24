@@ -118,16 +118,29 @@ const makeFakeWallet = (opts: FakeWalletOpts): EdgeCurrencyWallet => {
   } as unknown) as EdgeCurrencyWallet
 }
 
+/** A 400 error body the fake `fetchCors` returns for the /quote endpoint. */
+type QuoteError = Record<string, unknown> | null
+
 /**
  * Canned quote + order responses from NYM's partner API. The quote echoes the
  * requested `sourceAmount` back, as the live API does, so a max swap's second
- * (post-`getMaxSpendable`) quote reports the trimmed amount.
+ * (post-`getMaxSpendable`) quote reports the trimmed amount. Pass `quoteError`
+ * to make the /quote endpoint fail with that 400 body, mirroring NYM rejecting
+ * an out-of-limit amount before it will quote.
  */
-const makeFakeIo = (): { fetchCors: Function } => {
+const makeFakeIo = (quoteError: QuoteError = null): { fetchCors: Function } => {
   const expiresAt = new Date(Date.now() + 10 * 60 * 1000).toISOString()
   return {
     fetchCors: async (uri: string, opts: { body: string }) => {
       const sent = JSON.parse(opts.body)
+      if (uri.endsWith('/quote') && quoteError != null) {
+        return {
+          ok: false,
+          status: 400,
+          json: async () => quoteError,
+          text: async () => JSON.stringify(quoteError)
+        }
+      }
       const body = uri.endsWith('/quote')
         ? {
             quoteId: 'quote-1',
@@ -158,9 +171,9 @@ const makeFakeIo = (): { fetchCors: Function } => {
   }
 }
 
-const makePlugin = (): EdgeSwapPlugin =>
+const makePlugin = (quoteError: QuoteError = null): EdgeSwapPlugin =>
   makeNymPlugin(({
-    io: makeFakeIo(),
+    io: makeFakeIo(quoteError),
     initOptions: { apiKey: 'test-key' },
     log: { warn() {} }
   } as unknown) as EdgeCorePluginOptions)
@@ -274,6 +287,96 @@ describe('nym', function () {
         () => assert.fail('expected SwapCurrencyError'),
         (error: unknown) =>
           assert.equal((error as Error).name, 'SwapCurrencyError')
+      )
+  })
+
+  it('maps a below-minimum max swap to SwapBelowLimitError, not SwapCurrencyError', async function () {
+    // A native-EVM wallet whose ENTIRE balance is below NYM's minimum: the
+    // whole-balance max probe gets NYM's 400 `UnderLimitError`. Mapped to the
+    // ranked `SwapBelowLimitError` it wins error ranking and tells the user the
+    // real reason; left as `SwapCurrencyError` it loses to an unrelated plugin
+    // and surfaces the misleading "No enabled exchanges support ETH to NYM".
+    const fromWallet = makeFakeWallet({
+      pluginId: 'ethereum',
+      currencyCode: 'ETH',
+      address: ETH_ADDRESS,
+      evmChainId: 1,
+      balanceMap: new Map([[null, '3500000000000000']])
+    })
+
+    const request: EdgeSwapRequest = {
+      fromWallet,
+      fromTokenId: null,
+      toWallet: makeNymWallet(),
+      toTokenId: null,
+      nativeAmount: '0',
+      quoteFor: 'max'
+    }
+
+    const quoteError = {
+      errors: [
+        {
+          error: 'UnderLimitError',
+          sourceAmountLimit: '5000000000000000',
+          destinationAmountLimit: '511491944'
+        }
+      ]
+    }
+
+    await makePlugin(quoteError)
+      .fetchSwapQuote(request, undefined, { infoPayload: {} })
+      .then(
+        () => assert.fail('expected SwapBelowLimitError'),
+        (error: unknown) => {
+          assert.equal((error as Error).name, 'SwapBelowLimitError')
+          // The source-side limit, in native units, comes straight from NYM.
+          assert.equal(
+            (error as { nativeMin?: string }).nativeMin,
+            '5000000000000000'
+          )
+        }
+      )
+  })
+
+  it('maps an above-maximum swap to SwapAboveLimitError', async function () {
+    const fromWallet = makeFakeWallet({
+      pluginId: 'ethereum',
+      currencyCode: 'USDT',
+      address: ETH_ADDRESS,
+      evmChainId: 1,
+      balanceMap: new Map([[USDT_TOKEN_ID, '999999000000']])
+    })
+
+    const request: EdgeSwapRequest = {
+      fromWallet,
+      fromTokenId: USDT_TOKEN_ID,
+      toWallet: makeNymWallet(),
+      toTokenId: null,
+      nativeAmount: '999999000000',
+      quoteFor: 'from'
+    }
+
+    const quoteError = {
+      errors: [
+        {
+          error: 'OverLimitError',
+          sourceAmountLimit: '50000000000',
+          destinationAmountLimit: '2722222222222'
+        }
+      ]
+    }
+
+    await makePlugin(quoteError)
+      .fetchSwapQuote(request, undefined, { infoPayload: {} })
+      .then(
+        () => assert.fail('expected SwapAboveLimitError'),
+        (error: unknown) => {
+          assert.equal((error as Error).name, 'SwapAboveLimitError')
+          assert.equal(
+            (error as { nativeMax?: string }).nativeMax,
+            '50000000000'
+          )
+        }
       )
   })
 })

@@ -3,6 +3,7 @@
 ## Unreleased
 
 - fixed: (NYM) Max swaps from EVM wallets no longer fail with "No enabled exchanges support". The fee-estimation probe targets the user's own address, which the engine rejected as a spend to self.
+- fixed: (NYM) Swaps whose amount is outside NYM's per-asset limits now report "below the limit" / "above the limit" instead of "No enabled exchanges support". NYM rejects an out-of-range amount before quoting, and the error was mapped to an unsupported-pair error that lost error ranking to other plugins.
 
 ## 2.52.0 (2026-07-17)
 
