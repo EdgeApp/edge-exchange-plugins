@@ -108,8 +108,19 @@ const asNymOrder = asObject({
 // Error bodies come in two shapes:
 //   { errors: [{ error: 'InvalidRequest' | 'AssetNotSupported', message }] }
 //   { error: 'Quote rate limit exceeded ...' }
+// An amount outside a NYM asset's limits reports as one of the `errors` array
+// entries, carrying the boundary in native units for both sides:
+//   { errors: [{ error: 'UnderLimitError' | 'OverLimitError',
+//               sourceAmountLimit, destinationAmountLimit }] }
 const asNymErrorArray = asObject({
-  errors: asArray(asObject({ error: asString, message: asOptional(asString) }))
+  errors: asArray(
+    asObject({
+      error: asString,
+      message: asOptional(asString),
+      sourceAmountLimit: asOptional(asString),
+      destinationAmountLimit: asOptional(asString)
+    })
+  )
 })
 const asNymSimpleError = asObject({ error: asString })
 
@@ -174,6 +185,32 @@ export function makeNymPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
       // Region / geographic restriction.
       if (/region|geo|country|blocked|jurisdiction/i.test(message)) {
         throw new SwapPermissionError(swapInfo, 'geoRestriction')
+      }
+      // Amount outside the asset's limits. NYM rejects this with a 400 BEFORE it
+      // returns a quote, so it never reaches the min/max check that a successful
+      // quote runs. Map it to the ranked limit errors: otherwise it falls
+      // through to `SwapCurrencyError`, which edge-core-js ranks BELOW an
+      // unrelated plugin's "unsupported pair", so a below-minimum balance
+      // surfaces as the misleading "No enabled exchanges support X to Y" (the
+      // in-app symptom on a native-EVM wallet whose whole balance is below the
+      // minimum, e.g. a small ETH balance on a max swap). The boundary side
+      // follows the request direction: a `to` quote is limited by the
+      // destination amount, everything else by the source amount.
+      const limitError = errorArray.errors.find(
+        e => e.error === 'UnderLimitError' || e.error === 'OverLimitError'
+      )
+      if (limitError != null) {
+        const side = request.quoteFor === 'to' ? 'to' : 'from'
+        const limit =
+          side === 'to'
+            ? limitError.destinationAmountLimit
+            : limitError.sourceAmountLimit
+        if (limit != null) {
+          if (limitError.error === 'UnderLimitError') {
+            throw new SwapBelowLimitError(swapInfo, limit, side)
+          }
+          throw new SwapAboveLimitError(swapInfo, limit, side)
+        }
       }
       // Unsupported asset or pair/direction (e.g. selling NYM to a UTXO chain).
       throw new SwapCurrencyError(swapInfo, request)
@@ -303,6 +340,14 @@ export function makeNymPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
         }
       ],
       networkFeeOption: 'high',
+      // This spend is never broadcast: it exists only so `getMaxSpendable` can
+      // price the network fee before the real order (and its payin address)
+      // exists. Its target is the user's own from-chain address, which engines
+      // that compare the spend target against their own public key reject with
+      // `SpendToSelfError` (every EVM chain, where the public key *is* the
+      // address). That threw out of `getMaxSwappable` and failed every max
+      // swap from an EVM wallet. The real order below keeps all checks.
+      skipChecks: true,
       assetAction: {
         assetActionType: 'swap'
       }
