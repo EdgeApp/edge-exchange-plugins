@@ -9,9 +9,10 @@ import {
 describe(`appendMayaRefundAddress`, function () {
   const refund = 't1MnUkHpi3Ampr9ZzAtnWHFbatsVF3hEvKL'
 
-  it('appends the refund to the destination field of a Maya memo', function () {
-    const memo = '=:d:XnzErKGuqcG5Ci5oTsQv7stwCBofgChu8s:0/1/1:ej:75'
-    const result = appendMayaRefundAddress(memo, refund)
+  it('replaces the destination address with destination/refund', function () {
+    const destination = 'XnzErKGuqcG5Ci5oTsQv7stwCBofgChu8s'
+    const memo = `=:d:${destination}:0/1/1:ej:75`
+    const result = appendMayaRefundAddress(memo, destination, refund)
     assert.equal(
       result,
       '=:d:XnzErKGuqcG5Ci5oTsQv7stwCBofgChu8s/t1MnUkHpi3Ampr9ZzAtnWHFbatsVF3hEvKL:0/1/1:ej:75'
@@ -19,23 +20,22 @@ describe(`appendMayaRefundAddress`, function () {
   })
 
   it('leaves the asset and trailing fields untouched', function () {
-    const memo = '=:e:0x742d35Cc6634C0532925a3b844Bc454e4438f44e::ej:75'
-    const result = appendMayaRefundAddress(memo, refund)
+    const destination = '0x742d35Cc6634C0532925a3b844Bc454e4438f44e'
+    const memo = `=:e:${destination}::ej:75`
+    const result = appendMayaRefundAddress(memo, destination, refund)
     const fields = result.split(':')
     // index 1 (asset) and the affiliate/bps tail are unchanged; only the
     // destination field (index 2) gains the refund.
     assert.equal(fields[1], 'e')
-    assert.equal(
-      fields[2],
-      `0x742d35Cc6634C0532925a3b844Bc454e4438f44e/${refund}`
-    )
+    assert.equal(fields[2], `${destination}/${refund}`)
     assert.equal(fields[4], 'ej')
     assert.equal(fields[5], '75')
   })
 
-  it('returns a memo with no destination field unchanged', function () {
-    assert.equal(appendMayaRefundAddress('=:d', refund), '=:d')
-    assert.equal(appendMayaRefundAddress('', refund), '')
+  it('returns the memo unchanged when the destination is not present', function () {
+    const memo = '=:d:XnzErKGuqcG5Ci5oTsQv7stwCBofgChu8s:0/1/1:ej:75'
+    assert.equal(appendMayaRefundAddress(memo, 'notinmemo', refund), memo)
+    assert.equal(appendMayaRefundAddress('', 'notinmemo', refund), '')
   })
 })
 
