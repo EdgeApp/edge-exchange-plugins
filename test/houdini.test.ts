@@ -155,10 +155,19 @@ const makeFakeWallet = (
     decimals: number
     address: string
     tokens?: { [tokenId: string]: FakeToken }
+    /** Native balance, for the `max` path that sizes a quote off it. */
+    balance?: string
   },
   capture: SpendCapture
 ): EdgeCurrencyWallet => {
-  const { pluginId, currencyCode, decimals, address, tokens = {} } = params
+  const {
+    pluginId,
+    currencyCode,
+    decimals,
+    address,
+    tokens = {},
+    balance = '0'
+  } = params
   const multiplier = `1${'0'.repeat(decimals)}`
   const currencyInfo = {
     pluginId,
@@ -169,6 +178,10 @@ const makeFakeWallet = (
     id: `${pluginId}-wallet`,
     currencyInfo,
     currencyConfig: { currencyInfo, allTokens: tokens },
+    balanceMap: new Map([[null, balance]]),
+    // The whole balance is spendable; these tests care about how many calls
+    // the max path makes, not about fee arithmetic.
+    getMaxSpendable: async () => balance,
     getAddresses: async () => [
       { publicAddress: address, addressType: 'publicAddress' },
       { publicAddress: address, addressType: 'transparentAddress' }
@@ -225,6 +238,9 @@ const makeFakeSyntheticDestination = (params: {
   return (wallet as unknown) as EdgeCurrencyWallet
 }
 
+/** 1300 S, the send amount the sim drive used. */
+const SONIC_NATIVE_AMOUNT = '1300000000000000000000'
+
 describe('houdini', function () {
   // Live re-recording waits out the 1/min exchange budget:
   this.timeout(120000)
@@ -250,6 +266,7 @@ describe('houdini', function () {
   const usdcTokenId = usdcContract.slice(2)
 
   const capture: SpendCapture = {}
+
   const btcWallet = makeFakeWallet(
     {
       pluginId: 'bitcoin',
@@ -395,6 +412,11 @@ interface Script {
    */
   unservedChains?: string[]
   /**
+   * An error body the create-exchange call answers with (status 400) instead of
+   * an order, for asserting how a rejection is phrased to the user.
+   */
+  orderError?: unknown
+  /**
    * HTTP statuses handed to successive `tokens` calls, same repeat-last rule as
    * `quoteStatuses`. A non-200 is the provider failing to answer, which must
    * not be mistaken for a miss.
@@ -430,6 +452,7 @@ const makeScriptedPlugin = (script: Script): ScriptedRun => {
     quotes,
     quoteStatuses = [200],
     unservedChains = [],
+    orderError,
     tokenStatuses = [200],
     retryAfter
   } = script
@@ -500,6 +523,7 @@ const makeScriptedPlugin = (script: Script): ScriptedRun => {
 
     if (path.startsWith('exchanges')) {
       run.orderBodies.push(opts.body ?? '')
+      if (orderError != null) return reply(400, orderError)
       const { quoteId } = JSON.parse(opts.body ?? '{}')
       const used = quotes.find(quote => quote.quoteId === quoteId)
       return reply(200, {
@@ -543,7 +567,8 @@ describe('houdini offline behaviors', function () {
       pluginId: 'sonic',
       currencyCode: 'S',
       decimals: 18,
-      address: '0x1111111111111111111111111111111111111111'
+      address: '0x1111111111111111111111111111111111111111',
+      balance: SONIC_NATIVE_AMOUNT
     },
     capture
   )
@@ -585,9 +610,6 @@ describe('houdini offline behaviors', function () {
     amountIn: 1300
   }
 
-  // 1300 S, the send amount the sim drive used:
-  const sonicNativeAmount = '1300000000000000000000'
-
   const quoteSonicToStellar = async (
     run: ScriptedRun,
     overrides: Partial<EdgeSwapRequest> = {}
@@ -599,7 +621,7 @@ describe('houdini offline behaviors', function () {
       toWallet: stellarWallet,
       fromTokenId: null,
       toTokenId: null,
-      nativeAmount: sonicNativeAmount,
+      nativeAmount: SONIC_NATIVE_AMOUNT,
       quoteFor: 'from',
       ...overrides
     } as unknown) as EdgeSwapRequest
@@ -759,6 +781,42 @@ describe('houdini offline behaviors', function () {
 
     expect(afterFailure).is.greaterThan(0)
     expect(run.tokenUrls.length).is.greaterThan(afterFailure)
+  })
+
+  it('reads the field message out of a validation failure', async function () {
+    // A `VALIDATION_ERROR` sets the top-level message to a generic "Validation
+    // Failed" and puts the real reason under `fields.<name>.message`, so
+    // reading the top level alone told the user nothing they could act on.
+    const run = makeScriptedPlugin({
+      nativeAddress: '',
+      quotes: [privateQuote],
+      orderError: {
+        code: 'VALIDATION_ERROR',
+        message: 'Validation Failed',
+        fields: { quoteId: { message: 'Quote has expired' } }
+      }
+    })
+    const error = await quoteSonicToStellar(run).then(
+      () => undefined,
+      (error: unknown) => error
+    )
+
+    expect(String(error)).contains('Quote has expired')
+    expect(String(error)).does.not.contain('Validation Failed')
+  })
+
+  it('creates one exchange for a max quote, not two', async function () {
+    // `getMaxSwappable` runs the quote function once to size the spend, then
+    // the real quote runs it again. Creating an exchange on the sizing pass
+    // spends one of Houdini's one-per-minute exchange slots, so the real
+    // create is rate limited and the whole max quote stalls for the window.
+    const run = makeScriptedPlugin({
+      nativeAddress: '',
+      quotes: [privateQuote]
+    })
+    await quoteSonicToStellar(run, { quoteFor: 'max' })
+
+    expect(run.orderBodies.length).equals(1)
   })
 
   it('never retries before the window the API asked for', function () {

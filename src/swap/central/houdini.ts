@@ -148,10 +148,39 @@ const asHoudiniQuotesResponse = asObject({
   quotes: asArray(asMaybe(asHoudiniQuote))
 })
 
-/** The API's error envelope; `message` is human-readable. */
+/**
+ * The API's error envelope. `message` is human-readable, EXCEPT on a
+ * `VALIDATION_ERROR`, where it is the generic "Validation Failed" and the
+ * actionable text (an expired quote, a rejected address) sits under
+ * `fields.<name>.message`.
+ */
 const asHoudiniApiError = asMaybe(
-  asJSON(asObject({ message: asString }).withRest)
+  asJSON(
+    asObject({
+      message: asString,
+      fields: asOptional(
+        asObject(asMaybe(asObject({ message: asString }).withRest))
+      )
+    }).withRest
+  )
 )
+
+/**
+ * The most specific human-readable reason in an error body, or `undefined` if
+ * the body is not the API's error envelope at all. Field messages win over the
+ * top-level one, which is generic exactly when they are present.
+ */
+function houdiniErrorMessage(text: string): string | undefined {
+  const apiError = asHoudiniApiError(text)
+  if (apiError == null) return undefined
+
+  const fieldMessages = Object.values(apiError.fields ?? {})
+    .map(field => field?.message)
+    .filter((message): message is string => message != null && message !== '')
+  if (fieldMessages.length > 0) return fieldMessages.join('; ')
+
+  return apiError.message
+}
 
 /**
  * The 429 envelope, per Houdini's rate-limits-and-tiers doc. `retryAfter` is
@@ -368,7 +397,8 @@ export function makeHoudiniPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
   }
 
   const fetchSwapQuoteInner = async (
-    request: EdgeSwapRequestPlugin
+    request: EdgeSwapRequestPlugin,
+    probeOnly: boolean = false
   ): Promise<SwapOrder> => {
     const { fromWallet, toWallet, quoteFor, nativeAmount } = request
 
@@ -436,10 +466,10 @@ export function makeHoudiniPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
       const text = await quoteResponse.text()
       // Surface the API's own human-readable message when it carries one
       // (e.g. "Amount is too low, minimum is 25 USD") instead of raw JSON:
-      const apiError = asHoudiniApiError(text)
+      const apiMessage = houdiniErrorMessage(text)
       throw new Error(
-        apiError != null
-          ? `HoudiniSwap: ${apiError.message}`
+        apiMessage != null
+          ? `HoudiniSwap: ${apiMessage}`
           : `Houdini quotes returned ${quoteResponse.status}: ${text}`
       )
     }
@@ -601,6 +631,27 @@ export function makeHoudiniPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
     const destinationTag = toMemos.length > 0 ? toMemos[0].value : undefined
     let order: ReturnType<typeof asHoudiniOrder> | undefined
     let lastError = ''
+
+    if (probeOnly) {
+      // A `max` request runs this function twice: once for `getMaxSwappable`
+      // to learn the shape of the spend, then again for the real quote at the
+      // adjusted amount. `getMaxSwappable` reads nothing but `spendInfo`, so
+      // creating a real exchange for that probe spends one of Houdini's
+      // one-per-minute exchange slots and guarantees the follow-up create is
+      // rate limited, stalling every max quote for the retry window. Stand in
+      // the user's own refund address, which is on the from chain exactly as
+      // the deposit address would be, so fee estimation sees the same shape.
+      const best = inRangeQuotes[0]
+      return makeHoudiniSwapOrder({
+        houdiniId: '',
+        depositAddress: fromAddress,
+        depositTag: undefined,
+        expires: undefined,
+        inAmount: best.amountIn ?? 0,
+        outAmount: best.amountOut
+      })
+    }
+
     for (const candidate of inRangeQuotes.slice(0, 3)) {
       const orderBody = {
         addressTo: toAddress,
@@ -617,10 +668,10 @@ export function makeHoudiniPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
         break
       }
       const text = await orderResponse.text()
-      const apiError = asHoudiniApiError(text)
+      const apiMessage = houdiniErrorMessage(text)
       lastError =
-        apiError != null
-          ? `HoudiniSwap: ${apiError.message}`
+        apiMessage != null
+          ? `HoudiniSwap: ${apiMessage}`
           : `Houdini exchange returned ${orderResponse.status}: ${text}`
       if (
         orderResponse.status !== 409 ||
@@ -632,73 +683,78 @@ export function makeHoudiniPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
     if (order == null) {
       throw new Error(lastError)
     }
+    return makeHoudiniSwapOrder(order)
 
-    const fromNativeAmount = floatToNativeAmount(
-      fromWallet,
-      order.inAmount,
-      request.fromTokenId
-    )
-    const toNativeAmount = floatToNativeAmount(
-      toWallet,
-      order.outAmount,
-      request.toTokenId
-    )
+    function makeHoudiniSwapOrder(
+      order: ReturnType<typeof asHoudiniOrder>
+    ): SwapOrder {
+      const fromNativeAmount = floatToNativeAmount(
+        fromWallet,
+        order.inAmount,
+        request.fromTokenId
+      )
+      const toNativeAmount = floatToNativeAmount(
+        toWallet,
+        order.outAmount,
+        request.toTokenId
+      )
 
-    const memos: EdgeMemo[] =
-      order.depositTag == null
-        ? []
-        : [
-            {
-              type: memoType(fromWallet.currencyInfo.pluginId),
-              value: order.depositTag
-            }
-          ]
+      const memos: EdgeMemo[] =
+        order.depositTag == null
+          ? []
+          : [
+              {
+                type: memoType(fromWallet.currencyInfo.pluginId),
+                value: order.depositTag
+              }
+            ]
 
-    const spendInfo: EdgeSpendInfo = {
-      tokenId: request.fromTokenId,
-      spendTargets: [
-        {
-          nativeAmount: fromNativeAmount,
-          publicAddress: order.depositAddress
+      const spendInfo: EdgeSpendInfo = {
+        tokenId: request.fromTokenId,
+        spendTargets: [
+          {
+            nativeAmount: fromNativeAmount,
+            publicAddress: order.depositAddress
+          }
+        ],
+        memos,
+        networkFeeOption: 'high',
+        assetAction: {
+          assetActionType: 'swap'
+        },
+        savedAction: {
+          actionType: 'swap',
+          swapInfo,
+          orderId: order.houdiniId,
+          orderUri: orderUri + order.houdiniId,
+          // Only the exact-out path asks for `fixed=true`, and Houdini serves
+          // fixed rates on that path alone: a forward quote floats, private or
+          // standard. Reporting every quote as fixed showed users a locked
+          // receive amount for a leg whose rate can still move.
+          isEstimate: !reverseQuote,
+          toAsset: {
+            pluginId: toWallet.currencyInfo.pluginId,
+            tokenId: request.toTokenId,
+            nativeAmount: toNativeAmount
+          },
+          fromAsset: {
+            pluginId: fromWallet.currencyInfo.pluginId,
+            tokenId: request.fromTokenId,
+            nativeAmount: fromNativeAmount
+          },
+          payoutAddress: toAddress,
+          payoutWalletId: toWallet.id,
+          refundAddress: fromAddress
         }
-      ],
-      memos,
-      networkFeeOption: 'high',
-      assetAction: {
-        assetActionType: 'swap'
-      },
-      savedAction: {
-        actionType: 'swap',
-        swapInfo,
-        orderId: order.houdiniId,
-        orderUri: orderUri + order.houdiniId,
-        // Only the exact-out path asks for `fixed=true`, and Houdini serves
-        // fixed rates on that path alone: a forward quote floats, private or
-        // standard. Reporting every quote as fixed showed users a locked
-        // receive amount for a leg whose rate can still move.
-        isEstimate: !reverseQuote,
-        toAsset: {
-          pluginId: toWallet.currencyInfo.pluginId,
-          tokenId: request.toTokenId,
-          nativeAmount: toNativeAmount
-        },
-        fromAsset: {
-          pluginId: fromWallet.currencyInfo.pluginId,
-          tokenId: request.fromTokenId,
-          nativeAmount: fromNativeAmount
-        },
-        payoutAddress: toAddress,
-        payoutWalletId: toWallet.id,
-        refundAddress: fromAddress
       }
-    }
 
-    return {
-      request,
-      spendInfo,
-      swapInfo,
-      fromNativeAmount,
-      expirationDate: ensureInFuture(order.expires)
+      return {
+        request,
+        spendInfo,
+        swapInfo,
+        fromNativeAmount,
+        expirationDate: ensureInFuture(order.expires)
+      }
     }
   }
 
@@ -720,7 +776,13 @@ export function makeHoudiniPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
         swapInfo
       )
 
-      const newRequest = await getMaxSwappable(fetchSwapQuoteInner, request)
+      // The probe flag rides the extra argument `getMaxSwappable` forwards, so
+      // only the max-sizing pass skips creating an exchange.
+      const newRequest = await getMaxSwappable(
+        fetchSwapQuoteInner,
+        request,
+        true
+      )
       const swapOrder = await fetchSwapQuoteInner(newRequest)
       return await makeSwapPluginQuote(swapOrder)
     }
