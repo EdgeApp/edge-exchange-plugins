@@ -28,7 +28,10 @@ import fs from 'fs'
 import { describe, it } from 'mocha'
 import path from 'path'
 
-import { makeHoudiniPlugin } from '../src/swap/central/houdini'
+import {
+  makeHoudiniPlugin,
+  rateLimitDelayMs
+} from '../src/swap/central/houdini'
 import { asTestConfig } from './testconfig'
 
 const config = makeConfig(asTestConfig, './testconfig.json')
@@ -756,6 +759,19 @@ describe('houdini offline behaviors', function () {
 
     expect(afterFailure).is.greaterThan(0)
     expect(run.tokenUrls.length).is.greaterThan(afterFailure)
+  })
+
+  it('never retries before the window the API asked for', function () {
+    // Houdini's 1-per-minute exchange budget reports `retryAfter` near 60. The
+    // 30s cap on our own doubling used to truncate that, so the retry fired
+    // while still inside the window, drew another 429, and spent the retries
+    // for nothing.
+    expect(rateLimitDelayMs(0, 60)).is.at.least(60000)
+    expect(rateLimitDelayMs(2, 60)).is.at.least(60000)
+
+    // Without a reported window the cap still bounds our own growth.
+    expect(rateLimitDelayMs(0, undefined)).equals(1000)
+    expect(rateLimitDelayMs(9, undefined)).equals(30000)
   })
 
   it('asks once when both legs of a quote want the same token', async function () {

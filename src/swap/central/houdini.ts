@@ -176,6 +176,27 @@ const RATE_LIMIT_MAX_RETRIES = 3
 const RATE_LIMIT_MIN_DELAY_MS = 1000
 const RATE_LIMIT_MAX_DELAY_MS = 30000
 
+/**
+ * How long to wait before retrying a 429, given the attempt number and the
+ * `retryAfter` seconds the API reported (if any).
+ *
+ * `RATE_LIMIT_MAX_DELAY_MS` bounds OUR OWN doubling; it is not a ceiling on
+ * the window the provider asked for. Houdini's 1-per-minute exchange budget
+ * reports `retryAfter` near 60, so capping that at 30s retried while still
+ * inside the window, drew another 429, and spent the retries for nothing.
+ */
+export function rateLimitDelayMs(
+  attempt: number,
+  retryAfterSec: number | undefined
+): number {
+  // `retryAfter` is the floor the API asked for; the doubling on top of it
+  // keeps a burst from re-colliding at the moment the window reopens.
+  const apiFloorMs = retryAfterSec == null ? 0 : retryAfterSec * 1000
+  const baseMs = Math.max(apiFloorMs, RATE_LIMIT_MIN_DELAY_MS)
+  const backoffMs = Math.min(baseMs * 2 ** attempt, RATE_LIMIT_MAX_DELAY_MS)
+  return Math.max(backoffMs, apiFloorMs)
+}
+
 const asHoudiniOrder = asObject({
   houdiniId: asString,
   depositAddress: asString,
@@ -265,16 +286,7 @@ export function makeHoudiniPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
         )
       }
 
-      // `retryAfter` is the floor the API asked for; the doubling on top of it
-      // keeps a burst from re-colliding at the moment the window reopens.
-      const baseMs =
-        rateLimit?.retryAfter == null
-          ? RATE_LIMIT_MIN_DELAY_MS
-          : rateLimit.retryAfter * 1000
-      const delayMs = Math.min(
-        Math.max(baseMs, RATE_LIMIT_MIN_DELAY_MS) * 2 ** attempt,
-        RATE_LIMIT_MAX_DELAY_MS
-      )
+      const delayMs = rateLimitDelayMs(attempt, rateLimit?.retryAfter)
       log.warn(
         `Houdini rate limited (${
           rateLimit?.limit ?? '?'
