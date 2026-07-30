@@ -311,12 +311,14 @@ export function makeHoudiniPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
         : `tokens?chain=${chain}&mainnet=true&pageSize=100`
     const response = await fetchHoudini(query)
     if (!response.ok) {
-      // Deliberately NOT cached. A rate limit or a server error says nothing
-      // about whether the chain is served, and caching it would turn one bad
-      // minute into a chain that stays dead for the rest of the session.
+      // Nothing is cached, and nothing is RETURNED either. Returning a miss
+      // here would be indistinguishable from the provider answering "no such
+      // token", so a bad minute at the API would read to the user as a pair
+      // Houdini cannot route. Throwing names the real cause, the same way the
+      // quote path surfaces its own failures.
       const text = await response.text()
       log.warn('Houdini tokens lookup error:', text)
-      return undefined
+      throw new Error(`Houdini tokens returned ${response.status}: ${text}`)
     }
     const { tokens } = asHoudiniTokensResponse(await response.json())
 

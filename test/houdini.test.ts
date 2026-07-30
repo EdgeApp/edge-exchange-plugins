@@ -758,6 +758,25 @@ describe('houdini offline behaviors', function () {
     expect(run.tokenUrls.length).is.greaterThan(afterFailure)
   })
 
+  it('blames the provider when a lookup fails, not the pair', async function () {
+    // Returning a miss on a failed lookup would be indistinguishable from the
+    // provider answering "no such token", so a bad minute at the API would
+    // reach the user as a pair Houdini cannot route.
+    const run = makeScriptedPlugin({
+      nativeAddress: '',
+      quotes: [privateQuote],
+      tokenStatuses: [503]
+    })
+    const error = await quoteSonicToStellar(run).then(
+      () => undefined,
+      (error: unknown) => error
+    )
+
+    expect(error == null).equals(false)
+    expect(String(error)).does.not.contain('SwapCurrencyError')
+    expect(String(error)).contains('503')
+  })
+
   it('reports a floating rate on a forward quote and a fixed one on a reverse quote', async function () {
     // Houdini prices exact-out on fixed-rate quotes alone. A forward quote
     // floats whether the route is private or standard, so labelling every
