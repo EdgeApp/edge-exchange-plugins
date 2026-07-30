@@ -758,6 +758,23 @@ describe('houdini offline behaviors', function () {
     expect(run.tokenUrls.length).is.greaterThan(afterFailure)
   })
 
+  it('asks once when both legs of a quote want the same token', async function () {
+    // A quote resolves both legs with `Promise.all`, so a same-asset quote asks
+    // the same question twice at once. Caching only on completion let both
+    // miss and spend two calls against a rate-limited API on one answer.
+    const run = makeScriptedPlugin({
+      nativeAddress: '',
+      quotes: [privateQuote]
+    })
+    const swallow = (): void => {}
+    await quoteSonicToStellar(run, {
+      toWallet: sonicWallet
+    }).catch(swallow)
+
+    const sonicLookups = run.tokenUrls.filter(url => url.includes('sonic'))
+    expect(sonicLookups.length).equals(1)
+  })
+
   it('blames the provider when a lookup fails, not the pair', async function () {
     // Returning a miss on a failed lookup would be indistinguishable from the
     // provider answering "no such token", so a bad minute at the API would

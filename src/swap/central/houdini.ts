@@ -294,8 +294,10 @@ export function makeHoudiniPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
    * rate-limited call on every quote. This is the whole mechanism by which an
    * unserved chain declines cheaply, so the chain table never has to assert
    * which chains are served.
+   *
+   * Entries are the in-flight promises, so concurrent askers share one call.
    */
-  const tokenIdCache = new Map<string, string | undefined>()
+  const tokenIdCache = new Map<string, Promise<string | undefined>>()
 
   async function resolveTokenId(
     chain: string,
@@ -303,8 +305,26 @@ export function makeHoudiniPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
   ): Promise<string | undefined> {
     const addressKey = contractAddress?.toLowerCase() ?? 'native'
     const cacheKey = `${chain}:${addressKey}`
-    if (tokenIdCache.has(cacheKey)) return tokenIdCache.get(cacheKey)
+    const cached = tokenIdCache.get(cacheKey)
+    if (cached != null) return await cached
 
+    // The IN-FLIGHT promise is what gets cached, not its result. A quote
+    // resolves both legs with `Promise.all`, so a same-asset quote asks the
+    // same question twice at once; caching only on completion lets both miss
+    // and spend two calls on one answer.
+    const lookup = fetchTokenId(chain, contractAddress, addressKey)
+    tokenIdCache.set(cacheKey, lookup)
+    // A rejected lookup must not stick, for the same reason a failure is not a
+    // decline: the provider never answered.
+    lookup.catch(() => tokenIdCache.delete(cacheKey))
+    return await lookup
+  }
+
+  async function fetchTokenId(
+    chain: string,
+    contractAddress: string | undefined,
+    addressKey: string
+  ): Promise<string | undefined> {
     const query =
       contractAddress != null
         ? `tokens?chain=${chain}&address=${contractAddress}&pageSize=100`
@@ -332,7 +352,6 @@ export function makeHoudiniPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
       return token.address?.toLowerCase() === addressKey
     })
 
-    tokenIdCache.set(cacheKey, match?.id)
     return match?.id
   }
 
