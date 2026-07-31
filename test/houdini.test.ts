@@ -30,6 +30,7 @@ import path from 'path'
 
 import {
   makeHoudiniPlugin,
+  quoteValidUntilMs,
   rateLimitDelayMs
 } from '../src/swap/central/houdini'
 import { asTestConfig } from './testconfig'
@@ -802,6 +803,22 @@ describe('houdini offline behaviors', function () {
     expect(run.tokenUrls.length).is.greaterThan(afterFailure)
   })
 
+  it('reads the quote expiry the API actually sends', function () {
+    // Live fixtures record `validUntil` as Unix SECONDS in a string
+    // ("1783037880"), which `new Date` reads as an invalid date. Parsing it
+    // that way silently fell back to a fresh 60s window on every quote, so
+    // the expiry guard could never fire.
+    const at = 1783037880
+    const quote = ({ validUntil: String(at) } as unknown) as Parameters<
+      typeof quoteValidUntilMs
+    >[0]
+    expect(quoteValidUntilMs(quote)).equals(at * 1000)
+
+    // An absent expiry still falls back to the documented lifetime:
+    const noExpiry = ({} as unknown) as Parameters<typeof quoteValidUntilMs>[0]
+    expect(quoteValidUntilMs(noExpiry)).is.greaterThan(Date.now())
+  })
+
   it('does not wait out a window that outlives the quote', async function () {
     // Houdini's one-per-minute exchange budget reports `retryAfter` near 60,
     // and a quote id lives about that long. Waiting the full window and then
@@ -813,7 +830,8 @@ describe('houdini offline behaviors', function () {
       quotes: [
         {
           ...privateQuote,
-          validUntil: new Date(start + 20000).toISOString()
+          // Unix seconds in a string, exactly as the API reports it:
+          validUntil: String(Math.floor((start + 20000) / 1000))
         }
       ],
       orderStatuses: [429],

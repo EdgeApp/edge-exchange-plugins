@@ -232,10 +232,17 @@ export function rateLimitDelayMs(
  */
 const QUOTE_LIFETIME_MS = 60000
 
-function quoteValidUntilMs(quote: HoudiniQuote): number {
-  const parsed =
-    quote.validUntil == null ? NaN : new Date(quote.validUntil).valueOf()
-  if (!isNaN(parsed)) return parsed
+export function quoteValidUntilMs(quote: HoudiniQuote): number {
+  const { validUntil } = quote
+  if (validUntil != null) {
+    // The API reports this as Unix SECONDS inside a string ("1783037880"),
+    // which `new Date` reads as an invalid date rather than as a timestamp.
+    const seconds = Number(validUntil)
+    if (isFinite(seconds) && seconds > 0) return seconds * 1000
+
+    const parsed = new Date(validUntil).valueOf()
+    if (!isNaN(parsed)) return parsed
+  }
   return Date.now() + QUOTE_LIFETIME_MS
 }
 
