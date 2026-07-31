@@ -8,6 +8,7 @@ import { makeChangeNowPlugin } from './swap/central/changenow'
 import { makeExolixPlugin } from './swap/central/exolix'
 import { makeGodexPlugin } from './swap/central/godex'
 import { makeLetsExchangePlugin } from './swap/central/letsexchange'
+import { makeMpTradePlugin } from './swap/central/mptrade'
 import { makeNexchangePlugin } from './swap/central/nexchange'
 import { makeNymPlugin } from './swap/central/nym'
 import { makeSideshiftPlugin } from './swap/central/sideshift'
@@ -47,6 +48,7 @@ const plugins = {
   rango: makeRangoPlugin,
   sideshift: makeSideshiftPlugin,
   spookySwap: makeSpookySwapPlugin,
+  mptrade: makeMpTradePlugin,
   swapter: makeSwapterPlugin,
   swapuz: makeSwapuzPlugin,
   mayaprotocol: makeMayaProtocolPlugin,
