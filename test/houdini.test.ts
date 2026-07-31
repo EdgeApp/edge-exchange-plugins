@@ -389,6 +389,8 @@ interface ScriptedQuote {
   max?: number
   minOut?: number
   maxOut?: number
+  /** ISO timestamp the quote id stops being accepted. */
+  validUntil?: string
 }
 
 interface Script {
@@ -416,6 +418,11 @@ interface Script {
    * an order, for asserting how a rejection is phrased to the user.
    */
   orderError?: unknown
+  /**
+   * HTTP statuses handed to successive `exchanges` calls, same repeat-last rule
+   * as `quoteStatuses`. A 429 answers with the rate-limit envelope.
+   */
+  orderStatuses?: number[]
   /**
    * HTTP statuses handed to successive `tokens` calls, same repeat-last rule as
    * `quoteStatuses`. A non-200 is the provider failing to answer, which must
@@ -453,6 +460,7 @@ const makeScriptedPlugin = (script: Script): ScriptedRun => {
     quoteStatuses = [200],
     unservedChains = [],
     orderError,
+    orderStatuses = [200],
     tokenStatuses = [200],
     retryAfter
   } = script
@@ -465,6 +473,7 @@ const makeScriptedPlugin = (script: Script): ScriptedRun => {
   }
   let quoteCall = 0
   let tokenCall = 0
+  let orderCall = 0
 
   const reply = (status: number, body: unknown): FetchResponseLike => {
     const text = JSON.stringify(body)
@@ -523,6 +532,16 @@ const makeScriptedPlugin = (script: Script): ScriptedRun => {
 
     if (path.startsWith('exchanges')) {
       run.orderBodies.push(opts.body ?? '')
+      const orderStatus =
+        orderStatuses[Math.min(orderCall++, orderStatuses.length - 1)]
+      if (orderStatus === 429) {
+        return reply(429, {
+          type: 'RATE_LIMIT_EXCEEDED',
+          limit: 1,
+          windowMs: 60000,
+          ...(retryAfter == null ? {} : { retryAfter })
+        })
+      }
       if (orderError != null) return reply(400, orderError)
       const { quoteId } = JSON.parse(opts.body ?? '{}')
       const used = quotes.find(quote => quote.quoteId === quoteId)
@@ -781,6 +800,35 @@ describe('houdini offline behaviors', function () {
 
     expect(afterFailure).is.greaterThan(0)
     expect(run.tokenUrls.length).is.greaterThan(afterFailure)
+  })
+
+  it('does not wait out a window that outlives the quote', async function () {
+    // Houdini's one-per-minute exchange budget reports `retryAfter` near 60,
+    // and a quote id lives about that long. Waiting the full window and then
+    // POSTing the same quote id hangs the user for a minute only to fail as an
+    // expired quote, so the rate limit is reported straight away instead.
+    const start = Date.now()
+    const run = makeScriptedPlugin({
+      nativeAddress: '',
+      quotes: [
+        {
+          ...privateQuote,
+          validUntil: new Date(start + 20000).toISOString()
+        }
+      ],
+      orderStatuses: [429],
+      retryAfter: 60
+    })
+    const error = await quoteSonicToStellar(run).then(
+      () => undefined,
+      (error: unknown) => error
+    )
+
+    expect(String(error)).contains('rate limit')
+    // It failed rather than sleeping out the window:
+    expect(Date.now() - start).is.lessThan(5000)
+    // And it did not burn the remaining candidates on the same dead window:
+    expect(run.orderBodies.length).equals(1)
   })
 
   it('reads the field message out of a validation failure', async function () {

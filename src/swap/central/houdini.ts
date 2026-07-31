@@ -226,6 +226,19 @@ export function rateLimitDelayMs(
   return Math.max(backoffMs, apiFloorMs)
 }
 
+/**
+ * Houdini quotes live about a minute. `validUntil` is the API's own word on it
+ * when present; the constant is the documented default for when it is not.
+ */
+const QUOTE_LIFETIME_MS = 60000
+
+function quoteValidUntilMs(quote: HoudiniQuote): number {
+  const parsed =
+    quote.validUntil == null ? NaN : new Date(quote.validUntil).valueOf()
+  if (!isNaN(parsed)) return parsed
+  return Date.now() + QUOTE_LIFETIME_MS
+}
+
 const asHoudiniOrder = asObject({
   houdiniId: asString,
   depositAddress: asString,
@@ -294,10 +307,17 @@ export function makeHoudiniPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
    * window the API reports, and turns an exhausted retry budget into an error
    * that names the rate limit. Any other status is handed back untouched for
    * the caller to interpret.
+   *
+   * `validUntilMs` is the moment the thing being sent goes stale (a quote id
+   * expires about 60s after it is issued). Waiting out a window that outlives
+   * it retries something the API will reject anyway, so the call fails as a
+   * rate limit right away rather than hanging the user for the full window and
+   * then reporting an expired quote.
    */
   async function fetchHoudini(
     path: string,
-    init: { method?: string; body?: string } = {}
+    init: { method?: string; body?: string } = {},
+    validUntilMs?: number
   ): Promise<EdgeFetchResponse> {
     for (let attempt = 0; ; ++attempt) {
       const response = await fetchCors(uri + path, {
@@ -316,6 +336,14 @@ export function makeHoudiniPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
       }
 
       const delayMs = rateLimitDelayMs(attempt, rateLimit?.retryAfter)
+      if (validUntilMs != null && Date.now() + delayMs >= validUntilMs) {
+        log.warn(
+          `Houdini rate limited for ${delayMs}ms, longer than this quote lives`
+        )
+        throw new Error(
+          'HoudiniSwap: rate limit exceeded, please try again shortly'
+        )
+      }
       log.warn(
         `Houdini rate limited (${
           rateLimit?.limit ?? '?'
@@ -659,10 +687,11 @@ export function makeHoudiniPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
         refundAddress: fromAddress,
         ...(destinationTag == null ? {} : { destinationTag })
       }
-      const orderResponse = await fetchHoudini('exchanges', {
-        method: 'POST',
-        body: JSON.stringify(orderBody)
-      })
+      const orderResponse = await fetchHoudini(
+        'exchanges',
+        { method: 'POST', body: JSON.stringify(orderBody) },
+        quoteValidUntilMs(candidate)
+      )
       if (orderResponse.ok) {
         order = asHoudiniOrder(await orderResponse.json())
         break
