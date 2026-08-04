@@ -267,6 +267,46 @@ describe('makeSimpleSwapPlugin.fetchSwapQuote', function () {
     assert.equal(capturedSpendInfo.savedAction.isEstimate, true)
   })
 
+  it('falls back to floating when the amount is below the fixed-rate minimum', async function () {
+    const handler: FetchHandler = url => {
+      if (routeOf(url) === 'ranges' && url.includes('fixed=true')) {
+        // Fixed-rate minimum above the requested 0.1 BTC
+        return { status: 200, body: { result: { min: '5', max: '10' } } }
+      }
+      if (routeOf(url) === 'estimates') {
+        return { status: 200, body: { result: { estimatedAmount: '0.05' } } }
+      }
+      return { status: 200, body: okReplies[routeOf(url)] }
+    }
+    const plugin = makeSimpleSwapPlugin(makeOpts(handler))
+    const quote = await plugin.fetchSwapQuote(fromRequest(), undefined, {
+      infoPayload: {}
+    } as any)
+
+    assert.equal(quote.isEstimate, true) // served by the floating flow
+  })
+
+  it('surfaces the fixed-rate limit error when floating lacks the pair', async function () {
+    const handler: FetchHandler = url => {
+      if (routeOf(url) === 'ranges') {
+        if (url.includes('fixed=true')) {
+          return { status: 200, body: { result: { min: '5', max: '10' } } }
+        }
+        return { status: 404, body: {} }
+      }
+      return { status: 200, body: okReplies[routeOf(url)] }
+    }
+    const plugin = makeSimpleSwapPlugin(makeOpts(handler))
+    try {
+      await plugin.fetchSwapQuote(fromRequest(), undefined, {
+        infoPayload: {}
+      } as any)
+      assert.fail('expected a limit error')
+    } catch (error: unknown) {
+      assert.equal((error as Error).name, 'SwapBelowLimitError')
+    }
+  })
+
   it('maps a 403 to SwapPermissionError (unverified key)', async function () {
     const handler: FetchHandler = () => ({ status: 403, body: {} })
     const plugin = makeSimpleSwapPlugin(makeOpts(handler))
