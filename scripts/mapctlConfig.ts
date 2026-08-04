@@ -8,6 +8,7 @@ const asMapctlConfig = asObject({
   EXOLIX_API_KEY: asOptional(asString, ''),
   LETSEXCHANGE_API_KEY: asOptional(asString, ''),
   RANGO_API_KEY: asOptional(asString, ''),
+  SIMPLESWAP_API_KEY: asOptional(asString, ''),
   SWAPUZ_API_KEY: asOptional(asString, ''),
   SWAPKIT_API_KEY: asOptional(asString, ''),
   XGRAM_API_KEY: asOptional(asString, '')
