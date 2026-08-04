@@ -21,6 +21,7 @@ import {
   checkWhitelistedMainnetCodes,
   CurrencyCodeTranscriptionMap,
   CurrencyPluginIdSwapChainCodeMap,
+  ensureInFuture,
   getCodesWithTranscription,
   getMaxSwappable,
   InvalidTokenIds,
@@ -309,7 +310,7 @@ export function makeSimpleSwapPlugin(
 
     const expirationDate =
       estimate.validUntil != null
-        ? new Date(estimate.validUntil)
+        ? ensureInFuture(new Date(estimate.validUntil))
         : new Date(Date.now() + expirationMs)
 
     return {

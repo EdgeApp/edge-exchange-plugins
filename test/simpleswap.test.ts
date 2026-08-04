@@ -267,6 +267,34 @@ describe('makeSimpleSwapPlugin.fetchSwapQuote', function () {
     assert.equal(capturedSpendInfo.savedAction.isEstimate, true)
   })
 
+  it('clamps a stale validUntil into the future', async function () {
+    const handler: FetchHandler = url => {
+      if (routeOf(url) === 'estimates') {
+        return {
+          status: 200,
+          body: {
+            result: {
+              estimatedAmount: '0.05',
+              rateId: 'rate-1',
+              validUntil: '2020-01-01T00:00:00.000Z' // already expired
+            }
+          }
+        }
+      }
+      return { status: 200, body: okReplies[routeOf(url)] }
+    }
+    const plugin = makeSimpleSwapPlugin(makeOpts(handler))
+    const quote = await plugin.fetchSwapQuote(fromRequest(), undefined, {
+      infoPayload: {}
+    } as any)
+
+    assert.isDefined(quote.expirationDate)
+    assert.isAtLeast(
+      quote.expirationDate?.valueOf() ?? 0,
+      Date.now() + 25 * 1000
+    )
+  })
+
   it('falls back to floating when the amount is below the fixed-rate minimum', async function () {
     const handler: FetchHandler = url => {
       if (routeOf(url) === 'ranges' && url.includes('fixed=true')) {
