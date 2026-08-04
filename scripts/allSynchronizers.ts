@@ -16,6 +16,7 @@ import { makeLifiSynchronizer } from './synchronizers/lifi/lifiSynchronizer'
 import { makeMayaProtocolSynchronizer } from './synchronizers/mayaprotocol/mayaprotocolSynchronizer'
 import { makeRangoSynchronizer } from './synchronizers/rango/rangoSynchronizer'
 import { makeSideShiftSynchronizer } from './synchronizers/sideshift/sideshiftSynchronizer'
+import { makeSimpleSwapSynchronizer } from './synchronizers/simpleswap/simpleswapSynchronizer'
 import { makeSwapKitSynchronizer } from './synchronizers/swapkit/swapkitSynchronizer'
 import { makeSwapuzSynchronizer } from './synchronizers/swapuz/swapuzSynchronizer'
 import { makeThorchainSynchronizer } from './synchronizers/thorchain/thorchainSynchronizer'
@@ -32,6 +33,7 @@ export const synchronizers: SwapSynchronizer[] = [
   makeMayaProtocolSynchronizer(config),
   makeRangoSynchronizer(config),
   makeSideShiftSynchronizer(config),
+  makeSimpleSwapSynchronizer(config),
   makeSwapKitSynchronizer(config),
   makeSwapuzSynchronizer(config),
   makeThorchainSynchronizer(config),

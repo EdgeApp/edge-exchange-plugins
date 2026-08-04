@@ -1,0 +1,397 @@
+import { gt, lt } from 'biggystring'
+import { asEither, asNull, asObject, asOptional, asString } from 'cleaners'
+import {
+  EdgeCorePluginOptions,
+  EdgeFetchResponse,
+  EdgeMemo,
+  EdgeSpendInfo,
+  EdgeSwapInfo,
+  EdgeSwapPlugin,
+  EdgeSwapQuote,
+  EdgeSwapRequest,
+  SwapAboveLimitError,
+  SwapBelowLimitError,
+  SwapCurrencyError,
+  SwapPermissionError
+} from 'edge-core-js/types'
+
+import { simpleswap as simpleswapMapping } from '../../mappings/simpleswap'
+import {
+  checkInvalidTokenIds,
+  checkWhitelistedMainnetCodes,
+  CurrencyCodeTranscriptionMap,
+  CurrencyPluginIdSwapChainCodeMap,
+  getCodesWithTranscription,
+  getMaxSwappable,
+  InvalidTokenIds,
+  makeSwapPluginQuote,
+  mapToRecord,
+  SwapOrder
+} from '../../util/swapHelpers'
+import {
+  convertRequest,
+  denominationToNative,
+  getAddress,
+  memoType,
+  nativeToDenomination
+} from '../../util/utils'
+import { asNumberString, EdgeSwapRequestPlugin, StringMap } from '../types'
+
+const pluginId = 'simpleswap'
+
+const swapInfo: EdgeSwapInfo = {
+  pluginId,
+  isDex: false,
+  displayName: 'SimpleSwap',
+  supportEmail: 'support@simpleswap.io'
+}
+
+const asInitOptions = asObject({
+  apiKey: asString
+})
+
+const orderUri = 'https://simpleswap.io/exchange?id='
+const uri = 'https://api.simpleswap.io/v3/'
+
+const expirationMs = 1000 * 60
+
+const INVALID_TOKEN_IDS: InvalidTokenIds = { from: {}, to: {} }
+
+const addressTypeMap: StringMap = {
+  digibyte: 'publicAddress',
+  zcash: 'transparentAddress'
+}
+
+const MAINNET_CODE_TRANSCRIPTION: CurrencyPluginIdSwapChainCodeMap = mapToRecord(
+  simpleswapMapping
+)
+
+// Edge native currencyCode -> SimpleSwap ticker, where they differ
+// (verified against the live GET /v3/currencies list)
+const CURRENCY_CODE_TRANSCRIPTION: CurrencyCodeTranscriptionMap = {
+  avalanche: { AVAX: 'avaxc' },
+  binancesmartchain: { BNB: 'bnb-bsc' },
+  monad: { MON: 'monad' },
+  smartcash: { SMART: 'smart0' },
+  telos: { TLOS: 'tlosmain' },
+  wax: { WAX: 'waxp' }
+}
+
+const asRange = asObject({
+  min: asNumberString,
+  max: asEither(asNumberString, asNull)
+})
+const asEstimate = asObject({
+  estimatedAmount: asNumberString,
+  rateId: asOptional(asString),
+  validUntil: asOptional(asString)
+})
+const asCreatedExchange = asObject({
+  id: asString,
+  addressFrom: asString,
+  extraIdFrom: asOptional(asString),
+  amountFrom: asNumberString,
+  amountTo: asNumberString
+})
+const asRangeReply = asObject({ result: asRange })
+const asEstimateReply = asObject({ result: asEstimate })
+const asCreatedExchangeReply = asObject({ result: asCreatedExchange })
+
+export function makeSimpleSwapPlugin(
+  opts: EdgeCorePluginOptions
+): EdgeSwapPlugin {
+  const { io, log } = opts
+  const { fetchCors = io.fetch } = io
+  const { apiKey } = asInitOptions(opts.initOptions)
+  if (apiKey === '') {
+    throw new Error('SimpleSwap: missing apiKey in initOptions')
+  }
+
+  const headers = {
+    Accept: 'application/json',
+    'Content-Type': 'application/json',
+    'x-api-key': apiKey
+  }
+
+  const resolveNetworks = (
+    request: EdgeSwapRequestPlugin
+  ): { fromNetwork: string; toNetwork: string } => {
+    const fromNetwork =
+      MAINNET_CODE_TRANSCRIPTION[
+        request.fromWallet.currencyInfo
+          .pluginId as keyof CurrencyPluginIdSwapChainCodeMap
+      ]
+    const toNetwork =
+      MAINNET_CODE_TRANSCRIPTION[
+        request.toWallet.currencyInfo
+          .pluginId as keyof CurrencyPluginIdSwapChainCodeMap
+      ]
+    if (fromNetwork == null || toNetwork == null) {
+      throw new SwapCurrencyError(swapInfo, request)
+    }
+    return { fromNetwork, toNetwork }
+  }
+
+  const getQuoteForFlow = async (
+    request: EdgeSwapRequestPlugin,
+    fixed: boolean
+  ): Promise<SwapOrder> => {
+    const { fromWallet, toWallet, quoteFor } = request
+    const reverse = quoteFor === 'to'
+
+    const call = async (
+      method: 'GET' | 'POST',
+      route: string,
+      params: { query?: StringMap; body?: unknown }
+    ): Promise<unknown> => {
+      let response: EdgeFetchResponse
+      if (method === 'POST') {
+        response = await fetchCors(uri + route, {
+          method,
+          headers,
+          body: JSON.stringify(params.body)
+        })
+      } else {
+        const query = new URLSearchParams(params.query).toString()
+        response = await fetchCors(`${uri}${route}?${query}`, {
+          method,
+          headers
+        })
+      }
+
+      if (!response.ok) {
+        const text = await response.text()
+        log.warn(`SimpleSwap ${route} error ${response.status}: ${text}`)
+        switch (response.status) {
+          case 403:
+            throw new SwapPermissionError(swapInfo, 'noVerification')
+          // 422 = out of range, but limits are enforced by the /ranges check
+          // before estimate/create, so treat it as an unavailable pair here
+          case 404:
+          case 422:
+            throw new SwapCurrencyError(swapInfo, request)
+          default:
+            throw new Error(`SimpleSwap returned error code ${response.status}`)
+        }
+      }
+      return await response.json()
+    }
+
+    const { fromNetwork, toNetwork } = resolveNetworks(request)
+
+    const { fromCurrencyCode, toCurrencyCode } = getCodesWithTranscription(
+      request,
+      MAINNET_CODE_TRANSCRIPTION,
+      CURRENCY_CODE_TRANSCRIPTION
+    )
+
+    const [fromAddress, toAddress] = await Promise.all([
+      getAddress(fromWallet, addressTypeMap[fromWallet.currencyInfo.pluginId]),
+      getAddress(toWallet, addressTypeMap[toWallet.currencyInfo.pluginId])
+    ])
+
+    const amountWallet = reverse ? toWallet : fromWallet
+    const amountTokenId = reverse ? request.toTokenId : request.fromTokenId
+    const amount = nativeToDenomination(
+      amountWallet,
+      request.nativeAmount,
+      amountTokenId
+    )
+
+    const pairQuery: StringMap = {
+      tickerFrom: fromCurrencyCode.toLowerCase(),
+      networkFrom: fromNetwork,
+      tickerTo: toCurrencyCode.toLowerCase(),
+      networkTo: toNetwork,
+      fixed: String(fixed),
+      reverse: String(reverse)
+    }
+
+    const rangeJson = await call('GET', 'ranges', { query: pairQuery })
+    const { result: range } = asRangeReply(rangeJson)
+
+    const limitDirection = reverse ? 'to' : 'from'
+    const nativeMin = denominationToNative(
+      amountWallet,
+      range.min,
+      amountTokenId
+    )
+    if (lt(request.nativeAmount, nativeMin)) {
+      throw new SwapBelowLimitError(swapInfo, nativeMin, limitDirection)
+    }
+    if (range.max != null) {
+      const nativeMax = denominationToNative(
+        amountWallet,
+        range.max,
+        amountTokenId
+      )
+      if (gt(request.nativeAmount, nativeMax)) {
+        throw new SwapAboveLimitError(swapInfo, nativeMax, limitDirection)
+      }
+    }
+
+    const estimateJson = await call('GET', 'estimates', {
+      query: { ...pairQuery, amount }
+    })
+    const { result: estimate } = asEstimateReply(estimateJson)
+
+    const createJson = await call('POST', 'exchanges', {
+      body: {
+        tickerFrom: pairQuery.tickerFrom,
+        networkFrom: pairQuery.networkFrom,
+        tickerTo: pairQuery.tickerTo,
+        networkTo: pairQuery.networkTo,
+        amount,
+        fixed,
+        reverse,
+        addressTo: toAddress,
+        userRefundAddress: fromAddress,
+        rateId: estimate.rateId
+      }
+    })
+    const { result: exchange } = asCreatedExchangeReply(createJson)
+
+    const fromNativeAmount = denominationToNative(
+      fromWallet,
+      exchange.amountFrom,
+      request.fromTokenId
+    )
+    const toNativeAmount = denominationToNative(
+      toWallet,
+      exchange.amountTo,
+      request.toTokenId
+    )
+
+    const memos: EdgeMemo[] =
+      exchange.extraIdFrom == null
+        ? []
+        : [
+            {
+              type: memoType(fromWallet.currencyInfo.pluginId),
+              value: exchange.extraIdFrom
+            }
+          ]
+
+    const spendInfo: EdgeSpendInfo = {
+      tokenId: request.fromTokenId,
+      spendTargets: [
+        {
+          nativeAmount: fromNativeAmount,
+          publicAddress: exchange.addressFrom
+        }
+      ],
+      memos,
+      networkFeeOption: 'high',
+      assetAction: {
+        assetActionType: 'swap'
+      },
+      savedAction: {
+        actionType: 'swap',
+        swapInfo,
+        orderId: exchange.id,
+        orderUri: orderUri + exchange.id,
+        isEstimate: !fixed,
+        toAsset: {
+          pluginId: toWallet.currencyInfo.pluginId,
+          tokenId: request.toTokenId,
+          nativeAmount: toNativeAmount
+        },
+        fromAsset: {
+          pluginId: fromWallet.currencyInfo.pluginId,
+          tokenId: request.fromTokenId,
+          nativeAmount: fromNativeAmount
+        },
+        payoutAddress: toAddress,
+        payoutWalletId: toWallet.id,
+        refundAddress: fromAddress
+      }
+    }
+
+    const expirationDate =
+      estimate.validUntil != null
+        ? new Date(estimate.validUntil)
+        : new Date(Date.now() + expirationMs)
+
+    return {
+      request,
+      spendInfo,
+      swapInfo,
+      fromNativeAmount,
+      expirationDate
+    }
+  }
+
+  // edge-core-js error classes are transpiled, `instanceof SwapCurrencyError`
+  // is unreliable — match by name
+  const getQuote = async (
+    request: EdgeSwapRequestPlugin
+  ): Promise<SwapOrder> => {
+    try {
+      return await getQuoteForFlow(request, true)
+    } catch (error) {
+      if (error instanceof Error && error.name === 'SwapCurrencyError') {
+        return await getQuoteForFlow(request, false)
+      }
+      throw error
+    }
+  }
+
+  // `getMaxSwappable` probe: build a SwapOrder locally, targeting the user's
+  // own from-chain address, so `getMaxSpendable` can estimate fees WITHOUT
+  // creating (and abandoning) a live SimpleSwap order. The trimmed amount is
+  // then run through the real `getQuote`, which creates exactly one order.
+  const fetchProbeOrder = async (
+    request: EdgeSwapRequestPlugin
+  ): Promise<SwapOrder> => {
+    resolveNetworks(request)
+    const fromAddress = await getAddress(
+      request.fromWallet,
+      addressTypeMap[request.fromWallet.currencyInfo.pluginId]
+    )
+    const spendInfo: EdgeSpendInfo = {
+      tokenId: request.fromTokenId,
+      spendTargets: [
+        {
+          nativeAmount: request.nativeAmount,
+          publicAddress: fromAddress
+        }
+      ],
+      networkFeeOption: 'high',
+      // Never broadcast; targeting the user's own address trips
+      // `SpendToSelfError` on engines whose public key is the address
+      // (every EVM chain). The real order below keeps all checks.
+      skipChecks: true,
+      assetAction: {
+        assetActionType: 'swap'
+      }
+    }
+    return {
+      request,
+      spendInfo,
+      swapInfo,
+      fromNativeAmount: request.nativeAmount,
+      expirationDate: new Date(Date.now() + expirationMs)
+    }
+  }
+
+  const out: EdgeSwapPlugin = {
+    swapInfo,
+
+    async fetchSwapQuote(req: EdgeSwapRequest): Promise<EdgeSwapQuote> {
+      const request = convertRequest(req)
+
+      checkInvalidTokenIds(INVALID_TOKEN_IDS, request, swapInfo)
+      checkWhitelistedMainnetCodes(
+        MAINNET_CODE_TRANSCRIPTION,
+        request,
+        swapInfo
+      )
+
+      const newRequest = await getMaxSwappable(fetchProbeOrder, request)
+      const swapOrder = await getQuote(newRequest)
+      return await makeSwapPluginQuote(swapOrder)
+    }
+  }
+
+  return out
+}
