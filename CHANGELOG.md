@@ -2,7 +2,7 @@
 
 ## Unreleased
 
-- added: (swaps.xyz) New swaps.xyz cross-chain DEX aggregator swap provider for EVM chains.
+- added: (swaps.xyz) New swaps.xyz cross-chain swap provider, routing EVM, Solana and deposit-address chains.
 
 ## 2.52.2 (2026-07-27)
 
