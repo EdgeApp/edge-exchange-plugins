@@ -5,22 +5,33 @@ import {
   EdgeSpendInfo,
   EdgeSwapPlugin,
   EdgeSwapRequest,
-  EdgeTransaction
+  EdgeTransaction,
+  SwapBelowLimitError
 } from 'edge-core-js/types'
 import { describe, it } from 'mocha'
 
 import {
   makeMpTradePlugin,
   makeMpTradeSpendInfo,
-  MpTradeAction
-} from '../src/swap/defi/mptrade'
+  MpTradeAction,
+  resolveSlippageBps,
+  resolveSlippageTiers
+} from '../src/swap/central/mptrade'
+import { EdgeSwapRequestPlugin } from '../src/swap/types'
 
 const USDC = 'a0b86991c6218b36c1d19d4a2e9eb0ce3606eb48'
 const USDT = 'dac17f958d2ee523a2206206994597c13d831ec7'
+// A token in neither slippage tier, exercising the long-tail band.
+const LONGTAIL = 'bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb'
 // A token that resolves in the wallet but carries no on-chain contract
 // address, exercising the plugin's "no address to send to" guard.
 const NO_CONTRACT = 'ffffffffffffffffffffffffffffffffffffffff'
 const ROUTER = '0x1b6257CAE4192e62B629eFCa21771be3D759183D'
+const BROADCAST_TXID = '0xbroadcasted'
+// A deposit address and memo in the shape live alt-vm routes return.
+const LTC_DEPOSIT = 'MNhq86t59aShiEmD8uieSN4Tozp5s8FL45'
+const XRP_DEPOSIT = 'rKKbNYZRqwPgZYkFWvqNUFBuscEyiFyCE'
+const SOLANA_SYSTEM_PROGRAM = '11111111111111111111111111111111'
 const SENDER = '0x0b0901e9cef9eaed5753519177e3c7cfd0ef96ef'
 const RECIPIENT = '0x1234567890123456789012345678901234567890'
 
@@ -39,16 +50,32 @@ const makeAmount = (
   symbol
 })
 
+/**
+ * A `getAction` envelope with EVM defaults; each test overrides only the fields
+ * its route model cares about.
+ */
+const makeAction = (overrides: Partial<MpTradeAction> = {}): MpTradeAction => ({
+  tx: { to: ROUTER, data: '0x', value: '0', chainId: 1 },
+  txId: '0x99b16cbed2445ffdc34133e030cdda451bcdd73c',
+  amountIn: makeAmount('1', '0x0', true, 18, 'ETH'),
+  amountOut: makeAmount('1', '0x0', true, 18, 'ETH'),
+  amountOutMin: makeAmount('1', '0x0', true, 18, 'ETH'),
+  vmId: 'evm',
+  requiresTokenApproval: false,
+  requiresRegisterTransaction: false,
+  executionsType: 'DEFAULT',
+  ...overrides
+})
+
 describe('mptrade makeMpTradeSpendInfo', function () {
   it('native ethereum to usdc token', function () {
-    const action: MpTradeAction = {
+    const action = makeAction({
       tx: {
         to: ROUTER,
         data: '0x9be111d1deadbeef',
         value: '10000000000000000',
         chainId: 1
       },
-      txId: '0x99b16cbed2445ffdc34133e030cdda451bcdd73c',
       amountIn: makeAmount(
         '10000000000000000',
         '0x0000000000000000000000000000000000000000',
@@ -57,11 +84,8 @@ describe('mptrade makeMpTradeSpendInfo', function () {
         'ETH'
       ),
       amountOut: makeAmount('19156417', `0x${USDC}`, false, 6, 'USDC'),
-      amountOutMin: makeAmount('18964852', `0x${USDC}`, false, 6, 'USDC'),
-      vmId: 'evm',
-      requiresTokenApproval: false,
-      executionsType: 'DEFAULT'
-    }
+      amountOutMin: makeAmount('18964852', `0x${USDC}`, false, 6, 'USDC')
+    })
 
     const spendInfo = makeMpTradeSpendInfo({
       action,
@@ -87,18 +111,18 @@ describe('mptrade makeMpTradeSpendInfo', function () {
         actionType: 'swap',
         swapInfo: {
           pluginId: 'mptrade',
-          isDex: true,
+          isDex: false,
           displayName: 'MoonPay Trade',
           supportEmail: 'support@edge.app'
         },
         orderId: '0x99b16cbed2445ffdc34133e030cdda451bcdd73c',
         orderUri:
           'https://explorer.swaps.xyz/tx/0x99b16cbed2445ffdc34133e030cdda451bcdd73c',
-        isEstimate: true,
+        isEstimate: false,
         toAsset: {
           pluginId: 'ethereum',
           tokenId: USDC,
-          nativeAmount: '19156417'
+          nativeAmount: '18964852'
         },
         fromAsset: {
           pluginId: 'ethereum',
@@ -113,7 +137,7 @@ describe('mptrade makeMpTradeSpendInfo', function () {
   })
 
   it('usdc token to usdt token', function () {
-    const action: MpTradeAction = {
+    const action = makeAction({
       tx: {
         to: ROUTER,
         data: '0x9be111d1cafe',
@@ -124,10 +148,8 @@ describe('mptrade makeMpTradeSpendInfo', function () {
       amountIn: makeAmount('100000000', `0x${USDC}`, false, 6, 'USDC'),
       amountOut: makeAmount('100054660', `0x${USDT}`, false, 6, 'USDT'),
       amountOutMin: makeAmount('99054113', `0x${USDT}`, false, 6, 'USDT'),
-      vmId: 'evm',
-      requiresTokenApproval: true,
-      executionsType: 'DEFAULT'
-    }
+      requiresTokenApproval: true
+    })
 
     const spendInfo = makeMpTradeSpendInfo({
       action,
@@ -151,9 +173,145 @@ describe('mptrade makeMpTradeSpendInfo', function () {
     assert.isNotNull(savedAction)
     if (savedAction != null && savedAction.actionType === 'swap') {
       assert.strictEqual(savedAction.fromAsset.nativeAmount, '100000000')
-      assert.strictEqual(savedAction.toAsset.nativeAmount, '100054660')
+      assert.strictEqual(savedAction.toAsset.nativeAmount, '99054113')
       assert.strictEqual(savedAction.orderId, action.txId)
     }
+  })
+})
+
+describe('mptrade makeMpTradeSpendInfo route models', function () {
+  it('sends no memo when an EVM route carries no calldata', function () {
+    // Every EVM -> alt-vm route observed is a plain value send to the bridge
+    // contract with `data: '0x'`. An empty hex memo would be meaningless.
+    const spendInfo = makeMpTradeSpendInfo({
+      action: makeAction({
+        tx: { to: ROUTER, data: '0x', value: '5000000000000000', chainId: 8453 }
+      }),
+      fromPluginId: 'base',
+      toPluginId: 'monero',
+      fromTokenId: null,
+      toTokenId: null,
+      fromAddress: SENDER,
+      toAddress: RECIPIENT,
+      toWalletId: 'wallet-xmr'
+    })
+
+    assert.deepEqual(spendInfo.memos, [])
+    assert.deepEqual(spendInfo.spendTargets, [
+      { nativeAmount: '5000000000000000', publicAddress: ROUTER }
+    ])
+  })
+
+  it('builds a solana route from the unsigned transaction', function () {
+    const spendInfo = makeMpTradeSpendInfo({
+      action: makeAction({
+        vmId: 'solana',
+        tx: {
+          base64Tx: 'AQAAAAAAAAdeadbeef',
+          recentBlockhash: '8WnmUy6URoNdrEibEZAhCdsgX4pYcuuuz7rP3rP8u9om',
+          payer: '9WzDXwBbmkg8ZTbNMqUxvQRAyrZzDsGYdLVL9zYtAWWM'
+        },
+        amountIn: makeAmount('100000000', '0x0', true, 9, 'SOL')
+      }),
+      fromPluginId: 'solana',
+      toPluginId: 'base',
+      fromTokenId: null,
+      toTokenId: null,
+      fromAddress: ' 9WzDXwBbmkg8ZTbNMqUxvQRAyrZzDsGYdLVL9zYtAWWM',
+      toAddress: RECIPIENT,
+      toWalletId: 'wallet-base'
+    })
+
+    // The engine executes `unsignedTx`; the spend target only labels the spend,
+    // so a native source names the system program (matching rango).
+    assert.deepEqual(spendInfo.otherParams, {
+      unsignedTx: 'AQAAAAAAAAdeadbeef'
+    })
+    assert.deepEqual(spendInfo.spendTargets, [
+      { nativeAmount: '100000000', publicAddress: SOLANA_SYSTEM_PROGRAM }
+    ])
+    assert.deepEqual(spendInfo.memos, [])
+  })
+
+  it('names the token mint on a solana token route', function () {
+    const mint = 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v'
+    const spendInfo = makeMpTradeSpendInfo({
+      action: makeAction({
+        vmId: 'solana',
+        tx: {
+          base64Tx: 'AQAAAAAAAAdeadbeef',
+          recentBlockhash: '8WnmUy6URoNdrEibEZAhCdsgX4pYcuuuz7rP3rP8u9om',
+          payer: '9WzDXwBbmkg8ZTbNMqUxvQRAyrZzDsGYdLVL9zYtAWWM'
+        },
+        amountIn: makeAmount('3000000', mint, false, 6, 'USDC')
+      }),
+      fromPluginId: 'solana',
+      toPluginId: 'base',
+      fromTokenId: 'solana-usdc',
+      toTokenId: null,
+      fromAddress: '9WzDXwBbmkg8ZTbNMqUxvQRAyrZzDsGYdLVL9zYtAWWM',
+      toAddress: RECIPIENT,
+      toWalletId: 'wallet-base'
+    })
+
+    assert.deepEqual(spendInfo.spendTargets, [
+      { nativeAmount: '3000000', publicAddress: mint }
+    ])
+  })
+
+  it('pays the deposit address on an alt-vm route', function () {
+    const spendInfo = makeMpTradeSpendInfo({
+      action: makeAction({
+        vmId: 'alt-vm',
+        tx: {
+          to: LTC_DEPOSIT,
+          toExtra: null,
+          value: '100000000',
+          chainId: 999000323
+        },
+        amountIn: makeAmount('100000000', '0x0', true, 8, 'LTC')
+      }),
+      fromPluginId: 'litecoin',
+      toPluginId: 'base',
+      fromTokenId: null,
+      toTokenId: null,
+      fromAddress: 'ltc1qexample',
+      toAddress: RECIPIENT,
+      toWalletId: 'wallet-base'
+    })
+
+    assert.deepEqual(spendInfo.spendTargets, [
+      { nativeAmount: '100000000', publicAddress: LTC_DEPOSIT }
+    ])
+    // No memo slot on this chain, and no calldata to attach either.
+    assert.deepEqual(spendInfo.memos, [])
+    assert.isUndefined(spendInfo.otherParams)
+  })
+
+  it('carries toExtra as the chain memo when an alt-vm route needs one', function () {
+    // XRP routes return the destination tag in `toExtra`; dropping it sends the
+    // deposit to the bridge with no way to attribute it.
+    const spendInfo = makeMpTradeSpendInfo({
+      action: makeAction({
+        vmId: 'alt-vm',
+        tx: {
+          to: XRP_DEPOSIT,
+          toExtra: '927778164',
+          value: '100000000',
+          chainId: 999000346
+        },
+        amountIn: makeAmount('100000000', '0x0', true, 6, 'XRP')
+      }),
+      fromPluginId: 'ripple',
+      toPluginId: 'base',
+      fromTokenId: null,
+      toTokenId: null,
+      fromAddress: 'rExample',
+      toAddress: RECIPIENT,
+      toWalletId: 'wallet-base'
+    })
+
+    assert.deepEqual(spendInfo.memos, [{ type: 'number', value: '927778164' }])
   })
 })
 
@@ -180,6 +338,7 @@ const TOKENS: {
 } = {
   [USDC]: { currencyCode: 'USDC', contractAddress: `0x${USDC}` },
   [USDT]: { currencyCode: 'USDT', contractAddress: `0x${USDT}` },
+  [LONGTAIL]: { currencyCode: 'PEPE', contractAddress: `0x${LONGTAIL}` },
   // Resolvable currencyCode, but no contractAddress on its networkLocation.
   [NO_CONTRACT]: { currencyCode: 'NOC' }
 }
@@ -232,7 +391,15 @@ const makeFakeWallet = (opts: FakeWalletOpts): EdgeCurrencyWallet => {
         assetAction: spendInfo.assetAction,
         tokenId: spendInfo.tokenId
       } as unknown) as EdgeTransaction
-    }
+    },
+    async signTx(tx: EdgeTransaction): Promise<EdgeTransaction> {
+      return tx
+    },
+    async broadcastTx(tx: EdgeTransaction): Promise<EdgeTransaction> {
+      return { ...tx, txid: BROADCAST_TXID }
+    },
+    async saveTx(): Promise<void> {},
+    async saveTxAction(): Promise<void> {}
   } as unknown) as EdgeCurrencyWallet
 }
 
@@ -251,12 +418,21 @@ interface FakeResponse {
 const openPaths = (
   overrides: {
     paths?: unknown[]
-    srcToken?: { minAmount?: string | null; maxAmount?: string | null }
+    srcToken?: {
+      decimals?: number
+      minAmount?: string | null
+      maxAmount?: string | null
+    }
   } = {}
 ): FakeResponse => ({
   body: {
     srcChainId: 1,
-    srcToken: { minAmount: null, maxAmount: null, ...overrides.srcToken },
+    srcToken: {
+      decimals: 18,
+      minAmount: null,
+      maxAmount: null,
+      ...overrides.srcToken
+    },
     paths: overrides.paths ?? [
       {
         chainId: 1,
@@ -269,11 +445,28 @@ const openPaths = (
   }
 })
 
+/** Every `/registerTxs` POST body the plugin sent, in order. */
+interface RegisterLog {
+  calls: unknown[]
+}
+
 const makeFakeIo = (
   actionResponse: FakeResponse,
-  pathsResponse: FakeResponse
+  pathsResponse: FakeResponse,
+  registerLog?: RegisterLog,
+  uriLog?: string[]
 ): { fetchCors: Function } => ({
-  fetchCors: async (uri: string, _opts: unknown) => {
+  fetchCors: async (uri: string, opts: any) => {
+    uriLog?.push(uri)
+    if (uri.includes('/registerTxs')) {
+      registerLog?.calls.push(JSON.parse(opts.body))
+      return {
+        ok: true,
+        status: 200,
+        json: async () => [{ success: true, error: null }],
+        text: async () => '[]'
+      }
+    }
     const { body, ok = true, status = 200 } = uri.includes('/getPaths')
       ? pathsResponse
       : actionResponse
@@ -288,10 +481,12 @@ const makeFakeIo = (
 
 const makePlugin = (
   response: FakeResponse,
-  pathsResponse: FakeResponse = openPaths()
+  pathsResponse: FakeResponse = openPaths(),
+  registerLog?: RegisterLog,
+  uriLog?: string[]
 ): EdgeSwapPlugin =>
   makeMpTradePlugin(({
-    io: makeFakeIo(response, pathsResponse),
+    io: makeFakeIo(response, pathsResponse, registerLog, uriLog),
     initOptions: { apiKey: 'test-key' },
     log: { warn() {} }
   } as unknown) as EdgeCorePluginOptions)
@@ -388,17 +583,18 @@ describe('mptrade fetchSwapQuote guards (no network)', function () {
   })
 
   it('rejects an unmapped source chain with SwapCurrencyError', async function () {
-    // bitcoin is not in the EVM chain mapping, so no route can exist.
-    const bitcoin = makeFakeWallet({
-      pluginId: 'bitcoin',
-      currencyCode: 'BTC',
-      address: 'bc1qexampleexampleexampleexampleexampleexxx',
+    // piratechain is absent from the chain mapping (MoonPay Trade does not list
+    // it), so no route can exist and the plugin rejects before any request.
+    const piratechain = makeFakeWallet({
+      pluginId: 'piratechain',
+      currencyCode: 'ARRR',
+      address: 'zs1exampleexampleexampleexampleexampleexxx',
       balanceMap: new Map([[null, '100000000']])
     })
     const plugin = makePlugin(okAction())
     await expectErrorName(
       plugin,
-      usdcRequest({ fromWallet: bitcoin, fromTokenId: null }),
+      usdcRequest({ fromWallet: piratechain, fromTokenId: null }),
       'SwapCurrencyError'
     )
   })
@@ -442,7 +638,7 @@ describe('mptrade fetchSwapQuote getPaths pre-check', function () {
   })
 
   it('throws SwapBelowLimitError before getAction when under the route minimum', async function () {
-    // Limits are base-unit strings on the source token; the request sends
+    // Limits are DECIMAL strings on the source token; the request sends
     // 0.01 ETH against a 0.05 ETH minimum.
     await expectErrorName(
       makePlugin(
@@ -453,7 +649,7 @@ describe('mptrade fetchSwapQuote getPaths pre-check', function () {
               chainId: 1,
               supportsExactAmountIn: true,
               amountLimits: {
-                minAmount: '50000000000000000',
+                minAmount: '0.05',
                 maxAmount: null
               }
             }
@@ -466,6 +662,7 @@ describe('mptrade fetchSwapQuote getPaths pre-check', function () {
   })
 
   it('throws SwapAboveLimitError before getAction when over the route maximum', async function () {
+    // 0.01 ETH against a 0.001 ETH ceiling.
     await expectErrorName(
       makePlugin(
         okAction(),
@@ -476,7 +673,7 @@ describe('mptrade fetchSwapQuote getPaths pre-check', function () {
               supportsExactAmountIn: true,
               amountLimits: {
                 minAmount: null,
-                maxAmount: '1000000000000000'
+                maxAmount: '0.001'
               }
             }
           ]
@@ -487,12 +684,85 @@ describe('mptrade fetchSwapQuote getPaths pre-check', function () {
     )
   })
 
+  it('reports the below-limit minimum in base units, not the decimal string', async function () {
+    // The error travels to the GUI, which formats `nativeMin` as a native
+    // amount. Handing it the raw '0.05' would render 0.05 wei.
+    await makePlugin(
+      okAction(),
+      openPaths({
+        paths: [
+          {
+            chainId: 1,
+            supportsExactAmountIn: true,
+            amountLimits: { minAmount: '0.05', maxAmount: null }
+          }
+        ]
+      })
+    )
+      .fetchSwapQuote(usdcRequest(), undefined, { infoPayload: {} })
+      .then(
+        () => assert.fail('expected SwapBelowLimitError'),
+        (error: unknown) => {
+          assert.equal(
+            (error as SwapBelowLimitError).nativeMin,
+            '50000000000000000'
+          )
+        }
+      )
+  })
+
+  it('quotes inside a published decimal ceiling instead of rejecting it', async function () {
+    // The regression: MoonPay Trade publishes limits as decimals, so a live
+    // ethereum route ceiling of 6.404342 ETH was compared against a wei
+    // amount and rejected every real quote as above-limit.
+    const quote = await makePlugin(
+      okAction(),
+      openPaths({
+        paths: [
+          {
+            chainId: 1,
+            supportsExactAmountIn: true,
+            amountLimits: { minAmount: '0.0001325', maxAmount: '6.404342' }
+          }
+        ]
+      })
+    ).fetchSwapQuote(usdcRequest(), undefined, { infoPayload: {} })
+    assert.equal(quote.fromNativeAmount, '10000000000000000')
+  })
+
+  it('scales a decimal limit by the source token decimals, not by 18', async function () {
+    // A 6-decimal source token: 5.5 USDC is 5500000 base units, so a 3 USDC
+    // request is under the floor and a 6 USDC request would be over it.
+    await expectErrorName(
+      makePlugin(
+        okAction(),
+        openPaths({
+          srcToken: { decimals: 6 },
+          paths: [
+            {
+              chainId: 1,
+              supportsExactAmountIn: true,
+              amountLimits: { minAmount: '5.5', maxAmount: null }
+            }
+          ]
+        })
+      ),
+      usdcRequest({
+        fromWallet: ethWallet(new Map([[USDC, '10000000']])),
+        fromTokenId: USDC,
+        toTokenId: USDT,
+        nativeAmount: '3000000'
+      }),
+      'SwapBelowLimitError'
+    )
+  })
+
   it('falls back to the source token limits when the route carries none', async function () {
     await expectErrorName(
       makePlugin(
         okAction(),
         openPaths({
-          srcToken: { minAmount: '50000000000000000', maxAmount: null },
+          srcToken: { minAmount: '0.05', maxAmount: null },
           paths: [{ chainId: 1, supportsExactAmountIn: true }]
         })
       ),
@@ -518,11 +788,12 @@ describe('mptrade fetchSwapQuote getPaths pre-check', function () {
         amountIn: makeAmount('5000000', `0x${USDC}`, false, 6, 'USDC')
       }),
       openPaths({
+        srcToken: { decimals: 6 },
         paths: [
           {
             chainId: 1,
             supportsExactAmountIn: true,
-            amountLimits: { minAmount: null, maxAmount: '5000000' }
+            amountLimits: { minAmount: null, maxAmount: '5' }
           }
         ]
       })
@@ -596,6 +867,21 @@ describe('mptrade fetchSwapQuote getAction error classification', function () {
       makePlugin(errorBody('NO_QUOTE', 'Amount too low for this route')),
       usdcRequest(),
       'SwapBelowLimitError'
+    )
+  })
+
+  it('maps an unpayable destination address to SwapCurrencyError', async function () {
+    // MoonPay Trade will not pay a Zcash `t1…` or unified `u1…` address, so an
+    // Edge zcash wallet is a pair this provider cannot serve.
+    await expectErrorName(
+      makePlugin(
+        errorBody(
+          'INVALID_ADDRESS_FORMAT',
+          'The format of the specified address is invalid.'
+        )
+      ),
+      usdcRequest(),
+      'SwapCurrencyError'
     )
   })
 
@@ -681,11 +967,11 @@ describe('mptrade fetchSwapQuote getAction error classification', function () {
 })
 
 describe('mptrade fetchSwapQuote success-response guards', function () {
-  it('rejects a non-EVM route (vmId) with SwapCurrencyError', async function () {
-    // MoonPay Trade can route solana/tron/etc, but this plugin only executes
-    // EVM calldata, so a non-evm vmId is unsupported here.
+  it('rejects a hypercore route (vmId) with SwapCurrencyError', async function () {
+    // The plugin executes evm, solana and alt-vm routes; hypercore has no Edge
+    // currency plugin, so there is nothing to execute it with.
     await expectErrorName(
-      makePlugin(okAction({ vmId: 'solana' })),
+      makePlugin(okAction({ vmId: 'hypercore' })),
       usdcRequest(),
       'SwapCurrencyError'
     )
@@ -697,6 +983,46 @@ describe('mptrade fetchSwapQuote success-response guards', function () {
       usdcRequest(),
       'SwapCurrencyError'
     )
+  })
+
+  it('rejects an alt-vm deposit above the requested amount', async function () {
+    // The alt-vm spend sends `tx.value`, so a response inflating it past the
+    // request must not build a spend, even when `amountIn` looks correct.
+    const litecoin = makeFakeWallet({
+      pluginId: 'litecoin',
+      currencyCode: 'LTC',
+      address: 'ltc1qexample',
+      balanceMap: new Map([[null, '1000000000']])
+    })
+    await makePlugin(
+      okAction({
+        vmId: 'alt-vm',
+        tx: {
+          to: LTC_DEPOSIT,
+          toExtra: null,
+          value: '900000000',
+          chainId: 999000323
+        },
+        amountIn: makeAmount('100000000', '0x0', true, 8, 'LTC')
+      }),
+      openPaths({ srcToken: { decimals: 8 } })
+    )
+      .fetchSwapQuote(
+        usdcRequest({
+          fromWallet: litecoin,
+          fromTokenId: null,
+          nativeAmount: '100000000'
+        }),
+        undefined,
+        { infoPayload: {} }
+      )
+      .then(
+        () => assert.fail('expected a plain Error'),
+        (error: unknown) => {
+          assert.equal((error as Error).name, 'Error')
+          assert.include((error as Error).message, 'above the requested amount')
+        }
+      )
   })
 
   it('maps a zero-output route to SwapBelowLimitError', async function () {
@@ -722,9 +1048,185 @@ describe('mptrade fetchSwapQuote success', function () {
     )
     assert.equal(quote.pluginId, 'mptrade')
     assert.equal(quote.fromNativeAmount, '10000000000000000')
-    // minReceiveAmount comes straight from the route's amountOutMin.
-    assert.equal(quote.minReceiveAmount, '18964852')
-    assert.equal(quote.toNativeAmount, '19156417')
-    assert.equal(quote.isEstimate, true)
+    // The quote publishes the route's guaranteed floor, so there is no separate
+    // minimum to advertise; a non-null minReceiveAmount would render the quote
+    // as variable in the GUI.
+    assert.equal(quote.minReceiveAmount, undefined)
+    assert.equal(quote.toNativeAmount, '18964852')
+    assert.equal(quote.isEstimate, false)
+  })
+
+  it('builds a quote for an alt-vm source', async function () {
+    // A litecoin source pays a deposit address; there is no router to approve
+    // and no calldata to attach.
+    const litecoin = makeFakeWallet({
+      pluginId: 'litecoin',
+      currencyCode: 'LTC',
+      address: 'ltc1qexample',
+      balanceMap: new Map([[null, '1000000000']])
+    })
+    const quote = await makePlugin(
+      okAction({
+        vmId: 'alt-vm',
+        tx: {
+          to: LTC_DEPOSIT,
+          toExtra: null,
+          value: '100000000',
+          chainId: 999000323
+        },
+        amountIn: makeAmount('100000000', '0x0', true, 8, 'LTC'),
+        amountOut: makeAmount('44742031', `0x${USDC}`, false, 6, 'USDC'),
+        amountOutMin: makeAmount('44294610', `0x${USDC}`, false, 6, 'USDC')
+      }),
+      openPaths({ srcToken: { decimals: 8 } })
+    ).fetchSwapQuote(
+      usdcRequest({
+        fromWallet: litecoin,
+        fromTokenId: null,
+        nativeAmount: '100000000'
+      }),
+      undefined,
+      { infoPayload: {} }
+    )
+
+    assert.equal(quote.fromNativeAmount, '100000000')
+    assert.equal(quote.toNativeAmount, '44294610')
+  })
+
+  it('registers the broadcast hash when the route requires it', async function () {
+    // MoonPay Trade cannot track an order it did not broadcast itself, so a
+    // route flagged `requiresRegisterTransaction` gets a POST once the hash
+    // exists.
+    const registerLog: RegisterLog = { calls: [] }
+    const quote = await makePlugin(
+      okAction({ requiresRegisterTransaction: true }),
+      openPaths(),
+      registerLog
+    ).fetchSwapQuote(usdcRequest(), undefined, { infoPayload: {} })
+
+    assert.deepEqual(registerLog.calls, [])
+    await quote.approve()
+    assert.deepEqual(registerLog.calls, [
+      {
+        txId: '0x99b16cbed2445ffdc34133e030cdda451bcdd73c',
+        txHash: BROADCAST_TXID
+      }
+    ])
+  })
+
+  it('does not register a route that does not require it', async function () {
+    const registerLog: RegisterLog = { calls: [] }
+    const quote = await makePlugin(
+      okAction(),
+      openPaths(),
+      registerLog
+    ).fetchSwapQuote(usdcRequest(), undefined, { infoPayload: {} })
+
+    await quote.approve()
+    assert.deepEqual(registerLog.calls, [])
+  })
+})
+
+// ---------------------------------------------------------------------------
+// Slippage tiering
+//
+// The quote publishes `amountOutMin`, so the slippage band is the difference
+// between what Edge can guarantee and what the route is expected to deliver.
+// These assert the band that actually reaches `getAction`, not just the helper.
+// ---------------------------------------------------------------------------
+
+/** The `slippage` query param on the getAction request the plugin sent. */
+const sentSlippage = (uriLog: string[]): string | null => {
+  const actionUri = uriLog.find(uri => uri.includes('/getAction'))
+  if (actionUri == null) return null
+  return new URL(actionUri).searchParams.get('slippage')
+}
+
+describe('mptrade slippage tiers', function () {
+  it('uses the stable band when both legs are stablecoins', async function () {
+    const uriLog: string[] = []
+    await makePlugin(
+      okAction({
+        amountIn: makeAmount('100000000', `0x${USDC}`, false, 6, 'USDC'),
+        amountOut: makeAmount('99900000', `0x${USDT}`, false, 6, 'USDT'),
+        amountOutMin: makeAmount('99800000', `0x${USDT}`, false, 6, 'USDT')
+      }),
+      openPaths({ srcToken: { decimals: 6 } }),
+      undefined,
+      uriLog
+    ).fetchSwapQuote(
+      usdcRequest({
+        fromWallet: ethWallet(new Map([[USDC, '100000000']])),
+        fromTokenId: USDC,
+        toTokenId: USDT,
+        nativeAmount: '100000000'
+      }),
+      undefined,
+      { infoPayload: {} }
+    )
+
+    assert.equal(sentSlippage(uriLog), '10')
+  })
+
+  it('uses the major band for a major-to-stable route', async function () {
+    const uriLog: string[] = []
+    await makePlugin(
+      okAction(),
+      openPaths(),
+      undefined,
+      uriLog
+    ).fetchSwapQuote(usdcRequest(), undefined, { infoPayload: {} })
+
+    // ETH is a major and USDC a stable, so the looser of the two legs wins.
+    assert.equal(sentSlippage(uriLog), '50')
+  })
+
+  it('uses the long-tail band when either leg is untiered', async function () {
+    const uriLog: string[] = []
+    await makePlugin(
+      okAction({
+        amountOut: makeAmount('5000000', `0x${LONGTAIL}`, false, 6, 'PEPE'),
+        amountOutMin: makeAmount('4950000', `0x${LONGTAIL}`, false, 6, 'PEPE')
+      }),
+      openPaths(),
+      undefined,
+      uriLog
+    ).fetchSwapQuote(usdcRequest({ toTokenId: LONGTAIL }), undefined, {
+      infoPayload: {}
+    })
+
+    assert.equal(sentSlippage(uriLog), '100')
+  })
+
+  it('lets the info server retune a band without an app release', async function () {
+    const uriLog: string[] = []
+    await makePlugin(okAction(), openPaths(), undefined, uriLog).fetchSwapQuote(
+      usdcRequest(),
+      undefined,
+      {
+        infoPayload: { slippageBps: { major: 25 } }
+      }
+    )
+
+    assert.equal(sentSlippage(uriLog), '25')
+  })
+
+  it('falls back to the built-in tiers on a malformed payload', function () {
+    const tiers = resolveSlippageTiers({ slippageBps: 'nonsense' })
+
+    assert.deepEqual(tiers, { stable: 10, major: 50, default: 100 })
+  })
+
+  it('takes the looser leg when the two legs differ', function () {
+    const tiers = resolveSlippageTiers({})
+    const request: Pick<
+      EdgeSwapRequestPlugin,
+      'fromCurrencyCode' | 'toCurrencyCode'
+    > = {
+      fromCurrencyCode: 'USDC',
+      toCurrencyCode: 'PEPE'
+    }
+
+    assert.equal(resolveSlippageBps(request, tiers), 100)
   })
 })
