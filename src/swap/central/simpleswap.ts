@@ -323,14 +323,34 @@ export function makeSimpleSwapPlugin(
 
   // edge-core-js error classes are transpiled, `instanceof SwapCurrencyError`
   // is unreliable — match by name
+  const isFallbackWorthy = (error: unknown): boolean =>
+    error instanceof Error &&
+    (error.name === 'SwapCurrencyError' ||
+      error.name === 'SwapBelowLimitError' ||
+      error.name === 'SwapAboveLimitError')
+
   const getQuote = async (
     request: EdgeSwapRequestPlugin
   ): Promise<SwapOrder> => {
+    let fixedError: unknown
     try {
       return await getQuoteForFlow(request, true)
-    } catch (error) {
-      if (error instanceof Error && error.name === 'SwapCurrencyError') {
-        return await getQuoteForFlow(request, false)
+    } catch (error: unknown) {
+      if (!isFallbackWorthy(error)) throw error
+      fixedError = error
+    }
+    try {
+      return await getQuoteForFlow(request, false)
+    } catch (error: unknown) {
+      // A fixed-rate limit error is more actionable than "pair unsupported"
+      // from the float flow, which merely lacks the pair.
+      if (
+        error instanceof Error &&
+        error.name === 'SwapCurrencyError' &&
+        fixedError instanceof Error &&
+        fixedError.name !== 'SwapCurrencyError'
+      ) {
+        throw fixedError
       }
       throw error
     }
