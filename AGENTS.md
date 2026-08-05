@@ -19,10 +19,12 @@ TypeScript, transpiled with `sucrase`, type-checked by `tsc`, tested with `mocha
 
 ## Plugin model
 
-Two shapes, decided by what the provider returns:
+Two directories, split by VENUE, which is what `isDex` records:
 
-- **Central** (`src/swap/central/`, `isDex: false`) — the provider returns a **deposit address** the user pays into. Reference: `sideshift.ts`.
-- **DeFi** (`src/swap/defi/`, `isDex: true`) — the provider returns **executable on-chain calldata** (plus an optional ERC20 approval), broadcast by the wallet's own engine. Reference: `lifi.ts`, `swapsxyz.ts`.
+- **Central** (`src/swap/central/`, `isDex: false`) — a server-gated venue that can refuse an order: it signs the payload, screens the user, or both. Reference: `sideshift.ts`.
+- **DeFi** (`src/swap/defi/`, `isDex: true`) — a permissionless on-chain venue. Reference: `lifi.ts`.
+
+The PAYLOAD shape is independent of the split, so never infer one from the other. A central provider may return executable calldata rather than a deposit address (`central/swapsxyz.ts` dispatches calldata, an unsigned Solana transaction, or a deposit address off one `vmId` switch). Classify by whether the venue can refuse you, not by whether defi appears in the implementation.
 
 Start from the closest existing plugin of the right shape rather than from blank. Every plugin is a `makeXxxPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin` factory returning `{ swapInfo, fetchSwapQuote }`.
 
