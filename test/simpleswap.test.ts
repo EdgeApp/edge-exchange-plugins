@@ -488,8 +488,10 @@ describe('makeSimpleSwapPlugin.fetchSwapQuote', function () {
   })
 
   it('rejects a source amount above the requested amount', async function () {
-    const handler: FetchHandler = url =>
-      routeOf(url) === 'exchanges'
+    const exchangeCalls: string[] = []
+    const handler: FetchHandler = (url, method) => {
+      if (method === 'POST') exchangeCalls.push(url)
+      return routeOf(url) === 'exchanges'
         ? {
             status: 200,
             body: {
@@ -502,6 +504,7 @@ describe('makeSimpleSwapPlugin.fetchSwapQuote', function () {
             }
           }
         : { status: 200, body: okReplies[routeOf(url)] }
+    }
     const plugin = makeSimpleSwapPlugin(makeOpts(handler))
     try {
       await plugin.fetchSwapQuote(fromRequest(), undefined, {
@@ -514,6 +517,9 @@ describe('makeSimpleSwapPlugin.fetchSwapQuote', function () {
         'source amount above the requested amount'
       )
     }
+    // The fixed order already exists, so the float flow must not run and
+    // abandon it for a second one.
+    assert.equal(exchangeCalls.length, 1)
   })
 
   it('transcribes Edge currency codes to SimpleSwap tickers (BNB -> bnb-bsc)', async function () {

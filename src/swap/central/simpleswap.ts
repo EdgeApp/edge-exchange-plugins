@@ -94,6 +94,15 @@ const asCreatedExchange = asObject({
   amountFrom: asNumberString,
   amountTo: asNumberString
 })
+// Raised once an order already exists, so `getQuote` knows not to retry: the
+// other flow would abandon that order and hit the same problem again.
+const FATAL_ERROR_NAME = 'SimpleSwapFatalError'
+const makeFatalError = (message: string): Error => {
+  const error = new Error(message)
+  error.name = FATAL_ERROR_NAME
+  return error
+}
+
 const asRangeReply = asObject({ result: asRange })
 const asEstimateReply = asObject({ result: asEstimate })
 const asCreatedExchangeReply = asObject({ result: asCreatedExchange })
@@ -269,7 +278,7 @@ export function makeSimpleSwapPlugin(
     // `from` quote pins the source amount locally, so that is the one direction
     // with something to bound against.
     if (!reverse && gt(fromNativeAmount, request.nativeAmount)) {
-      throw new Error(
+      throw makeFatalError(
         'SimpleSwap returned a source amount above the requested amount'
       )
     }
@@ -357,14 +366,16 @@ export function makeSimpleSwapPlugin(
   const getQuote = async (
     request: EdgeSwapRequestPlugin
   ): Promise<SwapOrder> => {
-    // Every flow creates its order in its last hop, so a flow that throws never
-    // leaves one behind and the float retry is always safe. SimpleSwap rejects
-    // fixed-rate orders paying out to a memo/tag chain with a 500 that only the
-    // float flow gets past, so the retry is not limited to swap errors.
+    // SimpleSwap rejects fixed-rate orders paying out to a memo/tag chain with
+    // a 500 that only the float flow gets past, so the retry is not limited to
+    // swap errors. Everything up to and including order creation is safe to
+    // retry; a fatal error means the order already exists and must not be
+    // abandoned for a second one.
     let fixedError: unknown
     try {
       return await getQuoteForFlow(request, true)
     } catch (error: unknown) {
+      if (error instanceof Error && error.name === FATAL_ERROR_NAME) throw error
       fixedError = error
     }
     try {
