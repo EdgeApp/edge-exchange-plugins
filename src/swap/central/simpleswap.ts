@@ -1,4 +1,4 @@
-import { gt, lt } from 'biggystring'
+import { ceil, floor, gt, lt } from 'biggystring'
 import { asEither, asNull, asObject, asOptional, asString } from 'cleaners'
 import {
   EdgeCorePluginOptions,
@@ -211,20 +211,20 @@ export function makeSimpleSwapPlugin(
     const rangeJson = await call('GET', 'ranges', { query: pairQuery })
     const { result: range } = asRangeReply(rangeJson)
 
+    // Native amounts are whole atomic units. Round a minimum up and a maximum
+    // down, so rounding never widens the range SimpleSwap actually accepts.
     const limitDirection = reverse ? 'to' : 'from'
-    const nativeMin = denominationToNative(
-      amountWallet,
-      range.min,
-      amountTokenId
+    const nativeMin = ceil(
+      denominationToNative(amountWallet, range.min, amountTokenId),
+      0
     )
     if (lt(request.nativeAmount, nativeMin)) {
       throw new SwapBelowLimitError(swapInfo, nativeMin, limitDirection)
     }
     if (range.max != null) {
-      const nativeMax = denominationToNative(
-        amountWallet,
-        range.max,
-        amountTokenId
+      const nativeMax = floor(
+        denominationToNative(amountWallet, range.max, amountTokenId),
+        0
       )
       if (gt(request.nativeAmount, nativeMax)) {
         throw new SwapAboveLimitError(swapInfo, nativeMax, limitDirection)
@@ -252,16 +252,27 @@ export function makeSimpleSwapPlugin(
     })
     const { result: exchange } = asCreatedExchangeReply(createJson)
 
-    const fromNativeAmount = denominationToNative(
-      fromWallet,
-      exchange.amountFrom,
-      request.fromTokenId
+    const fromNativeAmount = floor(
+      denominationToNative(
+        fromWallet,
+        exchange.amountFrom,
+        request.fromTokenId
+      ),
+      0
     )
-    const toNativeAmount = denominationToNative(
-      toWallet,
-      exchange.amountTo,
-      request.toTokenId
+    const toNativeAmount = floor(
+      denominationToNative(toWallet, exchange.amountTo, request.toTokenId),
+      0
     )
+
+    // `amountFrom` is echoed by SimpleSwap and becomes a signed spend. Only a
+    // `from` quote pins the source amount locally, so that is the one direction
+    // with something to bound against.
+    if (!reverse && gt(fromNativeAmount, request.nativeAmount)) {
+      throw new Error(
+        'SimpleSwap returned a source amount above the requested amount'
+      )
+    }
 
     const memos: EdgeMemo[] =
       exchange.extraIdFrom == null
@@ -322,38 +333,44 @@ export function makeSimpleSwapPlugin(
     }
   }
 
-  // edge-core-js error classes are transpiled, `instanceof SwapCurrencyError`
-  // is unreliable — match by name
-  const isFallbackWorthy = (error: unknown): boolean =>
-    error instanceof Error &&
-    (error.name === 'SwapCurrencyError' ||
-      error.name === 'SwapBelowLimitError' ||
-      error.name === 'SwapAboveLimitError')
+  // How actionable an error is for the user, highest first: a limit error names
+  // the amount to retry with, a permission error names an account problem, and
+  // "unsupported pair" is the least specific. A transport or server error ranks
+  // below all of them, so one flow's outage never masks the other's real answer.
+  // edge-core-js error classes are transpiled, so `instanceof SwapCurrencyError`
+  // is unreliable — match by name.
+  const errorRank = (error: unknown): number => {
+    if (!(error instanceof Error)) return 0
+    switch (error.name) {
+      case 'SwapBelowLimitError':
+      case 'SwapAboveLimitError':
+        return 3
+      case 'SwapPermissionError':
+        return 2
+      case 'SwapCurrencyError':
+        return 1
+      default:
+        return 0
+    }
+  }
 
   const getQuote = async (
     request: EdgeSwapRequestPlugin
   ): Promise<SwapOrder> => {
+    // Every flow creates its order in its last hop, so a flow that throws never
+    // leaves one behind and the float retry is always safe. SimpleSwap rejects
+    // fixed-rate orders paying out to a memo/tag chain with a 500 that only the
+    // float flow gets past, so the retry is not limited to swap errors.
     let fixedError: unknown
     try {
       return await getQuoteForFlow(request, true)
     } catch (error: unknown) {
-      if (!isFallbackWorthy(error)) throw error
       fixedError = error
     }
     try {
       return await getQuoteForFlow(request, false)
     } catch (error: unknown) {
-      // A fixed-rate limit error is more actionable than "pair unsupported"
-      // from the float flow, which merely lacks the pair.
-      if (
-        error instanceof Error &&
-        error.name === 'SwapCurrencyError' &&
-        fixedError instanceof Error &&
-        fixedError.name !== 'SwapCurrencyError'
-      ) {
-        throw fixedError
-      }
-      throw error
+      throw errorRank(fixedError) >= errorRank(error) ? fixedError : error
     }
   }
 

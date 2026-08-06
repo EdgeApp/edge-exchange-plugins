@@ -404,6 +404,118 @@ describe('makeSimpleSwapPlugin.fetchSwapQuote', function () {
     assert.equal(probeSpendInfo.skipChecks, true)
   })
 
+  it('falls back to floating when the fixed flow fails on a server error', async function () {
+    // SimpleSwap rejects a fixed-rate order paying out to a memo/tag chain
+    // with `500 check extra_id`; only the floating flow gets past it.
+    const handler: FetchHandler = url => {
+      if (url.includes('fixed=true') && routeOf(url) !== 'ranges') {
+        return { status: 500, body: { message: 'check extra_id' } }
+      }
+      if (routeOf(url) === 'estimates') {
+        return { status: 200, body: { result: { estimatedAmount: '0.05' } } }
+      }
+      return { status: 200, body: okReplies[routeOf(url)] }
+    }
+    const plugin = makeSimpleSwapPlugin(makeOpts(handler))
+    const quote = await plugin.fetchSwapQuote(fromRequest(), undefined, {
+      infoPayload: {}
+    } as any)
+
+    assert.equal(quote.isEstimate, true) // served by the floating flow
+  })
+
+  it('surfaces the fixed flow SwapCurrencyError over a floating server error', async function () {
+    const handler: FetchHandler = url => {
+      if (routeOf(url) === 'ranges') {
+        return url.includes('fixed=true')
+          ? { status: 404, body: {} } // pair unavailable fixed
+          : { status: 500, body: {} } // floating side is just broken
+      }
+      return { status: 200, body: okReplies[routeOf(url)] }
+    }
+    const plugin = makeSimpleSwapPlugin(makeOpts(handler))
+    await expectError(
+      plugin.fetchSwapQuote(fromRequest(), undefined, {
+        infoPayload: {}
+      } as any),
+      'SwapCurrencyError'
+    )
+  })
+
+  it('rounds provider amounts to whole atomic units', async function () {
+    const handler: FetchHandler = url =>
+      routeOf(url) === 'exchanges'
+        ? {
+            status: 200,
+            body: {
+              result: {
+                id: 'order-3',
+                addressFrom: 'deposit-addr',
+                amountFrom: '0.1',
+                // More decimals than ETH's denomination holds
+                amountTo: '0.0500000000000000005'
+              }
+            }
+          }
+        : { status: 200, body: okReplies[routeOf(url)] }
+    const plugin = makeSimpleSwapPlugin(makeOpts(handler))
+    const quote = await plugin.fetchSwapQuote(fromRequest(), undefined, {
+      infoPayload: {}
+    } as any)
+
+    assert.equal(quote.toNativeAmount, '50000000000000000')
+  })
+
+  it('rounds a range minimum up, never below what SimpleSwap accepts', async function () {
+    const handler: FetchHandler = url =>
+      routeOf(url) === 'ranges'
+        ? {
+            status: 200,
+            // 0.100000001 BTC = 10000000.1 native, just above the request
+            body: { result: { min: '0.100000001', max: '10' } }
+          }
+        : { status: 200, body: okReplies[routeOf(url)] }
+    const plugin = makeSimpleSwapPlugin(makeOpts(handler))
+    try {
+      await plugin.fetchSwapQuote(fromRequest(), undefined, {
+        infoPayload: {}
+      } as any)
+      assert.fail('expected SwapBelowLimitError')
+    } catch (error: unknown) {
+      assert.equal((error as Error).name, 'SwapBelowLimitError')
+      assert.equal((error as any).nativeMin, '10000001')
+    }
+  })
+
+  it('rejects a source amount above the requested amount', async function () {
+    const handler: FetchHandler = url =>
+      routeOf(url) === 'exchanges'
+        ? {
+            status: 200,
+            body: {
+              result: {
+                id: 'order-4',
+                addressFrom: 'deposit-addr',
+                amountFrom: '0.2', // double what the request pinned
+                amountTo: '0.05'
+              }
+            }
+          }
+        : { status: 200, body: okReplies[routeOf(url)] }
+    const plugin = makeSimpleSwapPlugin(makeOpts(handler))
+    try {
+      await plugin.fetchSwapQuote(fromRequest(), undefined, {
+        infoPayload: {}
+      } as any)
+      assert.fail('expected the source amount to be rejected')
+    } catch (error: unknown) {
+      assert.include(
+        (error as Error).message,
+        'source amount above the requested amount'
+      )
+    }
+  })
+
   it('transcribes Edge currency codes to SimpleSwap tickers (BNB -> bnb-bsc)', async function () {
     const requestedUrls: string[] = []
     const handler: FetchHandler = url => {
