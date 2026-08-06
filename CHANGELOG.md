@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- added: `AGENTS.md` and `.cursor/BUGBOT.md`, recording the swap plugin conventions that recent provider reviews settled.
+- added: A test suite for the swap plugin template, covering the max-quote probe, limit handling, the trust boundary on provider amounts, and memo cleaning. A new integration can copy it alongside the template.
+- changed: The swap plugin template now models the max-quote probe, the trust boundary on provider-returned amounts, integer native-amount rounding, and funds-safe memo cleaning, so a new integration starts from them rather than rediscovering them in review.
+- changed: `docs/CREATING_AN_EXCHANGE_PLUGIN.md` covers max quotes and amount rounding in depth, and ends with a pre-PR checklist drawn from findings on shipped integrations.
+
 ## 2.52.2 (2026-07-27)
 
 - fixed: Maya swaps spending RUNE now send to Maya's inbound address instead of depositing into THORChain's own state machine, which misrouted the swap (THORChain read Maya's `=:d:` DASH memo as an unparseable DOGE swap and the deposit failed).
