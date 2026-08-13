@@ -127,6 +127,9 @@ lifi.set('opb', 'opbnb')
 // Display Name: Optimism
 lifi.set('opt', 'optimism')
 
+// Display Name: Robinhood Chain
+lifi.set('out', 'robinhood')
+
 // Display Name: Plasma
 lifi.set('pla', null)
 

@@ -106,6 +106,9 @@ sideshift.set('polygon', 'polygon')
 // Display Name: ripple
 sideshift.set('ripple', 'ripple')
 
+// Display Name: robinhood
+sideshift.set('robinhood', 'robinhood')
+
 // Display Name: ronin
 sideshift.set('ronin', null)
 
