@@ -12,6 +12,7 @@ import { makeMpTradePlugin } from './swap/central/mptrade'
 import { makeNexchangePlugin } from './swap/central/nexchange'
 import { makeNymPlugin } from './swap/central/nym'
 import { makeSideshiftPlugin } from './swap/central/sideshift'
+import { makeStealthexPlugin } from './swap/central/stealthex'
 import { makeSwapterPlugin } from './swap/central/swapter'
 import { makeSwapuzPlugin } from './swap/central/swapuz'
 import { makeXgramPlugin } from './swap/central/xgram'
@@ -51,6 +52,7 @@ const plugins = {
   spookySwap: makeSpookySwapPlugin,
   mptrade: makeMpTradePlugin,
   mptradedefi: makeMpTradeDefiPlugin,
+  stealthex: makeStealthexPlugin,
   swapter: makeSwapterPlugin,
   swapuz: makeSwapuzPlugin,
   mayaprotocol: makeMayaProtocolPlugin,

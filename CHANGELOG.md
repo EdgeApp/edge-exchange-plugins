@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- added: StealthEX swap plugin, using fixed rates where the route offers them and falling back to floating rates otherwise.
+
 ## 2.59.3 (2026-10-20)
 
 - fixed: (HoudiniSwap) Pay a picked Zcash destination wallet out to its transparent address
