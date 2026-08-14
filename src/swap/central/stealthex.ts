@@ -1,0 +1,724 @@
+import { ceil, floor, gt, lt } from 'biggystring'
+import {
+  asArray,
+  asDate,
+  asEither,
+  asJSON,
+  asMaybe,
+  asNull,
+  asNumber,
+  asObject,
+  asOptional,
+  asString
+} from 'cleaners'
+import {
+  EdgeCorePluginOptions,
+  EdgeCurrencyWallet,
+  EdgeMemo,
+  EdgeSpendInfo,
+  EdgeSwapInfo,
+  EdgeSwapPlugin,
+  EdgeSwapQuote,
+  EdgeSwapRequest,
+  EdgeToken,
+  EdgeTokenId,
+  SwapAboveLimitError,
+  SwapBelowLimitError,
+  SwapCurrencyError,
+  SwapPermissionError
+} from 'edge-core-js/types'
+
+import {
+  stealthex as stealthexMapping,
+  StealthexChain
+} from '../../mappings/stealthex'
+import { EdgeCurrencyPluginId } from '../../util/edgeCurrencyPluginIds'
+import {
+  checkInvalidTokenIds,
+  ensureInFuture,
+  getMaxSwappable,
+  InvalidTokenIds,
+  makeSwapPluginQuote,
+  SwapOrder
+} from '../../util/swapHelpers'
+import {
+  convertRequest,
+  denominationToNative,
+  getAddress,
+  memoType,
+  nativeToDenomination
+} from '../../util/utils'
+import { asNumberString, EdgeSwapRequestPlugin, StringMap } from '../types'
+
+const pluginId = 'stealthex'
+
+export const swapInfo: EdgeSwapInfo = {
+  pluginId,
+  isDex: false,
+  displayName: 'StealthEX',
+  supportEmail: 'support@stealthex.io'
+}
+
+const asInitOptions = asObject({
+  apiKey: asString
+})
+
+const API_BASE_URL = 'https://api.stealthex.io/v4'
+const ORDER_BASE_URL = 'https://stealthex.io/exchange/?id='
+
+const addressTypeMap: StringMap = {
+  zcash: 'transparentAddress'
+}
+
+/** StealthEX identifies an asset by its symbol on a specific network */
+interface StealthexAsset {
+  symbol: string
+  network: string
+}
+
+type StealthexRate = 'fixed' | 'floating'
+
+/**
+ * `reversed` estimation quotes by the amount the user receives, and StealthEX
+ * only offers it on fixed rate routes.
+ */
+type StealthexEstimation = 'direct' | 'reversed'
+
+/**
+ * One asset in StealthEX's catalog. `rates` is cleaned as plain strings so a
+ * rate type StealthEX adds later cannot invalidate every listing.
+ */
+const asStealthexCurrency = asObject({
+  symbol: asString,
+  network: asString,
+  rates: asArray(asString),
+  contract_address: asEither(asString, asNull)
+})
+type StealthexCurrency = ReturnType<typeof asStealthexCurrency>
+
+/** A malformed listing drops itself rather than the whole catalog page */
+const asStealthexCurrencies = asArray(asMaybe(asStealthexCurrency))
+
+/** The body both `/rates/estimated-amount` and `/exchanges` are built on */
+interface StealthexEstimateBody {
+  route: { from: StealthexAsset; to: StealthexAsset }
+  estimation: StealthexEstimation
+  rate: StealthexRate
+  amount: number
+}
+
+const asStealthexRange = asObject({
+  min_amount: asNumberString,
+  max_amount: asOptional(asNumberString)
+})
+
+const asStealthexEstimate = asObject({
+  estimated_amount: asNumberString,
+  // Only fixed rate estimates come with a rate to lock in:
+  rate: asOptional(asObject({ id: asString }))
+})
+
+/**
+ * A deposit memo / destination tag. StealthEX documents it as a string, but a
+ * numeric tag (XRP, and other tag chains) would arrive as a JSON number, and a
+ * cleaner that only accepts strings would fail the whole order response. An
+ * absent or blank value means the chain takes no memo.
+ */
+const asStealthexExtraId = asOptional(asEither(asString, asNumber, asNull))
+
+const asStealthexExchange = asObject({
+  id: asString,
+  deposit: asObject({
+    expected_amount: asNumberString,
+    address: asString,
+    extra_id: asStealthexExtraId
+  }),
+  withdrawal: asObject({
+    expected_amount: asNumberString
+  }),
+  created_at: asDate,
+  expires_at: asOptional(asDate)
+})
+
+/**
+ * Every StealthEX failure comes back as `{err: {kind, details}}`, and the kind
+ * is what distinguishes a bad pair from a bad amount.
+ */
+const asStealthexError = asMaybe(
+  asJSON(asObject({ err: asObject({ kind: asString, details: asString }) }))
+)
+
+/** Error kinds that mean StealthEX cannot swap this pair at all */
+const NO_ROUTE_KINDS = [
+  'NoPair',
+  'NoExchangeRoute',
+  'RouteIsDisabled',
+  'MarketUnavailable'
+]
+
+const INVALID_TOKEN_IDS: InvalidTokenIds = {
+  from: {},
+  to: {}
+}
+
+/** Fixed rate orders expire on their own, so a floating order needs a window */
+const FLOATING_EXPIRATION_MS = 1000 * 60 * 20
+
+/** `/currencies` pages at 250 listings, and the catalog runs about 1000 */
+const CATALOG_PAGE_SIZE = 250
+const CATALOG_MAX_PAGES = 40
+/** Pages fetched at once after the first, so a quote is not stuck serially */
+const CATALOG_PAGE_BATCH = 4
+const CATALOG_CACHE_MS = 1000 * 60 * 60
+
+export function makeStealthexPlugin(
+  opts: EdgeCorePluginOptions
+): EdgeSwapPlugin {
+  const { io, log } = opts
+  // StealthEX blocks browser-origin requests via CORS, and swap plugins run
+  // inside a WebView:
+  const { fetchCors = io.fetch } = io
+  const { apiKey } = asInitOptions(opts.initOptions)
+
+  const headers = {
+    'Content-Type': 'application/json',
+    Accept: 'application/json',
+    Authorization: `Bearer ${apiKey}`
+  }
+
+  /**
+   * StealthEX's whole asset catalog, indexed by provider network. It carries
+   * each listing's symbol, contract address and supported rate types, which is
+   * everything a quote needs to identify an asset.
+   */
+  let catalog = new Map<string, StealthexCurrency[]>()
+  let catalogUpdated = 0
+  let catalogErrorKind: string | undefined
+  let catalogFetch: Promise<void> | undefined
+
+  /**
+   * Edge tokenId to catalog listing, per `pluginId:network`, derived from
+   * `catalog`. Canonicalizing a contract address costs a call into the currency
+   * plugin and one network carries hundreds of listings, so a derived index
+   * lives until the catalog it came from is replaced.
+   */
+  const tokenIndexes = new Map<
+    string,
+    { stamp: number; byTokenId: Map<string, StealthexCurrency> }
+  >()
+
+  /**
+   * Returns the parsed JSON body, or the StealthEX error kind when the request
+   * failed with a recognizable error envelope.
+   */
+  const fetchStealthex = async (
+    path: string,
+    body?: unknown
+  ): Promise<{ json?: unknown; errorKind?: string }> => {
+    const response = await fetchCors(`${API_BASE_URL}${path}`, {
+      headers,
+      method: body == null ? 'GET' : 'POST',
+      body: body == null ? undefined : JSON.stringify(body)
+    })
+    const text = await response.text()
+
+    if (!response.ok) {
+      log.warn(`StealthEX ${path} returned ${response.status}: ${text}`)
+      const error = asStealthexError(text)
+      if (error != null) return { errorKind: error.err.kind }
+      throw new Error(`StealthEX returned error code ${response.status}`)
+    }
+
+    try {
+      return { json: JSON.parse(text) }
+    } catch (error: unknown) {
+      throw new Error(`StealthEX returned invalid JSON: ${text}`)
+    }
+  }
+
+  /** Turns an unexpected error kind into an error worth logging */
+  const unexpectedError = (path: string, errorKind: string): Error =>
+    new Error(`StealthEX ${path} failed with ${errorKind}`)
+
+  /**
+   * Maps a StealthEX error kind onto the Edge error it actually means. Every
+   * call site shares this so the same kind cannot mean an unsupported pair on
+   * one path and a generic plugin failure on another.
+   */
+  const stealthexError = (
+    path: string,
+    errorKind: string,
+    request: EdgeSwapRequestPlugin
+  ): Error => {
+    if (NO_ROUTE_KINDS.includes(errorKind)) {
+      return new SwapCurrencyError(swapInfo, request)
+    }
+    // StealthEX does not say what it is refusing, so do not claim a reason:
+    if (errorKind === 'NotAllowed') return new SwapPermissionError(swapInfo)
+    return unexpectedError(path, errorKind)
+  }
+
+  /**
+   * Refreshes the catalog once its TTL has lapsed. StealthEX renames listings,
+   * delists assets, corrects contract addresses and changes which pairs support
+   * fixed rates, so a catalog cached for the life of the app eventually quotes
+   * assets that no longer exist.
+   *
+   * The new catalog replaces the old one only after every page arrived and the
+   * result is non-empty. A failed or empty refresh keeps the previous good
+   * catalog and leaves the stamp expired, so the next quote retries instead of
+   * caching an outage for the full TTL.
+   */
+  const refreshCatalog = async (): Promise<void> => {
+    catalogErrorKind = undefined
+
+    const fetchPage = async (
+      page: number
+    ): Promise<{ listings: StealthexCurrency[]; full: boolean }> => {
+      const offset = page * CATALOG_PAGE_SIZE
+      const path = `/currencies?limit=${CATALOG_PAGE_SIZE}&offset=${offset}`
+      const { json, errorKind } = await fetchStealthex(path)
+      if (errorKind != null || json == null) {
+        catalogErrorKind = errorKind
+        throw unexpectedError(path, errorKind ?? 'no response body')
+      }
+      // A malformed listing drops itself rather than the whole page, so the
+      // raw count, not the kept count, says whether more pages follow:
+      const cleaned = asStealthexCurrencies(json)
+      return {
+        listings: cleaned.filter(
+          (currency): currency is StealthexCurrency => currency != null
+        ),
+        full: cleaned.length === CATALOG_PAGE_SIZE
+      }
+    }
+
+    const out = new Map<string, StealthexCurrency[]>()
+    let count = 0
+    const add = (listings: StealthexCurrency[]): void => {
+      for (const currency of listings) {
+        const network = out.get(currency.network) ?? []
+        network.push(currency)
+        out.set(currency.network, network)
+        ++count
+      }
+    }
+
+    try {
+      // The first page reports whether there is anything to page through, and
+      // the rest go out together: the catalog runs to about a thousand
+      // listings, and fetching five pages one after another makes the first
+      // quote of the hour wait on five round trips.
+      let more = await fetchPage(0)
+      add(more.listings)
+      let page = 1
+      while (more.full && page < CATALOG_MAX_PAGES) {
+        const batch = []
+        for (
+          let i = 0;
+          i < CATALOG_PAGE_BATCH && page + i < CATALOG_MAX_PAGES;
+          ++i
+        ) {
+          batch.push(fetchPage(page + i))
+        }
+        const pages = await Promise.all(batch)
+        for (const fetched of pages) add(fetched.listings)
+        page += pages.length
+        more = pages[pages.length - 1]
+      }
+    } catch (error: unknown) {
+      log.warn('StealthEX: could not update the currency catalog', error)
+      return
+    }
+
+    if (count === 0) {
+      log.warn('StealthEX: the currency catalog came back empty')
+      return
+    }
+    catalog = out
+    catalogUpdated = Date.now()
+  }
+
+  /** Refreshes the catalog on a lapsed TTL, one refresh per set of callers */
+  const updateCatalog = async (): Promise<void> => {
+    if (catalogUpdated > Date.now() - CATALOG_CACHE_MS) return
+    if (catalogFetch == null) {
+      catalogFetch = refreshCatalog().finally(() => {
+        catalogFetch = undefined
+      })
+    }
+    await catalogFetch
+  }
+
+  /**
+   * Builds, or reuses, the `tokenId` to listing index for one wallet's chain on
+   * one StealthEX network. Provider contract addresses are canonicalized
+   * through the wallet's own currency plugin, so casing and formatting
+   * differences cannot cause a false mismatch, and a listing whose
+   * `contract_address` is not a real address on this chain drops out.
+   */
+  const getTokenIndex = async (
+    wallet: EdgeCurrencyWallet,
+    network: string
+  ): Promise<Map<string, StealthexCurrency>> => {
+    const key = `${wallet.currencyInfo.pluginId}:${network}`
+    const cached = tokenIndexes.get(key)
+    if (cached != null && cached.stamp === catalogUpdated) {
+      return cached.byTokenId
+    }
+
+    const byTokenId = new Map<string, StealthexCurrency>()
+    for (const currency of catalog.get(network) ?? []) {
+      const contractAddress = currency.contract_address
+      if (contractAddress == null) continue
+
+      const token: EdgeToken = {
+        currencyCode: 'FAKE',
+        denominations: [{ name: 'FAKE', multiplier: '1' }],
+        displayName: 'FAKE',
+        networkLocation: { contractAddress }
+      }
+      try {
+        const tokenId = await wallet.currencyConfig.getTokenId(token)
+        if (tokenId != null) byTokenId.set(tokenId, currency)
+      } catch (error: unknown) {
+        // Not an address this chain recognizes, so not this chain's token
+      }
+    }
+
+    tokenIndexes.set(key, { stamp: catalogUpdated, byTokenId })
+    return byTokenId
+  }
+
+  /**
+   * The catalog listing for a wallet's asset, resolved by contract address
+   * rather than by ticker. Symbols are not unique across listings and StealthEX
+   * does not always spell a token the way Edge does, so a ticker match is both
+   * unsafe and needlessly narrow. Returns undefined when StealthEX does not
+   * list the asset.
+   */
+  const resolveListing = async (
+    wallet: EdgeCurrencyWallet,
+    tokenId: EdgeTokenId,
+    chain: StealthexChain
+  ): Promise<StealthexCurrency | undefined> => {
+    if (tokenId == null) {
+      // A native asset, so the listing must carry no contract address either:
+      return catalog
+        .get(chain.mainnetNetwork)
+        ?.find(
+          currency =>
+            currency.symbol === chain.mainnetSymbol &&
+            currency.contract_address == null
+        )
+    }
+
+    const { tokenNetwork } = chain
+    if (tokenNetwork == null) return undefined
+    const byTokenId = await getTokenIndex(wallet, tokenNetwork)
+    return byTokenId.get(tokenId)
+  }
+
+  const getQuote = async (
+    request: EdgeSwapRequestPlugin
+  ): Promise<SwapOrder> => {
+    const { fromWallet, toWallet, fromTokenId, toTokenId, quoteFor } = request
+
+    const fromChain = stealthexMapping.get(
+      fromWallet.currencyInfo.pluginId as EdgeCurrencyPluginId
+    )
+    const toChain = stealthexMapping.get(
+      toWallet.currencyInfo.pluginId as EdgeCurrencyPluginId
+    )
+    if (fromChain == null || toChain == null) {
+      throw new SwapCurrencyError(swapInfo, request)
+    }
+
+    await updateCatalog()
+    if (catalog.size === 0) {
+      // A catalog outage is a provider failure, not an unsupported pair. Saying
+      // otherwise would drop StealthEX out of the quote race silently and tell
+      // the user the pair does not exist.
+      if (catalogErrorKind === 'NotAllowed')
+        throw new SwapPermissionError(swapInfo)
+      throw new Error(
+        `StealthEX currency catalog unavailable: ${
+          catalogErrorKind ?? 'no catalog'
+        }`
+      )
+    }
+
+    const [fromCurrency, toCurrency] = await Promise.all([
+      resolveListing(fromWallet, fromTokenId, fromChain),
+      resolveListing(toWallet, toTokenId, toChain)
+    ])
+    if (fromCurrency == null || toCurrency == null) {
+      throw new SwapCurrencyError(swapInfo, request)
+    }
+    const route: StealthexEstimateBody['route'] = {
+      from: { symbol: fromCurrency.symbol, network: fromCurrency.network },
+      to: { symbol: toCurrency.symbol, network: toCurrency.network }
+    }
+
+    // A `to` quote asks StealthEX to work backwards from the payout amount,
+    // which it only does on fixed rate routes:
+    const estimation: StealthexEstimation =
+      quoteFor === 'to' ? 'reversed' : 'direct'
+    const fixedSupported =
+      fromCurrency.rates.includes('fixed') && toCurrency.rates.includes('fixed')
+    if (estimation === 'reversed' && !fixedSupported) {
+      throw new SwapCurrencyError(swapInfo, request)
+    }
+
+    const getRange = async (
+      rate: StealthexRate
+    ): Promise<ReturnType<typeof asStealthexRange> | undefined> => {
+      const { json, errorKind } = await fetchStealthex('/rates/range', {
+        route,
+        estimation,
+        rate
+      })
+      if (errorKind != null || json == null) {
+        // A missing route is the caller's cue to try the other rate type:
+        if (errorKind != null && NO_ROUTE_KINDS.includes(errorKind)) {
+          return undefined
+        }
+        throw stealthexError('/rates/range', errorKind ?? 'unknown', request)
+      }
+      return asStealthexRange(json)
+    }
+
+    // The amount is denominated in whichever asset the user pinned down:
+    const quoteWallet = quoteFor === 'to' ? toWallet : fromWallet
+    const quoteTokenId = quoteFor === 'to' ? toTokenId : fromTokenId
+    const quoteAmount = nativeToDenomination(
+      quoteWallet,
+      request.nativeAmount,
+      quoteTokenId
+    )
+    const limitDirection = quoteFor === 'to' ? 'to' : 'from'
+
+    /**
+     * The limit error for an amount outside the pair's range, or undefined when
+     * the amount fits. Bounds round INWARD, minimums up and maximums down, so a
+     * rounded limit can never sit outside what StealthEX actually accepts and
+     * send the user back with an amount that fails again.
+     */
+    const checkLimits = (
+      range: ReturnType<typeof asStealthexRange>
+    ): Error | undefined => {
+      if (lt(quoteAmount, range.min_amount)) {
+        return new SwapBelowLimitError(
+          swapInfo,
+          ceil(
+            denominationToNative(quoteWallet, range.min_amount, quoteTokenId),
+            0
+          ),
+          limitDirection
+        )
+      }
+      if (range.max_amount != null && gt(quoteAmount, range.max_amount)) {
+        return new SwapAboveLimitError(
+          swapInfo,
+          floor(
+            denominationToNative(quoteWallet, range.max_amount, quoteTokenId),
+            0
+          ),
+          limitDirection
+        )
+      }
+    }
+
+    /**
+     * Runs one rate type end to end: the pair's range, the amount check, and
+     * the estimate. Returns undefined when this rate type has no usable route,
+     * which is the caller's cue to try the other one.
+     */
+    let limitError: Error | undefined
+    const attemptRate = async (
+      rate: StealthexRate
+    ): Promise<
+      | {
+          rate: StealthexRate
+          estimate: ReturnType<typeof asStealthexEstimate>
+          body: StealthexEstimateBody
+        }
+      | undefined
+    > => {
+      const range = await getRange(rate)
+      if (range == null) return undefined
+
+      // An amount outside THIS rate type's range is not the end of the quote:
+      // fixed and floating routes carry different limits, so remember the error
+      // and let the caller try the other rate before reporting it.
+      const outOfRange = checkLimits(range)
+      if (outOfRange != null) {
+        limitError = outOfRange
+        return undefined
+      }
+
+      const body: StealthexEstimateBody = {
+        route,
+        estimation,
+        rate,
+        amount: Number(quoteAmount)
+      }
+      const { json, errorKind } = await fetchStealthex(
+        '/rates/estimated-amount',
+        body
+      )
+      if (errorKind != null || json == null) {
+        if (errorKind != null && NO_ROUTE_KINDS.includes(errorKind)) {
+          return undefined
+        }
+        throw stealthexError(
+          '/rates/estimated-amount',
+          errorKind ?? 'unknown',
+          request
+        )
+      }
+      const estimate = asStealthexEstimate(json)
+
+      // A fixed order is only fixed if StealthEX returned a rate to lock in.
+      // Creating the order without one leaves the payout floating while the
+      // quote claims a guaranteed amount, so treat it as no fixed route:
+      if (rate === 'fixed' && estimate.rate == null) {
+        log.warn('StealthEX returned a fixed estimate carrying no rate id')
+        return undefined
+      }
+      return { rate, estimate, body }
+    }
+
+    // Both assets supporting fixed rates does not guarantee the pair has a
+    // fixed rate route, so fall back to floating when the fixed one is missing.
+    // A reversed estimate has no floating equivalent, so it never falls back.
+    const attempt =
+      (fixedSupported ? await attemptRate('fixed') : undefined) ??
+      (estimation === 'direct' ? await attemptRate('floating') : undefined)
+    if (attempt == null) {
+      // A limit failure describes the pair better than "unsupported" does:
+      throw limitError ?? new SwapCurrencyError(swapInfo, request)
+    }
+    const { rate, estimate, body: estimateBody } = attempt
+
+    const [fromAddress, toAddress] = await Promise.all([
+      getAddress(fromWallet, addressTypeMap[fromWallet.currencyInfo.pluginId]),
+      getAddress(toWallet, addressTypeMap[toWallet.currencyInfo.pluginId])
+    ])
+
+    const exchangeReply = await fetchStealthex('/exchanges', {
+      ...estimateBody,
+      // `attemptRate` guarantees a fixed estimate carries one, so the order is
+      // locked at exactly the rate the quote showed:
+      ...(estimate.rate == null ? {} : { rate_id: estimate.rate.id }),
+      address: toAddress,
+      refund_address: fromAddress
+    })
+    if (exchangeReply.errorKind != null || exchangeReply.json == null) {
+      throw stealthexError(
+        '/exchanges',
+        exchangeReply.errorKind ?? 'unknown',
+        request
+      )
+    }
+    const exchange = asStealthexExchange(exchangeReply.json)
+
+    // StealthEX quotes more decimal places than a token may support, and native
+    // amounts have to be whole atomic units:
+    const fromNativeAmount = floor(
+      denominationToNative(
+        fromWallet,
+        exchange.deposit.expected_amount,
+        fromTokenId
+      ),
+      0
+    )
+    const toNativeAmount = floor(
+      denominationToNative(
+        toWallet,
+        exchange.withdrawal.expected_amount,
+        toTokenId
+      ),
+      0
+    )
+
+    // A numeric tag arrives as a JSON number, and an empty string means the
+    // chain takes no memo, so neither may become an EdgeMemo as-is:
+    const extraId = exchange.deposit.extra_id
+    const memoValue = extraId == null ? '' : String(extraId)
+    const memos: EdgeMemo[] =
+      memoValue === ''
+        ? []
+        : [
+            {
+              type: memoType(fromWallet.currencyInfo.pluginId),
+              value: memoValue
+            }
+          ]
+
+    const spendInfo: EdgeSpendInfo = {
+      tokenId: fromTokenId,
+      spendTargets: [
+        {
+          nativeAmount: fromNativeAmount,
+          publicAddress: exchange.deposit.address
+        }
+      ],
+      memos,
+      networkFeeOption: 'high',
+      assetAction: {
+        assetActionType: 'swap'
+      },
+      savedAction: {
+        actionType: 'swap',
+        swapInfo,
+        orderId: exchange.id,
+        orderUri: ORDER_BASE_URL + exchange.id,
+        isEstimate: rate === 'floating',
+        toAsset: {
+          pluginId: toWallet.currencyInfo.pluginId,
+          tokenId: toTokenId,
+          nativeAmount: toNativeAmount
+        },
+        fromAsset: {
+          pluginId: fromWallet.currencyInfo.pluginId,
+          tokenId: fromTokenId,
+          nativeAmount: fromNativeAmount
+        },
+        payoutAddress: toAddress,
+        payoutWalletId: toWallet.id,
+        refundAddress: fromAddress
+      }
+    }
+
+    // Floating rate orders never expire, so give the user the same window a
+    // fixed rate order gets:
+    const expirationDate =
+      exchange.expires_at ??
+      new Date(exchange.created_at.getTime() + FLOATING_EXPIRATION_MS)
+
+    return {
+      request,
+      spendInfo,
+      swapInfo,
+      fromNativeAmount,
+      expirationDate: ensureInFuture(expirationDate)
+    }
+  }
+
+  const out: EdgeSwapPlugin = {
+    swapInfo,
+
+    async fetchSwapQuote(req: EdgeSwapRequest): Promise<EdgeSwapQuote> {
+      const request = convertRequest(req)
+
+      checkInvalidTokenIds(INVALID_TOKEN_IDS, request, swapInfo)
+
+      const newRequest = await getMaxSwappable(getQuote, request)
+      const swapOrder = await getQuote(newRequest)
+      return await makeSwapPluginQuote(swapOrder)
+    }
+  }
+
+  return out
+}
