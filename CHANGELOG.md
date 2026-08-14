@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- added: (Rango) Tron swaps. A TRON quote previously fell through to the EVM transaction handler and threw, even though the chain was already mapped. The `TriggerSmartContract` call Rango returns now reaches the currency plugin intact, and a TRC20 sell picks up the router allowance Rango returns alongside it as a pre-transaction.
+
 ## 2.52.2 (2026-07-27)
 
 - fixed: Maya swaps spending RUNE now send to Maya's inbound address instead of depositing into THORChain's own state machine, which misrouted the swap (THORChain read Maya's `=:d:` DASH memo as an unparseable DOGE swap and the deposit failed).
