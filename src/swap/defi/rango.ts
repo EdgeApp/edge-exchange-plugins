@@ -7,6 +7,7 @@ import {
   asObject,
   asOptional,
   asString,
+  asTuple,
   asUnknown,
   asValue
 } from 'cleaners'
@@ -22,6 +23,7 @@ import {
   SwapBelowLimitError,
   SwapCurrencyError
 } from 'edge-core-js/types'
+import { ethers } from 'ethers'
 import { base64 } from 'rfc4648'
 
 import { rango as rangoMapping } from '../../mappings/rango'
@@ -72,6 +74,51 @@ const RANGO_SERVERS_DEFAULT = ['https://api.rango.exchange']
 const PARENT_TOKEN_CONTRACT_ADDRESS = '0x0'
 
 const DEFAULT_SLIPPAGE = '5'
+
+/**
+ * Tron contract payloads carry hex addresses, while wallets and spend targets
+ * speak base58check.
+ */
+export const hexToTronAddress = (hexAddress: string): string => {
+  const payload = Buffer.from(hexAddress, 'hex')
+  const checksum = Buffer.from(
+    ethers.utils.sha256(ethers.utils.sha256(payload)).slice(2, 10),
+    'hex'
+  )
+  return ethers.utils.base58.encode(Buffer.concat([payload, checksum]))
+}
+
+const TRON_APPROVE_SELECTOR = '095ea7b3'
+const TRON_ADDRESS_PREFIX = '41'
+
+// TRC20 calls that move or expose a balance directly. A swap goes through a
+// router and never makes one of these itself.
+const TRC20_MOVE_SELECTORS = [
+  TRON_APPROVE_SELECTOR,
+  'a9059cbb', // transfer(address,uint256)
+  '23b872dd', // transferFrom(address,address,uint256)
+  '39509351', // increaseAllowance(address,uint256)
+  'd73dd623' // increaseApproval(address,uint256)
+]
+
+/**
+ * Recovers the spender and allowance an `approve(address,uint256)` call
+ * grants, so an approval can be checked against the swap it is supposed to
+ * serve rather than against whatever the provider says it is for.
+ */
+export const decodeTronApproval = (
+  callData: string
+): { spender: string; nativeAmount: string } => {
+  const data = callData.replace(/^0x/, '').toLowerCase()
+  if (!data.startsWith(TRON_APPROVE_SELECTOR) || data.length < 136) {
+    throw new Error('Rango returned an approval that is not an approve() call')
+  }
+  const spender = data.slice(32, 72)
+  return {
+    spender: hexToTronAddress(`${TRON_ADDRESS_PREFIX}${spender}`),
+    nativeAmount: hexToDecimal(data.slice(72, 136))
+  }
+}
 
 interface Asset {
   blockchain: string
@@ -215,6 +262,36 @@ const asSuiTransaction = asObject({
   unsignedPtbBase64: asString
 })
 
+/**
+ * Tron transactions arrive as a finished `TriggerSmartContract` call. The
+ * payload passes through to the currency plugin untouched, since only the
+ * exact call Rango built will execute the swap.
+ */
+const asTronContract = asObject({
+  type: asValue('TriggerSmartContract'),
+  parameter: asObject({
+    value: asObject({
+      owner_address: asString,
+      contract_address: asString,
+      data: asString,
+      call_value: asOptional(asNumber, 0),
+      call_token_value: asOptional(asNumber, 0)
+    }).withRest
+  }).withRest
+}).withRest
+
+const asTronRawData = asObject({
+  contract: asTuple(asTronContract),
+  fee_limit: asOptional(asNumber)
+}).withRest
+
+const asTronTransaction = asObject({
+  type: asValue('TRON'),
+  raw_data: asTronRawData,
+  // Present when the sold token still needs an allowance for the router
+  approve_raw_data: asOptional(asEither(asTronRawData, asNull))
+})
+
 const asSwapResponse = asObject({
   resultType: asRoutingResultType,
   route: asEither(asSwapSimulationResult, asNull),
@@ -224,6 +301,7 @@ const asSwapResponse = asObject({
     asSolanaTransaction,
     asCosmosTransaction,
     asSuiTransaction,
+    asTronTransaction,
     asNull
   ),
   // Common tracking fields that might be in the response
@@ -671,6 +749,155 @@ export function makeRangoPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
         }
 
         return { ...swapOrderBase, makeTxParams }
+      }
+      case 'TRON': {
+        const {
+          approve_raw_data: approveRawData,
+          raw_data: rawData
+        } = asTronTransaction(tx)
+        const swapContract = rawData.contract[0]
+        const routerAddress = hexToTronAddress(
+          swapContract.parameter.value.contract_address
+        )
+
+        // The chain debits `call_value`, not the quoted amount, so the call
+        // may not move more TRX than the user is shown selling.
+        const callValue = String(swapContract.parameter.value.call_value)
+        const maxCallValue = fromTokenId == null ? nativeAmount : '0'
+        if (!lte(callValue, maxCallValue)) {
+          throw new Error(
+            `Rango swap sends ${callValue} sun, above the quoted ${maxCallValue}`
+          )
+        }
+
+        // Neither call may attach a TRC10 balance, which no quote accounts for.
+        if (
+          swapContract.parameter.value.call_token_value !== 0 ||
+          (approveRawData != null &&
+            approveRawData.contract[0].parameter.value.call_token_value !== 0)
+        ) {
+          throw new Error('Rango TRON call attaches a TRC10 token')
+        }
+
+        // Only the approval above may touch the sold token directly. A swap
+        // call aimed at the token itself, or shaped like a transfer or an
+        // approval, could move or expose more than the quoted amount.
+        const swapSelector = swapContract.parameter.value.data
+          .replace(/^0x/, '')
+          .slice(0, 8)
+          .toLowerCase()
+        if (routerAddress === fromContractAddress) {
+          throw new Error('Rango swap calls the sold token contract directly')
+        }
+        if (TRC20_MOVE_SELECTORS.includes(swapSelector)) {
+          throw new Error(
+            `Rango swap is a token transfer or approval (${swapSelector}), not a swap`
+          )
+        }
+
+        // The router needs an allowance before it can pull a TRC20 balance.
+        // Rango hands us that approval alongside the swap itself.
+        if (approveRawData != null) {
+          const approveContract = approveRawData.contract[0]
+          const approveTokenAddress = hexToTronAddress(
+            approveContract.parameter.value.contract_address
+          )
+
+          // Read the spender and allowance out of the approval's own call
+          // data rather than trusting the swap it arrived with. An approval
+          // that grants an allowance to anyone but this router, over a token
+          // other than the one being sold, or for more than the quoted sell
+          // amount, is not the approval this swap needs.
+          const {
+            spender: spenderAddress,
+            nativeAmount: allowance
+          } = decodeTronApproval(approveContract.parameter.value.data)
+          if (spenderAddress !== routerAddress) {
+            throw new Error(
+              `Rango approval grants ${spenderAddress} rather than the swap contract ${routerAddress}`
+            )
+          }
+          if (approveTokenAddress !== fromContractAddress) {
+            throw new Error(
+              `Rango approval covers ${approveTokenAddress} rather than the asset being sold`
+            )
+          }
+          if (!lte(allowance, nativeAmount)) {
+            throw new Error(
+              `Rango approval allows ${allowance}, above the quoted ${nativeAmount}`
+            )
+          }
+          if (approveContract.parameter.value.call_value !== 0) {
+            throw new Error('Rango approval sends TRX along with the approve()')
+          }
+
+          const approvalTx = await fromWallet.makeSpend({
+            tokenId: null,
+            spendTargets: [
+              {
+                nativeAmount: '0',
+                publicAddress: approveTokenAddress
+              }
+            ],
+            otherParams: {
+              contractJson: approveContract,
+              feeLimit: approveRawData.fee_limit
+            },
+            assetAction: {
+              assetActionType: 'tokenApproval'
+            },
+            savedAction: {
+              actionType: 'tokenApproval',
+              tokenApproved: {
+                pluginId: fromWallet.currencyInfo.pluginId,
+                tokenId: fromTokenId,
+                nativeAmount
+              },
+              tokenContractAddress: approveTokenAddress,
+              contractAddress: spenderAddress
+            }
+          })
+          preTxs.push(approvalTx)
+        }
+
+        spendInfo = {
+          tokenId: request.fromTokenId,
+          spendTargets: [
+            {
+              nativeAmount,
+              publicAddress: routerAddress
+            }
+          ],
+          otherParams: {
+            contractJson: swapContract,
+            feeLimit: rawData.fee_limit
+          },
+          memos: [],
+          assetAction: {
+            assetActionType: 'swap'
+          },
+          savedAction: {
+            actionType: 'swap',
+            swapInfo,
+            orderUri: orderUriValue,
+            isEstimate: true,
+            toAsset: {
+              pluginId: toWallet.currencyInfo.pluginId,
+              tokenId: toTokenId,
+              nativeAmount: route.outputAmount
+            },
+            fromAsset: {
+              pluginId: fromWallet.currencyInfo.pluginId,
+              tokenId: fromTokenId,
+              nativeAmount
+            },
+            payoutAddress: toAddress,
+            payoutWalletId: toWallet.id,
+            refundAddress: fromAddress
+          }
+        }
+
+        break
       }
       case 'COSMOS': {
         const cosmosTransaction = asCosmosTransaction(tx)
