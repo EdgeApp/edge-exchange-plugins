@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- added: HoudiniSwap swap plugin with privacy routing, receive-amount quotes, and swap-to-address with memo support
+- changed: `checkInvalidTokenIds` takes an `allowSameAsset` option for privacy providers
+
 ## 2.55.0 (2026-09-07)
 
 - added: Robinhood Chain swaps via SideShift, LI.FI, Rango, ChangeNow, Swapuz and LetsExchange.

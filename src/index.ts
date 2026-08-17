@@ -7,6 +7,7 @@ import { makeChangellyPlugin } from './swap/central/changelly'
 import { makeChangeNowPlugin } from './swap/central/changenow'
 import { makeExolixPlugin } from './swap/central/exolix'
 import { makeGodexPlugin } from './swap/central/godex'
+import { makeHoudiniPlugin } from './swap/central/houdini'
 import { makeLetsExchangePlugin } from './swap/central/letsexchange'
 import { makeNexchangePlugin } from './swap/central/nexchange'
 import { makeNymPlugin } from './swap/central/nym'
@@ -40,6 +41,7 @@ const plugins = {
   cosmosibc: makeCosmosIbcPlugin,
   exolix: makeExolixPlugin,
   godex: makeGodexPlugin,
+  houdini: makeHoudiniPlugin,
   letsexchange: makeLetsExchangePlugin,
   lifi: makeLifiPlugin,
   nexchange: makeNexchangePlugin,
