@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- added: HoudiniSwap swap plugin with privacy routing, receive-amount quotes, and swap-to-address with memo support
+- changed: `checkInvalidTokenIds` takes an `allowSameAsset` option for privacy providers
 - fixed: (LI.FI) Swaps from SOL and Solana tokens failing with "Non-base58 character"
 
 ## 2.57.4 (2026-10-01)
