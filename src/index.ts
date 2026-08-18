@@ -11,6 +11,7 @@ import { makeLetsExchangePlugin } from './swap/central/letsexchange'
 import { makeNexchangePlugin } from './swap/central/nexchange'
 import { makeNymPlugin } from './swap/central/nym'
 import { makeSideshiftPlugin } from './swap/central/sideshift'
+import { makeSwapsXyzPlugin } from './swap/central/swapsxyz'
 import { makeSwapuzPlugin } from './swap/central/swapuz'
 import { makeXgramPlugin } from './swap/central/xgram'
 import { make0xGaslessPlugin } from './swap/defi/0x/0xGasless'
@@ -46,6 +47,7 @@ const plugins = {
   rango: makeRangoPlugin,
   sideshift: makeSideshiftPlugin,
   spookySwap: makeSpookySwapPlugin,
+  swapsxyz: makeSwapsXyzPlugin,
   swapuz: makeSwapuzPlugin,
   mayaprotocol: makeMayaProtocolPlugin,
   thorchain: makeThorchainPlugin,
