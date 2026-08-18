@@ -451,6 +451,16 @@ export function makeThorchainBasedPlugin(
         : undefined
     )
 
+    // Maya cannot refund a shielded Zcash source without a transparent
+    // (t-address) refund address; other chains default to the sending address,
+    // which is correct, so no refund address is needed. The address is injected
+    // into the ZEC swap memo below via `appendMayaRefundAddress` (see that
+    // helper for why it is not passed to the quote endpoint).
+    const refundAddress =
+      fromWallet.currencyInfo.pluginId === 'zcash'
+        ? await getAddress(fromWallet, 'transparentAddress')
+        : undefined
+
     const fromMainnetCode =
       MAINNET_CODE_TRANSCRIPTION[fromWallet.currencyInfo.pluginId]
     const toMainnetCode =
@@ -879,18 +889,16 @@ export function makeThorchainBasedPlugin(
         fromCurrencyCode
       )
 
-      // Debug logging for Maya ZEC ZIP-321 construction
-      log(
-        '[MAYA ZEC] zip321 components ' +
-          JSON.stringify({
-            chain: fromCurrencyCode,
-            inbound_address: thorAddress,
-            memo_ascii: memo,
-            memo_recipient: memoRecipient,
-            amount_native: fromNativeAmount,
-            amount_decimal: amountZec
-          })
-      )
+      // Maya cannot refund a shielded Zcash source without a transparent refund
+      // address. This is the Zcash-only path, so it must be present.
+      if (refundAddress == null || refundAddress === '') {
+        throw new SwapCurrencyError(swapInfo, request)
+      }
+
+      // Inject the transparent refund address into the shielded ZEC swap memo,
+      // which is fetched from the quote endpoint without it (see
+      // `appendMayaRefundAddress`).
+      memo = appendMayaRefundAddress(memo, toAddress, refundAddress)
 
       // Encode memo per ZIP-321 as base64url (unpadded).
       const memoBase64Url = base64urlnopad.encode(utf8.decode(memo))
@@ -1602,6 +1610,32 @@ export const getVolatilitySpread = ({
 
   return volatilitySpreadFinal.toString()
 }
+
+/**
+ * Append a transparent (t-address) refund address to a Maya swap memo for a
+ * shielded Zcash source.
+ *
+ * Maya cannot refund a shielded Zcash source without a transparent refund
+ * address, which it reads from the swap memo's destination field as
+ * `DESTADDR/REFUNDADDR`. The address cannot be obtained from the quote/swap
+ * endpoint: given a `refund_address`, Maya builds that same memo and then
+ * rejects the quote because the result overflows Zcash's 80-char
+ * transparent-memo limit (e.g. ZEC->DASH is 86/80, verified against the live
+ * endpoint). The shielded Zcash send instead carries the memo in the encrypted
+ * note (512 bytes), which is not bound by that limit, so the refund is appended
+ * here after the quote is fetched without it.
+ *
+ * Maya reads the refund from the memo's destination field as
+ * `DESTADDR/REFUNDADDR`, so the destination address in the memo is replaced
+ * with `DESTADDR/REFUNDADDR`. A memo that does not contain the destination
+ * address is returned unchanged.
+ */
+export const appendMayaRefundAddress = (
+  memo: string,
+  destinationAddress: string,
+  refundAddress: string
+): string =>
+  memo.replace(destinationAddress, `${destinationAddress}/${refundAddress}`)
 
 /**
  * This will return the expected amount out from the quote maintaining backwards
