@@ -243,7 +243,7 @@ export function makeSwapuzPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
       )
 
       const memos: EdgeMemo[] =
-        memoFrom == null
+        memoFrom == null || memoFrom === ''
           ? []
           : [
               {
