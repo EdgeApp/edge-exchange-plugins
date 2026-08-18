@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 2.53.0 (2026-08-18)
+
 - added: Swapter swap provider
 
 ## 2.52.2 (2026-07-27)
