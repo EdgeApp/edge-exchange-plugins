@@ -379,6 +379,19 @@ describe('makeSimpleSwapPlugin.fetchSwapQuote', function () {
     const exchangeCalls: string[] = []
     const handler: FetchHandler = (url, method) => {
       if (method === 'POST') exchangeCalls.push(url)
+      if (routeOf(url) === 'exchanges') {
+        return {
+          status: 200,
+          body: {
+            result: {
+              id: 'order-max',
+              addressFrom: 'deposit-addr',
+              amountFrom: '0.19', // the trimmed max the plugin sent
+              amountTo: '0.05'
+            }
+          }
+        }
+      }
       return { status: 200, body: okReplies[routeOf(url)] }
     }
     const request = fromRequest()
@@ -397,11 +410,248 @@ describe('makeSimpleSwapPlugin.fetchSwapQuote', function () {
       infoPayload: {}
     } as any)
 
-    assert.equal(quote.fromNativeAmount, '10000000') // from create response
+    assert.equal(quote.fromNativeAmount, '19000000') // the trimmed max
     assert.equal(exchangeCalls.length, 1)
     // The probe targets the user's own address and is never broadcast;
     // without skipChecks EVM engines reject it with SpendToSelfError.
     assert.equal(probeSpendInfo.skipChecks, true)
+  })
+
+  it('falls back to floating when the fixed flow fails on a server error', async function () {
+    // SimpleSwap rejects a fixed-rate order paying out to a memo/tag chain
+    // with `500 check extra_id`; only the floating flow gets past it.
+    const handler: FetchHandler = url => {
+      if (url.includes('fixed=true') && routeOf(url) !== 'ranges') {
+        return { status: 500, body: { message: 'check extra_id' } }
+      }
+      if (routeOf(url) === 'estimates') {
+        return { status: 200, body: { result: { estimatedAmount: '0.05' } } }
+      }
+      return { status: 200, body: okReplies[routeOf(url)] }
+    }
+    const plugin = makeSimpleSwapPlugin(makeOpts(handler))
+    const quote = await plugin.fetchSwapQuote(fromRequest(), undefined, {
+      infoPayload: {}
+    } as any)
+
+    assert.equal(quote.isEstimate, true) // served by the floating flow
+  })
+
+  it('surfaces the fixed flow SwapCurrencyError over a floating server error', async function () {
+    const handler: FetchHandler = url => {
+      if (routeOf(url) === 'ranges') {
+        return url.includes('fixed=true')
+          ? { status: 404, body: {} } // pair unavailable fixed
+          : { status: 500, body: {} } // floating side is just broken
+      }
+      return { status: 200, body: okReplies[routeOf(url)] }
+    }
+    const plugin = makeSimpleSwapPlugin(makeOpts(handler))
+    await expectError(
+      plugin.fetchSwapQuote(fromRequest(), undefined, {
+        infoPayload: {}
+      } as any),
+      'SwapCurrencyError'
+    )
+  })
+
+  it('rounds provider amounts to whole atomic units', async function () {
+    const handler: FetchHandler = url =>
+      routeOf(url) === 'exchanges'
+        ? {
+            status: 200,
+            body: {
+              result: {
+                id: 'order-3',
+                addressFrom: 'deposit-addr',
+                amountFrom: '0.1',
+                // More decimals than ETH's denomination holds
+                amountTo: '0.0500000000000000005'
+              }
+            }
+          }
+        : { status: 200, body: okReplies[routeOf(url)] }
+    const plugin = makeSimpleSwapPlugin(makeOpts(handler))
+    const quote = await plugin.fetchSwapQuote(fromRequest(), undefined, {
+      infoPayload: {}
+    } as any)
+
+    assert.equal(quote.toNativeAmount, '50000000000000000')
+  })
+
+  it('rounds a range minimum up, never below what SimpleSwap accepts', async function () {
+    const handler: FetchHandler = url =>
+      routeOf(url) === 'ranges'
+        ? {
+            status: 200,
+            // 0.100000001 BTC = 10000000.1 native, just above the request
+            body: { result: { min: '0.100000001', max: '10' } }
+          }
+        : { status: 200, body: okReplies[routeOf(url)] }
+    const plugin = makeSimpleSwapPlugin(makeOpts(handler))
+    try {
+      await plugin.fetchSwapQuote(fromRequest(), undefined, {
+        infoPayload: {}
+      } as any)
+      assert.fail('expected SwapBelowLimitError')
+    } catch (error: unknown) {
+      assert.equal((error as Error).name, 'SwapBelowLimitError')
+      assert.equal((error as any).nativeMin, '10000001')
+    }
+  })
+
+  it('rejects a source amount above the requested amount', async function () {
+    const exchangeCalls: string[] = []
+    const handler: FetchHandler = (url, method) => {
+      if (method === 'POST') exchangeCalls.push(url)
+      return routeOf(url) === 'exchanges'
+        ? {
+            status: 200,
+            body: {
+              result: {
+                id: 'order-4',
+                addressFrom: 'deposit-addr',
+                amountFrom: '0.2', // double what the request pinned
+                amountTo: '0.05'
+              }
+            }
+          }
+        : { status: 200, body: okReplies[routeOf(url)] }
+    }
+    const plugin = makeSimpleSwapPlugin(makeOpts(handler))
+    try {
+      await plugin.fetchSwapQuote(fromRequest(), undefined, {
+        infoPayload: {}
+      } as any)
+      assert.fail('expected the source amount to be rejected')
+    } catch (error: unknown) {
+      assert.include(
+        (error as Error).message,
+        'source amount that does not match the requested amount'
+      )
+    }
+    // The fixed order already exists, so the float flow must not run and
+    // abandon it for a second one.
+    assert.equal(exchangeCalls.length, 1)
+  })
+
+  it('keeps a numeric deposit tag, including tag 0', async function () {
+    const makeHandler = (extraIdFrom: unknown): FetchHandler => url =>
+      routeOf(url) === 'exchanges'
+        ? {
+            status: 200,
+            body: {
+              result: {
+                id: 'order-5',
+                addressFrom: 'xrp-deposit',
+                extraIdFrom,
+                amountFrom: '0.1',
+                amountTo: '0.05'
+              }
+            }
+          }
+        : { status: 200, body: okReplies[routeOf(url)] }
+
+    // SimpleSwap sends the tag as a JSON number on some chains
+    let plugin = makeSimpleSwapPlugin(makeOpts(makeHandler(668522715)))
+    await plugin.fetchSwapQuote(fromRequest(), undefined, {
+      infoPayload: {}
+    } as any)
+    assert.deepEqual(capturedSpendInfo.memos, [
+      { type: 'text', value: '668522715' }
+    ])
+
+    // Tag 0 is a real tag, not an absent one
+    plugin = makeSimpleSwapPlugin(makeOpts(makeHandler(0)))
+    await plugin.fetchSwapQuote(fromRequest(), undefined, {
+      infoPayload: {}
+    } as any)
+    assert.deepEqual(capturedSpendInfo.memos, [{ type: 'text', value: '0' }])
+
+    // An empty tag is absent, not an empty memo
+    plugin = makeSimpleSwapPlugin(makeOpts(makeHandler('')))
+    await plugin.fetchSwapQuote(fromRequest(), undefined, {
+      infoPayload: {}
+    } as any)
+    assert.deepEqual(capturedSpendInfo.memos, [])
+  })
+
+  it('never opens a second order when the created one cannot be read', async function () {
+    const exchangeCalls: string[] = []
+    const handler: FetchHandler = (url, method) => {
+      if (method === 'POST') exchangeCalls.push(url)
+      return routeOf(url) === 'exchanges'
+        ? { status: 200, body: { result: { id: 'order-6' } } } // missing fields
+        : { status: 200, body: okReplies[routeOf(url)] }
+    }
+    const plugin = makeSimpleSwapPlugin(makeOpts(handler))
+    await expectError(
+      plugin.fetchSwapQuote(fromRequest(), undefined, {
+        infoPayload: {}
+      } as any),
+      'SimpleSwapFatalError'
+    )
+    assert.equal(exchangeCalls.length, 1)
+  })
+
+  it('never opens a second order when a created amount is unparseable', async function () {
+    const exchangeCalls: string[] = []
+    const handler: FetchHandler = (url, method) => {
+      if (method === 'POST') exchangeCalls.push(url)
+      return routeOf(url) === 'exchanges'
+        ? {
+            status: 200,
+            body: {
+              result: {
+                id: 'order-8',
+                addressFrom: 'deposit-addr',
+                amountFrom: 'not-a-number', // passes asNumberString, breaks biggystring
+                amountTo: '0.05'
+              }
+            }
+          }
+        : { status: 200, body: okReplies[routeOf(url)] }
+    }
+    const plugin = makeSimpleSwapPlugin(makeOpts(handler))
+    await expectError(
+      plugin.fetchSwapQuote(fromRequest(), undefined, {
+        infoPayload: {}
+      } as any),
+      'SimpleSwapFatalError'
+    )
+    assert.equal(exchangeCalls.length, 1)
+  })
+
+  it('rejects a destination amount below the requested amount on a reverse quote', async function () {
+    const request = fromRequest()
+    request.quoteFor = 'to'
+    request.nativeAmount = '50000000000000000' // 0.05 ETH pinned by the user
+    const handler: FetchHandler = url =>
+      routeOf(url) === 'exchanges'
+        ? {
+            status: 200,
+            body: {
+              result: {
+                id: 'order-7',
+                addressFrom: 'deposit-addr',
+                amountFrom: '0.1',
+                amountTo: '0.04' // under-delivers the pinned receive amount
+              }
+            }
+          }
+        : { status: 200, body: okReplies[routeOf(url)] }
+    const plugin = makeSimpleSwapPlugin(makeOpts(handler))
+    try {
+      await plugin.fetchSwapQuote(request, undefined, {
+        infoPayload: {}
+      } as any)
+      assert.fail('expected the destination amount to be rejected')
+    } catch (error: unknown) {
+      assert.include(
+        (error as Error).message,
+        'destination amount below the requested amount'
+      )
+    }
   })
 
   it('transcribes Edge currency codes to SimpleSwap tickers (BNB -> bnb-bsc)', async function () {

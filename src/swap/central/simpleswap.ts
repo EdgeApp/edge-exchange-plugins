@@ -1,4 +1,4 @@
-import { gt, lt } from 'biggystring'
+import { ceil, eq, floor, gt, lt } from 'biggystring'
 import { asEither, asNull, asObject, asOptional, asString } from 'cleaners'
 import {
   EdgeCorePluginOptions,
@@ -90,10 +90,21 @@ const asEstimate = asObject({
 const asCreatedExchange = asObject({
   id: asString,
   addressFrom: asString,
-  extraIdFrom: asOptional(asString),
+  // SimpleSwap sends a destination tag as a JSON number on some chains, and a
+  // tag of 0 is a real tag, so this must survive both.
+  extraIdFrom: asOptional(asEither(asNumberString, asNull)),
   amountFrom: asNumberString,
   amountTo: asNumberString
 })
+// Raised once an order already exists, so `getQuote` knows not to retry: the
+// other flow would abandon that order and hit the same problem again.
+const FATAL_ERROR_NAME = 'SimpleSwapFatalError'
+const makeFatalError = (message: string): Error => {
+  const error = new Error(message)
+  error.name = FATAL_ERROR_NAME
+  return error
+}
+
 const asRangeReply = asObject({ result: asRange })
 const asEstimateReply = asObject({ result: asEstimate })
 const asCreatedExchangeReply = asObject({ result: asCreatedExchange })
@@ -211,20 +222,20 @@ export function makeSimpleSwapPlugin(
     const rangeJson = await call('GET', 'ranges', { query: pairQuery })
     const { result: range } = asRangeReply(rangeJson)
 
+    // Native amounts are whole atomic units. Round a minimum up and a maximum
+    // down, so rounding never widens the range SimpleSwap actually accepts.
     const limitDirection = reverse ? 'to' : 'from'
-    const nativeMin = denominationToNative(
-      amountWallet,
-      range.min,
-      amountTokenId
+    const nativeMin = ceil(
+      denominationToNative(amountWallet, range.min, amountTokenId),
+      0
     )
     if (lt(request.nativeAmount, nativeMin)) {
       throw new SwapBelowLimitError(swapInfo, nativeMin, limitDirection)
     }
     if (range.max != null) {
-      const nativeMax = denominationToNative(
-        amountWallet,
-        range.max,
-        amountTokenId
+      const nativeMax = floor(
+        denominationToNative(amountWallet, range.max, amountTokenId),
+        0
       )
       if (gt(request.nativeAmount, nativeMax)) {
         throw new SwapAboveLimitError(swapInfo, nativeMax, limitDirection)
@@ -250,110 +261,151 @@ export function makeSimpleSwapPlugin(
         rateId: estimate.rateId
       }
     })
-    const { result: exchange } = asCreatedExchangeReply(createJson)
+    // The order exists from here on, so EVERY failure below is fatal and
+    // `getQuote` must not retry the other flow: that would abandon this
+    // deposit and open a second live order. The boundary covers the response
+    // cleaner, the amount arithmetic and the spend construction alike, since a
+    // malformed amount makes biggystring throw an ordinary Error.
+    try {
+      const { result: exchange } = asCreatedExchangeReply(createJson)
 
-    const fromNativeAmount = denominationToNative(
-      fromWallet,
-      exchange.amountFrom,
-      request.fromTokenId
-    )
-    const toNativeAmount = denominationToNative(
-      toWallet,
-      exchange.amountTo,
-      request.toTokenId
-    )
+      const fromNativeAmount = floor(
+        denominationToNative(
+          fromWallet,
+          exchange.amountFrom,
+          request.fromTokenId
+        ),
+        0
+      )
+      const toNativeAmount = floor(
+        denominationToNative(toWallet, exchange.amountTo, request.toTokenId),
+        0
+      )
 
-    const memos: EdgeMemo[] =
-      exchange.extraIdFrom == null
-        ? []
-        : [
-            {
-              type: memoType(fromWallet.currencyInfo.pluginId),
-              value: exchange.extraIdFrom
-            }
-          ]
-
-    const spendInfo: EdgeSpendInfo = {
-      tokenId: request.fromTokenId,
-      spendTargets: [
-        {
-          nativeAmount: fromNativeAmount,
-          publicAddress: exchange.addressFrom
-        }
-      ],
-      memos,
-      networkFeeOption: 'high',
-      assetAction: {
-        assetActionType: 'swap'
-      },
-      savedAction: {
-        actionType: 'swap',
-        swapInfo,
-        orderId: exchange.id,
-        orderUri: orderUri + exchange.id,
-        isEstimate: !fixed,
-        toAsset: {
-          pluginId: toWallet.currencyInfo.pluginId,
-          tokenId: request.toTokenId,
-          nativeAmount: toNativeAmount
-        },
-        fromAsset: {
-          pluginId: fromWallet.currencyInfo.pluginId,
-          tokenId: request.fromTokenId,
-          nativeAmount: fromNativeAmount
-        },
-        payoutAddress: toAddress,
-        payoutWalletId: toWallet.id,
-        refundAddress: fromAddress
+      // Both amounts are echoed by SimpleSwap: `amountFrom` becomes the signed
+      // spend, `amountTo` is what the user is promised. The order was created
+      // from the locally pinned amount, so the echoed side must match it. Above
+      // it overspends; below it underpays a live order and the deposit never
+      // completes.
+      if (!reverse && !eq(fromNativeAmount, request.nativeAmount)) {
+        throw makeFatalError(
+          'SimpleSwap returned a source amount that does not match the requested amount'
+        )
       }
-    }
+      if (reverse && lt(toNativeAmount, request.nativeAmount)) {
+        throw makeFatalError(
+          'SimpleSwap returned a destination amount below the requested amount'
+        )
+      }
 
-    const expirationDate =
-      estimate.validUntil != null
-        ? ensureInFuture(new Date(estimate.validUntil))
-        : new Date(Date.now() + expirationMs)
+      const memos: EdgeMemo[] =
+        exchange.extraIdFrom == null || exchange.extraIdFrom === ''
+          ? []
+          : [
+              {
+                type: memoType(fromWallet.currencyInfo.pluginId),
+                value: exchange.extraIdFrom
+              }
+            ]
 
-    return {
-      request,
-      spendInfo,
-      swapInfo,
-      fromNativeAmount,
-      expirationDate
+      const spendInfo: EdgeSpendInfo = {
+        tokenId: request.fromTokenId,
+        spendTargets: [
+          {
+            nativeAmount: fromNativeAmount,
+            publicAddress: exchange.addressFrom
+          }
+        ],
+        memos,
+        networkFeeOption: 'high',
+        assetAction: {
+          assetActionType: 'swap'
+        },
+        savedAction: {
+          actionType: 'swap',
+          swapInfo,
+          orderId: exchange.id,
+          orderUri: orderUri + exchange.id,
+          isEstimate: !fixed,
+          toAsset: {
+            pluginId: toWallet.currencyInfo.pluginId,
+            tokenId: request.toTokenId,
+            nativeAmount: toNativeAmount
+          },
+          fromAsset: {
+            pluginId: fromWallet.currencyInfo.pluginId,
+            tokenId: request.fromTokenId,
+            nativeAmount: fromNativeAmount
+          },
+          payoutAddress: toAddress,
+          payoutWalletId: toWallet.id,
+          refundAddress: fromAddress
+        }
+      }
+
+      const expirationDate =
+        estimate.validUntil != null
+          ? ensureInFuture(new Date(estimate.validUntil))
+          : new Date(Date.now() + expirationMs)
+
+      return {
+        request,
+        spendInfo,
+        swapInfo,
+        fromNativeAmount,
+        expirationDate
+      }
+    } catch (error: unknown) {
+      throw error instanceof Error && error.name === FATAL_ERROR_NAME
+        ? error
+        : makeFatalError(
+            `SimpleSwap created an order this quote could not use: ${String(
+              error
+            )}`
+          )
     }
   }
 
-  // edge-core-js error classes are transpiled, `instanceof SwapCurrencyError`
-  // is unreliable — match by name
-  const isFallbackWorthy = (error: unknown): boolean =>
-    error instanceof Error &&
-    (error.name === 'SwapCurrencyError' ||
-      error.name === 'SwapBelowLimitError' ||
-      error.name === 'SwapAboveLimitError')
+  // How actionable an error is for the user, highest first: a limit error names
+  // the amount to retry with, a permission error names an account problem, and
+  // "unsupported pair" is the least specific. A transport or server error ranks
+  // below all of them, so one flow's outage never masks the other's real answer.
+  // edge-core-js error classes are transpiled, so `instanceof SwapCurrencyError`
+  // is unreliable — match by name.
+  const errorRank = (error: unknown): number => {
+    if (!(error instanceof Error)) return 0
+    switch (error.name) {
+      case 'SwapBelowLimitError':
+      case 'SwapAboveLimitError':
+        return 3
+      case 'SwapPermissionError':
+        return 2
+      case 'SwapCurrencyError':
+        return 1
+      default:
+        return 0
+    }
+  }
 
   const getQuote = async (
     request: EdgeSwapRequestPlugin
   ): Promise<SwapOrder> => {
+    // SimpleSwap rejects fixed-rate orders paying out to a memo/tag chain with
+    // a 500 that only the float flow gets past, so the retry is not limited to
+    // swap errors. Anything that fails BEFORE the order is created is safe to
+    // retry; once it exists every failure is fatal, so the retry can never
+    // abandon a live deposit and open a second one.
     let fixedError: unknown
     try {
       return await getQuoteForFlow(request, true)
     } catch (error: unknown) {
-      if (!isFallbackWorthy(error)) throw error
+      if (error instanceof Error && error.name === FATAL_ERROR_NAME) throw error
       fixedError = error
     }
     try {
       return await getQuoteForFlow(request, false)
     } catch (error: unknown) {
-      // A fixed-rate limit error is more actionable than "pair unsupported"
-      // from the float flow, which merely lacks the pair.
-      if (
-        error instanceof Error &&
-        error.name === 'SwapCurrencyError' &&
-        fixedError instanceof Error &&
-        fixedError.name !== 'SwapCurrencyError'
-      ) {
-        throw fixedError
-      }
-      throw error
+      throw errorRank(fixedError) >= errorRank(error) ? fixedError : error
     }
   }
 
