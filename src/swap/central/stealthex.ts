@@ -169,6 +169,8 @@ const CATALOG_PAGE_SIZE = 250
 const CATALOG_MAX_PAGES = 40
 /** Pages fetched at once after the first, so a quote is not stuck serially */
 const CATALOG_PAGE_BATCH = 4
+/** Rebuilds of a token index racing a catalog refresh before serving uncached */
+const TOKEN_INDEX_ATTEMPTS = 3
 const CATALOG_CACHE_MS = 1000 * 60 * 60
 
 export function makeStealthexPlugin(
@@ -350,25 +352,13 @@ export function makeStealthexPlugin(
     await catalogFetch
   }
 
-  /**
-   * Builds, or reuses, the `tokenId` to listing index for one wallet's chain on
-   * one StealthEX network. Provider contract addresses are canonicalized
-   * through the wallet's own currency plugin, so casing and formatting
-   * differences cannot cause a false mismatch, and a listing whose
-   * `contract_address` is not a real address on this chain drops out.
-   */
-  const getTokenIndex = async (
+  /** Canonicalizes one catalog snapshot's contracts into an Edge tokenId map */
+  const buildTokenIndex = async (
     wallet: EdgeCurrencyWallet,
-    network: string
+    listings: StealthexCurrency[]
   ): Promise<Map<string, StealthexCurrency>> => {
-    const key = `${wallet.currencyInfo.pluginId}:${network}`
-    const cached = tokenIndexes.get(key)
-    if (cached != null && cached.stamp === catalogUpdated) {
-      return cached.byTokenId
-    }
-
     const byTokenId = new Map<string, StealthexCurrency>()
-    for (const currency of catalog.get(network) ?? []) {
+    for (const currency of listings) {
       const contractAddress = currency.contract_address
       if (contractAddress == null) continue
 
@@ -385,9 +375,45 @@ export function makeStealthexPlugin(
         // Not an address this chain recognizes, so not this chain's token
       }
     }
-
-    tokenIndexes.set(key, { stamp: catalogUpdated, byTokenId })
     return byTokenId
+  }
+
+  /**
+   * Builds, or reuses, the `tokenId` to listing index for one wallet's chain on
+   * one StealthEX network. Provider contract addresses are canonicalized
+   * through the wallet's own currency plugin, so casing and formatting
+   * differences cannot cause a false mismatch, and a listing whose
+   * `contract_address` is not a real address on this chain drops out.
+   */
+  const getTokenIndex = async (
+    wallet: EdgeCurrencyWallet,
+    network: string
+  ): Promise<Map<string, StealthexCurrency>> => {
+    const key = `${wallet.currencyInfo.pluginId}:${network}`
+
+    // Each pass builds from ONE catalog snapshot and only caches the result if
+    // that snapshot is still current: canonicalizing a contract awaits the
+    // currency plugin, and a refresh landing during those awaits would
+    // otherwise stamp an index built from the old catalog as if it came from
+    // the new one, freezing stale symbol/network rows in for the whole TTL.
+    for (let attempt = 0; attempt < TOKEN_INDEX_ATTEMPTS; ++attempt) {
+      const cached = tokenIndexes.get(key)
+      if (cached != null && cached.stamp === catalogUpdated) {
+        return cached.byTokenId
+      }
+
+      const stamp = catalogUpdated
+      const listings = catalog.get(network) ?? []
+      const byTokenId = await buildTokenIndex(wallet, listings)
+
+      if (catalogUpdated !== stamp) continue
+      tokenIndexes.set(key, { stamp, byTokenId })
+      return byTokenId
+    }
+
+    // The catalog kept moving underneath, so serve this quote from the current
+    // snapshot without caching an index that may already be behind:
+    return await buildTokenIndex(wallet, catalog.get(network) ?? [])
   }
 
   /**
@@ -499,16 +525,14 @@ export function makeStealthexPlugin(
     const limitDirection = quoteFor === 'to' ? 'to' : 'from'
 
     /**
-     * The limit error for an amount outside the pair's range, or undefined when
-     * the amount fits. Bounds round INWARD, minimums up and maximums down, so a
-     * rounded limit can never sit outside what StealthEX actually accepts and
-     * send the user back with an amount that fails again.
+     * Throws when the amount sits outside the pair's range. Bounds round
+     * INWARD, minimums up and maximums down, so a rounded limit can never sit
+     * outside what StealthEX actually accepts and send the user back with an
+     * amount that fails again.
      */
-    const checkLimits = (
-      range: ReturnType<typeof asStealthexRange>
-    ): Error | undefined => {
+    const checkLimits = (range: ReturnType<typeof asStealthexRange>): void => {
       if (lt(quoteAmount, range.min_amount)) {
-        return new SwapBelowLimitError(
+        throw new SwapBelowLimitError(
           swapInfo,
           ceil(
             denominationToNative(quoteWallet, range.min_amount, quoteTokenId),
@@ -518,7 +542,7 @@ export function makeStealthexPlugin(
         )
       }
       if (range.max_amount != null && gt(quoteAmount, range.max_amount)) {
-        return new SwapAboveLimitError(
+        throw new SwapAboveLimitError(
           swapInfo,
           floor(
             denominationToNative(quoteWallet, range.max_amount, quoteTokenId),
@@ -531,10 +555,12 @@ export function makeStealthexPlugin(
 
     /**
      * Runs one rate type end to end: the pair's range, the amount check, and
-     * the estimate. Returns undefined when this rate type has no usable route,
-     * which is the caller's cue to try the other one.
+     * the estimate. Returns undefined ONLY when this rate type has no route,
+     * which is the caller's cue to try the other one. Every other failure,
+     * limit errors included, describes the pair rather than the rate type and
+     * is thrown, so the fallback never retries something the other rate type
+     * would reject the same way.
      */
-    let limitError: Error | undefined
     const attemptRate = async (
       rate: StealthexRate
     ): Promise<
@@ -547,15 +573,7 @@ export function makeStealthexPlugin(
     > => {
       const range = await getRange(rate)
       if (range == null) return undefined
-
-      // An amount outside THIS rate type's range is not the end of the quote:
-      // fixed and floating routes carry different limits, so remember the error
-      // and let the caller try the other rate before reporting it.
-      const outOfRange = checkLimits(range)
-      if (outOfRange != null) {
-        limitError = outOfRange
-        return undefined
-      }
+      checkLimits(range)
 
       const body: StealthexEstimateBody = {
         route,
@@ -589,15 +607,20 @@ export function makeStealthexPlugin(
       return { rate, estimate, body }
     }
 
-    // Both assets supporting fixed rates does not guarantee the pair has a
-    // fixed rate route, so fall back to floating when the fixed one is missing.
+    // StealthEX publishes rate types PER ASSET but offers no way to ask which
+    // types a given ROUTE supports, and both assets listing `fixed` does not
+    // mean the pair has a fixed route (BTC to ARRR was exactly that). The
+    // fallback compensates for that one missing capability and nothing else:
+    // it runs only when the fixed route is absent, never on a limit or
+    // unsupported-pair failure, and no order exists yet at this point, so
+    // neither attempt can create a second one. Drop it once StealthEX reports
+    // per-route rate types (see the ask in docs/API_REQUIREMENTS.md).
     // A reversed estimate has no floating equivalent, so it never falls back.
     const attempt =
       (fixedSupported ? await attemptRate('fixed') : undefined) ??
       (estimation === 'direct' ? await attemptRate('floating') : undefined)
     if (attempt == null) {
-      // A limit failure describes the pair better than "unsupported" does:
-      throw limitError ?? new SwapCurrencyError(swapInfo, request)
+      throw new SwapCurrencyError(swapInfo, request)
     }
     const { rate, estimate, body: estimateBody } = attempt
 
