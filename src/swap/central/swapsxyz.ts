@@ -19,6 +19,7 @@ import {
   EdgeSwapQuote,
   EdgeSwapRequest,
   EdgeTransaction,
+  JsonObject,
   SwapAboveLimitError,
   SwapBelowLimitError,
   SwapCurrencyError
@@ -61,8 +62,46 @@ const SWAPSXYZ_API_URL = 'https://api-v2.swaps.xyz/api'
 const NATIVE_TOKEN_ADDRESS = '0x0000000000000000000000000000000000000000'
 // swaps.xyz quotes are time-sensitive on-chain routes; keep them short-lived.
 const EXPIRATION_MS = 1000 * 60
-// 1% (100 basis points) default slippage.
-const SLIPPAGE_BPS = '100'
+// Slippage tiers in basis points, per swaps.xyz's own guidance: stables need no
+// more than 10, major assets 50, and the long tail 100. The band is not a
+// display nicety here. The quote publishes `amountOutMin`, which IS the amount
+// Edge commits to, so a tighter band directly raises the number the user is
+// guaranteed to receive.
+const SLIPPAGE_BPS_STABLE = 10
+const SLIPPAGE_BPS_MAJOR = 50
+const SLIPPAGE_BPS_DEFAULT = 100
+
+/**
+ * Codes are chain-agnostic: USDC on Base and USDC on Arbitrum carry the same
+ * price risk between quote and settlement, so they share a tier. Both sets are
+ * a starting point the info server can retune per route popularity without an
+ * app release (see `asSwapsXyzInfoPayload`).
+ */
+const STABLE_CURRENCY_CODES = new Set([
+  'DAI',
+  'FDUSD',
+  'GUSD',
+  'PYUSD',
+  'TUSD',
+  'USDC',
+  'USDE',
+  'USDP',
+  'USDS',
+  'USDT'
+])
+const MAJOR_CURRENCY_CODES = new Set([
+  'AVAX',
+  'BCH',
+  'BNB',
+  'BTC',
+  'ETH',
+  'LTC',
+  'SOL',
+  'TRX',
+  'WBTC',
+  'WETH',
+  'XRP'
+])
 // swaps.xyz explorer base for the saved swap action.
 const ORDER_URI = 'https://explorer.swaps.xyz/tx/'
 // Solana has no "zero address"; the system program stands in as the spend
@@ -180,6 +219,63 @@ const asSwapsXyzRegisterResults = asArray(
   })
 )
 
+/**
+ * Runtime configuration from the info server, keyed to this plugin under
+ * `corePlugins.swapsxyz`. Every field is optional and the whole payload is read
+ * through `asMaybe`, so a malformed or absent payload silently falls back to the
+ * built-in tiers rather than failing a quote.
+ */
+const asSwapsXyzInfoPayload = asObject({
+  slippageBps: asOptional(
+    asObject({
+      stable: asOptional(asNumber),
+      major: asOptional(asNumber),
+      default: asOptional(asNumber)
+    })
+  )
+})
+
+interface SlippageTiers {
+  stable: number
+  major: number
+  default: number
+}
+
+export const resolveSlippageTiers = (
+  infoPayload: JsonObject
+): SlippageTiers => {
+  const payload = asMaybe(asSwapsXyzInfoPayload)(infoPayload)
+  const slippageBps = payload?.slippageBps
+  return {
+    stable: slippageBps?.stable ?? SLIPPAGE_BPS_STABLE,
+    major: slippageBps?.major ?? SLIPPAGE_BPS_MAJOR,
+    default: slippageBps?.default ?? SLIPPAGE_BPS_DEFAULT
+  }
+}
+
+const currencyTierBps = (
+  currencyCode: string,
+  tiers: SlippageTiers
+): number => {
+  const code = currencyCode.toUpperCase()
+  if (STABLE_CURRENCY_CODES.has(code)) return tiers.stable
+  if (MAJOR_CURRENCY_CODES.has(code)) return tiers.major
+  return tiers.default
+}
+
+/**
+ * A route is only as tight as its looser leg: a stablecoin paid out in a long
+ * tail asset carries the long tail's price risk, so the wider band wins.
+ */
+export const resolveSlippageBps = (
+  request: Pick<EdgeSwapRequestPlugin, 'fromCurrencyCode' | 'toCurrencyCode'>,
+  tiers: SlippageTiers
+): number =>
+  Math.max(
+    currencyTierBps(request.fromCurrencyCode, tiers),
+    currencyTierBps(request.toCurrencyCode, tiers)
+  )
+
 export type SwapsXyzAction = ReturnType<typeof asSwapsXyzAction>
 type SwapsXyzError = ReturnType<typeof asSwapsXyzError>
 
@@ -235,7 +331,7 @@ export const makeSwapsXyzSpendInfo = (
     toAddress,
     toWalletId
   } = context
-  const { txId, amountIn, amountOut, vmId } = action
+  const { txId, amountIn, amountOutMin, vmId } = action
 
   let fromNativeAmount: string
   let publicAddress: string
@@ -296,11 +392,16 @@ export const makeSwapsXyzSpendInfo = (
       swapInfo,
       orderId: txId,
       orderUri: ORDER_URI + txId,
-      isEstimate: true,
+      // swaps.xyz commits to `amountOutMin`: the route's on-chain floor, which
+      // the user receives or the swap does not settle. Quoting that floor rather
+      // than the expected `amountOut` is what makes this a FIXED quote, on
+      // swaps.xyz's own recommendation. The user may receive more; they can
+      // never receive less, which is exactly what a fixed quote promises.
+      isEstimate: false,
       toAsset: {
         pluginId: toPluginId,
         tokenId: toTokenId,
-        nativeAmount: amountOut.amount
+        nativeAmount: amountOutMin.amount
       },
       fromAsset: {
         pluginId: fromPluginId,
@@ -437,6 +538,7 @@ export function makeSwapsXyzPlugin(
 
   const fetchSwapQuoteInner = async (
     request: EdgeSwapRequestPlugin,
+    slippageBps: number,
     isMaxRequest: boolean = false
   ): Promise<SwapsXyzSwapOrder> => {
     const {
@@ -556,7 +658,7 @@ export function makeSwapsXyzPlugin(
       dstToken: toTokenAddress,
       amount: swapAmount,
       swapDirection: 'exact-amount-in',
-      slippage: SLIPPAGE_BPS
+      slippage: String(slippageBps)
     })
 
     const response = await fetchCors(
@@ -645,7 +747,6 @@ export function makeSwapsXyzPlugin(
       action,
       expirationDate: new Date(Date.now() + EXPIRATION_MS),
       fromNativeAmount: swapAmount,
-      minReceiveAmount: action.amountOutMin.amount,
       preTxs,
       request,
       spendInfo,
@@ -656,8 +757,16 @@ export function makeSwapsXyzPlugin(
   const out: EdgeSwapPlugin = {
     swapInfo,
 
-    async fetchSwapQuote(req: EdgeSwapRequest): Promise<EdgeSwapQuote> {
+    async fetchSwapQuote(
+      req: EdgeSwapRequest,
+      userSettings: JsonObject | undefined,
+      opts: { infoPayload: JsonObject }
+    ): Promise<EdgeSwapQuote> {
       const request = convertRequest(req)
+      const slippageBps = resolveSlippageBps(
+        request,
+        resolveSlippageTiers(opts.infoPayload)
+      )
 
       const isMaxRequest = request.quoteFor === 'max'
       let newRequest = request
@@ -672,12 +781,16 @@ export function makeSwapsXyzPlugin(
           }
         } else {
           newRequest = await getMaxSwappable(
-            async r => await fetchSwapQuoteInner(r, true),
+            async r => await fetchSwapQuoteInner(r, slippageBps, true),
             request
           )
         }
       }
-      const swapOrder = await fetchSwapQuoteInner(newRequest, isMaxRequest)
+      const swapOrder = await fetchSwapQuoteInner(
+        newRequest,
+        slippageBps,
+        isMaxRequest
+      )
       const quote = await makeSwapPluginQuote(swapOrder)
       const { action } = swapOrder
       if (!action.requiresRegisterTransaction) return quote
