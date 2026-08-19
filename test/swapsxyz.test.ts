@@ -13,11 +13,16 @@ import { describe, it } from 'mocha'
 import {
   makeSwapsXyzPlugin,
   makeSwapsXyzSpendInfo,
+  resolveSlippageBps,
+  resolveSlippageTiers,
   SwapsXyzAction
 } from '../src/swap/central/swapsxyz'
+import { EdgeSwapRequestPlugin } from '../src/swap/types'
 
 const USDC = 'a0b86991c6218b36c1d19d4a2e9eb0ce3606eb48'
 const USDT = 'dac17f958d2ee523a2206206994597c13d831ec7'
+// A token in neither slippage tier, exercising the long-tail band.
+const LONGTAIL = 'bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb'
 // A token that resolves in the wallet but carries no on-chain contract
 // address, exercising the plugin's "no address to send to" guard.
 const NO_CONTRACT = 'ffffffffffffffffffffffffffffffffffffffff'
@@ -115,11 +120,11 @@ describe('swapsxyz makeSwapsXyzSpendInfo', function () {
         orderId: '0x99b16cbed2445ffdc34133e030cdda451bcdd73c',
         orderUri:
           'https://explorer.swaps.xyz/tx/0x99b16cbed2445ffdc34133e030cdda451bcdd73c',
-        isEstimate: true,
+        isEstimate: false,
         toAsset: {
           pluginId: 'ethereum',
           tokenId: USDC,
-          nativeAmount: '19156417'
+          nativeAmount: '18964852'
         },
         fromAsset: {
           pluginId: 'ethereum',
@@ -170,7 +175,7 @@ describe('swapsxyz makeSwapsXyzSpendInfo', function () {
     assert.isNotNull(savedAction)
     if (savedAction != null && savedAction.actionType === 'swap') {
       assert.strictEqual(savedAction.fromAsset.nativeAmount, '100000000')
-      assert.strictEqual(savedAction.toAsset.nativeAmount, '100054660')
+      assert.strictEqual(savedAction.toAsset.nativeAmount, '99054113')
       assert.strictEqual(savedAction.orderId, action.txId)
     }
   })
@@ -335,6 +340,7 @@ const TOKENS: {
 } = {
   [USDC]: { currencyCode: 'USDC', contractAddress: `0x${USDC}` },
   [USDT]: { currencyCode: 'USDT', contractAddress: `0x${USDT}` },
+  [LONGTAIL]: { currencyCode: 'PEPE', contractAddress: `0x${LONGTAIL}` },
   // Resolvable currencyCode, but no contractAddress on its networkLocation.
   [NO_CONTRACT]: { currencyCode: 'NOC' }
 }
@@ -449,9 +455,11 @@ interface RegisterLog {
 const makeFakeIo = (
   actionResponse: FakeResponse,
   pathsResponse: FakeResponse,
-  registerLog?: RegisterLog
+  registerLog?: RegisterLog,
+  uriLog?: string[]
 ): { fetchCors: Function } => ({
   fetchCors: async (uri: string, opts: any) => {
+    uriLog?.push(uri)
     if (uri.includes('/registerTxs')) {
       registerLog?.calls.push(JSON.parse(opts.body))
       return {
@@ -476,10 +484,11 @@ const makeFakeIo = (
 const makePlugin = (
   response: FakeResponse,
   pathsResponse: FakeResponse = openPaths(),
-  registerLog?: RegisterLog
+  registerLog?: RegisterLog,
+  uriLog?: string[]
 ): EdgeSwapPlugin =>
   makeSwapsXyzPlugin(({
-    io: makeFakeIo(response, pathsResponse, registerLog),
+    io: makeFakeIo(response, pathsResponse, registerLog, uriLog),
     initOptions: { apiKey: 'test-key' },
     log: { warn() {} }
   } as unknown) as EdgeCorePluginOptions)
@@ -1040,10 +1049,12 @@ describe('swapsxyz fetchSwapQuote success', function () {
     )
     assert.equal(quote.pluginId, 'swapsxyz')
     assert.equal(quote.fromNativeAmount, '10000000000000000')
-    // minReceiveAmount comes straight from the route's amountOutMin.
-    assert.equal(quote.minReceiveAmount, '18964852')
-    assert.equal(quote.toNativeAmount, '19156417')
-    assert.equal(quote.isEstimate, true)
+    // The quote publishes the route's guaranteed floor, so there is no separate
+    // minimum to advertise; a non-null minReceiveAmount would render the quote
+    // as variable in the GUI.
+    assert.equal(quote.minReceiveAmount, undefined)
+    assert.equal(quote.toNativeAmount, '18964852')
+    assert.equal(quote.isEstimate, false)
   })
 
   it('builds a quote for an alt-vm source', async function () {
@@ -1080,7 +1091,7 @@ describe('swapsxyz fetchSwapQuote success', function () {
     )
 
     assert.equal(quote.fromNativeAmount, '100000000')
-    assert.equal(quote.toNativeAmount, '44742031')
+    assert.equal(quote.toNativeAmount, '44294610')
   })
 
   it('registers the broadcast hash when the route requires it', async function () {
@@ -1113,5 +1124,109 @@ describe('swapsxyz fetchSwapQuote success', function () {
 
     await quote.approve()
     assert.deepEqual(registerLog.calls, [])
+  })
+})
+
+// ---------------------------------------------------------------------------
+// Slippage tiering
+//
+// The quote publishes `amountOutMin`, so the slippage band is the difference
+// between what Edge can guarantee and what the route is expected to deliver.
+// These assert the band that actually reaches `getAction`, not just the helper.
+// ---------------------------------------------------------------------------
+
+/** The `slippage` query param on the getAction request the plugin sent. */
+const sentSlippage = (uriLog: string[]): string | null => {
+  const actionUri = uriLog.find(uri => uri.includes('/getAction'))
+  if (actionUri == null) return null
+  return new URL(actionUri).searchParams.get('slippage')
+}
+
+describe('swapsxyz slippage tiers', function () {
+  it('uses the stable band when both legs are stablecoins', async function () {
+    const uriLog: string[] = []
+    await makePlugin(
+      okAction({
+        amountIn: makeAmount('100000000', `0x${USDC}`, false, 6, 'USDC'),
+        amountOut: makeAmount('99900000', `0x${USDT}`, false, 6, 'USDT'),
+        amountOutMin: makeAmount('99800000', `0x${USDT}`, false, 6, 'USDT')
+      }),
+      openPaths({ srcToken: { decimals: 6 } }),
+      undefined,
+      uriLog
+    ).fetchSwapQuote(
+      usdcRequest({
+        fromWallet: ethWallet(new Map([[USDC, '100000000']])),
+        fromTokenId: USDC,
+        toTokenId: USDT,
+        nativeAmount: '100000000'
+      }),
+      undefined,
+      { infoPayload: {} }
+    )
+
+    assert.equal(sentSlippage(uriLog), '10')
+  })
+
+  it('uses the major band for a major-to-stable route', async function () {
+    const uriLog: string[] = []
+    await makePlugin(
+      okAction(),
+      openPaths(),
+      undefined,
+      uriLog
+    ).fetchSwapQuote(usdcRequest(), undefined, { infoPayload: {} })
+
+    // ETH is a major and USDC a stable, so the looser of the two legs wins.
+    assert.equal(sentSlippage(uriLog), '50')
+  })
+
+  it('uses the long-tail band when either leg is untiered', async function () {
+    const uriLog: string[] = []
+    await makePlugin(
+      okAction({
+        amountOut: makeAmount('5000000', `0x${LONGTAIL}`, false, 6, 'PEPE'),
+        amountOutMin: makeAmount('4950000', `0x${LONGTAIL}`, false, 6, 'PEPE')
+      }),
+      openPaths(),
+      undefined,
+      uriLog
+    ).fetchSwapQuote(usdcRequest({ toTokenId: LONGTAIL }), undefined, {
+      infoPayload: {}
+    })
+
+    assert.equal(sentSlippage(uriLog), '100')
+  })
+
+  it('lets the info server retune a band without an app release', async function () {
+    const uriLog: string[] = []
+    await makePlugin(okAction(), openPaths(), undefined, uriLog).fetchSwapQuote(
+      usdcRequest(),
+      undefined,
+      {
+        infoPayload: { slippageBps: { major: 25 } }
+      }
+    )
+
+    assert.equal(sentSlippage(uriLog), '25')
+  })
+
+  it('falls back to the built-in tiers on a malformed payload', function () {
+    const tiers = resolveSlippageTiers({ slippageBps: 'nonsense' })
+
+    assert.deepEqual(tiers, { stable: 10, major: 50, default: 100 })
+  })
+
+  it('takes the looser leg when the two legs differ', function () {
+    const tiers = resolveSlippageTiers({})
+    const request: Pick<
+      EdgeSwapRequestPlugin,
+      'fromCurrencyCode' | 'toCurrencyCode'
+    > = {
+      fromCurrencyCode: 'USDC',
+      toCurrencyCode: 'PEPE'
+    }
+
+    assert.equal(resolveSlippageBps(request, tiers), 100)
   })
 })
