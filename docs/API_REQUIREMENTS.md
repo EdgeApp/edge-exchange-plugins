@@ -4,46 +4,46 @@ Technical API requirements for third-party exchange providers integrating with t
 
 These requirements exist to enable smooth integration across three Edge repositories:
 
-- **[edge-exchange-plugins](https://github.com/AirshipApp/edge-exchange-plugins)** — swap plugins that call the provider API and map responses to Edge core types (`EdgeSwapQuote`, `EdgeTxActionSwap`, etc.)
-- **[edge-react-gui](https://github.com/AirshipApp/edge-react-gui)** — the wallet UI that displays quotes, errors, transaction details, and opens provider status pages
-- **[edge-reports-server](https://github.com/AirshipApp/edge-reports-server)** — the reporting pipeline that queries provider APIs and normalizes transactions into `StandardTx` records for revenue analytics
+- **[edge-exchange-plugins](https://github.com/AirshipApp/edge-exchange-plugins)**: swap plugins that call the provider API and map responses to Edge core types (`EdgeSwapQuote`, `EdgeTxActionSwap`, etc.)
+- **[edge-react-gui](https://github.com/AirshipApp/edge-react-gui)**: the wallet UI that displays quotes, errors, transaction details, and opens provider status pages
+- **[edge-reports-server](https://github.com/AirshipApp/edge-reports-server)**: the reporting pipeline that queries provider APIs and normalizes transactions into `StandardTx` records for revenue analytics
 
-Field names and JSON shapes in this document are illustrative — the plugin layer handles mapping between provider-specific names and Edge types. What matters is that the **information** is available and machine-readable.
+Field names and JSON shapes in this document are illustrative. The plugin layer maps between provider-specific names and Edge types, so the requirement is on the **information**, which must be present and machine-readable.
 
 **All requirements are mandatory** unless explicitly stated otherwise.
 
-### Table of Contents
+### Table of contents
 
 **General principles:**
 
-- [Amount Representation](#amount-representation)
+- [Amount representation](#amount-representation)
 
 **Requirements for all providers:**
 
-1. [Chain and Token Identification](#1-chain-and-token-identification)
-2. [Order Identification and Status Page](#2-order-identification-and-status-page)
-3. [Error Handling](#3-error-handling)
-4. [Quoting Requirements](#4-quoting-requirements)
-5. [Transaction Status API](#5-transaction-status-api)
+1. [Chain and token identification](#1-chain-and-token-identification)
+2. [Order identification and status page](#2-order-identification-and-status-page)
+3. [Error handling](#3-error-handling)
+4. [Quoting requirements](#4-quoting-requirements)
+5. [Transaction status API](#5-transaction-status-api)
 6. [Reporting API](#6-reporting-api)
-7. [Account Activation](#7-account-activation)
-8. [Affiliate Revenue Withdrawal](#8-affiliate-revenue-withdrawal)
+7. [Account activation](#7-account-activation)
+8. [Affiliate revenue withdrawal](#8-affiliate-revenue-withdrawal)
 
 **Additional requirements for fiat on/off ramp providers:**
 
-9. [User Authentication](#9-user-authentication)
-10. [Regional and Fiat Currency Support](#10-regional-and-fiat-currency-support)
-11. [KYC Information](#11-kyc-information)
-12. [Bank Information](#12-bank-information)
+9. [User authentication](#9-user-authentication)
+10. [Regional and fiat currency support](#10-regional-and-fiat-currency-support)
+11. [KYC information](#11-kyc-information)
+12. [Bank information](#12-bank-information)
 13. [Verification](#13-verification)
 14. [Widget Return URIs](#14-widgets)
-15. [Off-Ramp Flow](#15-off-ramp-flow)
+15. [Off-ramp flow](#15-off-ramp-flow)
 
 ---
 
-## General Principles
+## General principles
 
-### Amount Representation
+### Amount representation
 
 Amounts **should** be expressed in the asset's **native (smallest indivisible) units** rather than display units:
 
@@ -54,47 +54,53 @@ Amounts **should** be expressed in the asset's **native (smallest indivisible) u
 | SOL | lamports | `1500000000` |
 | USDC (6 decimals) | micro-units | `1500000` |
 
-Edge swap plugins convert between native and display units using `denominationToNative` / `nativeToDenomination` (see [`CREATING_AN_EXCHANGE_PLUGIN.md`](./CREATING_AN_EXCHANGE_PLUGIN.md) Step 5), so display-unit APIs are workable. However, if native units are not used, the API **must** clearly document which unit convention applies to every amount field so the plugin can convert correctly.
+This applies to **every** amount field in this document: quoted amounts (section 4), limit amounts in error responses (section 3), and transaction amounts in reporting records (section 6). No section carries a different convention.
+
+Native amounts for high-decimal assets run past the IEEE-754 safe integer range (1 ETH is `1000000000000000000` wei, well beyond 2^53), so they **should** be sent as JSON **strings** rather than numbers.
+
+Edge swap plugins convert between native and display units using `denominationToNative` / `nativeToDenomination` (see [`CREATING_AN_EXCHANGE_PLUGIN.md`](./CREATING_AN_EXCHANGE_PLUGIN.md) Step 5), so display-unit APIs are workable. If native units are not used, the API **must** clearly document which unit convention applies to every amount field so the plugin can convert correctly.
+
+Every example in this document annotates its native amounts with the display equivalent in a trailing comment. The comments are documentation, not part of the payload.
 
 ---
 
-## Requirements for All Providers
+## Requirements for all providers
 
-### 1. Chain and Token Identification
+### 1. Chain and token identification
 
-The API **must** accept a unique chain identifier and token identifier (such as the contract address) when requesting quotes and creating orders. It is **not** sufficient to only provide a separate "list all assets" endpoint — the exact asset must be specifiable in the quote/order request itself.
+The API **must** accept a unique chain identifier and token identifier (such as the contract address) when requesting quotes and creating orders. It is **not** sufficient to only provide a separate "list all assets" endpoint: the exact asset must be specifiable in the quote/order request itself.
 
-Edge exchange plugins maintain a mapping file (`src/mappings/<provider>.ts`) that translates Edge `pluginId` values (e.g. `'ethereum'`, `'bitcoin'`, `'solana'`) to the provider's chain codes. The provider's identifiers do not need to match Edge's — they just need to be stable and unique per chain.
+Edge exchange plugins maintain a mapping file (`src/mappings/<provider>.ts`) that translates Edge `pluginId` values (e.g. `'ethereum'`, `'bitcoin'`, `'solana'`) to the provider's chain codes. The provider's identifiers do not need to match Edge's, but they must be stable and unique per chain.
 
-For EVM chains, the API **should** accept the standard numeric EVM `chainId` (e.g. `1` for Ethereum, `56` for BNB Smart Chain). This avoids ambiguity with provider-specific EVM network names.
+For EVM chains, the API **must** accept the standard numeric EVM `chainId` (e.g. `1` for Ethereum, `56` for BNB Smart Chain). Numeric chain ids let a newly listed EVM work the day it is added, with no new entry in the plugin's mapping file, and they avoid ambiguity with provider-specific EVM network names.
 
 For tokens, the API **must** accept the on-chain contract address (or equivalent identifier) to distinguish tokens on the same chain.
 
-**Example — non-EVM asset:**
+**Example: non-EVM asset**
 
 ```json
 {
   "network": "solana",
-  "contractAddress": "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v"
+  "contractAddress": "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v" // USDC
 }
 ```
 
-**Example — EVM asset:**
+**Example: EVM asset**
 
 ```json
 {
   "network": "bsc",
-  "evmChainId": 56,
-  "contractAddress": "0x8ac76a51cc950d9822d68b83fe1ad97b32cd580d"
+  "evmChainId": 56, // BNB Smart Chain
+  "contractAddress": "0x8ac76a51cc950d9822d68b83fe1ad97b32cd580d" // USDC
 }
 ```
 
-### 2. Order Identification and Status Page
+### 2. Order identification and status page
 
 - Every order/quote response **must** include a unique order identifier that the plugin can store as `orderId` on the `EdgeTxActionSwap` (swap) or `EdgeTxActionFiat` (fiat) saved with the transaction. This same identifier must be usable to query the Transaction Status API (section 5) via an **unauthenticated** endpoint, and must match records in the Reporting API (section 6).
 - The provider **must** host an unauthenticated, user-facing status page accessible by order identifier. The Edge GUI opens this URL (stored as `orderUri` on the transaction action) so users can track their order outside the app. Example: `https://provider.com/status/{orderId}`
 
-### 3. Error Handling
+### 3. Error handling
 
 When a quote request fails or has issues, the API **must** return **all** applicable errors in a **single response** as structured JSON with machine-readable error codes. The exchange plugin determines error priority and maps to the appropriate Edge error class. Returning only a human-readable string message is not acceptable.
 
@@ -111,27 +117,30 @@ The plugin maps provider errors to these Edge error classes (defined in `edge-co
 
 #### Why both source and destination limits are needed
 
-Edge supports bi-directional quoting — the user may be specifying either the source amount or the destination amount (`quoteFor: 'from' | 'to'`). The plugin selects the appropriate limit based on which side the user specified:
+Edge supports bi-directional quoting, so the user may be specifying either the source amount or the destination amount (`quoteFor: 'from' | 'to'`). The plugin selects the appropriate limit based on which side the user specified:
 
 ```typescript
-const nativeLimit = denominationToNative(
-  quoteFor === 'from' ? request.fromWallet : request.toWallet,
-  quoteFor === 'from' ? limitError.sourceLimitAmount : limitError.destinationLimitAmount,
-  quoteFor === 'from' ? request.fromTokenId : request.toTokenId
-)
+const limitAmount =
+  quoteFor === 'from'
+    ? limitError.sourceLimitAmount
+    : limitError.destinationLimitAmount
 ```
 
 If the API can only return one side, the plugin cannot display the correct limit when the user quotes from the other direction.
 
 #### Example structured error response
 
+A BTC to USDT quote that is both above the limit and region restricted. Both
+errors come back in the one response, and both limit fields carry the same cap
+expressed in each asset.
+
 ```json
 {
   "errors": [
     {
       "code": "ABOVE_LIMIT",
-      "sourceLimitAmount": "0.009789",
-      "destinationLimitAmount": "1000000"
+      "sourceLimitAmount": "978900000", // 9.789 BTC in satoshis
+      "destinationLimitAmount": "1000000000000" // 1,000,000 USDT in micro-units
     },
     {
       "code": "REGION_UNSUPPORTED"
@@ -140,15 +149,15 @@ If the API can only return one side, the plugin cannot display the correct limit
 }
 ```
 
-Limit amounts in error responses are expected in **display units**, not [native units](#amount-representation). This is the one place the native-unit preference does not apply: the plugin passes these values straight into `denominationToNative` before constructing the Edge error, as shown above. If the API returns limits in native units instead, it **must** say so explicitly so the plugin can skip the conversion.
+Limit amounts **should** use [native units](#amount-representation), the same as every other amount in this document. Native units are integers, so a limit expressed in them always lands on a whole atomic unit, which is what Edge's limit errors carry. A display-unit limit carrying more decimal places than the asset's denomination holds does not: the plugin multiplies it up, gets a fractional native value, and has to pick a rounding direction for a bound it did not set. If the API returns limits in display units, it **must** document that convention, as [Amount Representation](#amount-representation) requires for every amount field, and the plugin converts with `denominationToNative`.
 
-The exact field names and code strings can vary — the plugin defines cleaners to parse the provider's specific format. What matters is that:
+The exact field names and code strings can vary, since the plugin defines cleaners for the provider's specific format. The requirements are:
 1. All errors are returned at once (not just the first one)
 2. Error types are machine-readable codes (not embedded in human-readable messages)
 3. Limit errors include amounts for both sides of the trade
 4. The unit convention for limit amounts is documented and consistent
 
-**Incorrect — unstructured string message:**
+**Incorrect, an unstructured string message:**
 
 ```json
 {
@@ -156,15 +165,23 @@ The exact field names and code strings can vary — the plugin defines cleaners 
 }
 ```
 
-### 4. Quoting Requirements
+The defect there is the shape, not the amount. A limit buried in a human-readable sentence cannot be parsed into a `SwapBelowLimitError` at all, whichever units it is written in.
+
+### 4. Quoting requirements
 
 The API **must** support bi-directional quoting: the user can specify either the source amount or the destination amount, and the API returns the corresponding counterpart. In Edge, this maps to `EdgeSwapRequest.quoteFor: 'from' | 'to' | 'max'`.
 
-Additionally, the API **should** support a "max" quote where the user wants to swap their entire balance. If the API does not support this natively, the plugin will emulate it by querying the user's balance and requesting a `'from'` quote with that amount.
+The API **should** also support a "max" quote where the user wants to swap their entire balance. If the API does not support this natively, the plugin will emulate it by querying the user's balance and requesting a `'from'` quote with that amount.
 
-Quoted amounts **should** use [native units](#amount-representation) where possible. If the API quotes in display units, it must document that convention (see [Amount Representation](#amount-representation)) so the plugin converts correctly.
+Quoted amounts **should** use [native units](#amount-representation), the same as every other amount in this document. If the API quotes in display units, it **must** document that convention (see [Amount representation](#amount-representation)) so the plugin converts correctly.
 
-### 5. Transaction Status API
+#### Rate types
+
+Where the provider offers more than one rate type (fixed, floating), the API **must** expose which types a given route supports, so the client selects a type rather than attempting one and inferring support from the failure. Where only one type is available for a route, the quote response **must** state which.
+
+Inferring support from a failure is unreliable in both directions: a provider that answers `5xx` for a route it cannot fix is indistinguishable from an outage, and a provider that accepts an unrecognized rate-type value silently downgrades every quote.
+
+### 5. Transaction status API
 
 The provider **must** expose an **unauthenticated** endpoint that accepts the order identifier (from section 2) and returns the current transaction status. Edge queries this without partner credentials, so it must not require an API key.
 
@@ -184,9 +201,9 @@ The `edge-reports-server` normalizes provider statuses to this set when writing 
 | `blocked` | Order held for review |
 | `other` | Catch-all for provider-specific states |
 
-The provider does not need to use these exact strings — each reporting plugin maps the provider's native status values. However, the API **must** distinguish at minimum between: pending/in-progress, completed, expired, and refunded/failed states.
+The provider does not need to use these exact strings, since each reporting plugin maps the provider's native status values. The API **must** still distinguish at minimum between: pending/in-progress, completed, expired, and refunded/failed states.
 
-Providers that can stall an order pending user input (most fiat ramps, where KYC documents or additional details are outstanding) **must** additionally expose an **`infoNeeded`** state, distinct from generic pending. Edge uses it to prompt the user rather than leave them waiting on an order that will never progress on its own. `StandardTx` has no dedicated value for this, so reporting plugins currently normalize it to `blocked`; the distinction matters at the status API and in the GUI, not in reports.
+Providers that can stall an order pending user input (most fiat ramps, where KYC documents or additional details are outstanding) **must** also expose an **`infoNeeded`** state, distinct from generic pending. Edge uses it to prompt the user rather than leave them waiting on an order that will never progress on its own. `StandardTx` has no dedicated value for this, so reporting plugins currently normalize it to `blocked`; the distinction matters at the status API and in the GUI, not in reports.
 
 ### 6. Reporting API
 
@@ -194,15 +211,13 @@ The provider **must** expose an authenticated API that returns all transactions 
 
 #### Pagination and filtering
 
-The API **must** support incremental querying so the reporting pipeline can efficiently poll for new transactions. Acceptable approaches include:
+The API **must** support paginated queries filtered by a **start date**, an **end date**, and a **maximum record count**, so the reporting pipeline can poll incrementally for new transactions instead of re-reading the full history on every run.
 
-- Date range filtering (start/end date) with pagination (limit/offset or cursor)
-- Offset-based pagination with a reasonable page size
-- Cursor/bookmark-based pagination
+Pagination within that date range may be offset-based or cursor/bookmark-based; either is acceptable. The date range itself is not optional: without it the pipeline cannot bound a query to the window it has not yet ingested.
 
 #### Required data per transaction
 
-Each transaction record must include enough information for the reporting plugin to populate a `StandardTx`. The field names below are from the `StandardTx` type — the provider's field names will differ and the plugin handles the mapping:
+Each transaction record must include enough information for the reporting plugin to populate a `StandardTx`. The field names below are from the `StandardTx` type; the provider's names will differ, and the plugin handles the mapping:
 
 | `StandardTx` field | Description | Required |
 |---|---|---|
@@ -212,25 +227,28 @@ Each transaction record must include enough information for the reporting plugin
 | (no field yet) | Order **completion** date, when the order reached a terminal status | Yes, see below |
 | `depositCurrency` / `payoutCurrency` | Currency codes for source and destination | Yes |
 | `depositAmount` / `payoutAmount` | Amounts for source and destination | Yes |
-| `depositAddress` / `payoutAddress` | Deposit and withdrawal addresses | Recommended |
-| `depositTxid` / `payoutTxid` | On-chain transaction IDs | Recommended |
-| `depositTokenId` / `payoutTokenId` | Token contract address, or `null` for native assets | Recommended |
-| `depositEvmChainId` / `payoutEvmChainId` | Numeric EVM chain ID if applicable | Recommended for EVM chains |
+| `depositAddress` / `payoutAddress` | Deposit and withdrawal addresses | Yes |
+| `depositTxid` / `payoutTxid` | On-chain transaction IDs | Yes |
+| `depositChainPluginId` / `payoutChainPluginId` | Chain identifier for each side (e.g. `"solana"`, `"bitcoin"`) | Yes |
+| `depositTokenId` / `payoutTokenId` | Token contract address, or `null` for native assets | Yes |
+| `depositEvmChainId` / `payoutEvmChainId` | Numeric EVM chain ID for the side, whenever that side is an EVM chain | Yes, for EVM chains |
 | `countryCode` | User's country (ISO 3166-1 alpha-2) | Fiat providers only |
 | `direction` | `'buy'` or `'sell'` (fiat) or `null` (swap) | Fiat providers only |
 | `paymentType` | Payment method (e.g. `'sepa'`, `'credit'`, `'ach'`) | Fiat providers only |
 
 **Both dates are required from the provider.** The response **must** carry the order creation date and, for orders in a terminal status, the completion/settlement date. `StandardTx` currently persists only the creation date (as `isoDate` and `timestamp`) and has no completion field, so the completion date survives only inside `rawTx` today. Providers should still return it: settlement time is needed for partner reporting, and the field is expected to be promoted to a first-class `StandardTx` column.
 
-Amount fields (`depositAmount`, `payoutAmount`, `usdValue`) are **display-unit numbers**, not [native units](#amount-representation). `StandardTx` types them via `asSafeNumber`, so native units for high-decimal assets would overflow the safe integer range. The reporting plugin converts if the provider reports natively, but the API **must** document which convention it uses.
+Reported amounts **should** use [native units](#amount-representation), the same as every other amount in this document. If the API reports in display units, it **must** document that convention.
+
+`StandardTx` itself stores `depositAmount`, `payoutAmount` and `usdValue` as **display-unit numbers**: it types them via `asSafeNumber`, and native units on a high-decimal asset would overflow the safe integer range. That constrains Edge's storage, not the provider's wire format, and converting into it is the reporting plugin's job.
 
 The reporting plugin also stores the raw provider response in `rawTx` for auditing, so including additional metadata in the response is helpful.
 
-### 7. Account Activation
+### 7. Account activation
 
-Some blockchain networks (e.g. XRP, HBAR, Tron) require account activation or reserve balances before an address can receive funds. For any such network the provider supports, the provider **must** detect unactivated destination addresses and handle activation as part of the withdrawal — without requiring additional action from the user or from Edge.
+Some blockchain networks require account activation or a reserve balance before an address can receive funds, XRP, HBAR and Tron among them. For any such network the provider supports, the provider **must** detect unactivated destination addresses and handle activation as part of the withdrawal, without requiring additional action from the user or from Edge.
 
-### 8. Affiliate Revenue Withdrawal
+### 8. Affiliate revenue withdrawal
 
 - The provider **must** automatically withdraw affiliate revenue no later than **24 hours after each month-end (GMT)**. Edge should **not** be required to initiate withdrawals.
 - Withdrawal must be supported in at least **BTC, ETH, and USDC** to a fixed address verified by Edge.
@@ -238,22 +256,23 @@ Some blockchain networks (e.g. XRP, HBAR, Tron) require account activation or re
 
 ---
 
-## Additional Requirements for Fiat On/Off Ramp Providers
+## Additional requirements for fiat on/off ramp providers
 
 Fiat providers in Edge are integrated through the GUI's fiat plugin system (`edge-react-gui/src/plugins/gui/`). Each provider implements the `FiatProvider` interface, which receives quote parameters including region, fiat currency, payment type, and crypto asset. The requirements below ensure the provider API supports the data flows this system needs.
 
-### 9. User Authentication
+### 9. User authentication
 
-The provider **must** support a way for Edge to authenticate users programmatically — without requiring the user to create an account on the provider's website. Edge generates a unique per-user identifier and passes it to the provider with every request.
+The provider **must** support a way for Edge to authenticate users programmatically, without requiring the user to create an account on the provider's website. Edge generates a **cryptographically random** per-user identifier (`authKey`) and passes it with every quoting and order execution request.
 
-The implementation can be:
-- An API key or token that Edge generates and the provider associates with a user account
-- A device-based identifier that the provider uses to create and retrieve user sessions
-- A signed challenge/response flow
+The provider can consume that identifier however it likes:
 
-The key requirement is that user creation and authentication happen through API calls, not through an external registration page.
+- Treat it as an API key or token and associate it with a user account
+- Use it to create and retrieve a user session
+- Key a signed challenge/response flow to it
 
-### 10. Regional and Fiat Currency Support
+The identifier **must** originate with Edge, not with the provider. When it names a user the provider has not seen before, account creation **must** proceed through the API by accepting KYC information (section 11), never through an external registration page.
+
+### 10. Regional and fiat currency support
 
 The quoting API **must** accept the user's region and fiat currency. In Edge, region is represented as:
 
@@ -266,7 +285,7 @@ interface FiatPluginRegionCode {
 
 The API **must** return structured errors (see [section 3](#3-error-handling)) for unsupported regions and unsupported fiat currencies. In Edge, these map to `FiatProviderError` with `errorType: 'regionRestricted'` and `errorType: 'fiatUnsupported'` respectively.
 
-### 11. KYC Information
+### 11. KYC information
 
 The provider API **must** allow Edge to submit KYC information **via API** (not via a widget or redirect):
 
@@ -277,7 +296,7 @@ The provider API **must** allow Edge to submit KYC information **via API** (not 
 
 Additional verification steps (e.g. document upload, facial recognition) may use a widget (see section 14), but basic identity information must be submittable programmatically.
 
-### 12. Bank Information
+### 12. Bank information
 
 For payment methods that require bank details (e.g. wire transfers, SEPA, ACH), the provider **must** expose an API for Edge to submit bank account information. The API should support the relevant identifiers for its operating regions (IBAN, account number + routing number, etc.).
 
@@ -288,15 +307,18 @@ For payment methods that require bank details (e.g. wire transfers, SEPA, ACH), 
 
 ### 14. Widgets
 
-Any required widgets (e.g. for credit card entry, document upload, or biometric scans) **must** support closing and returning to the Edge app. Acceptable approaches:
+Any required widgets (e.g. for credit card entry, document upload, or biometric scans) **must** accept a return URI / redirect URL parameter from Edge, so the widget redirects back once it completes and the app can resume its flow.
 
-- Accept a return URI / redirect URL parameter so the webview can navigate back to Edge
-- Support deep link callbacks that Edge can listen for
-- Provide a clear "done" signal (URL navigation to a known path, postMessage, etc.) that Edge can detect to close the webview
+Any step that takes a card payment, Apple Pay, or Google Pay has to run in the system browser (SafariView on iOS, Custom Tabs on Android). Those payment methods are unavailable to an embedded WebView, and an embedded WebView is a surface the host app can inject JavaScript into, which no card processor accepts for cardholder data entry. Edge cannot observe that page, so a redirect to a URI Edge registered is the only route back.
 
-The Edge GUI displays widgets in either an in-app WebView or an external browser (SafariView / Custom Tabs). Both flows need a way to detect completion and return control to the app.
+Edge does display widgets in its own WebView for steps that take no payment, such as bank-account linking and sell flows, and there a completion signal Edge can observe is workable too:
 
-### 15. Off-Ramp Flow
+- Navigation to a known path
+- A `postMessage` to the host
+
+Neither carries over to the system browser, so a widget offering only these cannot host a payment step.
+
+### 15. Off-ramp flow
 
 For off-ramp (sell) transactions where the user has already completed KYC and linked a payment method, the provider **must** support a **fully API-driven flow** (no widget required) by returning:
 
