@@ -1,4 +1,4 @@
-# Edge Exchange Plugins - Agent Guidelines
+# Edge Exchange Plugins - agent guidelines
 
 Swap and exchange-rate plugins loaded by `edge-core-js`. Each plugin adapts one
 provider's API to the `EdgeSwapPlugin` interface: quote a pair, map the
@@ -45,6 +45,9 @@ units**. Provider APIs almost always speak **decimal denominated** amounts.
   string comparisons silently misread.
 - Never assume a provider's documented unit. Several providers document base
   units and return decimals; check a live response.
+- `docs/API_REQUIREMENTS.md` asks partners for native units. That is what Edge
+  asks for, not a fact about any given provider. Most existing integrations
+  predate the request and send decimals.
 
 ## Starting a new provider
 
@@ -54,11 +57,17 @@ the invariants that recur in review (the max-quote probe, the trust boundary on
 provider-returned amounts, memo cleaning, limit direction). Copy it and keep the
 comments for the constructs you keep.
 
+Read [`docs/API_REQUIREMENTS.md`](./docs/API_REQUIREMENTS.md) before writing any
+of it, not only when deciding whether to take a provider on. It states what Edge
+asks every provider for, so it tells you which gaps you are about to work around
+belong to the provider rather than to the plugin. A workaround for a requirement
+the provider owes is worth raising with them before it becomes permanent.
+
 `src/swap/central/nym.ts` is the closest reviewed reference implementation.
 
 ## Docs
 
 - [`docs/CREATING_AN_EXCHANGE_PLUGIN.md`](./docs/CREATING_AN_EXCHANGE_PLUGIN.md) - build a plugin, plus the pre-PR checklist. Read before writing one
-- [`docs/API_REQUIREMENTS.md`](./docs/API_REQUIREMENTS.md) - what a provider's API must offer. Read when evaluating a new provider or arguing a gap back to them
+- [`docs/API_REQUIREMENTS.md`](./docs/API_REQUIREMENTS.md) - what a provider's API must offer. **Read before implementing a plugin**, as well as when evaluating a new provider or arguing a gap back to them
 - [`docs/CHAIN_MAPPING_SYNCHRONIZERS.md`](./docs/CHAIN_MAPPING_SYNCHRONIZERS.md) - keeping `src/mappings/*` in sync with a provider's chain list
 - [`.cursor/BUGBOT.md`](./.cursor/BUGBOT.md) - standing conventions for PR review on this repo

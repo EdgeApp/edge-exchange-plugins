@@ -32,6 +32,10 @@ Provider docs are wrong about units often enough that a claim needs a live
 response behind it. Decimal-vs-base-unit mistakes are silent whenever the pairs
 used during development happen to return null limits.
 
+`docs/API_REQUIREMENTS.md` asks partners for native units, which is what Edge
+asks for rather than evidence about a particular provider. It does not settle
+the question either way.
+
 ### Use `biggystring`, Not Floats (`biggystring-not-floats`)
 
 Applies to comparison and sorting too, not just arithmetic. `String(smallFloat)`
@@ -186,6 +190,30 @@ A local backoff cap must bound only our own doubling. Truncating a reported
 `retryAfter` fires retries early and burns the provider's budget. A backoff that
 would land past the quote's own expiry should fail as a rate limit immediately
 rather than sleep through the window and then report an expired quote.
+
+### Credentials Go Per Endpoint (`per-endpoint-auth`)
+
+Some provider endpoints reject an authenticated request outright: a public
+catalog route can return 401 for ANY api key header. Flag credentials attached
+globally instead of per endpoint, and check each endpoint's auth expectation
+against a live response rather than the provider's docs.
+
+### Provider Catalogs Need an Expiry (`catalog-cache-expiry`)
+
+A cached list of supported assets or rate types needs a TTL or a
+re-fetch-on-miss path. Flag caching for the lifetime of the plugin justified by
+"these do not change": providers rename, delist and relist assets, and a stale
+catalog refuses a pair the provider now supports.
+
+### Scope a Rate-Type Fallback to What It Compensates For (`rate-type-fallback-scope`)
+
+Attempting a fixed rate and falling back to floating is only correct when the
+provider offers no way to ask which rate types a route supports. Flag a blanket
+`catch` around the fixed attempt (it retries limit and unsupported-pair failures
+that the other rate type rejects identically), any fallback reachable after an
+order was created, and a fallback whose comment does not name the missing
+provider capability. Where the provider does expose per-route rate types, select
+explicitly instead of inferring from a failure.
 
 ## Chain Mappings
 

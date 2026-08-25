@@ -1,42 +1,43 @@
-# Creating an Exchange Plugin
+# Creating an exchange plugin
 
-This guide walks you through creating a new exchange plugin for Edge. **Before starting, review [`API_REQUIREMENTS.md`](./API_REQUIREMENTS.md)** which outlines mandatory API specifications.
+Review [`API_REQUIREMENTS.md`](./API_REQUIREMENTS.md) before starting. It states what a provider's API must offer, and a gap there is the provider's to close rather than something the plugin works around.
 
-## Table of Contents
+## Table of contents
 
 - [Prerequisites](#prerequisites)
-- [Plugin Types](#plugin-types)
-- [Getting Started](#getting-started)
-- [Implementation Steps](#implementation-steps)
-- [Code Conventions](#code-conventions)
-- [Testing & Registration](#testing--registration)
+- [Plugin types](#plugin-types)
+- [Getting started](#getting-started)
+- [Implementation steps](#implementation-steps)
+- [Code conventions](#code-conventions)
+- [Testing & registration](#testing--registration)
 - [Resources](#resources)
+- [Pre-PR checklist](#pre-pr-checklist)
 
 ## Prerequisites
 
-**Review [`API_REQUIREMENTS.md`](./API_REQUIREMENTS.md)** to ensure your exchange provider meets all requirements including: chain/token identification, error handling, bi-directional quoting, transaction status APIs, and reporting APIs.
+[`API_REQUIREMENTS.md`](./API_REQUIREMENTS.md) covers chain and token identification, error handling, bi-directional quoting, the transaction status API, and the reporting API. Confirm the provider meets those before writing code.
 
-### Development Environment
+### Development environment
 
 1. Clone `edge-exchange-plugins` as a peer to `edge-react-gui`
 2. Install: `npm install && npm run prepare`
 3. Review `src/swap/central/template.ts` as a complete example
 
-## Plugin Types
+## Plugin types
 
 **Centralized Exchange Plugins** (`src/swap/central/`): Traditional exchanges (ChangeNOW, Exolix, etc.) that handle swaps through their infrastructure. Use API keys, deposit addresses, and order IDs.
 
 **DeFi Exchange Plugins** (`src/swap/defi/`): Decentralized exchanges (LI.FI, THORChain, etc.) that execute on-chain. May require token approvals and handle on-chain transaction construction.
 
-## Getting Started
+## Getting started
 
 1. Choose location: `src/swap/central/yourplugin.ts` or `src/swap/defi/yourplugin.ts`
 2. Copy `src/swap/central/template.ts` as your base
 3. Study similar plugins: `exolix.ts` (central) or `lifi.ts` (DeFi)
 
-## Implementation Steps
+## Implementation steps
 
-### Step 1: Plugin Metadata
+### Step 1: Plugin metadata
 
 ```typescript
 const pluginId = 'yourplugin'
@@ -49,7 +50,7 @@ export const swapInfo: EdgeSwapInfo = {
 }
 ```
 
-### Step 2: Initialization Options
+### Step 2: Initialization options
 
 ```typescript
 import { asObject, asOptional, asString } from 'cleaners'
@@ -60,15 +61,15 @@ const asInitOptions = asObject({
 })
 ```
 
-### Step 3: Chain Code Mapping
+### Step 3: Chain code mapping
 
 Each plugin needs a mapping file in `src/mappings/` that translates Edge currency plugin IDs to your exchange provider's chain codes. **For EVM chains, use `evmChainId` (not provider-specific network names)** per API requirements.
 
-#### Creating the Mapping File
+#### Creating the mapping file
 
 Follow the [Chain Mapping Synchronizers](./CHAIN_MAPPING_SYNCHRONIZERS.md) guide to set up automated synchronization for your mapping file. This fetches supported chains from your provider's API and keeps the mapping up-to-date.
 
-#### Using the Mapping in Your Plugin
+#### Using the mapping in your plugin
 
 Import and use the mapping directly:
 
@@ -86,7 +87,7 @@ if (fromMainnetCode == null || toMainnetCode == null) {
 
 > **Note**: Some existing plugins convert the Map to an object using `mapToStringMap()` or `mapToRecord()` from `swapHelpers.ts`. This is a legacy pattern - new plugins can use the Map directly.
 
-#### Manual Mapping (Alternative)
+#### Manual mapping (alternative)
 
 For providers without a chain configuration API, you can manually create and maintain `src/mappings/yourplugin.ts`:
 
@@ -101,7 +102,7 @@ yourplugin.set('unsupportedchain', null)  // null = not supported by provider
 // ... map all Edge plugin IDs to your provider's chain codes
 ```
 
-### Step 4: Quote Fetching
+### Step 4: Quote fetching
 
 The `fetchSwapQuote` function must:
 1. Call `checkInvalidTokenIds()` before touching the network, so blocked assets
@@ -113,7 +114,7 @@ The `fetchSwapQuote` function must:
 6. Create `EdgeSpendInfo` or `MakeTxParams`
 7. Return quote using `makeSwapPluginQuote()`
 
-### Step 4b: Max Quotes
+### Step 4b: Max quotes
 
 A `max` request arrives carrying the wallet's **raw, pre-fee balance**.
 `getMaxSwappable()` invokes your quote function as a probe with that balance,
@@ -141,7 +142,7 @@ const newRequest = await getMaxSwappable(fetchProbeOrder, request)
 const swapOrder = await fetchSwapQuoteInner(newRequest) // creates the order, once
 ```
 
-Three details are load-bearing, and each has broken a shipped plugin:
+Each of these has broken a shipped plugin:
 
 - **The probe must not create an order.** Otherwise every max swap creates and
   abandons a live order, which also burns the budget of any provider that
@@ -160,17 +161,24 @@ If the provider has no separate quote endpoint (order creation *is* the quote),
 say so in a comment. The abandoned probe order is then inherent rather than a
 plugin defect.
 
-### Step 5: Amount Conversions
+### Step 5: Amount conversions
 
 ```typescript
+import { floor } from 'biggystring'
+
 import { denominationToNative, nativeToDenomination } from '../../util/swapHelpers'
 
 // To API
 const apiAmount = nativeToDenomination(wallet, nativeAmount, tokenId)
 
-// From API — round to whole atomic units
+// From API: round to whole atomic units
 const nativeAmount = floor(denominationToNative(wallet, apiAmount, tokenId), 0)
 ```
+
+Convert only when the provider speaks denominated amounts. Sections 3, 4 and 6 of
+[`API_REQUIREMENTS.md`](./API_REQUIREMENTS.md) ask partners for native units, so a
+provider that complies needs no conversion on the way in, and converting anyway
+inflates the value by 10^decimals.
 
 `denominationToNative` is a plain multiply, so a provider amount carrying more
 decimals than the asset's denomination returns a **fraction**
@@ -193,11 +201,11 @@ Never assume the provider's documented unit. Docs claiming base units while the
 API returns decimals is common, and the mistake is invisible whenever the pairs
 used during development return null limits.
 
-### Step 6: Error Handling
+### Step 6: Error handling
 
 **The API must return all applicable errors in an array.** Your plugin prioritizes which error to throw.
 
-Four rules, each from a shipped defect:
+Each rule below comes from a shipped defect:
 
 1. **Limit errors outrank currency errors.** A limit failure whose code or
    message also names a token, path or route must still surface as
@@ -247,7 +255,10 @@ const asErrorResponse = asObject({
 Handle errors in priority order:
 
 ```typescript
+import { ceil, floor } from 'biggystring'
 import { SwapAboveLimitError, SwapBelowLimitError, SwapCurrencyError, SwapPermissionError } from 'edge-core-js/types'
+
+import { denominationToNative } from '../../util/swapHelpers'
 
 if ('errors' in quoteReply) {
   // Throw errors in order of highest priority
@@ -270,11 +281,19 @@ if ('errors' in quoteReply) {
   const limitError = errors.find(e => e.code === 'BELOW_LIMIT' || e.code === 'ABOVE_LIMIT')
   if (limitError && 'sourceLimitAmount' in limitError) {
     if (quoteFor === 'max') throw new Error('Max quote cannot return limit error')
-    const nativeLimit = denominationToNative(
-      quoteFor === 'from' ? request.fromWallet : request.toWallet,
-      quoteFor === 'from' ? limitError.sourceLimitAmount : limitError.destinationLimitAmount,
-      quoteFor === 'from' ? request.fromTokenId : request.toTokenId
-    )
+    const limitAmount =
+      quoteFor === 'from' ? limitError.sourceLimitAmount : limitError.destinationLimitAmount
+    const limitWallet = quoteFor === 'from' ? request.fromWallet : request.toWallet
+    const limitTokenId = quoteFor === 'from' ? request.fromTokenId : request.toTokenId
+
+    // Confirm against a live response which units this provider sends. If it
+    // sends native units, drop the conversion; converting again inflates the
+    // limit by 10^decimals. Round toward the provider either way: a minimum up
+    // and a maximum down, so rounding never widens the range it accepts.
+    const nativeLimit =
+      limitError.code === 'BELOW_LIMIT'
+        ? ceil(denominationToNative(limitWallet, limitAmount, limitTokenId), 0)
+        : floor(denominationToNative(limitWallet, limitAmount, limitTokenId), 0)
     throw limitError.code === 'BELOW_LIMIT'
       ? new SwapBelowLimitError(swapInfo, nativeLimit, quoteFor)
       : new SwapAboveLimitError(swapInfo, nativeLimit, quoteFor)
@@ -284,7 +303,7 @@ if ('errors' in quoteReply) {
 }
 ```
 
-### Step 7: Transaction Information
+### Step 7: Transaction information
 
 For central exchanges, create `EdgeSpendInfo`:
 
@@ -312,7 +331,7 @@ const spendInfo: EdgeSpendInfo = {
 
 For DeFi exchanges, use `MakeTxParams` (see DeFi plugin examples).
 
-Three fields above are decisions, not boilerplate:
+These fields are decisions, not boilerplate:
 
 - **`orderUri` is built from your own constant** plus the order id. Never persist
   a partner-supplied `statusUrl`. It renders as a tappable link in the
@@ -337,18 +356,17 @@ if (request.quoteFor === 'from' && gt(fromNativeAmount, request.nativeAmount)) {
 
 Bound **every** field the spend path consumes, not only the most obvious one: on
 a DeFi route that includes the token-approval amount and any native value on the
-transaction. Compare each against a value in **its own units** — a native fee in
+transaction. Compare each against a value in **its own units**: a native fee in
 wei compared against a token amount in token base units falsely rejects valid
 quotes.
 
 Only a `from` quote pins the source amount locally. On a reverse (`to`) quote the
 user pinned the receive amount, so there is nothing local to bound against.
 
-### Step 8: API Response Validation
+### Step 8: API response validation
 
-Always use `cleaners` to validate API responses:
-
-Keep the **quote** and **order** responses as separate cleaners. What belongs to
+Every API response goes through a `cleaners` validator, and the **quote** and
+**order** responses get separate ones. What belongs to
 which is not cosmetic: a response carrying a `depositAddress` has committed the
 provider, so if `orderId` and `depositAddress` live on the quote cleaner then the
 quote call *is* an order call, and the max probe cannot avoid creating one no
@@ -384,13 +402,13 @@ a defect in the plugin, and reviewers have accepted that where it is true.
 `asMaybe(asString)`) has two failure modes that both silently send an *untagged*
 deposit, which loses funds on memo-based chains:
 
-- a **numeric** memo — the common shape for an XRP destination tag, including
-  the valid tag `0` — fails a string-only cleaner
+- a **numeric** memo fails a string-only cleaner. That is the common shape for
+  an XRP destination tag, including the valid tag `0`
 - an **empty string** becomes an empty `EdgeMemo` rather than no memo at all
 
 `asOptionalBlank(asNumberString)` covers both.
 
-Two more cleaner notes:
+Also:
 
 - Accept **numeric or string error codes**. A provider that returns amounts as
   either shape usually does the same with codes, and `asNumberString`
@@ -399,9 +417,8 @@ Two more cleaner notes:
   `undefined`. `asEither(asString, asNull)` is only needed when `null` and
   absent must stay distinguishable.
 
-## Code Conventions
+## Code conventions
 
-Follow Edge conventions:
 - **Code style**: [`edge-conventions/code/javascriptCode.md`](https://github.com/EdgeApp/edge-conventions/blob/master/code/javascriptCode.md) - Use `TODO + initials`, named exports only, Prettier formatting
 - **Setup**: [`edge-conventions/code/javascriptSetup.md`](https://github.com/EdgeApp/edge-conventions/blob/master/code/javascriptSetup.md)
 - **Git**: [`edge-conventions/git/commit.md`](https://github.com/EdgeApp/edge-conventions/blob/master/git/commit.md) - Imperative mood, 50 char subject, wrap body at 72 chars
@@ -412,7 +429,7 @@ Follow Edge conventions:
 
 **Error handling**: Always use Edge error types (`SwapCurrencyError`, etc.), never raw strings
 
-## Testing & Registration
+## Testing & registration
 
 ### Testing
 
@@ -434,20 +451,20 @@ Native JS context, so Metro's debugger and Hermes breakpoints cannot reach them.
 Verification means rebuilding the bundle, relinking, and reading plugin logs.
 Budget for that loop.
 
-**Exercise these paths specifically**, since they are where new plugins break
-and none of them show up in a happy-path quote:
+Exercise these paths specifically. They are where new plugins break, and none of
+them show up in a happy-path quote:
 
-- A **max** swap from an EVM wallet (catches a probe missing `skipChecks`)
-- A **max** swap from a wallet whose balance exceeds the provider maximum
-  (catches a probe that throws instead of clamping)
-- A **reverse** (`to`) quote, if the provider supports one
-- A swap to a **memo-based** chain such as XRP or XLM (catches a memo cleaner
-  that drops numeric tags)
-- An amount **below the minimum** and one **above the maximum**, checking the
-  figure the GUI actually shows
-- A **token** route, not only the native asset
-- A **pair the provider does not route**, confirming it fails as
-  `SwapCurrencyError` rather than a hard error
+- A max swap from an EVM wallet (catches a probe missing `skipChecks`)
+- A max swap from a wallet whose balance exceeds the provider maximum (catches a
+  probe that throws instead of clamping)
+- A reverse (`to`) quote, if the provider supports one
+- A swap to a memo-based chain such as XRP or XLM (catches a memo cleaner that
+  drops numeric tags)
+- An amount below the minimum and one above the maximum, checking the figure the
+  GUI actually shows
+- A token route, not only the native asset
+- A pair the provider does not route, confirming it fails as `SwapCurrencyError`
+  rather than a hard error
 
 ### Registration
 
@@ -483,17 +500,17 @@ Plugin ID must match your `pluginId` constant.
 - `utils.ts` - `getAddress`, `denominationToNative`, etc.
 - `edgeCurrencyPluginIds.ts` - Currency plugin ID constants
 
-**Chain Mappings**:
+**Chain mappings**:
 - `src/mappings/` - Chain code mapping files (Edge plugin IDs → provider codes)
 - See [Chain Mapping Synchronizers](./CHAIN_MAPPING_SYNCHRONIZERS.md) for automated sync setup
 
-**PR Requirements**:
+**PR requirements**:
 1. Rebase on master
 2. `npm run verify` passes (prepare, lint, tsc, mocha)
 3. Submit PRs to `edge-reports-server` (reporting) and `edge-react-gui` (UI/logos)
 4. Update docs if new patterns discovered
 
-## Pre-PR Checklist
+## Pre-PR checklist
 
 Every item below has been raised in review on a recent provider integration.
 Walking the list before opening the PR is cheaper than discovering them one
