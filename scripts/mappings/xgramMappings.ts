@@ -56,6 +56,9 @@ xgram.set('FIO', 'fio')
 xgram.set('HBAR', 'hedera')
 
 // WARNING: Not included by the synchronizer synchronization
+xgram.set('LTC', 'litecoin')
+
+// WARNING: Not included by the synchronizer synchronization
 xgram.set('OPTIMISM', 'optimism')
 
 // WARNING: Not included by the synchronizer synchronization
@@ -81,6 +84,9 @@ xgram.set('TRX', 'tron')
 
 // WARNING: Not included by the synchronizer synchronization
 xgram.set('WAX', 'wax')
+
+// WARNING: Not included by the synchronizer synchronization
+xgram.set('XLM', 'stellar')
 
 // WARNING: Not included by the synchronizer synchronization
 xgram.set('XMR', 'monero')

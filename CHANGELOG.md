@@ -6,6 +6,7 @@
 - added: A test suite for the swap plugin template, covering the max-quote probe, limit handling, the trust boundary on provider amounts, and memo cleaning. A new integration can copy it alongside the template.
 - changed: The swap plugin template now models the max-quote probe, the trust boundary on provider-returned amounts, integer native-amount rounding, and funds-safe memo cleaning, so a new integration starts from them rather than rediscovering them in review.
 - changed: `docs/CREATING_AN_EXCHANGE_PLUGIN.md` covers max quotes and amount rounding in depth, and ends with a pre-PR checklist drawn from findings on shipped integrations.
+- fixed: Xgram swaps to and from Litecoin and Stellar. Both chains were unmapped, so the plugin refused every such pair outright, and Litecoin additionally needed the non-bech32 address form Xgram accepts.
 
 ## 2.53.0 (2026-08-18)
 

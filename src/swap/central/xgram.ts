@@ -66,7 +66,14 @@ export const MAINNET_CODE_TRANSCRIPTION: CurrencyPluginIdSwapChainCodeMap = mapT
   xgramMapping
 )
 
+// Xgram rejects bech32 Litecoin addresses on both sides of a swap ("refund
+// address is invalid" / "destination address is invalid", both returned under a
+// CURRENCY_UNSUPPORTED code, which reads as an unsupported pair). It accepts the
+// legacy and P2SH-wrapped forms. Litecoin wallets default to bip49, so their
+// `publicAddress` is the P2SH form Xgram accepts, while the segwit address
+// `getAddress` otherwise prefers is not.
 const addressTypeMap: StringMap = {
+  litecoin: 'publicAddress',
   zcash: 'transparentAddress'
 }
 
