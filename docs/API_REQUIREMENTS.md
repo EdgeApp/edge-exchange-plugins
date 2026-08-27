@@ -17,6 +17,7 @@ Field names and JSON shapes in this document are illustrative. The plugin layer 
 **General principles:**
 
 - [Amount representation](#amount-representation)
+- [Address formats](#address-formats)
 
 **Requirements for all providers:**
 
@@ -62,6 +63,40 @@ Edge swap plugins convert between native and display units using `denominationTo
 
 Every example in this document annotates its native amounts with the display equivalent in a trailing comment. The comments are documentation, not part of the payload.
 
+### Address formats
+
+Every address field in this document is a **user wallet address**: the payout destination, the refund address, and the deposit address the API returns. A wallet decides which address it hands out, and that choice is not something the client can override per provider, so the address reaching the API is whatever the user's wallet considers current.
+
+#### Document which formats you accept
+
+For each chain it supports, the API **must** document which address formats it accepts and which it does not.
+
+Partial coverage is acceptable. Formats are not equivalent amounts of work: a shielded chain's transparent, shielded and unified forms are different constructions, and a provider may reasonably support some and not others. Which formats a given provider covers, and by when, is a commercial matter settled per partner rather than by this document.
+
+What is **not** acceptable is leaving the gap undocumented. An unsupported format that is written down is an integration constraint the client can design around, by steering the user or by hiding the pair. The same gap undiscovered is a user whose swap failed for a reason nobody can explain.
+
+#### Accept every encoding of a format you do support
+
+Once the API accepts a format, it **must** accept every valid encoding of an address in that format. These are not separate formats to be supported one at a time; they are the same address written more than one way, and the difference is usually invisible to the person who copied it.
+
+- Compare addresses by decoding them according to the chain's rules, never by string equality on what the caller sent.
+- Do not pin a length or a checksum constant into validation. Lengths vary within a format, and chains revise checksums.
+
+The equivalences below are **examples, not a checklist**. Every chain defines its own, and a provider is responsible for those belonging to the chains it lists:
+
+| Axis | Example |
+|---|---|
+| Case | Bech32 is case-insensitive by [BIP-173](https://github.com/bitcoin/bips/blob/master/bip-0173.mediawiki) and permits an all-uppercase encoding so QR codes can use alphanumeric mode. Hex EVM addresses are case-insensitive, with [EIP-55](https://eips.ethereum.org/EIPS/eip-55) mixed case carrying an optional checksum rather than identifying a different address. |
+| Alternate encodings of one account | Some chains publish an account in two encodings at once, such as a base58check form and a raw hex form. |
+| Optional prefixes | A scheme or network prefix the chain's own spec makes optional, so the same address is valid with and without it. |
+| Checksum revisions | Bech32m ([BIP-350](https://github.com/bitcoin/bips/blob/master/bip-0350.mediawiki)) uses a different checksum constant from bech32 for witness version 1 and above, so a validator hardcoded to bech32 rejects every taproot address. |
+
+Bech32 and hex are named because they are the two that broke live integrations, not because they are the whole set. A provider that handles only these two and string-matches everything else has not met this requirement.
+
+#### Report a rejected address as its own error
+
+Rejecting an address **must** return its own machine-readable error code, distinct from the code for an unsupported pair (see [section 3](#3-error-handling)). Without that separation the client cannot tell an address the provider will not take from a chain it does not serve, and the user is shown the wrong reason. This is also what makes the documentation requirement above verifiable from the outside.
+
 ---
 
 ## Requirements for all providers
@@ -75,6 +110,21 @@ Edge exchange plugins maintain a mapping file (`src/mappings/<provider>.ts`) tha
 For EVM chains, the API **must** accept the standard numeric EVM `chainId` (e.g. `1` for Ethereum, `56` for BNB Smart Chain). Numeric chain ids let a newly listed EVM work the day it is added, with no new entry in the plugin's mapping file, and they avoid ambiguity with provider-specific EVM network names.
 
 For tokens, the API **must** accept the on-chain contract address (or equivalent identifier) to distinguish tokens on the same chain.
+
+Contract addresses **must** be matched case-insensitively wherever the chain's address encoding is case-insensitive, which covers every EVM chain. `0xdac17f958d2ee523a2206206994597c13d831ec7` and `0xdAC17F958D2ee523a2206206994597C13D831ec7` are the same token; the second simply carries an [EIP-55](https://eips.ethereum.org/EIPS/eip-55) checksum. Matching the raw string means whether a token resolves depends on which casing the caller happened to hold, and a provider whose own asset list mixes the two casings will serve some tokens and not others for no reason the caller can see.
+
+#### The asset list must agree with order behavior
+
+The "list all assets" endpoint is what an integrator builds the mapping from, so it **must** describe what the order endpoint will actually accept, in two respects.
+
+**Same identifiers.** Whatever identifiers the quote and order endpoints accept **must** be documented, and the list **must** report assets using those same identifiers.
+
+- A chain named one way in the list and another way at the order endpoint cannot be mapped from the API at all. It has to be guessed by hand, and chains then fall out of the mapping silently as the provider adds them.
+- An asset whose list entry omits the identifier the order endpoint requires cannot be ordered from list data at all. A list keyed by ticker is not a substitute when the order endpoint takes a contract address: the entry is advertised as available while carrying nothing an order can be built from.
+
+**Same availability.** An asset or pair the list reports as available **must not** be refused by the order endpoint as unsupported, and an asset the order endpoint serves **should** appear in the list. Where availability is genuinely dynamic (a temporary halt, a liquidity or maintenance window), the list **must** carry that state in a machine-readable field rather than continuing to advertise the asset, and the order endpoint **must** distinguish a temporary halt from an unsupported asset by error code (see [section 3](#3-error-handling)).
+
+A list that advertises assets the order endpoint rejects is worse than no list. It reads as a supported-asset inventory, an integrator maps every entry in it, and every one of those mappings that does not work becomes a pair the user is offered and cannot complete.
 
 **Example: non-EVM asset**
 
@@ -114,6 +164,10 @@ The plugin maps provider errors to these Edge error classes (defined in `edge-co
 | Asset/pair not supported | `SwapCurrencyError` | A machine-readable code identifying which asset(s) are unsupported |
 | Amount too low | `SwapBelowLimitError` | The minimum amount in **both** the source asset and the destination asset |
 | Amount too high | `SwapAboveLimitError` | The maximum amount in **both** the source asset and the destination asset |
+| Address not accepted | `SwapCurrencyError` (until a dedicated class exists) | A machine-readable code identifying which address was rejected, distinct from an unsupported pair |
+| Transient or retryable failure | retried, then surfaced as a generic failure | A machine-readable code marking the failure as retryable rather than permanent |
+
+A code **must** identify one condition. Reusing a single code across distinct conditions is the same defect as returning an unstructured string: the client can read it, but it does not mean anything specific enough to act on. Two conditions this matters most for are the last two rows above. An address the provider will not accept, and a creation failure that would succeed on retry, both differ from "this pair is unsupported", and a client that cannot tell them apart will report a permanent limitation for a problem that is neither permanent nor about the pair.
 
 #### Why both source and destination limits are needed
 
