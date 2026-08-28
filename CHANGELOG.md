@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 2.54.0 (2026-08-28)
+
 - changed: LI.FI quotes no longer force a 5% slippage. LI.FI now picks the slippage per pair, which is 0.1% for stable-to-stable and 0.5% otherwise, shrinking the window a sandwich bot can extract. The plugin also reads an optional `swap.plugins.lifi.slippage` override, which the info server has to start serving before it does anything.
 
 ## 2.53.0 (2026-08-18)
