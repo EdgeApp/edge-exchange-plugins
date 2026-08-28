@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 2.54.0 (2026-08-28)
+
 - added: Robinhood Chain swaps via SideShift, LI.FI, Rango, ChangeNow, Swapuz and LetsExchange.
 - added: `AGENTS.md` and `.cursor/BUGBOT.md`, recording the swap plugin conventions that recent provider reviews settled.
 - added: A test suite for the swap plugin template, covering the max-quote probe, limit handling, the trust boundary on provider amounts, and memo cleaning. A new integration can copy it alongside the template.
