@@ -316,6 +316,10 @@ changenow.set('hkd', null)
 // Display Name: hnl
 changenow.set('hnl', null)
 
+// Currency Count: 3
+// Display Name: hood
+changenow.set('hood', 'robinhood')
+
 // Currency Count: 1
 // Display Name: hrk
 changenow.set('hrk', null)

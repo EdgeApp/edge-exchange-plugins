@@ -520,6 +520,9 @@ swapuz.set('REDBELLY', null)
 // Display Name: REEF
 swapuz.set('REEF', null)
 
+// Display Name: ROBINHOOD
+swapuz.set('ROBINHOOD', 'robinhood')
+
 // Display Name: RONIN
 swapuz.set('RON', null)
 
