@@ -64,8 +64,6 @@ const asInitOptions = asObject({
   integrator: asOptional(asString, 'edgeapp')
 })
 
-/** Allow up to 5% slippage even for variable rate quotes */
-const MAX_SLIPPAGE = '0.05'
 const LIFI_SERVERS_DEFAULT = ['https://li.quest']
 const EXPIRATION_MS = 1000 * 60
 const EXCHANGE_INFO_UPDATE_FREQ_MS = 60000
@@ -121,7 +119,19 @@ const asExchangeInfo = asObject({
           // volatilitySpread: asOptional(asNumber),
           // likeKindVolatilitySpread: asOptional(asNumber),
           // daVolatilitySpread: asOptional(asNumber),
-          lifiServers: asOptional(asArray(asString))
+          lifiServers: asOptional(asArray(asString)),
+
+          /**
+           * Maximum slippage as a decimal, ie 0.01 for 1%. Overrides the
+           * slippage LI.FI picks for the pair, so an unresponsive route can be
+           * loosened without shipping a client release.
+           *
+           * The info server does not serve this yet: its own `asExchangeInfo`
+           * enumerates `swap.plugins` without a `lifi` block and drops unknown
+           * keys, which is also why `lifiServers` above never arrives. Adding
+           * that block is what turns both into live config.
+           */
+          slippage: asOptional(asNumber)
         })
       )
     })
@@ -307,9 +317,11 @@ export function makeLifiPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
       }
     }
 
+    let slippage: number | undefined
     if (exchangeInfo != null) {
       const { lifi } = exchangeInfo.swap.plugins
       lifiServers = lifi?.lifiServers ?? lifiServers
+      slippage = lifi?.slippage
     }
 
     const params = makeQueryParams({
@@ -321,8 +333,12 @@ export function makeLifiPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
       fromAddress,
       toAddress,
       integrator,
-      slippage: MAX_SLIPPAGE,
-      fee: affiliateFee
+      fee: affiliateFee,
+      // Omitting `slippage` lets LI.FI pick it per pair, which is far tighter
+      // than a blanket maximum on liquid pairs and shrinks the window a
+      // sandwich bot can extract. `makeQueryParams` emits a valueless key for
+      // undefined, so the param has to be left out rather than passed empty.
+      ...(slippage != null ? { slippage } : {})
     })
     // Get current pool
     const [quoteResponse] = await Promise.all([
