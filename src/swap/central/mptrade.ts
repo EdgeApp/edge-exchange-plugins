@@ -40,18 +40,55 @@ import {
   memoType
 } from '../../util/utils'
 import { createEvmApprovalEdgeTransactions } from '../defi/defiUtils'
-import { EdgeSwapRequestPlugin, StringMap } from '../types'
+import { asNumberString, EdgeSwapRequestPlugin, StringMap } from '../types'
+import { asOptionalBlank } from './changenow'
 
-const pluginId = 'mptrade'
-// CENTRALIZED, despite the on-chain execution: every executable payload is
-// signed by a MoonPay Trade server (their fee module), and their `alt-vm`
-// bridges have raised KYC flags, so the venue is server-gated. That is what the
-// Edge DEX litmus asks, not whether defi shows up in the implementation.
-const swapInfo: EdgeSwapInfo = {
-  pluginId,
+/**
+ * One MoonPay Trade API, two Edge registrations, split by VENUE because `isDex`
+ * lives on the plugin rather than the quote:
+ *
+ * - `mptrade` (this file, CENTRALIZED): every route whose settlement a server
+ *   can gate. EVM payloads carry a MoonPay Trade server signature the router
+ *   requires, `alt-vm` sources pay an operator-issued deposit address, and
+ *   every cross-chain route releases funds through a bridge whose escrow is
+ *   operator-run for part of their set. That is what the Edge DEX litmus asks,
+ *   not whether defi shows up in the implementation.
+ * - `mptradedefi` (`defi/mptradeDefi.ts`, DEX): every route settled on a
+ *   permissionless venue, which today is Solana-to-Solana. MoonPay Trade
+ *   invokes the underlying program directly with no router of its own, no order
+ *   state depends on user identity, and delivery happens inside the user's own
+ *   atomic transaction, so no party can gate it after signing. The id is
+ *   venue-generic, not chain-specific: the route set can grow.
+ *
+ * `handlesRoute` partitions every pair between the two, so a route is quoted
+ * exactly once and never by both.
+ *
+ * Both registrations carry the MoonPay Trade brand, and their display names say
+ * which venue each covers, since Swap Settings and the preferred-provider
+ * picker show `displayName` alone.
+ */
+export interface MpTradeVariant {
+  swapInfo: EdgeSwapInfo
+  handlesRoute: (fromPluginId: string, toPluginId: string) => boolean
+}
+
+/** The one route family whose settlement is the user's own atomic transaction. */
+export const isSolanaSameChainRoute = (
+  fromPluginId: string,
+  toPluginId: string
+): boolean => fromPluginId === 'solana' && toPluginId === 'solana'
+
+export const mpTradeSwapInfo: EdgeSwapInfo = {
+  pluginId: 'mptrade',
   isDex: false,
-  displayName: 'MoonPay Trade',
+  displayName: 'MoonPay Trade (Centralized)',
   supportEmail: 'support@edge.app'
+}
+
+const centralVariant: MpTradeVariant = {
+  swapInfo: mpTradeSwapInfo,
+  handlesRoute: (fromPluginId, toPluginId) =>
+    !isSolanaSameChainRoute(fromPluginId, toPluginId)
 }
 
 const asInitOptions = asObject({
@@ -139,7 +176,10 @@ const asMpTradeSolanaTx = asObject({
 
 const asMpTradeAltVmTx = asObject({
   to: asString,
-  toExtra: asOptional(asString),
+  // A destination tag can arrive as a number (XRP tags are numeric), and the
+  // valid tag `0` must survive: accept either shape, treat only null or blank
+  // as absent.
+  toExtra: asOptionalBlank(asNumberString),
   value: asString,
   chainId: asNumber
 })
@@ -221,8 +261,8 @@ const asMpTradeRegisterResults = asArray(
 )
 
 /**
- * Runtime configuration from the info server, keyed to this plugin under
- * `corePlugins.mptrade`. Every field is optional and the whole payload is read
+ * Runtime configuration from the info server, keyed per registration under
+ * `corePlugins.<pluginId>`. Every field is optional and the whole payload is read
  * through `asMaybe`, so a malformed or absent payload silently falls back to the
  * built-in tiers rather than failing a quote.
  */
@@ -295,6 +335,8 @@ const SUPPORTED_VM_IDS = ['evm', 'solana', 'alt-vm']
  */
 export interface MpTradeSpendContext {
   action: MpTradeAction
+  /** The registration that quoted the route; recorded on the saved action. */
+  swapInfo: EdgeSwapInfo
   fromPluginId: string
   toPluginId: string
   fromTokenId: string | null
@@ -324,6 +366,7 @@ export const makeMpTradeSpendInfo = (
 ): EdgeSpendInfo => {
   const {
     action,
+    swapInfo,
     fromPluginId,
     toPluginId,
     fromTokenId,
@@ -473,6 +516,7 @@ const limitToNative = (
 
 /** Translate a MoonPay Trade error response into the closest Edge swap error. */
 const throwMpTradeError = (
+  swapInfo: EdgeSwapInfo,
   swapError: MpTradeError,
   request: EdgeSwapRequestPlugin,
   endpoint: string
@@ -496,8 +540,12 @@ const throwMpTradeError = (
   )
 }
 
-export function makeMpTradePlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
+export function makeMpTradeBasedPlugin(
+  opts: EdgeCorePluginOptions,
+  variant: MpTradeVariant
+): EdgeSwapPlugin {
   const { io, log } = opts
+  const { swapInfo, handlesRoute } = variant
   const { apiKey } = asInitOptions(opts.initOptions)
   const { fetchCors = io.fetch } = io
 
@@ -558,6 +606,12 @@ export function makeMpTradePlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
     const fromPluginId = fromWallet.currencyInfo.pluginId
     const toPluginId = toWallet.currencyInfo.pluginId
 
+    // The other registration owns this pair; to the core that reads as this
+    // provider not serving it, which is exactly the ranking wanted.
+    if (!handlesRoute(fromPluginId, toPluginId)) {
+      throw new SwapCurrencyError(swapInfo, request)
+    }
+
     // Rejects same-asset transfers plus the shared default exclusions every
     // central plugin applies. MoonPay Trade adds none of its own, so the map is
     // empty, matching nym.
@@ -604,7 +658,7 @@ export function makeMpTradePlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
 
     const pathsError = asMaybe(asMpTradeError)(pathsJson)
     if (pathsError != null) {
-      throwMpTradeError(pathsError, request, 'getPaths')
+      throwMpTradeError(swapInfo, pathsError, request, 'getPaths')
     }
     if (!pathsResponse.ok) {
       throw new Error(
@@ -668,7 +722,7 @@ export function makeMpTradePlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
 
     const swapError = asMaybe(asMpTradeError)(responseJson)
     if (swapError != null) {
-      throwMpTradeError(swapError, request, 'getAction')
+      throwMpTradeError(swapInfo, swapError, request, 'getAction')
     }
     if (!response.ok) {
       throw new Error(
@@ -731,6 +785,7 @@ export function makeMpTradePlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
 
     const spendInfo = makeMpTradeSpendInfo({
       action,
+      swapInfo,
       fromPluginId,
       toPluginId,
       fromTokenId,
@@ -806,3 +861,7 @@ export function makeMpTradePlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
   }
   return out
 }
+
+export const makeMpTradePlugin = (
+  opts: EdgeCorePluginOptions
+): EdgeSwapPlugin => makeMpTradeBasedPlugin(opts, centralVariant)

@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- added: MoonPay Trade swap provider
+
 ## 2.55.0 (2026-09-07)
 
 - added: Robinhood Chain swaps via SideShift, LI.FI, Rango, ChangeNow, Swapuz and LetsExchange.
