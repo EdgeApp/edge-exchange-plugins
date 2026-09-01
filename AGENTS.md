@@ -26,6 +26,8 @@ Two directories, split by VENUE, which is what `isDex` records:
 
 The PAYLOAD shape is independent of the split, so never infer one from the other. A central provider may return executable calldata rather than a deposit address (`central/swapsxyz.ts` dispatches calldata, an unsigned Solana transaction, or a deposit address off one `vmId` switch). Classify by whether the venue can refuse you, not by whether defi appears in the implementation.
 
+Classification is per REGISTRATION, not per quote (`isDex` lives on `swapInfo`, which the core copies onto every quote). A provider whose route families sit on different venues ships one registration per venue and partitions its routes between them with a single predicate, so no route is quoted twice or dropped: `central/swapsxyz.ts` owns the shared factory, `defi/swapsxyzSolana.ts` registers its Solana-to-Solana routes as the DEX half.
+
 Start from the closest existing plugin of the right shape rather than from blank. Every plugin is a `makeXxxPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin` factory returning `{ swapInfo, fetchSwapQuote }`.
 
 `fetchSwapQuote` follows one pipeline in every plugin: `convertRequest` → gate the pair (typed error if unsupported) → `getMaxSwappable` for `quoteFor: 'max'` → an inner function returning a `SwapOrder` → `makeSwapPluginQuote`. The shared machinery is in `src/util/swapHelpers.ts` and `src/util/utils.ts`.

@@ -15,8 +15,13 @@ import {
   makeSwapsXyzSpendInfo,
   resolveSlippageBps,
   resolveSlippageTiers,
-  SwapsXyzAction
+  SwapsXyzAction,
+  swapsXyzSwapInfo
 } from '../src/swap/central/swapsxyz'
+import {
+  makeSwapsXyzSolanaPlugin,
+  swapsXyzSolanaSwapInfo
+} from '../src/swap/defi/swapsxyzSolana'
 import { EdgeSwapRequestPlugin } from '../src/swap/types'
 
 const USDC = 'a0b86991c6218b36c1d19d4a2e9eb0ce3606eb48'
@@ -91,6 +96,7 @@ describe('swapsxyz makeSwapsXyzSpendInfo', function () {
 
     const spendInfo = makeSwapsXyzSpendInfo({
       action,
+      swapInfo: swapsXyzSwapInfo,
       fromPluginId: 'ethereum',
       toPluginId: 'ethereum',
       fromTokenId: null,
@@ -155,6 +161,7 @@ describe('swapsxyz makeSwapsXyzSpendInfo', function () {
 
     const spendInfo = makeSwapsXyzSpendInfo({
       action,
+      swapInfo: swapsXyzSwapInfo,
       fromPluginId: 'ethereum',
       toPluginId: 'ethereum',
       fromTokenId: USDC,
@@ -189,6 +196,7 @@ describe('swapsxyz makeSwapsXyzSpendInfo route models', function () {
       action: makeAction({
         tx: { to: ROUTER, data: '0x', value: '5000000000000000', chainId: 8453 }
       }),
+      swapInfo: swapsXyzSwapInfo,
       fromPluginId: 'base',
       toPluginId: 'monero',
       fromTokenId: null,
@@ -215,6 +223,7 @@ describe('swapsxyz makeSwapsXyzSpendInfo route models', function () {
         },
         amountIn: makeAmount('100000000', '0x0', true, 9, 'SOL')
       }),
+      swapInfo: swapsXyzSwapInfo,
       fromPluginId: 'solana',
       toPluginId: 'base',
       fromTokenId: null,
@@ -247,6 +256,7 @@ describe('swapsxyz makeSwapsXyzSpendInfo route models', function () {
         },
         amountIn: makeAmount('3000000', mint, false, 6, 'USDC')
       }),
+      swapInfo: swapsXyzSwapInfo,
       fromPluginId: 'solana',
       toPluginId: 'base',
       fromTokenId: 'solana-usdc',
@@ -273,6 +283,7 @@ describe('swapsxyz makeSwapsXyzSpendInfo route models', function () {
         },
         amountIn: makeAmount('100000000', '0x0', true, 8, 'LTC')
       }),
+      swapInfo: swapsXyzSwapInfo,
       fromPluginId: 'litecoin',
       toPluginId: 'base',
       fromTokenId: null,
@@ -304,6 +315,7 @@ describe('swapsxyz makeSwapsXyzSpendInfo route models', function () {
         },
         amountIn: makeAmount('100000000', '0x0', true, 6, 'XRP')
       }),
+      swapInfo: swapsXyzSwapInfo,
       fromPluginId: 'ripple',
       toPluginId: 'base',
       fromTokenId: null,
@@ -481,17 +493,39 @@ const makeFakeIo = (
   }
 })
 
+const makePluginOpts = (
+  response: FakeResponse,
+  pathsResponse: FakeResponse,
+  registerLog?: RegisterLog,
+  uriLog?: string[]
+): EdgeCorePluginOptions =>
+  (({
+    io: makeFakeIo(response, pathsResponse, registerLog, uriLog),
+    initOptions: { apiKey: 'test-key' },
+    log: { warn() {} }
+  } as unknown) as EdgeCorePluginOptions)
+
+/** The centralized registration, which quotes every route but Solana-to-Solana. */
 const makePlugin = (
   response: FakeResponse,
   pathsResponse: FakeResponse = openPaths(),
   registerLog?: RegisterLog,
   uriLog?: string[]
 ): EdgeSwapPlugin =>
-  makeSwapsXyzPlugin(({
-    io: makeFakeIo(response, pathsResponse, registerLog, uriLog),
-    initOptions: { apiKey: 'test-key' },
-    log: { warn() {} }
-  } as unknown) as EdgeCorePluginOptions)
+  makeSwapsXyzPlugin(
+    makePluginOpts(response, pathsResponse, registerLog, uriLog)
+  )
+
+/** The DEX registration, which quotes only Solana-to-Solana. */
+const makeSolanaPlugin = (
+  response: FakeResponse,
+  pathsResponse: FakeResponse = openPaths(),
+  registerLog?: RegisterLog,
+  uriLog?: string[]
+): EdgeSwapPlugin =>
+  makeSwapsXyzSolanaPlugin(
+    makePluginOpts(response, pathsResponse, registerLog, uriLog)
+  )
 
 /** A getAction error body: `{ success: false, error: { code, message } }`. */
 const errorBody = (code: string, message = ''): FakeResponse => ({
@@ -1124,6 +1158,151 @@ describe('swapsxyz fetchSwapQuote success', function () {
 
     await quote.approve()
     assert.deepEqual(registerLog.calls, [])
+  })
+})
+
+// ---------------------------------------------------------------------------
+// Venue split
+//
+// `isDex` is per plugin, so swaps.xyz ships two registrations that partition
+// its routes: Solana-to-Solana is the DEX half, everything else the CEX half.
+// These assert the partition from both sides, and that neither side needs the
+// network to decline a pair it does not own.
+// ---------------------------------------------------------------------------
+
+const SOLANA_CHAIN_ID = 1399811149
+const SOL_ADDRESS = '9WzDXwBbmkg8ZTbNMqUxvQRAyrZzDsGYdLVL9zYtAWWM'
+
+const solanaWallet = (address: string = SOL_ADDRESS): EdgeCurrencyWallet =>
+  makeFakeWallet({
+    pluginId: 'solana',
+    currencyCode: 'SOL',
+    address,
+    balanceMap: new Map([[null, '1000000000']])
+  })
+
+/** 0.005 SOL into USDC on Solana, the shape the live same-chain route returns. */
+const solanaSameChainRequest = (): EdgeSwapRequest =>
+  usdcRequest({
+    fromWallet: solanaWallet(),
+    fromTokenId: null,
+    toWallet: solanaWallet(),
+    toTokenId: USDC,
+    nativeAmount: '5000000'
+  })
+
+const solanaAction = (): FakeResponse =>
+  okAction({
+    vmId: 'solana',
+    tx: {
+      base64Tx: 'AQAAAAAAAAdeadbeef',
+      recentBlockhash: 'XMWMqoNf1oYxGxB8E18F7tyF3mrWPGSbbHcNd85BwSN',
+      payer: SOL_ADDRESS
+    },
+    amountIn: makeAmount('5000000', '0x0', true, 9, 'SOL'),
+    amountOut: makeAmount('500937', `0x${USDC}`, false, 6, 'USDC'),
+    amountOutMin: makeAmount('498432', `0x${USDC}`, false, 6, 'USDC')
+  })
+
+const solanaPaths = (): FakeResponse =>
+  openPaths({
+    srcToken: { decimals: 9 },
+    paths: [{ chainId: SOLANA_CHAIN_ID, supportsExactAmountIn: true }]
+  })
+
+describe('swapsxyz venue split', function () {
+  it('publishes a centralized and a DEX swapInfo under distinct ids', function () {
+    assert.equal(makePlugin(okAction()).swapInfo.isDex, false)
+    assert.equal(makePlugin(okAction()).swapInfo.pluginId, 'swapsxyz')
+    assert.equal(makeSolanaPlugin(okAction()).swapInfo.isDex, true)
+    assert.equal(
+      makeSolanaPlugin(okAction()).swapInfo.pluginId,
+      'swapsxyzsolana'
+    )
+    // Swap Settings and the preferred-provider picker show displayName alone.
+    assert.notEqual(
+      swapsXyzSwapInfo.displayName,
+      swapsXyzSolanaSwapInfo.displayName
+    )
+  })
+
+  it('centralized registration declines Solana-to-Solana before any request', async function () {
+    const uriLog: string[] = []
+    await expectErrorName(
+      makePlugin(solanaAction(), solanaPaths(), undefined, uriLog),
+      solanaSameChainRequest(),
+      'SwapCurrencyError'
+    )
+    assert.deepEqual(uriLog, [])
+  })
+
+  it('DEX registration declines an EVM route before any request', async function () {
+    const uriLog: string[] = []
+    await expectErrorName(
+      makeSolanaPlugin(okAction(), openPaths(), undefined, uriLog),
+      usdcRequest(),
+      'SwapCurrencyError'
+    )
+    assert.deepEqual(uriLog, [])
+  })
+
+  it('DEX registration declines a Solana cross-chain route before any request', async function () {
+    // A Solana source into another chain releases funds through a bridge, so
+    // it belongs to the centralized half even though the payload is identical.
+    const uriLog: string[] = []
+    await expectErrorName(
+      makeSolanaPlugin(solanaAction(), solanaPaths(), undefined, uriLog),
+      usdcRequest({
+        fromWallet: solanaWallet(),
+        fromTokenId: null,
+        nativeAmount: '5000000'
+      }),
+      'SwapCurrencyError'
+    )
+    assert.deepEqual(uriLog, [])
+  })
+
+  it('DEX registration builds a fixed Solana-to-Solana quote under its own id', async function () {
+    const quote = await makeSolanaPlugin(
+      solanaAction(),
+      solanaPaths()
+    ).fetchSwapQuote(solanaSameChainRequest(), undefined, { infoPayload: {} })
+
+    assert.equal(quote.pluginId, 'swapsxyzsolana')
+    assert.equal(quote.swapInfo.isDex, true)
+    assert.equal(quote.fromNativeAmount, '5000000')
+    assert.equal(quote.toNativeAmount, '498432')
+    assert.equal(quote.isEstimate, false)
+    assert.equal(quote.minReceiveAmount, undefined)
+  })
+
+  it('records the quoting registration on the saved action', function () {
+    const spendInfo = makeSwapsXyzSpendInfo({
+      action: makeAction({
+        vmId: 'solana',
+        tx: {
+          base64Tx: 'AQAAAAAAAAdeadbeef',
+          recentBlockhash: 'XMWMqoNf1oYxGxB8E18F7tyF3mrWPGSbbHcNd85BwSN',
+          payer: SOL_ADDRESS
+        },
+        amountIn: makeAmount('5000000', '0x0', true, 9, 'SOL')
+      }),
+      swapInfo: swapsXyzSolanaSwapInfo,
+      fromPluginId: 'solana',
+      toPluginId: 'solana',
+      fromTokenId: null,
+      toTokenId: 'solana-usdc',
+      fromAddress: SOL_ADDRESS,
+      toAddress: SOL_ADDRESS,
+      toWalletId: 'wallet-sol'
+    })
+
+    const savedAction = spendInfo.savedAction
+    assert.isNotNull(savedAction)
+    if (savedAction != null && savedAction.actionType === 'swap') {
+      // Tx history attributes the swap to the DEX entry, not the CEX one.
+      assert.deepEqual(savedAction.swapInfo, swapsXyzSolanaSwapInfo)
+    }
   })
 })
 
