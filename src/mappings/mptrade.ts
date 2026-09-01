@@ -43,51 +43,84 @@ mptrade.set('algorand', '999000419')
 mptrade.set('amoy', null) // Polygon testnet
 mptrade.set('arbitrum', '42161')
 mptrade.set('avalanche', '43114')
+mptrade.set('axelar', null) // not on getChainList
+mptrade.set('badcoin', null) // not on getChainList
 mptrade.set('base', '8453')
+mptrade.set('binance', null) // BNB Beacon Chain, retired
 mptrade.set('binancesmartchain', '56')
 mptrade.set('bitcoin', '999000313')
 mptrade.set('bitcoincash', '10000')
+mptrade.set('bitcoincashtestnet', null) // testnet
+mptrade.set('bitcoingold', null) // not on getChainList
+mptrade.set('bitcoingoldtestnet', null) // testnet
 mptrade.set('bitcoinsv', '999000331')
+mptrade.set('bitcointestnet', null) // testnet
+mptrade.set('bitcointestnet4', null) // testnet
 mptrade.set('bobevm', '60808')
 mptrade.set('botanix', '3637')
+mptrade.set('calibration', null) // testnet
 mptrade.set('cardano', '1816')
+mptrade.set('cardanotestnet', null) // testnet
 mptrade.set('celo', '42220')
+mptrade.set('coreum', null) // not on getChainList
 mptrade.set('cosmoshub', '999000433')
 mptrade.set('dash', '999000416')
 mptrade.set('digibyte', '999000301')
 mptrade.set('dogecoin', '2000')
+mptrade.set('eboost', null) // not on getChainList
 mptrade.set('ecash', '999000920')
+mptrade.set('eos', null) // not on getChainList
 mptrade.set('ethDev', null) // Local dev chain
 mptrade.set('ethereum', '1')
 mptrade.set('ethereumclassic', '61')
 mptrade.set('ethereumpow', '10001')
 mptrade.set('fantom', '250')
+mptrade.set('feathercoin', null) // not on getChainList
 mptrade.set('filecoin', '314')
 mptrade.set('filecoinfevm', null) // MoonPay Trade lists 314 as native Filecoin
 mptrade.set('filecoinfevmcalibration', null) // Filecoin testnet
+mptrade.set('fio', null) // not on getChainList
+mptrade.set('groestlcoin', null) // not on getChainList
 mptrade.set('hedera', '295')
 mptrade.set('holesky', null) // Ethereum testnet
 mptrade.set('hyperevm', '999')
+mptrade.set('liberland', null) // not on getChainList
+mptrade.set('liberlandtestnet', null) // testnet
 mptrade.set('litecoin', '999000323')
+mptrade.set('mayachain', null) // not on getChainList
 mptrade.set('monad', '143')
 mptrade.set('monero', '999000343')
+mptrade.set('nym', null) // not on getChainList
 mptrade.set('opbnb', '204')
 mptrade.set('optimism', '10')
 mptrade.set('osmosis', '999000446')
+mptrade.set('piratechain', null) // not on getChainList
 mptrade.set('pivx', '999000455')
+mptrade.set('polkadot', null) // not on getChainList
 mptrade.set('polygon', '137')
 mptrade.set('pulsechain', '369')
 mptrade.set('qtum', '999000955')
 mptrade.set('ravencoin', '999000342')
 mptrade.set('ripple', '999000346')
+mptrade.set('robinhood', '4663')
 mptrade.set('rsk', '30')
 mptrade.set('sepolia', null) // Ethereum testnet
+mptrade.set('smartcash', null) // not on getChainList
 mptrade.set('solana', '1399811149')
 mptrade.set('sonic', '146')
 mptrade.set('stellar', '999000338')
 mptrade.set('sui', '999000938')
+mptrade.set('suitestnet', null) // testnet
+mptrade.set('telos', null) // not on getChainList
 mptrade.set('tezos', '999000358')
+mptrade.set('thorchainrune', null) // not on getChainList
+mptrade.set('thorchainrunestagenet', null) // testnet
 mptrade.set('ton', '999000337')
 mptrade.set('tron', '728126428')
+mptrade.set('ufo', null) // not on getChainList
+mptrade.set('vertcoin', null) // not on getChainList
+mptrade.set('wax', null) // not on getChainList
+mptrade.set('zano', null) // not on getChainList
 mptrade.set('zcash', '999000322')
+mptrade.set('zcoin', null) // not on getChainList
 mptrade.set('zksync', '324')

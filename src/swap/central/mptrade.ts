@@ -22,7 +22,8 @@ import {
   JsonObject,
   SwapAboveLimitError,
   SwapBelowLimitError,
-  SwapCurrencyError
+  SwapCurrencyError,
+  SwapPermissionError
 } from 'edge-core-js/types'
 
 import { mptrade as mptradeMapping } from '../../mappings/mptrade'
@@ -37,21 +38,59 @@ import {
   convertRequest,
   getAddress,
   makeQueryParams,
-  memoType
+  memoType,
+  snooze
 } from '../../util/utils'
 import { createEvmApprovalEdgeTransactions } from '../defi/defiUtils'
-import { EdgeSwapRequestPlugin, StringMap } from '../types'
+import { asNumberString, EdgeSwapRequestPlugin, StringMap } from '../types'
+import { asOptionalBlank } from './changenow'
 
-const pluginId = 'mptrade'
-// CENTRALIZED, despite the on-chain execution: every executable payload is
-// signed by a MoonPay Trade server (their fee module), and their `alt-vm`
-// bridges have raised KYC flags, so the venue is server-gated. That is what the
-// Edge DEX litmus asks, not whether defi shows up in the implementation.
-const swapInfo: EdgeSwapInfo = {
-  pluginId,
+/**
+ * One MoonPay Trade API, two Edge registrations, split by VENUE because `isDex`
+ * lives on the plugin rather than the quote:
+ *
+ * - `mptrade` (this file, CENTRALIZED): every route whose settlement a server
+ *   can gate. EVM payloads carry a MoonPay Trade server signature the router
+ *   requires, `alt-vm` sources pay an operator-issued deposit address, and
+ *   every cross-chain route releases funds through a bridge whose escrow is
+ *   operator-run for part of their set. That is what the Edge DEX litmus asks,
+ *   not whether defi shows up in the implementation.
+ * - `mptradedefi` (`defi/mptradeDefi.ts`, DEX): every route settled on a
+ *   permissionless venue, which today is Solana-to-Solana. MoonPay Trade
+ *   invokes the underlying program directly with no router of its own, no order
+ *   state depends on user identity, and delivery happens inside the user's own
+ *   atomic transaction, so no party can gate it after signing. The id is
+ *   venue-generic, not chain-specific: the route set can grow.
+ *
+ * `handlesRoute` partitions every pair between the two, so a route is quoted
+ * exactly once and never by both.
+ *
+ * Both registrations carry the MoonPay Trade brand, and their display names say
+ * which venue each covers, since Swap Settings and the preferred-provider
+ * picker show `displayName` alone.
+ */
+export interface MpTradeVariant {
+  swapInfo: EdgeSwapInfo
+  handlesRoute: (fromPluginId: string, toPluginId: string) => boolean
+}
+
+/** The one route family whose settlement is the user's own atomic transaction. */
+export const isSolanaSameChainRoute = (
+  fromPluginId: string,
+  toPluginId: string
+): boolean => fromPluginId === 'solana' && toPluginId === 'solana'
+
+export const mpTradeSwapInfo: EdgeSwapInfo = {
+  pluginId: 'mptrade',
   isDex: false,
-  displayName: 'MoonPay Trade',
+  displayName: 'MoonPay Trade (Centralized)',
   supportEmail: 'support@edge.app'
+}
+
+const centralVariant: MpTradeVariant = {
+  swapInfo: mpTradeSwapInfo,
+  handlesRoute: (fromPluginId, toPluginId) =>
+    !isSolanaSameChainRoute(fromPluginId, toPluginId)
 }
 
 const asInitOptions = asObject({
@@ -103,6 +142,12 @@ const MAJOR_CURRENCY_CODES = new Set([
   'WETH',
   'XRP'
 ])
+// Backoff between `registerTxs` attempts, one entry per retry. The user's
+// coins are already at the provider's deposit address by the time registration
+// runs, so a transient failure is worth retrying, but `approve` waits on this
+// budget, so it stays under four seconds.
+const REGISTER_RETRY_DELAYS_MS = [250, 500, 1000, 2000]
+
 // MoonPay Trade explorer base for the saved swap action.
 const ORDER_URI = 'https://explorer.swaps.xyz/tx/'
 // Solana has no "zero address"; the system program stands in as the spend
@@ -127,30 +172,26 @@ const MAINNET_CODE_TRANSCRIPTION: StringMap = mapToStringMap(mptradeMapping)
 const asMpTradeEvmTx = asObject({
   to: asString,
   data: asString,
-  value: asString,
-  chainId: asNumber
+  value: asString
 })
 
 const asMpTradeSolanaTx = asObject({
-  base64Tx: asString,
-  recentBlockhash: asString,
-  payer: asString
+  base64Tx: asString
 })
 
 const asMpTradeAltVmTx = asObject({
   to: asString,
-  toExtra: asOptional(asString),
-  value: asString,
-  chainId: asNumber
+  // A destination tag can arrive as a number (XRP tags are numeric), and the
+  // valid tag `0` must survive: accept either shape, treat only null or blank
+  // as absent.
+  toExtra: asOptionalBlank(asNumberString),
+  value: asString
 })
 
 const asMpTradeAmount = asObject({
   amount: asString,
   address: asString,
-  chainId: asNumber,
-  isNative: asBoolean,
-  decimals: asNumber,
-  symbol: asString
+  isNative: asBoolean
 })
 
 /**
@@ -207,7 +248,6 @@ const asMpTradeError = asObject({
   success: asValue(false),
   error: asObject({
     code: asString,
-    name: asOptional(asString, ''),
     message: asOptional(asString, ''),
     statusCode: asOptional(asNumber)
   })
@@ -221,8 +261,8 @@ const asMpTradeRegisterResults = asArray(
 )
 
 /**
- * Runtime configuration from the info server, keyed to this plugin under
- * `corePlugins.mptrade`. Every field is optional and the whole payload is read
+ * Runtime configuration from the info server, keyed per registration under
+ * `corePlugins.<pluginId>`. Every field is optional and the whole payload is read
  * through `asMaybe`, so a malformed or absent payload silently falls back to the
  * built-in tiers rather than failing a quote.
  */
@@ -286,6 +326,18 @@ type MpTradeError = ReturnType<typeof asMpTradeError>
  */
 type MpTradeSwapOrder = SwapOrder & { action: MpTradeAction }
 
+/** What `getPaths` settles about a pair, before any order exists. */
+interface MpTradeRoute {
+  fromPluginId: string
+  toPluginId: string
+  fromChainId: string
+  toChainId: string
+  fromTokenAddress: string
+  toTokenAddress: string
+  /** The requested amount, clamped to the route ceiling on a max request. */
+  swapAmount: string
+}
+
 /** Source-chain VMs this plugin knows how to execute. */
 const SUPPORTED_VM_IDS = ['evm', 'solana', 'alt-vm']
 
@@ -295,6 +347,8 @@ const SUPPORTED_VM_IDS = ['evm', 'solana', 'alt-vm']
  */
 export interface MpTradeSpendContext {
   action: MpTradeAction
+  /** The registration that quoted the route; recorded on the saved action. */
+  swapInfo: EdgeSwapInfo
   fromPluginId: string
   toPluginId: string
   fromTokenId: string | null
@@ -324,6 +378,7 @@ export const makeMpTradeSpendInfo = (
 ): EdgeSpendInfo => {
   const {
     action,
+    swapInfo,
     fromPluginId,
     toPluginId,
     fromTokenId,
@@ -417,27 +472,47 @@ export const makeMpTradeSpendInfo = (
   return spendInfo
 }
 
-const CURRENCY_ERROR_KEYWORDS = [
-  'TOKEN',
-  'CHAIN',
-  'ROUTE',
-  'PATH',
-  'PAIR',
-  'UNSUPPORTED',
-  'NOT_FOUND',
-  'NO_QUOTE',
-  // MoonPay Trade rejects address formats it cannot pay: Zcash routes take only
-  // `t3…` P2SH addresses, so every `t1…` and every unified `u1…` Edge hands
-  // them comes back as INVALID_ADDRESS_FORMAT. From the user's side that is
-  // the provider being unable to serve the pair, which is what the core ranks
-  // a currency error as, rather than an internal fault worth surfacing.
-  'ADDRESS'
-]
+/**
+ * MoonPay Trade publishes a closed `code` enum, so an error classifies on the
+ * code itself rather than on words in the human-readable message. These are the
+ * codes that mean the provider cannot serve the PAIR, which is how the core
+ * ranks a currency error. `INVALID_ADDRESS_FORMAT` belongs here because MoonPay
+ * Trade rejects address formats it cannot pay: Zcash routes take only `t3…`
+ * P2SH addresses, so every `t1…` and every unified `u1…` Edge hands them comes
+ * back that way, which from the user's side is the pair not being served.
+ */
+const CURRENCY_ERROR_CODES = new Set([
+  'INVALID_ADDRESS_FORMAT',
+  'INVALID_DESTINATION_TOKEN',
+  'INVALID_SOURCE_TOKEN',
+  'NO_AVAILABLE_ROUTE',
+  'UNSUPPORTED_NETWORK',
+  'UNSUPPORTED_NETWORK_PAIR',
+  'UNSUPPORTED_NETWORK_TOKEN_PAIR',
+  'UNSUPPORTED_SWAP_DIRECTION'
+])
+const BELOW_LIMIT_CODES = new Set(['AMOUNT_TOO_LOW', 'INVALID_AMOUNT_ZERO'])
+const ABOVE_LIMIT_CODES = new Set(['AMOUNT_TOO_HIGH'])
+/**
+ * Codes where the provider serves the pair and simply failed this attempt.
+ * These stay plain errors so the core ranks them below any provider that can
+ * actually quote, instead of reading as an unsupported pair. `WALLET_SCREENED`
+ * is deliberate rather than unmapped: it is a compliance rejection of the
+ * wallet, which no Edge swap error describes, and calling it a geo restriction
+ * would tell the user the wrong thing about why.
+ */
+const PROVIDER_ERROR_CODES = new Set([
+  'INSUFFICIENT_LIQUIDITY',
+  'INTERNAL_SERVER_ERROR',
+  'WALLET_SCREENED'
+])
 
-// Checked BEFORE the currency keywords, since a limit failure often names the
-// route or token too ("amount too low for this route") and the limit is the
-// more specific, more useful error. Kept as whole phrases rather than bare
-// substrings: 'LOW' alone also matches ALLOWANCE, 'MIN' matches TERMINATED.
+// Fallback for a code outside the published enum, applied only to a 4xx (see
+// `throwMpTradeError`). Limit keywords are checked BEFORE the currency ones,
+// since a limit failure often names the route or token too ("amount too low for
+// this route") and the limit is the more specific, more useful error. Kept as
+// whole phrases rather than bare substrings: 'LOW' alone also matches
+// ALLOWANCE, 'MIN' matches TERMINATED.
 const BELOW_LIMIT_KEYWORDS = [
   'TOO_LOW',
   'TOO LOW',
@@ -455,6 +530,17 @@ const ABOVE_LIMIT_KEYWORDS = [
   'EXCEED',
   'ABOVE'
 ]
+const CURRENCY_ERROR_KEYWORDS = [
+  'TOKEN',
+  'CHAIN',
+  'ROUTE',
+  'PATH',
+  'PAIR',
+  'UNSUPPORTED',
+  'NOT_FOUND',
+  'NO_QUOTE',
+  'ADDRESS'
+]
 
 /**
  * Scale a decimal `getPaths` limit into the source token's base units, which is
@@ -471,15 +557,47 @@ const limitToNative = (
   return roundUp ? ceil(scaled, 0) : floor(scaled, 0)
 }
 
-/** Translate a MoonPay Trade error response into the closest Edge swap error. */
+/**
+ * Translate a MoonPay Trade error response into the closest Edge swap error,
+ * classifying on the published `code`. `status` is the HTTP status the body
+ * arrived with, used only by the keyword fallback.
+ */
 const throwMpTradeError = (
+  swapInfo: EdgeSwapInfo,
   swapError: MpTradeError,
   request: EdgeSwapRequestPlugin,
-  endpoint: string
+  endpoint: string,
+  status: number
 ): never => {
-  const { code, message } = swapError.error
-  const upper = `${code} ${message}`.toUpperCase()
+  const { code, message, statusCode } = swapError.error
+  const providerError = new Error(
+    `MoonPay Trade ${endpoint} failed: ${code}${
+      message !== '' ? ` (${message})` : ''
+    }`
+  )
 
+  if (BELOW_LIMIT_CODES.has(code)) {
+    throw new SwapBelowLimitError(swapInfo, undefined, 'from')
+  }
+  if (ABOVE_LIMIT_CODES.has(code)) {
+    throw new SwapAboveLimitError(swapInfo, undefined, 'from')
+  }
+  if (code === 'GEO_BLOCKED') {
+    throw new SwapPermissionError(swapInfo, 'geoRestriction')
+  }
+  if (CURRENCY_ERROR_CODES.has(code)) {
+    throw new SwapCurrencyError(swapInfo, request)
+  }
+  if (PROVIDER_ERROR_CODES.has(code)) throw providerError
+
+  // An unpublished code falls back to the message, but only when the provider
+  // blamed the REQUEST. A 5xx is the provider failing, and its message often
+  // names the token or path it could not load, which would otherwise read as an
+  // unsupported pair and outrank a provider that can still quote.
+  const httpStatus = statusCode ?? status
+  if (httpStatus < 400 || httpStatus >= 500) throw providerError
+
+  const upper = `${code} ${message}`.toUpperCase()
   if (BELOW_LIMIT_KEYWORDS.some(keyword => upper.includes(keyword))) {
     throw new SwapBelowLimitError(swapInfo, undefined, 'from')
   }
@@ -489,15 +607,15 @@ const throwMpTradeError = (
   if (CURRENCY_ERROR_KEYWORDS.some(keyword => upper.includes(keyword))) {
     throw new SwapCurrencyError(swapInfo, request)
   }
-  throw new Error(
-    `MoonPay Trade ${endpoint} failed: ${code}${
-      message !== '' ? ` (${message})` : ''
-    }`
-  )
+  throw providerError
 }
 
-export function makeMpTradePlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
+export function makeMpTradeBasedPlugin(
+  opts: EdgeCorePluginOptions,
+  variant: MpTradeVariant
+): EdgeSwapPlugin {
   const { io, log } = opts
+  const { swapInfo, handlesRoute } = variant
   const { apiKey } = asInitOptions(opts.initOptions)
   const { fetchCors = io.fetch } = io
 
@@ -510,53 +628,81 @@ export function makeMpTradePlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
    * POST the broadcast hash back to MoonPay Trade so they start tracking the
    * order. Required on every route that flags it, EVM included: it attaches the
    * hash to their order for status tracking, and an unregistered order sits
-   * pending. The swap is already on chain by the time this runs, so a failure
-   * here is logged and swallowed: throwing would report a successful swap as
-   * failed.
+   * pending. On a deposit-address route the user's coins are already at the
+   * provider's address by the time this runs, so a transient failure is retried
+   * on the budget in `REGISTER_RETRY_DELAYS_MS`; once that is spent the failure
+   * is logged with both ids a manual registration needs and swallowed, since
+   * throwing would report a settled swap as failed.
    */
   const registerTx = async (txId: string, txHash: string): Promise<void> => {
-    try {
-      const response = await fetchCors(`${MPTRADE_API_URL}/registerTxs`, {
-        method: 'POST',
-        headers,
-        body: JSON.stringify({ txId, txHash })
-      })
-      const json = await response.json()
-      const results = asMaybe(asMpTradeRegisterResults)(json)
-      const failure = results?.find(result => !result.success)
-      if (!response.ok || failure != null) {
-        log.warn(
-          `MoonPay Trade registerTxs failed for ${txId}: ${
-            failure?.error ?? `status ${response.status}`
-          }`
-        )
+    let failure = 'unknown error'
+    for (
+      let attempt = 0;
+      attempt <= REGISTER_RETRY_DELAYS_MS.length;
+      ++attempt
+    ) {
+      if (attempt > 0) await snooze(REGISTER_RETRY_DELAYS_MS[attempt - 1])
+      try {
+        const response = await fetchCors(`${MPTRADE_API_URL}/registerTxs`, {
+          method: 'POST',
+          headers,
+          body: JSON.stringify({ txId, txHash })
+        })
+        // Status before body: a 5xx often answers with something that is not
+        // JSON, and parsing first would bury the status in a parse error.
+        if (!response.ok) {
+          failure = `status ${response.status}`
+          continue
+        }
+        const json = await response.json()
+        const results = asMaybe(asMpTradeRegisterResults)(json)
+        const rejection = results?.find(result => !result.success)
+        if (rejection == null) return
+        // A parsed rejection is the provider's answer about this hash, not a
+        // transient fault, so re-POSTing it would only be told the same thing.
+        failure = rejection.error ?? 'registration rejected'
+        break
+      } catch (error: unknown) {
+        failure = String(error)
       }
-    } catch (error: unknown) {
-      log.warn(`MoonPay Trade registerTxs threw for ${txId}: ${String(error)}`)
     }
+    log.warn(
+      `MoonPay Trade registerTxs failed for txId ${txId} txHash ${txHash}: ${failure}`
+    )
   }
 
-  const fetchSwapQuoteInner = async (
+  /**
+   * Everything `getPaths` settles about a pair: whether a route exists at all,
+   * and what amount that route will accept. `getAction` answers both only by
+   * failing, so asking first turns an unsupported pair or an out-of-bounds
+   * amount into the typed error the core ranks against the other providers
+   * instead of a generic route failure.
+   */
+  const fetchRoute = async (
     request: EdgeSwapRequestPlugin,
-    slippageBps: number,
-    isMaxRequest: boolean = false
-  ): Promise<MpTradeSwapOrder> => {
+    isMaxRequest: boolean
+  ): Promise<MpTradeRoute> => {
     const {
       fromTokenId,
       toTokenId,
       nativeAmount,
       fromWallet,
-      toWallet,
-      quoteFor
+      toWallet
     } = request
 
     // MoonPay Trade `getAction` builds a route for an exact source amount.
-    if (quoteFor !== 'from') {
+    if (request.quoteFor !== 'from') {
       throw new SwapCurrencyError(swapInfo, request)
     }
 
     const fromPluginId = fromWallet.currencyInfo.pluginId
     const toPluginId = toWallet.currencyInfo.pluginId
+
+    // The other registration owns this pair; to the core that reads as this
+    // provider not serving it, which is exactly the ranking wanted.
+    if (!handlesRoute(fromPluginId, toPluginId)) {
+      throw new SwapCurrencyError(swapInfo, request)
+    }
 
     // Rejects same-asset transfers plus the shared default exclusions every
     // central plugin applies. MoonPay Trade adds none of its own, so the map is
@@ -585,11 +731,6 @@ export function makeMpTradePlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
       throw new SwapCurrencyError(swapInfo, request)
     }
 
-    // `getPaths` answers two questions `getAction` only answers by failing:
-    // whether a route exists at all for this pair, and what its usable amount
-    // limits are. Asking first turns an unsupported pair or an out-of-bounds
-    // amount into the right typed error, which the core ranks against the
-    // other providers, instead of a generic route failure.
     const pathsParams = makeQueryParams({
       srcChainId: fromChainId,
       srcToken: fromTokenAddress,
@@ -604,7 +745,13 @@ export function makeMpTradePlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
 
     const pathsError = asMaybe(asMpTradeError)(pathsJson)
     if (pathsError != null) {
-      throwMpTradeError(pathsError, request, 'getPaths')
+      throwMpTradeError(
+        swapInfo,
+        pathsError,
+        request,
+        'getPaths',
+        pathsResponse.status
+      )
     }
     if (!pathsResponse.ok) {
       throw new Error(
@@ -620,12 +767,13 @@ export function makeMpTradePlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
       throw new SwapCurrencyError(swapInfo, request)
     }
 
-    // Route limits win over the source token's own limits when both exist.
-    // Both arrive as decimal strings, so they have to be scaled into the base
-    // units `nativeAmount` uses before any compare.
+    // The source token's own limits are the canonical ones; the route's
+    // `amountLimits` are deprecated in the API reference and kept only as a
+    // fallback. Both arrive as decimal strings, so they have to be scaled into
+    // the base units `nativeAmount` uses before any compare.
     const { decimals } = srcToken
-    const minLimit = path.amountLimits?.minAmount ?? srcToken.minAmount
-    const maxLimit = path.amountLimits?.maxAmount ?? srcToken.maxAmount
+    const minLimit = srcToken.minAmount ?? path.amountLimits?.minAmount
+    const maxLimit = srcToken.maxAmount ?? path.amountLimits?.maxAmount
     const minAmount =
       minLimit == null ? null : limitToNative(minLimit, decimals, true)
     const maxAmount =
@@ -643,6 +791,33 @@ export function makeMpTradePlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
       }
       swapAmount = maxAmount
     }
+
+    return {
+      fromPluginId,
+      toPluginId,
+      fromChainId,
+      toChainId,
+      fromTokenAddress,
+      toTokenAddress,
+      swapAmount
+    }
+  }
+
+  const fetchSwapQuoteInner = async (
+    request: EdgeSwapRequestPlugin,
+    slippageBps: number,
+    isMaxRequest: boolean = false
+  ): Promise<MpTradeSwapOrder> => {
+    const { fromTokenId, toTokenId, fromWallet, toWallet } = request
+    const {
+      fromPluginId,
+      toPluginId,
+      fromChainId,
+      toChainId,
+      fromTokenAddress,
+      toTokenAddress,
+      swapAmount
+    } = await fetchRoute(request, isMaxRequest)
 
     const fromAddress = await getAddress(fromWallet)
     const toAddress = await getAddress(toWallet)
@@ -668,7 +843,13 @@ export function makeMpTradePlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
 
     const swapError = asMaybe(asMpTradeError)(responseJson)
     if (swapError != null) {
-      throwMpTradeError(swapError, request, 'getAction')
+      throwMpTradeError(
+        swapInfo,
+        swapError,
+        request,
+        'getAction',
+        response.status
+      )
     }
     if (!response.ok) {
       throw new Error(
@@ -731,6 +912,7 @@ export function makeMpTradePlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
 
     const spendInfo = makeMpTradeSpendInfo({
       action,
+      swapInfo,
       fromPluginId,
       toPluginId,
       fromTokenId,
@@ -748,6 +930,52 @@ export function makeMpTradePlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
       request,
       spendInfo,
       swapInfo
+    }
+  }
+
+  /**
+   * The `getMaxSwappable` probe, which exists only to price the network fee and
+   * is thrown away. Every `getAction` call allocates a deposit address and runs
+   * the provider's wallet screening, so probing a source that PAYS a deposit
+   * address would leave an unfunded order behind on every max swap. Such a
+   * spend is a plain payment whose fee does not depend on the destination, and
+   * its limits already came from `getPaths`, so the probe pays the user's own
+   * address with `skipChecks` and lets `getMaxSpendable` do the rest. EVM and
+   * Solana sources still quote through `getAction`, which is the only place
+   * their calldata and unsigned transaction come from.
+   */
+  const fetchProbeOrder = async (
+    request: EdgeSwapRequestPlugin,
+    slippageBps: number
+  ): Promise<SwapOrder> => {
+    const { fromTokenId, fromWallet } = request
+    // The provider reaches a few EVM chains through its alt-vm route model
+    // (sonic, ethereumpow, pulsechain), and this test keeps those on the
+    // calldata path they quote on today rather than guessing from the pair.
+    const paysDepositAddress =
+      fromWallet.currencyInfo.evmChainId == null &&
+      fromWallet.currencyInfo.pluginId !== 'solana'
+    if (!paysDepositAddress) {
+      return await fetchSwapQuoteInner(request, slippageBps, true)
+    }
+
+    const { swapAmount } = await fetchRoute(request, true)
+    const fromAddress = await getAddress(fromWallet)
+    const spendInfo: EdgeSpendInfo = {
+      tokenId: fromTokenId,
+      spendTargets: [{ nativeAmount: swapAmount, publicAddress: fromAddress }],
+      networkFeeOption: 'high',
+      // The probe spends to the wallet's own address, which the engine would
+      // otherwise reject, and its amount is the full balance before fees.
+      skipChecks: true,
+      assetAction: { assetActionType: 'swap' }
+    }
+    return {
+      request,
+      spendInfo,
+      swapInfo,
+      fromNativeAmount: swapAmount,
+      expirationDate: new Date(Date.now() + EXPIRATION_MS)
     }
   }
 
@@ -778,7 +1006,7 @@ export function makeMpTradePlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
           }
         } else {
           newRequest = await getMaxSwappable(
-            async r => await fetchSwapQuoteInner(r, slippageBps, true),
+            async r => await fetchProbeOrder(r, slippageBps),
             request
           )
         }
@@ -806,3 +1034,7 @@ export function makeMpTradePlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
   }
   return out
 }
+
+export const makeMpTradePlugin = (
+  opts: EdgeCorePluginOptions
+): EdgeSwapPlugin => makeMpTradeBasedPlugin(opts, centralVariant)
