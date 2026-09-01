@@ -40,18 +40,55 @@ import {
   memoType
 } from '../../util/utils'
 import { createEvmApprovalEdgeTransactions } from '../defi/defiUtils'
-import { EdgeSwapRequestPlugin, StringMap } from '../types'
+import { asNumberString, EdgeSwapRequestPlugin, StringMap } from '../types'
+import { asOptionalBlank } from './changenow'
 
-const pluginId = 'swapsxyz'
-// CENTRALIZED, despite the on-chain execution: every executable payload is
-// signed by a swaps.xyz server (their fee module), and their `alt-vm` bridges
-// have raised KYC flags, so the venue is server-gated. That is what the Edge
-// DEX litmus asks, not whether defi shows up in the implementation.
-const swapInfo: EdgeSwapInfo = {
-  pluginId,
+/**
+ * One swaps.xyz API, two Edge registrations, split by VENUE because `isDex`
+ * lives on the plugin rather than the quote:
+ *
+ * - `swapsxyz` (this file, CENTRALIZED): every route whose settlement a server
+ *   can gate. EVM payloads carry a swaps.xyz server signature the router
+ *   requires, `alt-vm` sources pay an operator-issued deposit address, and
+ *   every cross-chain route releases funds through a bridge whose escrow is
+ *   operator-run for part of their set. That is what the Edge DEX litmus asks,
+ *   not whether defi shows up in the implementation.
+ * - `swapsxyzdefi` (`defi/swapsxyzDefi.ts`, DEX): every route settled on a
+ *   permissionless venue, which today is Solana-to-Solana. swaps.xyz invokes
+ *   the underlying program directly with no router of its own, no order state
+ *   depends on user identity, and delivery happens inside the user's own
+ *   atomic transaction, so no party can gate it after signing. The id is
+ *   venue-generic, not chain-specific: the route set can grow.
+ *
+ * `handlesRoute` partitions every pair between the two, so a route is quoted
+ * exactly once and never by both.
+ *
+ * Both registrations carry the MoonPay Trade brand (swaps.xyz is MoonPay's
+ * swap product) and their display names say which venue each covers, since
+ * Swap Settings and the preferred-provider picker show `displayName` alone.
+ */
+export interface SwapsXyzVariant {
+  swapInfo: EdgeSwapInfo
+  handlesRoute: (fromPluginId: string, toPluginId: string) => boolean
+}
+
+/** The one route family whose settlement is the user's own atomic transaction. */
+export const isSolanaSameChainRoute = (
+  fromPluginId: string,
+  toPluginId: string
+): boolean => fromPluginId === 'solana' && toPluginId === 'solana'
+
+export const swapsXyzSwapInfo: EdgeSwapInfo = {
+  pluginId: 'swapsxyz',
   isDex: false,
-  displayName: 'swaps.xyz',
+  displayName: 'MoonPay Trade (Centralized)',
   supportEmail: 'support@edge.app'
+}
+
+const centralVariant: SwapsXyzVariant = {
+  swapInfo: swapsXyzSwapInfo,
+  handlesRoute: (fromPluginId, toPluginId) =>
+    !isSolanaSameChainRoute(fromPluginId, toPluginId)
 }
 
 const asInitOptions = asObject({
@@ -138,7 +175,10 @@ const asSwapsXyzSolanaTx = asObject({
 
 const asSwapsXyzAltVmTx = asObject({
   to: asString,
-  toExtra: asOptional(asString),
+  // A destination tag can arrive as a number (XRP tags are numeric), and the
+  // valid tag `0` must survive: accept either shape, treat only null or blank
+  // as absent.
+  toExtra: asOptionalBlank(asNumberString),
   value: asString,
   chainId: asNumber
 })
@@ -220,8 +260,8 @@ const asSwapsXyzRegisterResults = asArray(
 )
 
 /**
- * Runtime configuration from the info server, keyed to this plugin under
- * `corePlugins.swapsxyz`. Every field is optional and the whole payload is read
+ * Runtime configuration from the info server, keyed per registration under
+ * `corePlugins.<pluginId>`. Every field is optional and the whole payload is read
  * through `asMaybe`, so a malformed or absent payload silently falls back to the
  * built-in tiers rather than failing a quote.
  */
@@ -294,6 +334,8 @@ const SUPPORTED_VM_IDS = ['evm', 'solana', 'alt-vm']
  */
 export interface SwapsXyzSpendContext {
   action: SwapsXyzAction
+  /** The registration that quoted the route; recorded on the saved action. */
+  swapInfo: EdgeSwapInfo
   fromPluginId: string
   toPluginId: string
   fromTokenId: string | null
@@ -323,6 +365,7 @@ export const makeSwapsXyzSpendInfo = (
 ): EdgeSpendInfo => {
   const {
     action,
+    swapInfo,
     fromPluginId,
     toPluginId,
     fromTokenId,
@@ -472,6 +515,7 @@ const limitToNative = (
 
 /** Translate a swaps.xyz error response into the closest Edge swap error. */
 const throwSwapsXyzError = (
+  swapInfo: EdgeSwapInfo,
   swapError: SwapsXyzError,
   request: EdgeSwapRequestPlugin,
   endpoint: string
@@ -495,10 +539,12 @@ const throwSwapsXyzError = (
   )
 }
 
-export function makeSwapsXyzPlugin(
-  opts: EdgeCorePluginOptions
+export function makeSwapsXyzBasedPlugin(
+  opts: EdgeCorePluginOptions,
+  variant: SwapsXyzVariant
 ): EdgeSwapPlugin {
   const { io, log } = opts
+  const { swapInfo, handlesRoute } = variant
   const { apiKey } = asInitOptions(opts.initOptions)
   const { fetchCors = io.fetch } = io
 
@@ -558,6 +604,12 @@ export function makeSwapsXyzPlugin(
     const fromPluginId = fromWallet.currencyInfo.pluginId
     const toPluginId = toWallet.currencyInfo.pluginId
 
+    // The other registration owns this pair; to the core that reads as this
+    // provider not serving it, which is exactly the ranking wanted.
+    if (!handlesRoute(fromPluginId, toPluginId)) {
+      throw new SwapCurrencyError(swapInfo, request)
+    }
+
     // Rejects same-asset transfers plus the shared default exclusions every
     // central plugin applies. swaps.xyz adds none of its own, so the map is
     // empty, matching nym.
@@ -604,7 +656,7 @@ export function makeSwapsXyzPlugin(
 
     const pathsError = asMaybe(asSwapsXyzError)(pathsJson)
     if (pathsError != null) {
-      throwSwapsXyzError(pathsError, request, 'getPaths')
+      throwSwapsXyzError(swapInfo, pathsError, request, 'getPaths')
     }
     if (!pathsResponse.ok) {
       throw new Error(
@@ -671,7 +723,7 @@ export function makeSwapsXyzPlugin(
 
     const swapError = asMaybe(asSwapsXyzError)(responseJson)
     if (swapError != null) {
-      throwSwapsXyzError(swapError, request, 'getAction')
+      throwSwapsXyzError(swapInfo, swapError, request, 'getAction')
     }
     if (!response.ok) {
       throw new Error(
@@ -734,6 +786,7 @@ export function makeSwapsXyzPlugin(
 
     const spendInfo = makeSwapsXyzSpendInfo({
       action,
+      swapInfo,
       fromPluginId,
       toPluginId,
       fromTokenId,
@@ -809,3 +862,7 @@ export function makeSwapsXyzPlugin(
   }
   return out
 }
+
+export const makeSwapsXyzPlugin = (
+  opts: EdgeCorePluginOptions
+): EdgeSwapPlugin => makeSwapsXyzBasedPlugin(opts, centralVariant)

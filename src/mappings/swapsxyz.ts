@@ -43,51 +43,84 @@ swapsxyz.set('algorand', '999000419')
 swapsxyz.set('amoy', null) // Polygon testnet
 swapsxyz.set('arbitrum', '42161')
 swapsxyz.set('avalanche', '43114')
+swapsxyz.set('axelar', null) // not on getChainList
+swapsxyz.set('badcoin', null) // not on getChainList
 swapsxyz.set('base', '8453')
+swapsxyz.set('binance', null) // BNB Beacon Chain, retired
 swapsxyz.set('binancesmartchain', '56')
 swapsxyz.set('bitcoin', '999000313')
 swapsxyz.set('bitcoincash', '10000')
+swapsxyz.set('bitcoincashtestnet', null) // testnet
+swapsxyz.set('bitcoingold', null) // not on getChainList
+swapsxyz.set('bitcoingoldtestnet', null) // testnet
 swapsxyz.set('bitcoinsv', '999000331')
+swapsxyz.set('bitcointestnet', null) // testnet
+swapsxyz.set('bitcointestnet4', null) // testnet
 swapsxyz.set('bobevm', '60808')
 swapsxyz.set('botanix', '3637')
+swapsxyz.set('calibration', null) // testnet
 swapsxyz.set('cardano', '1816')
+swapsxyz.set('cardanotestnet', null) // testnet
 swapsxyz.set('celo', '42220')
+swapsxyz.set('coreum', null) // not on getChainList
 swapsxyz.set('cosmoshub', '999000433')
 swapsxyz.set('dash', '999000416')
 swapsxyz.set('digibyte', '999000301')
 swapsxyz.set('dogecoin', '2000')
+swapsxyz.set('eboost', null) // not on getChainList
 swapsxyz.set('ecash', '999000920')
+swapsxyz.set('eos', null) // not on getChainList
 swapsxyz.set('ethDev', null) // Local dev chain
 swapsxyz.set('ethereum', '1')
 swapsxyz.set('ethereumclassic', '61')
 swapsxyz.set('ethereumpow', '10001')
 swapsxyz.set('fantom', '250')
+swapsxyz.set('feathercoin', null) // not on getChainList
 swapsxyz.set('filecoin', '314')
 swapsxyz.set('filecoinfevm', null) // swaps.xyz lists 314 as native Filecoin
 swapsxyz.set('filecoinfevmcalibration', null) // Filecoin testnet
+swapsxyz.set('fio', null) // not on getChainList
+swapsxyz.set('groestlcoin', null) // not on getChainList
 swapsxyz.set('hedera', '295')
 swapsxyz.set('holesky', null) // Ethereum testnet
 swapsxyz.set('hyperevm', '999')
+swapsxyz.set('liberland', null) // not on getChainList
+swapsxyz.set('liberlandtestnet', null) // testnet
 swapsxyz.set('litecoin', '999000323')
+swapsxyz.set('mayachain', null) // not on getChainList
 swapsxyz.set('monad', '143')
 swapsxyz.set('monero', '999000343')
+swapsxyz.set('nym', null) // not on getChainList
 swapsxyz.set('opbnb', '204')
 swapsxyz.set('optimism', '10')
 swapsxyz.set('osmosis', '999000446')
+swapsxyz.set('piratechain', null) // not on getChainList
 swapsxyz.set('pivx', '999000455')
+swapsxyz.set('polkadot', null) // not on getChainList
 swapsxyz.set('polygon', '137')
 swapsxyz.set('pulsechain', '369')
 swapsxyz.set('qtum', '999000955')
 swapsxyz.set('ravencoin', '999000342')
 swapsxyz.set('ripple', '999000346')
+swapsxyz.set('robinhood', '4663')
 swapsxyz.set('rsk', '30')
 swapsxyz.set('sepolia', null) // Ethereum testnet
+swapsxyz.set('smartcash', null) // not on getChainList
 swapsxyz.set('solana', '1399811149')
 swapsxyz.set('sonic', '146')
 swapsxyz.set('stellar', '999000338')
 swapsxyz.set('sui', '999000938')
+swapsxyz.set('suitestnet', null) // testnet
+swapsxyz.set('telos', null) // not on getChainList
 swapsxyz.set('tezos', '999000358')
+swapsxyz.set('thorchainrune', null) // not on getChainList
+swapsxyz.set('thorchainrunestagenet', null) // testnet
 swapsxyz.set('ton', '999000337')
 swapsxyz.set('tron', '728126428')
+swapsxyz.set('ufo', null) // not on getChainList
+swapsxyz.set('vertcoin', null) // not on getChainList
+swapsxyz.set('wax', null) // not on getChainList
+swapsxyz.set('zano', null) // not on getChainList
 swapsxyz.set('zcash', '999000322')
+swapsxyz.set('zcoin', null) // not on getChainList
 swapsxyz.set('zksync', '324')
