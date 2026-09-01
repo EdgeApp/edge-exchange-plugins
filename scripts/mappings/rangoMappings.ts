@@ -196,6 +196,9 @@ rango.set('POLYGONZK', null)
 // Display Name: Regen Network
 rango.set('REGEN', null)
 
+// Display Name: Robinhood
+rango.set('ROBINHOOD', 'robinhood')
+
 // Display Name: Scroll
 rango.set('SCROLL', null)
 

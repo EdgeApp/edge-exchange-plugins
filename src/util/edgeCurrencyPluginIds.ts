@@ -63,6 +63,7 @@ export const edgeCurrencyPluginIds = [
   'qtum',
   'ravencoin',
   'ripple',
+  'robinhood',
   'rsk',
   'sepolia',
   'smartcash',

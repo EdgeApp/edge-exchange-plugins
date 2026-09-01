@@ -991,6 +991,9 @@ letsexchange.set('REEF', null)
 // Display Name: REI
 letsexchange.set('REI', null)
 
+// Display Name: ROBINHOOD
+letsexchange.set('ROBINHOOD', 'robinhood')
+
 // Display Name: ROCK
 letsexchange.set('ROCK', null)
 
