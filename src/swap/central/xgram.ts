@@ -3,6 +3,7 @@ import {
   asDate,
   asEither,
   asMaybe,
+  asNumber,
   asObject,
   asOptional,
   asString,
@@ -73,11 +74,30 @@ const addressTypeMap: StringMap = {
 type XgramRateType = 'fixed' | 'float'
 const ccyAmountLimitRegex = /ccyAmount must be ([><])\s*([\d.]+)/
 
-const isTypedSwapError = (error: unknown): boolean =>
+/**
+ * Xgram answers a rejected key, and its other transport-level refusals, with an
+ * HTTP 200 whose body is `{"status":401,"message":"Unauthorized"}`. That shape
+ * matches none of the quote cleaners, so without a branch of its own the reply
+ * surfaces as `Expected a string, got undefined at .error`, which reads like a
+ * plugin bug instead of the API turning us away.
+ */
+class XgramStatusError extends Error {
+  name = 'XgramStatusError'
+  constructor(status: number, message: string) {
+    super(`Xgram: HTTP ${status} ${message}`)
+  }
+}
+
+/**
+ * Errors that apply to both rate types, so the float retry in `swapExchange`
+ * cannot clear them and would only double the failed calls.
+ */
+const isNonRetryableError = (error: unknown): boolean =>
   error instanceof SwapAboveLimitError ||
   error instanceof SwapBelowLimitError ||
   error instanceof SwapCurrencyError ||
-  error instanceof SwapPermissionError
+  error instanceof SwapPermissionError ||
+  error instanceof XgramStatusError
 
 export function makeXgramPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
   const { io } = opts
@@ -159,6 +179,10 @@ export function makeXgramPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
       })
       const quoteFor = request.quoteFor === 'from' ? 'from' : 'to'
       const quoteReply = asXgramQuoteReply(orderResponseJson)
+
+      if ('status' in quoteReply) {
+        throw new XgramStatusError(quoteReply.status, quoteReply.message)
+      }
 
       if ('errors' in quoteReply) {
         const errors = quoteReply.errors
@@ -254,16 +278,16 @@ export function makeXgramPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
 
       // Xgram intermittently rejects every fixed-rate creation provider-side
       // with a generic "Error while creating exchange", so fall back to a
-      // float-rate order when the fixed-rate attempt fails. Typed swap errors
-      // (limits, unsupported pair, geo restriction) apply to both rate types
-      // and are rethrown without a retry. Float orders lock no rate, so the
-      // resulting quote is flagged as an estimate.
+      // float-rate order when the fixed-rate attempt fails. Errors that apply
+      // to both rate types (limits, unsupported pair, geo restriction, and the
+      // transport-level refusals above) are rethrown without a retry. Float
+      // orders lock no rate, so the resulting quote is flagged as an estimate.
       let order: XgramResponse
       let isEstimate = false
       try {
         order = await createOrder(isSelling, largeDenomAmount, 'fixed')
       } catch (error: unknown) {
-        if (isTypedSwapError(error)) throw error
+        if (isNonRetryableError(error)) throw error
         order = await createOrder(isSelling, largeDenomAmount, 'float')
         isEstimate = true
       }
@@ -413,6 +437,10 @@ const asXgramError = asObject({
 const asXgramStringError = asObject({
   error: asString
 })
+const asXgramStatusError = asObject({
+  message: asString,
+  status: asNumber
+})
 const asXgramQuote = asObject({
   ccyAmountToExpected: asOptional(asNumberString),
   depositAddress: asString,
@@ -425,5 +453,6 @@ const asXgramQuote = asObject({
 const asXgramQuoteReply = asEither(
   asXgramQuote,
   asXgramError,
-  asXgramStringError
+  asXgramStringError,
+  asXgramStatusError
 )
