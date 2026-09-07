@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 2.55.0 (2026-09-07)
+
 - added: Robinhood Chain swaps via SideShift, LI.FI, Rango, ChangeNow, Swapuz and LetsExchange.
 
 ## 2.54.0 (2026-08-28)
