@@ -126,7 +126,8 @@ const asSwapsXyzAction = asObject({
   vmId: asString,
   requiresTokenApproval: asBoolean,
   // Registration is how swaps.xyz starts tracking an order it did not itself
-  // broadcast. Their docs call it mandatory for non-EVM transactions.
+  // broadcast. The partner requires it on every route that sets this flag,
+  // EVM included: an unregistered order sits pending in their tracking.
   requiresRegisterTransaction: asOptional(asBoolean, false),
   executionsType: asString
 })
@@ -407,8 +408,9 @@ export function makeSwapsXyzPlugin(
 
   /**
    * POST the broadcast hash back to swaps.xyz so they start tracking the order.
-   * Mandatory for the models where the wallet, not swaps.xyz, broadcasts. The
-   * swap is already on chain by the time this runs, so a failure here is
+   * Required on every route that flags it, EVM included: it attaches the hash
+   * to their order for status tracking, and an unregistered order sits pending.
+   * The swap is already on chain by the time this runs, so a failure here is
    * logged and swallowed: throwing would report a successful swap as failed.
    */
   const registerTx = async (txId: string, txHash: string): Promise<void> => {
