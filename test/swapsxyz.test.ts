@@ -120,7 +120,7 @@ describe('swapsxyz makeSwapsXyzSpendInfo', function () {
         swapInfo: {
           pluginId: 'swapsxyz',
           isDex: false,
-          displayName: 'swaps.xyz',
+          displayName: 'MoonPay Trade (Centralized)',
           supportEmail: 'support@edge.app'
         },
         orderId: '0x99b16cbed2445ffdc34133e030cdda451bcdd73c',

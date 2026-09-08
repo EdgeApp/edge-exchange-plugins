@@ -18,7 +18,7 @@ import {
 export const swapsXyzSolanaSwapInfo: EdgeSwapInfo = {
   pluginId: 'swapsxyzsolana',
   isDex: true,
-  displayName: 'swaps.xyz (Solana)',
+  displayName: 'MoonPay Trade (DeFi)',
   supportEmail: 'support@edge.app'
 }
 

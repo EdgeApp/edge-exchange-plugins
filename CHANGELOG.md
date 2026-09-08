@@ -2,7 +2,7 @@
 
 ## Unreleased
 
-- added: (swaps.xyz) New swaps.xyz cross-chain swap provider, routing EVM, Solana and deposit-address chains with fixed-rate quotes. Solana-to-Solana routes ship as a separate DEX-classified "swaps.xyz (Solana)" provider.
+- added: (MoonPay Trade) New MoonPay Trade (swaps.xyz) cross-chain swap provider, routing EVM, Solana and deposit-address chains with fixed-rate quotes. Ships as two entries: "MoonPay Trade (Centralized)" and the DEX-classified "MoonPay Trade (DeFi)" for Solana-to-Solana routes.
 
 ## 2.52.2 (2026-07-27)
 

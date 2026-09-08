@@ -59,6 +59,10 @@ import { EdgeSwapRequestPlugin, StringMap } from '../types'
  *
  * `handlesRoute` partitions every pair between the two, so a route is quoted
  * exactly once and never by both.
+ *
+ * Both registrations carry the MoonPay Trade brand (swaps.xyz is MoonPay's
+ * swap product) and their display names say which venue each covers, since
+ * Swap Settings and the preferred-provider picker show `displayName` alone.
  */
 export interface SwapsXyzVariant {
   swapInfo: EdgeSwapInfo
@@ -74,7 +78,7 @@ export const isSolanaSameChainRoute = (
 export const swapsXyzSwapInfo: EdgeSwapInfo = {
   pluginId: 'swapsxyz',
   isDex: false,
-  displayName: 'swaps.xyz',
+  displayName: 'MoonPay Trade (Centralized)',
   supportEmail: 'support@edge.app'
 }
 
