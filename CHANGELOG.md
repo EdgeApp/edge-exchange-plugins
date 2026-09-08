@@ -5,6 +5,7 @@
 ## 2.55.0 (2026-09-07)
 
 - added: Robinhood Chain swaps via SideShift, LI.FI, Rango, ChangeNow, Swapuz and LetsExchange.
+- fixed: Xgram now reports a rejected API key as `Xgram: HTTP 401 Unauthorized` instead of a cleaner type error, and stops retrying such a refusal as a float order.
 
 ## 2.54.0 (2026-08-28)
 
