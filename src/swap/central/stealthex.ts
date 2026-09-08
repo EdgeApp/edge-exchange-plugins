@@ -429,14 +429,28 @@ export function makeStealthexPlugin(
     chain: StealthexChain
   ): Promise<StealthexCurrency | undefined> => {
     if (tokenId == null) {
-      // A native asset, so the listing must carry no contract address either:
-      return catalog
+      // A native asset is matched on the mapped symbol and network alone.
+      // `symbol` plus `network` is unique across the whole catalog, so the
+      // pair already identifies the asset, while requiring a null contract
+      // address drops every chain whose native listing carries a
+      // PSEUDO-CONTRACT instead: ETH on `base` is `baseeth`, AVAX on `avax-c`
+      // is `cchain`, ATOM is `atom1`, Vaulta is `core.vaulta`, and AXL is an
+      // IBC denom. None of those are addresses on their own chain, so they
+      // never survive into a token index and cannot collide with a real token.
+      const listing = catalog
         .get(chain.mainnetNetwork)
-        ?.find(
-          currency =>
-            currency.symbol === chain.mainnetSymbol &&
-            currency.contract_address == null
+        ?.find(currency => currency.symbol === chain.mainnetSymbol)
+
+      // The caller has already established that the catalog is non-empty, so a
+      // miss here means the mapping names a listing StealthEX no longer
+      // carries. That is drift in this file, not a chain StealthEX never had,
+      // and it is otherwise indistinguishable from an unsupported pair:
+      if (listing == null) {
+        log.warn(
+          `StealthEX lists no ${chain.mainnetSymbol} on ${chain.mainnetNetwork}`
         )
+      }
+      return listing
     }
 
     const { tokenNetwork } = chain
@@ -640,10 +654,13 @@ export function makeStealthexPlugin(
       return { rate, estimate, body }
     }
 
-    // StealthEX publishes rate types PER ASSET but offers no way to ask which
-    // types a given ROUTE supports, and both assets listing `fixed` does not
-    // mean the pair has a fixed route (BTC to ARRR was exactly that). The
-    // fallback compensates for that one missing capability and nothing else:
+    // Both assets listing `fixed` does not mean the PAIR has a fixed route.
+    // StealthEX does publish per-route rate types, on
+    // `/v4/currencies/available-routes`, but that endpoint hands back every
+    // pair it knows in one response, about 507k of them and 66 MB, with
+    // `direction` as its only filter, so a client cannot ask it about one
+    // route. The fallback compensates for that one missing capability and
+    // nothing else:
     // it runs only when the fixed route is absent, never on a limit or
     // unsupported-pair failure, and no order exists yet at this point, so
     // neither attempt can create a second one. Drop it once StealthEX reports
