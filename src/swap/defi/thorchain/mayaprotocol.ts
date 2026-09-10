@@ -12,6 +12,7 @@ import {
   ProviderNativeChain,
   ThorchainChainStrategy
 } from './thorchainTypes'
+import { makeZcashShieldedMemoSpend } from './zcashShieldedMemo'
 
 const swapInfo: EdgeSwapInfo = {
   pluginId: 'mayaprotocol',
@@ -48,9 +49,15 @@ export const MAYA_NATIVE_CHAIN: ProviderNativeChain = {
   maxQuoteSeedExchangeAmount: '1000'
 }
 
-/** Maya's Zcash vaults pay out to transparent addresses only. */
+/**
+ * Maya's Zcash vaults pay out to transparent addresses only, and take a
+ * Zcash swap in with the memo carried in a shielded note.
+ */
 const MAYA_CHAINS: { [pluginId: string]: ThorchainChainStrategy } = {
-  zcash: { destinationAddressType: 'transparentAddress' }
+  zcash: {
+    destinationAddressType: 'transparentAddress',
+    makeSourceSpend: makeZcashShieldedMemoSpend
+  }
 }
 
 export const makeMayaProtocolPlugin = (

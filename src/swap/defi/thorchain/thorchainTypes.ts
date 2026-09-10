@@ -1,8 +1,8 @@
 import { asArray, asNumber, asObject, asOptional, asString } from 'cleaners'
-import { EdgeSwapInfo } from 'edge-core-js/types'
+import { EdgeLog, EdgeMemo, EdgeSwapInfo, JsonObject } from 'edge-core-js/types'
 
 import { InvalidTokenIds } from '../../../util/swapHelpers'
-import { StringMap } from '../../types'
+import { EdgeSwapRequestPlugin, StringMap } from '../../types'
 
 export const asAssetSpread = asObject({
   sourcePluginId: asOptional(asString),
@@ -59,6 +59,41 @@ export interface ProviderNativeChain {
   maxQuoteSeedExchangeAmount: string
 }
 
+/** What a chain-specific inbound gets from the quote and the node. */
+export interface SourceSpendContext {
+  request: EdgeSwapRequestPlugin
+  swapInfo: EdgeSwapInfo
+  /** Provider chain code of `request.fromWallet`, e.g. `ZEC`. */
+  fromMainnetCode: string
+  /** Amount the wallet will spend, in integer native units. */
+  fromNativeAmount: string
+  /** Destination address as sent to the quote. */
+  toAddress: string
+  /** Final swap memo, with the limit already applied. */
+  memo: string
+  /** The quote's `inbound_address`, if any. */
+  inboundAddress: string | undefined
+  /**
+   * Raw `inbound_addresses` entry for `fromMainnetCode`, when the fetch
+   * succeeded and listed the chain. The strategy cleans what it needs, so a
+   * provider-specific field never has to be known to the common code.
+   */
+  inboundEntry: unknown
+  log: EdgeLog
+}
+
+/** The pieces of the common `EdgeSpendInfo` a chain strategy replaces. */
+export interface SourceSpendOverride {
+  memo: EdgeMemo
+  publicAddress: string
+  /** Merged over the common `{ outputSort: 'targets' }`. */
+  otherParams?: JsonObject
+}
+
+export type SourceSpendStrategy = (
+  ctx: SourceSpendContext
+) => Promise<SourceSpendOverride>
+
 /** Per-chain behaviour, keyed by Edge currency pluginId. */
 export interface ThorchainChainStrategy {
   /**
@@ -67,6 +102,12 @@ export interface ThorchainChainStrategy {
    * Default: the wallet's segwit address, else its first address.
    */
   destinationAddressType?: string
+  /**
+   * Replaces the generic text-memo send to the inbound address for sources on
+   * this chain. Not consulted for EVM chains (router call) or for the native
+   * chain (MsgDeposit); those paths run first.
+   */
+  makeSourceSpend?: SourceSpendStrategy
 }
 
 export interface ThorchainProviderOpts {

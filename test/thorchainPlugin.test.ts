@@ -13,6 +13,8 @@ import { describe, it } from 'mocha'
 
 import { makeMayaProtocolPlugin } from '../src/swap/defi/thorchain/mayaprotocol'
 import { makeThorchainPlugin } from '../src/swap/defi/thorchain/thorchain'
+import { makeThorchainBasedPlugin } from '../src/swap/defi/thorchain/thorchainCommon'
+import { ThorchainProviderOpts } from '../src/swap/defi/thorchain/thorchainTypes'
 import { MakeTxParams } from '../src/swap/types'
 import { div18 } from '../src/util/biggystringplus'
 
@@ -147,6 +149,8 @@ interface FakeIoLog {
 interface FakeIoOpts {
   /** Replaces the provider's canned `inbound_addresses`. */
   inbound?: FakeInbound[]
+  /** Replaces the provider's canned Midgard pools. */
+  pools?: unknown[]
 }
 
 /**
@@ -185,7 +189,9 @@ const makeFakeIo = (
     if (uri.endsWith('/inbound_addresses')) return ok(inboundAddresses)
 
     if (uri.endsWith('/v2/pools')) {
-      return ok(provider === 'thorchain' ? THORCHAIN_POOLS : MAYA_POOLS)
+      return ok(
+        opts.pools ?? (provider === 'thorchain' ? THORCHAIN_POOLS : MAYA_POOLS)
+      )
     }
 
     if (uri.includes('/quote/swap?')) {
@@ -880,5 +886,137 @@ describe('mayaprotocol plugin', function () {
     assert.equal(spendInfo.savedAction?.actionType, 'swap')
     if (spendInfo.savedAction?.actionType !== 'swap') return
     assert.equal(spendInfo.savedAction.payoutAddress, ZEC_TRANSPARENT)
+  })
+})
+
+/**
+ * A THORChain-shaped provider that lists Zcash but injects no Zcash send
+ * strategy, to show what the profile alone does with a Zcash source.
+ */
+const makeSyntheticPlugin = (
+  log: FakeIoLog,
+  overrides: Partial<ThorchainProviderOpts> = {}
+): EdgeSwapPlugin =>
+  makeThorchainBasedPlugin(
+    ({
+      io: makeFakeIo('thorchain', { expectedAmountOut: '250000' }, log, {
+        inbound: [
+          ...THORCHAIN_INBOUND,
+          inbound('ZEC', 't1ThorVaultHpi3Ampr9ZzAtnWHFbatsVF3hEv', '15000')
+        ],
+        pools: [
+          ...THORCHAIN_POOLS,
+          { asset: 'ZEC.ZEC', assetPrice: '400', assetPriceUSD: '48' }
+        ]
+      }),
+      initOptions: {},
+      log: fakeLog
+    } as unknown) as EdgeCorePluginOptions,
+    {
+      swapInfo: {
+        pluginId: 'synthetic',
+        isDex: true,
+        displayName: 'Synthetic',
+        supportEmail: 'support@edge.app'
+      },
+      orderUri: 'https://example.invalid/{{TXID}}',
+      MAINNET_CODE_TRANSCRIPTION: { bitcoin: 'BTC', zcash: 'ZEC' },
+      MIDGARD_SERVERS_DEFAULT: ['https://midgard.example.invalid'],
+      THORNODE_SERVERS_DEFAULT: ['https://thornode.example.invalid'],
+      infoServer: { exchangeInfo: undefined, exchangeInfoLastUpdate: 0 },
+      nativeChain: {
+        pluginId: 'thorchainrune',
+        baseAsset: 'THOR.RUNE',
+        ownAssetsUseNativePrecision: false,
+        maxQuoteSeedExchangeAmount: '10'
+      },
+      ...overrides
+    }
+  )
+
+describe('provider profile', function () {
+  it('excludes a source chain through invalidTokenIds before any fetch', async function () {
+    const log = makeLog()
+    const plugin = makeSyntheticPlugin(log, {
+      invalidTokenIds: { from: { zcash: 'allCodes' }, to: {} }
+    })
+    const error = await expectError(
+      fetchQuote(plugin, {
+        fromWallet: makeZecWallet(),
+        fromTokenId: null,
+        toWallet: makeBtcWallet(),
+        toTokenId: null,
+        nativeAmount: '123456789',
+        quoteFor: 'from'
+      })
+    )
+    assert.equal(error.name, 'SwapCurrencyError')
+    assert.lengthOf(log.uris, 0)
+  })
+
+  it('keeps the shared exclusions alongside the provider ones', async function () {
+    const log = makeLog()
+    const plugin = makeSyntheticPlugin(log, {
+      MAINNET_CODE_TRANSCRIPTION: {
+        bitcoin: 'BTC',
+        zcash: 'ZEC',
+        optimism: 'OP'
+      },
+      invalidTokenIds: { from: { zcash: 'allCodes' }, to: {} }
+    })
+    // VELO on Optimism is blocked for every Thorchain-based plugin.
+    const veloTokenId = '9560e827af36c94d2ac33a39bce1fe78631088db'
+    const error = await expectError(
+      fetchQuote(plugin, {
+        fromWallet: makeFakeWallet({
+          pluginId: 'optimism',
+          currencyCode: 'ETH',
+          multiplier: '1000000000000000000',
+          addresses: [
+            { addressType: 'publicAddress', publicAddress: ETH_USER }
+          ],
+          tokens: [
+            {
+              tokenId: veloTokenId,
+              currencyCode: 'VELO',
+              multiplier: '1000000000000000000'
+            }
+          ]
+        }),
+        fromTokenId: veloTokenId,
+        toWallet: makeBtcWallet(),
+        toTokenId: null,
+        nativeAmount: '1000000000000000000',
+        quoteFor: 'from'
+      })
+    )
+    assert.equal(error.name, 'SwapCurrencyError')
+    assert.lengthOf(log.uris, 0)
+  })
+
+  it('falls back to a plain text-memo send for a chain with no strategy', async function () {
+    // Documents that the exclusion, not the missing strategy, is what keeps a
+    // shielded Zcash source away from a provider that cannot read its memo.
+    const log = makeLog()
+    const spendLog: EdgeSpendInfo[] = []
+    await fetchQuote(makeSyntheticPlugin(log), {
+      fromWallet: makeZecWallet(spendLog),
+      fromTokenId: null,
+      toWallet: makeBtcWallet(),
+      toTokenId: null,
+      nativeAmount: '123456789',
+      quoteFor: 'from'
+    })
+
+    assert.lengthOf(spendLog, 1)
+    const [spendInfo] = spendLog
+    assert.deepEqual(spendInfo.memos, [
+      { type: 'text', value: swapMemo('BTC.BTC', BTC_USER) }
+    ])
+    assert.deepEqual(spendInfo.otherParams, { outputSort: 'targets' })
+    assert.equal(
+      spendInfo.spendTargets[0].publicAddress,
+      't1ThorVaultHpi3Ampr9ZzAtnWHFbatsVF3hEv'
+    )
   })
 })

@@ -1,4 +1,3 @@
-import { base64urlnopad, utf8 } from '@scure/base'
 import { add, gt, lt, mul, round, sub } from 'biggystring'
 import {
   asArray,
@@ -7,7 +6,8 @@ import {
   asNumber,
   asObject,
   asOptional,
-  asString
+  asString,
+  asUnknown
 } from 'cleaners'
 import {
   EdgeCorePluginOptions,
@@ -181,14 +181,7 @@ export const asInboundAddresses = asArray(
     halted: asBoolean,
     pub_key: asString,
     router: asOptional(asString),
-    dust_threshold: asString,
-    shielded_memo_config: asOptional(
-      asObject({
-        enabled: asBoolean,
-        uivk: asString,
-        unified_address: asString
-      })
-    )
+    dust_threshold: asString
   })
 )
 
@@ -352,16 +345,6 @@ export function makeThorchainBasedPlugin(
       chains[toWallet.currencyInfo.pluginId]?.destinationAddressType
     )
 
-    // Maya cannot refund a shielded Zcash source without a transparent
-    // (t-address) refund address; other chains default to the sending address,
-    // which is correct, so no refund address is needed. The address is injected
-    // into the ZEC swap memo below via `appendMayaRefundAddress` (see that
-    // helper for why it is not passed to the quote endpoint).
-    const refundAddress =
-      fromWallet.currencyInfo.pluginId === 'zcash'
-        ? await getAddress(fromWallet, 'transparentAddress')
-        : undefined
-
     const fromMainnetCode =
       MAINNET_CODE_TRANSCRIPTION[fromWallet.currencyInfo.pluginId]
     const toMainnetCode =
@@ -460,9 +443,11 @@ export function makeThorchainBasedPlugin(
       `volatilitySpreadStreamingFinal: ${volatilitySpreadStreamingFinal.toString()}`
     )
 
-    // Fetch `inbound_addresses` for dust thresholds and shielded memo config
+    // Fetch `inbound_addresses` for dust thresholds. The source chain's raw
+    // entry is kept for a chain strategy, which may read provider-specific
+    // fields the common cleaner does not know about.
     const dustThresholds: Record<string, string> = {}
-    const shieldedMemoUnifiedAddressByChain: Record<string, string> = {}
+    let fromInboundEntry: unknown
     try {
       const inboundResponse = await fetchWaterfall(
         fetchCors,
@@ -472,19 +457,17 @@ export function makeThorchainBasedPlugin(
       )
       if (inboundResponse.ok) {
         const inboundJson = await inboundResponse.json()
+        const inboundEntries = asArray(asUnknown)(inboundJson)
         const inboundAddresses = asInboundAddresses(inboundJson)
-        for (const inbound of inboundAddresses) {
+        for (const [index, inbound] of inboundAddresses.entries()) {
           const nativeToThorMultiplier =
             NATIVE_TO_THOR_MULTIPLIER[inbound.chain] ?? '1'
           dustThresholds[inbound.chain] = mul(
             inbound.dust_threshold,
             nativeToThorMultiplier
           )
-          if (inbound.shielded_memo_config?.enabled === true) {
-            const ua = inbound.shielded_memo_config.unified_address
-            if (ua != null && ua !== '') {
-              shieldedMemoUnifiedAddressByChain[inbound.chain] = ua
-            }
+          if (inbound.chain === fromMainnetCode) {
+            fromInboundEntry = inboundEntries[index]
           }
         }
       } else {
@@ -653,7 +636,8 @@ export function makeThorchainBasedPlugin(
 
     let publicAddress = thorAddress
     const preTxs: EdgeTransaction[] = []
-    let memoType: EdgeMemo['type']
+    let spendMemo: EdgeMemo
+    let spendOtherParams: JsonObject = {}
 
     const savedAction: EdgeTxActionSwap = {
       actionType: 'swap',
@@ -674,9 +658,6 @@ export function makeThorchainBasedPlugin(
       payoutWalletId: toWallet.id
     }
 
-    // ZIP-321 URI for ZEC transactions (populated in UTXO path if applicable)
-    let zip321Uri: string | undefined
-
     if (CHAIN_TYPE_MAP[fromMainnetCode] === 'evm') {
       if (router == null)
         throw new Error(`Missing router address for ${fromMainnetCode}`)
@@ -684,7 +665,6 @@ export function makeThorchainBasedPlugin(
         throw new Error('Invalid vault address')
       }
 
-      memoType = 'hex'
       let assetAddress = '0x0000000000000000000000000000000000000000' // mainnet
       publicAddress = router
 
@@ -713,7 +693,7 @@ export function makeThorchainBasedPlugin(
         vaultAddress: thorAddress,
         memo
       })
-      memo = memo.replace(/^0x/, '')
+      spendMemo = { type: 'hex', value: memo.replace(/^0x/, '') }
     } else if (isProviderNativeDeposit(nativeChain, fromWallet)) {
       const makeTxParams: MakeTxParams = {
         type: 'MakeTxDeposit',
@@ -761,75 +741,37 @@ export function makeThorchainBasedPlugin(
         fromNativeAmount,
         expirationDate: new Date(Date.now() + EXPIRATION_MS)
       }
-    } else if (fromWallet.currencyInfo.pluginId === 'zcash') {
-      // Handle ZEC swaps separately from UTXO chains.
-      // Build a ZIP-321 URI to satisfy Maya's requirements.
-      memoType = 'text'
-
-      if (fromTokenId != null) {
-        // Cannot yet do tokens on ZEC
-        throw new SwapCurrencyError(swapInfo, request)
-      }
-
-      if (thorAddress == null) {
-        throw new Error('Invalid vault address')
-      }
-
-      // Inbound address must be transparent (t-address)
-      if (!(thorAddress.startsWith('t1') || thorAddress.startsWith('t3'))) {
-        throw new SwapCurrencyError(swapInfo, request)
-      }
-
-      // Shielded memo recipient must be available from inbound_addresses
-      const memoRecipient = shieldedMemoUnifiedAddressByChain[fromCurrencyCode]
-      if (memoRecipient == null || memoRecipient === '') {
-        throw new SwapCurrencyError(swapInfo, request)
-      }
-
-      // Convert native to a decimal string per ZIP-321 spec
-      const amountZec = await fromWallet.nativeToDenomination(
-        fromNativeAmount,
-        fromCurrencyCode
-      )
-
-      // Maya cannot refund a shielded Zcash source without a transparent refund
-      // address. This is the Zcash-only path, so it must be present.
-      if (refundAddress == null || refundAddress === '') {
-        throw new SwapCurrencyError(swapInfo, request)
-      }
-
-      // Inject the transparent refund address into the shielded ZEC swap memo,
-      // which is fetched from the quote endpoint without it (see
-      // `appendMayaRefundAddress`).
-      memo = appendMayaRefundAddress(memo, toAddress, refundAddress)
-
-      // Encode memo per ZIP-321 as base64url (unpadded).
-      const memoBase64Url = base64urlnopad.encode(utf8.decode(memo))
-
-      // ZIP-321 requires grouping parameters by payment using paramindex.
-      // Payment 0 (unindexed): transparent vault recipient & swap amount.
-      // Payment 1 (indexed .1): shielded memo recipient with zero amount.
-      zip321Uri =
-        `zcash:?address=${encodeURIComponent(thorAddress)}` + // output 1: transparent vault
-        `&amount=${encodeURIComponent(amountZec)}` +
-        `&address.1=${encodeURIComponent(memoRecipient)}` + // output 2: shielded memo note
-        `&amount.1=0` +
-        `&memo.1=${memoBase64Url}`
-
-      // Clear memo since it's already embedded in zip321Uri
-      memo = ''
-
-      // Set publicAddress for spendTargets
-      publicAddress = thorAddress
     } else {
-      // For UTXO chains and bank sends to the provider's inbound address
-      // (e.g. RUNE swapped through Maya), we send the memo as text which gets
-      // encoded by the plugins
-      memoType = 'text'
-
+      // Only EVM chains and the provider's own chain carry tokens; every other
+      // inbound spends the chain's mainnet coin.
       if (fromTokenId != null) {
-        // Cannot yet do tokens on utxo chains
         throw new SwapCurrencyError(swapInfo, request)
+      }
+
+      const makeSourceSpend =
+        chains[fromWallet.currencyInfo.pluginId]?.makeSourceSpend
+      if (makeSourceSpend != null) {
+        // A chain the provider takes in some other way than a plain send
+        // with a text memo.
+        const override = await makeSourceSpend({
+          request,
+          swapInfo,
+          fromMainnetCode,
+          fromNativeAmount,
+          toAddress,
+          memo,
+          inboundAddress: thorAddress,
+          inboundEntry: fromInboundEntry,
+          log
+        })
+        spendMemo = override.memo
+        publicAddress = override.publicAddress
+        spendOtherParams = override.otherParams ?? {}
+      } else {
+        // For UTXO chains and bank sends to the provider's inbound address
+        // (e.g. RUNE swapped through Maya), we send the memo as text which gets
+        // encoded by the plugins
+        spendMemo = { type: 'text', value: memo }
       }
     }
 
@@ -839,12 +781,7 @@ export function makeThorchainBasedPlugin(
 
     const spendInfo: EdgeSpendInfo = {
       tokenId: request.fromTokenId,
-      memos: [
-        {
-          type: memoType,
-          value: memo
-        }
-      ],
+      memos: [spendMemo],
       spendTargets: [
         {
           // The amount spent from the wallet, always denominated in the
@@ -860,11 +797,7 @@ export function makeThorchainBasedPlugin(
       networkFeeOption: 'high',
       assetAction: { assetActionType: 'swap' },
       savedAction,
-      otherParams: {
-        outputSort: 'targets',
-        // Pass ZIP-321 if present for ZEC:
-        zip321Uri
-      }
+      otherParams: { outputSort: 'targets', ...spendOtherParams }
     }
 
     // Apply recommended gas rate if available
@@ -1494,32 +1427,6 @@ export const getVolatilitySpread = ({
 
   return volatilitySpreadFinal.toString()
 }
-
-/**
- * Append a transparent (t-address) refund address to a Maya swap memo for a
- * shielded Zcash source.
- *
- * Maya cannot refund a shielded Zcash source without a transparent refund
- * address, which it reads from the swap memo's destination field as
- * `DESTADDR/REFUNDADDR`. The address cannot be obtained from the quote/swap
- * endpoint: given a `refund_address`, Maya builds that same memo and then
- * rejects the quote because the result overflows Zcash's 80-char
- * transparent-memo limit (e.g. ZEC->DASH is 86/80, verified against the live
- * endpoint). The shielded Zcash send instead carries the memo in the encrypted
- * note (512 bytes), which is not bound by that limit, so the refund is appended
- * here after the quote is fetched without it.
- *
- * Maya reads the refund from the memo's destination field as
- * `DESTADDR/REFUNDADDR`, so the destination address in the memo is replaced
- * with `DESTADDR/REFUNDADDR`. A memo that does not contain the destination
- * address is returned unchanged.
- */
-export const appendMayaRefundAddress = (
-  memo: string,
-  destinationAddress: string,
-  refundAddress: string
-): string =>
-  memo.replace(destinationAddress, `${destinationAddress}/${refundAddress}`)
 
 /**
  * This will return the expected amount out from the quote maintaining backwards
