@@ -23,7 +23,7 @@ export const makeRangoSynchronizer = (
     mappingFilePath: getMappingFilePath(NAME),
     fetchChainCodes: async (): Promise<FetchChainCodeResult[]> => {
       const response = await fetch(
-        `https://api.rango.exchange/basic/meta?apiKey=${apiKey}`
+        `https://api.rango.exchange/basic/meta?apikey=${apiKey}&apiKey=${apiKey}`
       )
       if (!response.ok) {
         throw new Error(

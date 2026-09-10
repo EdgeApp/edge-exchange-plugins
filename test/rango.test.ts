@@ -3,8 +3,22 @@ import { describe, it } from 'mocha'
 
 import {
   decodeTronApproval,
-  hexToTronAddress
+  hexToTronAddress,
+  makeRangoAuthParams
 } from '../src/swap/defi/rango'
+import { makeQueryParams } from '../src/util/utils'
+
+describe(`rango makeRangoAuthParams`, function () {
+  it('sends the key as the apikey query parameter', function () {
+    const query = makeQueryParams({
+      ...makeRangoAuthParams('key-123'),
+      amount: '1000'
+    })
+    const params = new URLSearchParams(query)
+    assert.equal(params.get('apikey'), 'key-123')
+    assert.equal(params.get('apiKey'), 'key-123')
+  })
+})
 
 describe(`rango hexToTronAddress`, function () {
   it('converts the USDT TRC20 contract', function () {
