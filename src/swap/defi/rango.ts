@@ -76,6 +76,18 @@ const PARENT_TOKEN_CONTRACT_ADDRESS = '0x0'
 const DEFAULT_SLIPPAGE = '5'
 
 /**
+ * Rango authenticates with the `apikey` query parameter. Its gateway still
+ * rejects that name on its own, so the legacy `apiKey` spelling rides along
+ * until the lowercase parameter is accepted alone.
+ */
+export const makeRangoAuthParams = (
+  rangoApiKey: string
+): { apikey: string; apiKey: string } => ({
+  apikey: rangoApiKey,
+  apiKey: rangoApiKey
+})
+
+/**
  * Tron contract payloads carry hex addresses, while wallets and spend targets
  * speak base58check.
  */
@@ -439,7 +451,7 @@ export function makeRangoPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
     }
 
     const swapParameters = {
-      apiKey: rangoApiKey,
+      ...makeRangoAuthParams(rangoApiKey),
       from: createAssetString(
         fromMainnetCode,
         fromContractAddress,

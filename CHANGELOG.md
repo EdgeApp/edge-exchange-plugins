@@ -3,6 +3,7 @@
 ## Unreleased
 
 - added: (Rango) Tron swaps
+- changed: (Rango) Send the API key as the `apikey` query parameter
 
 ## 2.52.2 (2026-07-27)
 
