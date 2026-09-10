@@ -32,7 +32,6 @@ import { div18 } from '../../../util/biggystringplus'
 import {
   checkInvalidTokenIds,
   getMaxSwappable,
-  InvalidTokenIds,
   isLikeKind,
   makeSwapPluginQuote,
   SwapOrder
@@ -54,13 +53,16 @@ import {
   createEvmApprovalEdgeTransactions,
   getDepositWithExpiryData
 } from '../defiUtils'
-
-export const EXPIRATION_MS = 1000 * 60
-export const EXCHANGE_INFO_UPDATE_FREQ_MS = 60000
-export const EVM_SEND_GAS = '80000'
-export const EVM_TOKEN_SEND_GAS = '80000'
-export const THOR_LIMIT_UNITS = '100000000'
-export const AFFILIATE_FEE_BASIS_DEFAULT = '50'
+import {
+  AFFILIATE_FEE_BASIS_DEFAULT,
+  CHAIN_TYPE_MAP,
+  EXCHANGE_INFO_UPDATE_FREQ_MS,
+  EXPIRATION_MS,
+  getGasLimit,
+  INVALID_TOKEN_IDS,
+  NATIVE_TO_THOR_MULTIPLIER,
+  THOR_LIMIT_UNITS
+} from './thorchainConstants'
 
 // Both nodes normalize bridged assets to THOR_LIMIT_UNITS (1e8) in their quote
 // APIs, regardless of the asset's own precision. Mayanode's only exception is
@@ -97,7 +99,6 @@ export const isProviderNativeDeposit = (
   PROVIDER_NATIVE_PLUGIN_ID[swapInfo.pluginId] ===
   fromWallet.currencyInfo.pluginId
 
-const NATIVE_IN_GWEI = '1000000000'
 const STREAMING_INTERVAL_DEFAULT = 10
 const STREAMING_QUANTITY_DEFAULT = 10
 const STREAMING_INTERVAL_NOSTREAM = 1
@@ -166,70 +167,6 @@ export const PER_ASSET_SPREAD_DEFAULT: AssetSpread[] = [
     destCurrencyCode: undefined
   }
 ]
-
-export const INVALID_TOKEN_IDS: InvalidTokenIds = {
-  from: {
-    optimism: ['9560e827af36c94d2ac33a39bce1fe78631088db' /* VELO */]
-  },
-  to: {}
-}
-
-export type ChainType = 'evm' | 'utxo' | 'cosmos' | 'other'
-
-/** Chain type classification for THORChain/Maya supported chains */
-export const CHAIN_TYPE_MAP: { [cc: string]: ChainType } = {
-  // EVM chains
-  ARB: 'evm',
-  AVAX: 'evm',
-  BASE: 'evm',
-  BSC: 'evm',
-  ETC: 'evm',
-  ETH: 'evm',
-  FTM: 'evm',
-  OP: 'evm',
-  POL: 'evm',
-
-  // UTXO chains
-  BCH: 'utxo',
-  BTC: 'utxo',
-  DASH: 'utxo',
-  DOGE: 'utxo',
-  LTC: 'utxo',
-  ZEC: 'utxo',
-
-  // Cosmos chains
-  GAIA: 'cosmos',
-  THOR: 'cosmos',
-  MAYA: 'cosmos',
-  KUJI: 'cosmos',
-
-  // Other chain types
-  DOT: 'other',
-  SOL: 'other',
-  SUI: 'other',
-  TRON: 'other',
-  XRP: 'other'
-}
-
-/** Thorchain has weird heuristics for some currencies */
-const NATIVE_TO_THOR_MULTIPLIER: { [cc: string]: string } = {
-  ARB: NATIVE_IN_GWEI,
-  AVAX: NATIVE_IN_GWEI,
-  BASE: NATIVE_IN_GWEI,
-  BCH: '1',
-  BNB: '1',
-  BSC: NATIVE_IN_GWEI,
-  BTC: '1',
-  DASH: '1',
-  DOGE: '1',
-  ETC: NATIVE_IN_GWEI,
-  ETH: NATIVE_IN_GWEI,
-  FTM: NATIVE_IN_GWEI,
-  LTC: '1',
-  THOR: '1',
-  TRON: '1',
-  XRP: '0.01'
-}
 
 export const asInitOptions = asObject({
   appId: asOptional(asString, 'edge'),
@@ -1539,19 +1476,6 @@ const getQuote = async (
     return quote
   } catch (e) {
     console.error(`getQuote throw ${String(e)}`)
-  }
-}
-
-export const getGasLimit = (
-  chain: string,
-  tokenId: string | null
-): string | undefined => {
-  if (CHAIN_TYPE_MAP[chain] === 'evm') {
-    if (tokenId == null) {
-      return EVM_SEND_GAS
-    } else {
-      return EVM_TOKEN_SEND_GAS
-    }
   }
 }
 

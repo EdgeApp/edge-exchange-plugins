@@ -47,7 +47,7 @@ import {
   EXPIRATION_MS,
   getGasLimit,
   INVALID_TOKEN_IDS
-} from './thorchainCommon'
+} from './thorchainConstants'
 
 const pluginId = 'swapkit'
 const swapInfo: EdgeSwapInfo = {
