@@ -6,7 +6,12 @@ import {
 
 import { mayaprotocol as mayaprotocolMapping } from '../../../mappings/mayaprotocol'
 import { mapToStringMap } from '../../../util/swapHelpers'
-import { ExchangeInfo, makeThorchainBasedPlugin } from './thorchainCommon'
+import { makeThorchainBasedPlugin } from './thorchainCommon'
+import {
+  ExchangeInfo,
+  ProviderNativeChain,
+  ThorchainChainStrategy
+} from './thorchainTypes'
 
 const swapInfo: EdgeSwapInfo = {
   pluginId: 'mayaprotocol',
@@ -29,6 +34,25 @@ export const MAINNET_CODE_TRANSCRIPTION: {
   [cc: string]: string
 } = mapToStringMap(mayaprotocolMapping)
 
+/**
+ * Maya's own chain. CACAO is spent with a MsgDeposit and, having no pool of
+ * its own, is priced at 1. Mayanode expresses MAYAChain's assets in their
+ * native precision (CACAO 1e10, MAYA 1e4) while normalizing bridged assets
+ * to 1e8, and CACAO is low value, so a max-quote probe seeds with 1000 CACAO
+ * to clear Maya's minimum.
+ */
+export const MAYA_NATIVE_CHAIN: ProviderNativeChain = {
+  pluginId: 'mayachain',
+  baseAsset: 'MAYA.CACAO',
+  ownAssetsUseNativePrecision: true,
+  maxQuoteSeedExchangeAmount: '1000'
+}
+
+/** Maya's Zcash vaults pay out to transparent addresses only. */
+const MAYA_CHAINS: { [pluginId: string]: ThorchainChainStrategy } = {
+  zcash: { destinationAddressType: 'transparentAddress' }
+}
+
 export const makeMayaProtocolPlugin = (
   opts: EdgeCorePluginOptions
 ): EdgeSwapPlugin => {
@@ -38,6 +62,8 @@ export const makeMayaProtocolPlugin = (
     THORNODE_SERVERS_DEFAULT,
     infoServer,
     orderUri,
-    swapInfo
+    swapInfo,
+    nativeChain: MAYA_NATIVE_CHAIN,
+    chains: MAYA_CHAINS
   })
 }

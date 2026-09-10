@@ -1,3 +1,4 @@
+import { mul } from 'biggystring'
 import { assert } from 'chai'
 import {
   EdgeCurrencyWallet,
@@ -6,12 +7,17 @@ import {
 } from 'edge-core-js/types'
 import { describe, it } from 'mocha'
 
+import { MAYA_NATIVE_CHAIN } from '../src/swap/defi/thorchain/mayaprotocol'
+import { THORCHAIN_NATIVE_CHAIN } from '../src/swap/defi/thorchain/thorchain'
 import {
   getNodeLimitUnits,
   getPool,
   isProviderNativeDeposit
 } from '../src/swap/defi/thorchain/thorchainCommon'
+import { INVALID_TOKEN_IDS } from '../src/swap/defi/thorchain/thorchainConstants'
 import { EdgeSwapRequestPlugin } from '../src/swap/types'
+import { mergeInvalidTokenIds } from '../src/util/swapHelpers'
+import { getTokenMultiplier } from '../src/util/utils'
 
 const mayaSwapInfo: EdgeSwapInfo = {
   pluginId: 'mayaprotocol',
@@ -71,7 +77,12 @@ const dashWallet = makeFakeWallet('dash', 'DASH', '100000000')
 const mayachainWallet = makeFakeWallet('mayachain', 'CACAO', '10000000000', [
   { tokenId: 'mayatokenid', currencyCode: 'MAYA', multiplier: '10000' }
 ])
-const thorchainruneWallet = makeFakeWallet('thorchainrune', 'RUNE', '100000000')
+const thorchainruneWallet = makeFakeWallet(
+  'thorchainrune',
+  'RUNE',
+  '100000000',
+  [{ tokenId: 'tcytokenid', currencyCode: 'TCY', multiplier: '100000000' }]
+)
 
 describe(`getNodeLimitUnits`, function () {
   // Mayanode normalizes bridged assets to 1e8 no matter their own precision,
@@ -85,7 +96,7 @@ describe(`getNodeLimitUnits`, function () {
   for (const [name, wallet, tokenId] of bridgedCases) {
     it(`maya uses 1e8 for ${name}`, function () {
       assert.equal(
-        getNodeLimitUnits(mayaSwapInfo, wallet, tokenId),
+        getNodeLimitUnits(MAYA_NATIVE_CHAIN, wallet, tokenId),
         '100000000'
       )
     })
@@ -95,26 +106,38 @@ describe(`getNodeLimitUnits`, function () {
   // their native precision.
   it('maya uses native 1e10 for CACAO', function () {
     assert.equal(
-      getNodeLimitUnits(mayaSwapInfo, mayachainWallet, null),
+      getNodeLimitUnits(MAYA_NATIVE_CHAIN, mayachainWallet, null),
       '10000000000'
     )
   })
 
   it('maya uses native 1e4 for the MAYA token', function () {
     assert.equal(
-      getNodeLimitUnits(mayaSwapInfo, mayachainWallet, 'mayatokenid'),
+      getNodeLimitUnits(MAYA_NATIVE_CHAIN, mayachainWallet, 'mayatokenid'),
       '10000'
     )
   })
 
-  // Thornode normalizes everything, including MAYAChain assets.
+  // Thornode normalizes everything, including MAYAChain assets and its own.
   it('thorchain always uses 1e8', function () {
     assert.equal(
-      getNodeLimitUnits(thorSwapInfo, ethWallet, 'usdttokenid'),
+      getNodeLimitUnits(THORCHAIN_NATIVE_CHAIN, ethWallet, 'usdttokenid'),
       '100000000'
     )
     assert.equal(
-      getNodeLimitUnits(thorSwapInfo, mayachainWallet, null),
+      getNodeLimitUnits(THORCHAIN_NATIVE_CHAIN, mayachainWallet, null),
+      '100000000'
+    )
+    assert.equal(
+      getNodeLimitUnits(THORCHAIN_NATIVE_CHAIN, thorchainruneWallet, null),
+      '100000000'
+    )
+    assert.equal(
+      getNodeLimitUnits(
+        THORCHAIN_NATIVE_CHAIN,
+        thorchainruneWallet,
+        'tcytokenid'
+      ),
       '100000000'
     )
   })
@@ -124,33 +147,83 @@ describe(`isProviderNativeDeposit`, function () {
   // The MsgDeposit path only applies on the provider's own protocol chain.
   it('thorchain deposits RUNE', function () {
     assert.equal(
-      isProviderNativeDeposit(thorSwapInfo, thorchainruneWallet),
+      isProviderNativeDeposit(THORCHAIN_NATIVE_CHAIN, thorchainruneWallet),
       true
     )
   })
 
   it('maya deposits CACAO', function () {
-    assert.equal(isProviderNativeDeposit(mayaSwapInfo, mayachainWallet), true)
+    assert.equal(
+      isProviderNativeDeposit(MAYA_NATIVE_CHAIN, mayachainWallet),
+      true
+    )
   })
 
   // RUNE is an external asset to Maya. It must be sent to Maya's inbound
-  // address like any other chain — depositing it hands Maya's memo to
+  // address like any other chain: depositing it hands Maya's memo to
   // THORChain, which misparses it (e.g. `=:d:<dashAddr>` becomes a DOGE swap
   // with an unparseable address).
   it('maya must NOT deposit RUNE', function () {
     assert.equal(
-      isProviderNativeDeposit(mayaSwapInfo, thorchainruneWallet),
+      isProviderNativeDeposit(MAYA_NATIVE_CHAIN, thorchainruneWallet),
       false
     )
   })
 
   it('thorchain must NOT deposit CACAO', function () {
-    assert.equal(isProviderNativeDeposit(thorSwapInfo, mayachainWallet), false)
+    assert.equal(
+      isProviderNativeDeposit(THORCHAIN_NATIVE_CHAIN, mayachainWallet),
+      false
+    )
   })
 
   it('external chains never deposit', function () {
-    assert.equal(isProviderNativeDeposit(mayaSwapInfo, dashWallet), false)
-    assert.equal(isProviderNativeDeposit(thorSwapInfo, ethWallet), false)
+    assert.equal(isProviderNativeDeposit(MAYA_NATIVE_CHAIN, dashWallet), false)
+    assert.equal(
+      isProviderNativeDeposit(THORCHAIN_NATIVE_CHAIN, ethWallet),
+      false
+    )
+  })
+})
+
+describe(`native chain profiles`, function () {
+  // The max-quote probe seed is denominated so it reads as an amount of the
+  // base asset; multiplied out it must equal what each node needs to clear
+  // its minimum: 10 RUNE and 1000 CACAO.
+  it('thorchain probes max quotes with 10 RUNE', function () {
+    assert.equal(
+      mul(
+        THORCHAIN_NATIVE_CHAIN.maxQuoteSeedExchangeAmount,
+        getTokenMultiplier(thorchainruneWallet, null)
+      ),
+      '1000000000'
+    )
+  })
+
+  it('maya probes max quotes with 1000 CACAO', function () {
+    assert.equal(
+      mul(
+        MAYA_NATIVE_CHAIN.maxQuoteSeedExchangeAmount,
+        getTokenMultiplier(mayachainWallet, null)
+      ),
+      '10000000000000'
+    )
+  })
+})
+
+describe(`mergeInvalidTokenIds`, function () {
+  it('keeps the shared exclusions and adds the provider ones', function () {
+    const merged = mergeInvalidTokenIds(INVALID_TOKEN_IDS, {
+      from: { zcash: 'allCodes' },
+      to: {}
+    })
+    assert.deepEqual(merged.from.optimism, INVALID_TOKEN_IDS.from.optimism)
+    assert.equal(merged.from.zcash, 'allCodes')
+    assert.deepEqual(merged.to, {})
+  })
+
+  it('leaves the shared list unchanged without provider exclusions', function () {
+    assert.deepEqual(mergeInvalidTokenIds(INVALID_TOKEN_IDS), INVALID_TOKEN_IDS)
   })
 })
 
@@ -192,9 +265,16 @@ const thorPools = [
 describe(`getPool`, function () {
   // Maya treats RUNE as an ordinary bridged asset with a real pool. Pricing it
   // as a base asset (assetPrice '1') put the 'to' quote out by the whole
-  // RUNE/CACAO ratio — ~3.58x here.
+  // RUNE/CACAO ratio, about 3.58x here.
   it('maya prices RUNE from its real pool, not as a base asset', function () {
-    const pool = getPool(fakeRequest, mayaSwapInfo, 'THOR', 'RUNE', mayaPools)
+    const pool = getPool(
+      fakeRequest,
+      mayaSwapInfo,
+      MAYA_NATIVE_CHAIN,
+      'THOR',
+      'RUNE',
+      mayaPools
+    )
     assert.equal(pool.asset, 'THOR.RUNE')
     assert.equal(pool.assetPrice, '3.578525528664948')
   })
@@ -202,23 +282,45 @@ describe(`getPool`, function () {
   // THORChain lists no pool for its own base asset, so it still gets a
   // synthetic one priced at 1.
   it('thorchain synthesizes a RUNE pool priced at 1', function () {
-    const pool = getPool(fakeRequest, thorSwapInfo, 'THOR', 'RUNE', thorPools)
+    const pool = getPool(
+      fakeRequest,
+      thorSwapInfo,
+      THORCHAIN_NATIVE_CHAIN,
+      'THOR',
+      'RUNE',
+      thorPools
+    )
     assert.equal(pool.asset, 'THOR.RUNE')
     assert.equal(pool.assetPrice, '1')
   })
 
   it('maya synthesizes a CACAO pool priced at 1', function () {
-    const pool = getPool(fakeRequest, mayaSwapInfo, 'MAYA', 'CACAO', mayaPools)
+    const pool = getPool(
+      fakeRequest,
+      mayaSwapInfo,
+      MAYA_NATIVE_CHAIN,
+      'MAYA',
+      'CACAO',
+      mayaPools
+    )
     assert.equal(pool.asset, 'MAYA.CACAO')
     assert.equal(pool.assetPrice, '1')
   })
 
   it('uses the real pool for a provider-native token', function () {
-    const thorTcy = getPool(fakeRequest, thorSwapInfo, 'THOR', 'TCY', thorPools)
+    const thorTcy = getPool(
+      fakeRequest,
+      thorSwapInfo,
+      THORCHAIN_NATIVE_CHAIN,
+      'THOR',
+      'TCY',
+      thorPools
+    )
     assert.equal(thorTcy.assetPrice, '0.0189')
     const mayaMaya = getPool(
       fakeRequest,
       mayaSwapInfo,
+      MAYA_NATIVE_CHAIN,
       'MAYA',
       'MAYA',
       mayaPools
@@ -227,22 +329,45 @@ describe(`getPool`, function () {
   })
 
   it('matches a token pool despite its contract-address suffix', function () {
-    const pool = getPool(fakeRequest, thorSwapInfo, 'ETH', 'USDC', thorPools)
+    const pool = getPool(
+      fakeRequest,
+      thorSwapInfo,
+      THORCHAIN_NATIVE_CHAIN,
+      'ETH',
+      'USDC',
+      thorPools
+    )
     assert.equal(pool.assetPrice, '2.34')
   })
 
   it('throws for an asset with no pool', function () {
     assert.throws(
-      () => getPool(fakeRequest, mayaSwapInfo, 'LTC', 'LTC', mayaPools),
+      () =>
+        getPool(
+          fakeRequest,
+          mayaSwapInfo,
+          MAYA_NATIVE_CHAIN,
+          'LTC',
+          'LTC',
+          mayaPools
+        ),
       /does not support/
     )
   })
 
   // CACAO is not a base asset to THORChain, so it must not be synthesized
-  // there — it would price CACAO at 1 RUNE.
+  // there: it would price CACAO at 1 RUNE.
   it('does not synthesize another protocol base asset', function () {
     assert.throws(
-      () => getPool(fakeRequest, thorSwapInfo, 'MAYA', 'CACAO', thorPools),
+      () =>
+        getPool(
+          fakeRequest,
+          thorSwapInfo,
+          THORCHAIN_NATIVE_CHAIN,
+          'MAYA',
+          'CACAO',
+          thorPools
+        ),
       /does not support/
     )
   })

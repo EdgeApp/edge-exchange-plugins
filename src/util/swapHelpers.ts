@@ -355,6 +355,18 @@ export interface InvalidTokenIds {
   to: { [pluginId: string]: 'allCodes' | 'allTokens' | EdgeTokenId[] }
 }
 
+/**
+ * Layers a plugin's own exclusions over a shared list. For a pluginId listed
+ * in both, the plugin's entry wins.
+ */
+export const mergeInvalidTokenIds = (
+  base: InvalidTokenIds,
+  extra: InvalidTokenIds = { from: {}, to: {} }
+): InvalidTokenIds => ({
+  from: { ...base.from, ...extra.from },
+  to: { ...base.to, ...extra.to }
+})
+
 const defaultInvalidCodes: InvalidTokenIds = {
   from: { ethereum: ['1985365e9f78359a9b6ad760e32412f4a445e862' /* REP */] },
   to: { ethereum: ['1985365e9f78359a9b6ad760e32412f4a445e862' /* REP */] }

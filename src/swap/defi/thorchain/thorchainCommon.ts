@@ -34,6 +34,7 @@ import {
   getMaxSwappable,
   isLikeKind,
   makeSwapPluginQuote,
+  mergeInvalidTokenIds,
   SwapOrder
 } from '../../../util/swapHelpers'
 import {
@@ -63,41 +64,39 @@ import {
   NATIVE_TO_THOR_MULTIPLIER,
   THOR_LIMIT_UNITS
 } from './thorchainConstants'
+import {
+  asExchangeInfo,
+  AssetSpread,
+  ProviderNativeChain,
+  ThorchainProviderOpts
+} from './thorchainTypes'
 
-// Both nodes normalize bridged assets to THOR_LIMIT_UNITS (1e8) in their quote
-// APIs, regardless of the asset's own precision. Mayanode's only exception is
-// MAYAChain's own assets, which it expresses in their native precision (CACAO
-// is 1e10, MAYA is 1e4). Resolve the multiplier that converts between an
-// asset's exchange-denominated amount and the units the node API expects.
+// The nodes normalize bridged assets to THOR_LIMIT_UNITS (1e8) in their quote
+// APIs, regardless of the asset's own precision. A provider may instead express
+// its own chain's assets in their native precision (Mayanode does: CACAO is
+// 1e10, MAYA is 1e4). Resolve the multiplier that converts between an asset's
+// exchange-denominated amount and the units the node API expects.
 export const getNodeLimitUnits = (
-  swapInfo: EdgeSwapInfo,
+  nativeChain: ProviderNativeChain,
   wallet: EdgeCurrencyWallet,
   tokenId: EdgeTokenId
 ): string =>
-  swapInfo.pluginId === 'mayaprotocol' &&
-  wallet.currencyInfo.pluginId === 'mayachain'
+  nativeChain.ownAssetsUseNativePrecision &&
+  wallet.currencyInfo.pluginId === nativeChain.pluginId
     ? getTokenMultiplier(wallet, tokenId)
     : THOR_LIMIT_UNITS
-
-/** Each provider's own protocol chain, by swap pluginId */
-const PROVIDER_NATIVE_PLUGIN_ID: { [swapPluginId: string]: string } = {
-  thorchain: 'thorchainrune',
-  mayaprotocol: 'mayachain'
-}
 
 // The MsgDeposit path only applies when spending an asset native to the swap
 // provider's own protocol chain: RUNE (or THOR-chain tokens) via THORChain,
 // CACAO (or MAYA-chain tokens) via Maya. An asset from the *other* protocol's
-// chain — e.g. RUNE swapped through Maya — is just another external asset to
+// chain, e.g. RUNE swapped through Maya, is just another external asset to
 // that provider and must be sent to the quote's inbound address. Depositing it
 // instead hands the memo to the wrong protocol: THORChain executes Maya's
 // `=:d:<dashAddr>` as a DOGE swap and fails to parse the DASH address.
 export const isProviderNativeDeposit = (
-  swapInfo: EdgeSwapInfo,
+  nativeChain: ProviderNativeChain,
   fromWallet: EdgeCurrencyWallet
-): boolean =>
-  PROVIDER_NATIVE_PLUGIN_ID[swapInfo.pluginId] ===
-  fromWallet.currencyInfo.pluginId
+): boolean => fromWallet.currencyInfo.pluginId === nativeChain.pluginId
 
 const STREAMING_INTERVAL_DEFAULT = 10
 const STREAMING_QUANTITY_DEFAULT = 10
@@ -171,7 +170,6 @@ export const PER_ASSET_SPREAD_DEFAULT: AssetSpread[] = [
 export const asInitOptions = asObject({
   appId: asOptional(asString, 'edge'),
   affiliateFeeBasis: asOptional(asString, AFFILIATE_FEE_BASIS_DEFAULT),
-  ninerealmsClientId: asOptional(asString, ''),
   thorname: asOptional(asString, 'ej')
 })
 
@@ -201,30 +199,6 @@ export const asPool = asObject({
   assetPriceUSD: asString
   // assetDepth: asString,
   // runeDepth: asString
-})
-
-export const asAssetSpread = asObject({
-  sourcePluginId: asOptional(asString),
-  sourceTokenId: asOptional(asString),
-  sourceCurrencyCode: asOptional(asString),
-  destPluginId: asOptional(asString),
-  destTokenId: asOptional(asString),
-  destCurrencyCode: asOptional(asString),
-  volatilitySpread: asNumber
-})
-
-const asExchangeInfo = asObject({
-  perAssetSpread: asArray(asAssetSpread),
-  perAssetSpreadStreaming: asOptional(asArray(asAssetSpread)),
-  volatilitySpread: asNumber,
-  volatilitySpreadStreaming: asOptional(asNumber),
-  likeKindVolatilitySpread: asNumber,
-  likeKindVolatilitySpreadStreaming: asOptional(asNumber),
-  midgardServers: asArray(asString),
-  affiliateFeeBasis: asOptional(asString),
-  streamingInterval: asOptional(asNumber),
-  streamingQuantity: asOptional(asNumber),
-  thornodeServersWithPath: asOptional(asArray(asString))
 })
 
 const asExchangeInfoMap = asObject({
@@ -267,11 +241,10 @@ interface QuoteError {
 }
 
 type QuoteSwapFull = QuoteSwap | QuoteError
-type AssetSpread = ReturnType<typeof asAssetSpread>
 type Pool = ReturnType<typeof asPool>
-export type ExchangeInfo = ReturnType<typeof asExchangeInfo>
 interface CalcSwapParams {
   swapInfo: EdgeSwapInfo
+  nativeChain: ProviderNativeChain
   log: Function
   fetch: EdgeFetchFunction
   thornodes: string[]
@@ -310,22 +283,9 @@ interface CalcSwapResponse {
   gasRateUnits?: string
 }
 
-interface ThorchainOpts {
-  MAINNET_CODE_TRANSCRIPTION: { [cc: string]: string }
-  MIDGARD_SERVERS_DEFAULT: string[]
-  THORNODE_SERVERS_DEFAULT: string[]
-  infoServer: {
-    exchangeInfo: ExchangeInfo | undefined
-    exchangeInfoLastUpdate: number
-  }
-  orderUri: string
-  swapInfo: EdgeSwapInfo
-  thornodesFetchOptions?: Record<string, string>
-}
-
 export function makeThorchainBasedPlugin(
   opts: EdgeCorePluginOptions,
-  thorchainOpts: ThorchainOpts
+  thorchainOpts: ThorchainProviderOpts
 ): EdgeSwapPlugin {
   const { io, log } = opts
   const { fetchCors = io.fetch } = io
@@ -340,8 +300,15 @@ export function makeThorchainBasedPlugin(
     infoServer,
     orderUri,
     swapInfo,
-    thornodesFetchOptions = {}
+    thornodesFetchOptions = {},
+    nativeChain,
+    invalidTokenIds: providerInvalidTokenIds,
+    chains = {}
   } = thorchainOpts
+  const invalidTokenIds = mergeInvalidTokenIds(
+    INVALID_TOKEN_IDS,
+    providerInvalidTokenIds
+  )
 
   const fetchSwapQuoteInner = async (
     request: EdgeSwapRequestPlugin,
@@ -376,16 +343,13 @@ export function makeThorchainBasedPlugin(
     let streamingInterval: number = STREAMING_INTERVAL_DEFAULT
     let streamingQuantity: number = STREAMING_QUANTITY_DEFAULT
 
-    checkInvalidTokenIds(INVALID_TOKEN_IDS, request, swapInfo)
+    checkInvalidTokenIds(invalidTokenIds, request, swapInfo)
 
-    // Grab addresses:
-    // For Zcash receives, prefer a transparent address as Maya requires
-    // t-addresses for inbound/outbound routing.
+    // A provider may only pay out to one of a chain's address types (Zcash
+    // vaults route through transparent addresses); the profile says which.
     const toAddress = await getAddress(
       toWallet,
-      toWallet.currencyInfo.pluginId === 'zcash'
-        ? 'transparentAddress'
-        : undefined
+      chains[toWallet.currencyInfo.pluginId]?.destinationAddressType
     )
 
     // Maya cannot refund a shielded Zcash source without a transparent
@@ -549,6 +513,7 @@ export function makeThorchainBasedPlugin(
     const sourcePool = getPool(
       request,
       swapInfo,
+      nativeChain,
       fromMainnetCode,
       fromCurrencyCode,
       pools
@@ -566,6 +531,7 @@ export function makeThorchainBasedPlugin(
     const destPool = getPool(
       request,
       swapInfo,
+      nativeChain,
       toMainnetCode,
       toCurrencyCode,
       pools
@@ -586,6 +552,7 @@ export function makeThorchainBasedPlugin(
 
       calcResponse = await calcSwapFrom({
         swapInfo,
+        nativeChain,
         log,
         fetch: fetchCors,
         thornodes: thornodeServersWithPath,
@@ -635,6 +602,7 @@ export function makeThorchainBasedPlugin(
 
       calcResponse = await calcSwapTo({
         swapInfo,
+        nativeChain,
         log,
         fetch: fetchCors,
         thornodes: thornodeServersWithPath,
@@ -746,15 +714,13 @@ export function makeThorchainBasedPlugin(
         memo
       })
       memo = memo.replace(/^0x/, '')
-    } else if (isProviderNativeDeposit(swapInfo, fromWallet)) {
-      const chainPrefix =
-        fromWallet.currencyInfo.pluginId === 'thorchainrune' ? 'THOR' : 'MAYA'
+    } else if (isProviderNativeDeposit(nativeChain, fromWallet)) {
       const makeTxParams: MakeTxParams = {
         type: 'MakeTxDeposit',
         assets: [
           {
             amount: fromNativeAmount,
-            asset: `${chainPrefix}.${fromCurrencyCode}`,
+            asset: `${fromMainnetCode}.${fromCurrencyCode}`,
             // The deposit amount is in the source asset's native precision, so
             // tag it with that asset's multiplier. For RUNE this equals
             // THOR_LIMIT_UNITS (1e8); CACAO needs its own 1e10 multiplier.
@@ -770,7 +736,7 @@ export function makeThorchainBasedPlugin(
       if (quoteFor === 'max') {
         if (fromTokenId != null) {
           throw new Error(
-            'fetchSwapQuoteInner max quote only for RUNE or CACAO'
+            `fetchSwapQuoteInner max quote only for ${nativeChain.baseAsset}`
           )
         }
         const maxNativeAmount = await fromWallet.otherMethods.getMaxTx(
@@ -980,7 +946,7 @@ export function makeThorchainBasedPlugin(
       let swapOrder
       if (
         quoteFor === 'max' &&
-        isProviderNativeDeposit(swapInfo, fromWallet) &&
+        isProviderNativeDeposit(nativeChain, fromWallet) &&
         request.fromTokenId == null
       ) {
         // fetchSwapQuoteInner has unique logic to handle 'max' quotes but
@@ -1000,15 +966,6 @@ export function makeThorchainBasedPlugin(
     }
   }
   return out
-}
-
-/**
- * Each provider's own base asset. A provider prices every pool in this asset,
- * so it never lists a pool for the asset itself.
- */
-const PROVIDER_BASE_ASSET: { [swapPluginId: string]: string } = {
-  thorchain: 'THOR.RUNE',
-  mayaprotocol: 'MAYA.CACAO'
 }
 
 /**
@@ -1036,6 +993,7 @@ const createNativePool = (
 export const getPool = (
   request: EdgeSwapRequestPlugin,
   swapInfo: EdgeSwapInfo,
+  nativeChain: ProviderNativeChain,
   mainnetCode: string,
   tokenCode: string,
   pools: Pool[]
@@ -1052,7 +1010,7 @@ export const getPool = (
   // base asset is an ordinary bridged asset here, with a real pool: Maya lists
   // THOR.RUNE, and pricing it as a base asset (1 CACAO per RUNE instead of the
   // pool's rate) skewed 'to' quotes by the whole RUNE/CACAO ratio.
-  if (PROVIDER_BASE_ASSET[swapInfo.pluginId] === wantedAsset) {
+  if (nativeChain.baseAsset === wantedAsset) {
     return createNativePool(request, swapInfo, wantedAsset, pools)
   }
 
@@ -1061,6 +1019,7 @@ export const getPool = (
 
 const calcSwapFrom = async ({
   swapInfo,
+  nativeChain,
   log,
   fetch,
   thornodes,
@@ -1085,14 +1044,14 @@ const calcSwapFrom = async ({
   streamingQuantity
 }: CalcSwapParams): Promise<CalcSwapResponse> => {
   // Max quotes start by probing the rate with a small fixed amount that must
-  // clear the provider's minimum. 10 RUNE works for Thorchain; CACAO is lower
-  // value and 10-decimal, so probe with ~1000 CACAO to stay above Maya's min.
+  // clear the provider's minimum; the profile carries it in the base asset's
+  // exchange denomination.
   const isNativeDeposit =
-    isProviderNativeDeposit(swapInfo, fromWallet) && fromTokenId == null
-  const maxSeedAmount =
-    fromWallet.currencyInfo.pluginId === 'mayachain'
-      ? mul('1000', getTokenMultiplier(fromWallet, fromTokenId))
-      : '1000000000'
+    isProviderNativeDeposit(nativeChain, fromWallet) && fromTokenId == null
+  const maxSeedAmount = mul(
+    nativeChain.maxQuoteSeedExchangeAmount,
+    getTokenMultiplier(fromWallet, fromTokenId)
+  )
   const fromNativeAmount =
     quoteFor === 'max' && isNativeDeposit ? maxSeedAmount : nativeAmount
 
@@ -1105,8 +1064,8 @@ const calcSwapFrom = async ({
 
   log(`fromExchangeAmount: ${fromExchangeAmount}`)
 
-  const fromLimitUnits = getNodeLimitUnits(swapInfo, fromWallet, fromTokenId)
-  const toLimitUnits = getNodeLimitUnits(swapInfo, toWallet, toTokenId)
+  const fromLimitUnits = getNodeLimitUnits(nativeChain, fromWallet, fromTokenId)
+  const toLimitUnits = getNodeLimitUnits(nativeChain, toWallet, toTokenId)
 
   const fromThorAmountDecimal = mul(fromExchangeAmount, fromLimitUnits)
   const fromThorAmount = round(fromThorAmountDecimal, 0)
@@ -1203,6 +1162,7 @@ const calcSwapFrom = async ({
 
 const calcSwapTo = async ({
   swapInfo,
+  nativeChain,
   log,
   fetch,
   thornodes,
@@ -1234,8 +1194,8 @@ const calcSwapTo = async ({
     toTokenId
   )
 
-  const fromLimitUnits = getNodeLimitUnits(swapInfo, fromWallet, fromTokenId)
-  const toLimitUnits = getNodeLimitUnits(swapInfo, toWallet, toTokenId)
+  const fromLimitUnits = getNodeLimitUnits(nativeChain, fromWallet, fromTokenId)
+  const toLimitUnits = getNodeLimitUnits(nativeChain, toWallet, toTokenId)
 
   const requestedToThorAmount = mul(toExchangeAmount, toLimitUnits)
 

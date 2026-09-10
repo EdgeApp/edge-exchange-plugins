@@ -1,3 +1,4 @@
+import { asObject, asOptional, asString } from 'cleaners'
 import {
   EdgeCorePluginOptions,
   EdgeSwapInfo,
@@ -6,11 +7,12 @@ import {
 
 import { thorchain as thorchainMapping } from '../../../mappings/thorchain'
 import { mapToStringMap } from '../../../util/swapHelpers'
+import { makeThorchainBasedPlugin } from './thorchainCommon'
 import {
-  asInitOptions,
   ExchangeInfo,
-  makeThorchainBasedPlugin
-} from './thorchainCommon'
+  ProviderNativeChain,
+  ThorchainChainStrategy
+} from './thorchainTypes'
 
 const swapInfo: EdgeSwapInfo = {
   pluginId: 'thorchain',
@@ -35,14 +37,36 @@ const MAINNET_CODE_TRANSCRIPTION: {
   [cc: string]: string
 } = mapToStringMap(thorchainMapping)
 
+/** Only THORChain's thornode gateway wants a client id header. */
+const asThorchainInitOptions = asObject({
+  ninerealmsClientId: asOptional(asString, '')
+})
+
+/**
+ * THORChain's own chain. RUNE is spent with a MsgDeposit and, having no pool
+ * of its own, is priced at 1. Thornode quotes every asset in 1e8, its own
+ * included, and 10 RUNE clears its minimum for a max-quote probe.
+ */
+export const THORCHAIN_NATIVE_CHAIN: ProviderNativeChain = {
+  pluginId: 'thorchainrune',
+  baseAsset: 'THOR.RUNE',
+  ownAssetsUseNativePrecision: false,
+  maxQuoteSeedExchangeAmount: '10'
+}
+
+/** THORChain's Zcash vaults pay out to transparent addresses only. */
+const THORCHAIN_CHAINS: { [pluginId: string]: ThorchainChainStrategy } = {
+  zcash: { destinationAddressType: 'transparentAddress' }
+}
+
 export const makeThorchainPlugin = (
   opts: EdgeCorePluginOptions
 ): EdgeSwapPlugin => {
-  const initOptions = asInitOptions(opts.initOptions)
+  const { ninerealmsClientId } = asThorchainInitOptions(opts.initOptions)
 
   const thornodesFetchOptions = {
     'Content-Type': 'application/json',
-    'x-client-id': initOptions.ninerealmsClientId
+    'x-client-id': ninerealmsClientId
   }
 
   return makeThorchainBasedPlugin(opts, {
@@ -52,6 +76,8 @@ export const makeThorchainPlugin = (
     infoServer,
     orderUri,
     swapInfo,
-    thornodesFetchOptions
+    thornodesFetchOptions,
+    nativeChain: THORCHAIN_NATIVE_CHAIN,
+    chains: THORCHAIN_CHAINS
   })
 }
