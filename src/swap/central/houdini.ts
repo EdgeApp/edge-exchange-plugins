@@ -1,0 +1,1215 @@
+import { add, ceil, floor, gt, lt } from 'biggystring'
+import {
+  asArray,
+  asBoolean,
+  asDate,
+  asEither,
+  asJSON,
+  asMaybe,
+  asNull,
+  asNumber,
+  asObject,
+  asOptional,
+  asString,
+  asValue
+} from 'cleaners'
+import {
+  EdgeCorePluginOptions,
+  EdgeCurrencyWallet,
+  EdgeFetchResponse,
+  EdgeMemo,
+  EdgeSpendInfo,
+  EdgeSwapApproveOptions,
+  EdgeSwapInfo,
+  EdgeSwapPlugin,
+  EdgeSwapQuote,
+  EdgeSwapRequest,
+  EdgeSwapResult,
+  EdgeTokenId,
+  EdgeTxActionSwap,
+  SwapAboveLimitError,
+  SwapBelowLimitError,
+  SwapCurrencyError
+} from 'edge-core-js/types'
+
+import { houdini as houdiniMapping } from '../../mappings/houdini'
+import { EdgeCurrencyPluginId } from '../../util/edgeCurrencyPluginIds'
+import {
+  checkInvalidTokenIds,
+  checkWhitelistedMainnetCodes,
+  CurrencyPluginIdSwapChainCodeMap,
+  ensureInFuture,
+  getContractAddresses,
+  getMaxSwappable,
+  InvalidTokenIds,
+  makeSwapPluginQuote,
+  mapToRecord,
+  SwapOrder
+} from '../../util/swapHelpers'
+import {
+  convertRequest,
+  denominationToNative,
+  getAddress,
+  memoType,
+  nativeToDenomination,
+  snooze
+} from '../../util/utils'
+import { asNumberString, EdgeSwapRequestPlugin, StringMap } from '../types'
+import { asOptionalBlank } from './changenow'
+
+const pluginId = 'houdini'
+
+export const swapInfo: EdgeSwapInfo = {
+  pluginId,
+  isDex: false,
+  displayName: 'HoudiniSwap',
+  supportEmail: 'support@houdiniswap.com'
+}
+
+// Houdini's v2 partner API. Note the auth header is `Authorization: <key>:<secret>`
+// (no `Bearer`); every endpoint returns 402 without it.
+const asInitOptions = asObject({
+  apiKey: asString,
+  apiSecret: asString
+})
+
+const orderUri = 'https://houdiniswap.com/order/'
+const uri = 'https://api-partner.houdiniswap.com/v2/'
+
+// Houdini quotes/exchanges are keyed by an opaque token id, so destination
+// addresses pass straight through. Zcash is the lone exception: Houdini only
+// accepts transparent `t1` addresses, mirroring how ChangeNow special-cases it.
+const addressTypeMap: StringMap = {
+  zcash: 'transparentAddress'
+}
+
+/**
+ * A swap-to-address destination arrives as a core-built synthetic wallet whose
+ * id carries this prefix. Synthetic wallets hold exactly one pasted address
+ * (already validated by the caller), so typed-address lookups do not apply,
+ * and they may expose destination memos through a `getMemos` method.
+ */
+const SYNTHETIC_WALLET_ID_PREFIX = 'synthetic://'
+
+/**
+ * Assets this plugin refuses outright. Empty: the provider's own token list is
+ * the authority on what it serves, and anything absent from it already fails
+ * the token-id lookup. The shared blocked-token defaults still apply.
+ */
+const INVALID_TOKEN_IDS: InvalidTokenIds = { from: {}, to: {} }
+
+interface SyntheticDestinationMethods {
+  getMemos?: () => Promise<EdgeMemo[]>
+}
+
+/**
+ * Reads the destination memos (e.g. an XRP destination tag) off a core-built
+ * synthetic destination wallet. Real wallets have no `getMemos`; their payout
+ * goes to the user's own address, which needs no tag.
+ */
+async function getDestinationMemos(
+  toWallet: EdgeCurrencyWallet
+): Promise<EdgeMemo[]> {
+  const synthetic = toWallet as EdgeCurrencyWallet & SyntheticDestinationMethods
+  if (synthetic.getMemos == null) return []
+  // Called on the wallet rather than destructured first: the destination is a
+  // bridged object, and a bridge proxy's methods need their receiver to route
+  // the call. Every other wallet call in this plugin reads the same way.
+  return await synthetic.getMemos()
+}
+
+/**
+ * Edge `EdgeCurrencyPluginId` -> Houdini chain `shortName`. Chains that Houdini
+ * cannot serve map to `null` and are rejected up front by
+ * `checkWhitelistedMainnetCodes`.
+ */
+export const MAINNET_CODE_TRANSCRIPTION: CurrencyPluginIdSwapChainCodeMap = mapToRecord(
+  houdiniMapping
+)
+
+const asHoudiniToken = asObject({
+  id: asString,
+  address: asEither(asNull, asString)
+})
+
+const asHoudiniTokensResponse = asObject({
+  tokens: asArray(asMaybe(asHoudiniToken))
+})
+
+const asHoudiniQuote = asObject({
+  quoteId: asString,
+  type: asString,
+  amountOut: asNumber,
+  amountIn: asOptional(asNumber),
+  min: asOptional(asNumber),
+  max: asOptional(asNumber),
+  minOut: asOptional(asNumber),
+  maxOut: asOptional(asNumber),
+  validUntil: asOptional(asString),
+  /** On a dex route: whether a token approval must be signed first. */
+  requiresApproval: asOptional(asBoolean)
+})
+
+type HoudiniQuote = ReturnType<typeof asHoudiniQuote>
+
+const asHoudiniQuotesResponse = asObject({
+  quotes: asArray(asMaybe(asHoudiniQuote))
+})
+
+/**
+ * The API's error envelope. `message` is human-readable, EXCEPT on a
+ * `VALIDATION_ERROR`, where it is the generic "Validation Failed" and the
+ * actionable text (an expired quote, a rejected address) sits under
+ * `fields.<name>.message`.
+ */
+const asHoudiniApiError = asMaybe(
+  asJSON(
+    asObject({
+      message: asString,
+      // The machine-readable half of the envelope (`VALIDATION_ERROR`,
+      // `STATIC_DEPOSIT_IN_USE`, `ADDRESS_TO_IN_DEPOSIT_LOG`). Read through
+      // `asNumberString` because a provider that returns amounts as either a
+      // number or a string usually does the same with codes.
+      code: asOptional(asNumberString),
+      fields: asOptional(
+        asObject(asMaybe(asObject({ message: asString }).withRest))
+      )
+    }).withRest
+  )
+)
+
+/**
+ * The API's machine-readable error code, or `undefined` when the body is not
+ * the error envelope. Classification reads THIS rather than searching the raw
+ * response text: a code that also appears inside a human-readable message
+ * would match a substring test on a body that means something else.
+ */
+function houdiniErrorCode(text: string): string | undefined {
+  return asHoudiniApiError(text)?.code
+}
+
+/**
+ * The most specific human-readable reason in an error body, or `undefined` if
+ * the body is not the API's error envelope at all. Field messages win over the
+ * top-level one, which is generic exactly when they are present.
+ */
+function houdiniErrorMessage(text: string): string | undefined {
+  const apiError = asHoudiniApiError(text)
+  if (apiError == null) return undefined
+
+  const fieldMessages = Object.values(apiError.fields ?? {})
+    .map(field => field?.message)
+    .filter((message): message is string => message != null && message !== '')
+  if (fieldMessages.length > 0) return fieldMessages.join('; ')
+
+  return apiError.message
+}
+
+/**
+ * The 429 envelope, per Houdini's rate-limits-and-tiers doc. `retryAfter` is
+ * in seconds and names the earliest moment the window reopens.
+ */
+const asHoudiniRateLimitError = asMaybe(
+  asJSON(
+    asObject({
+      type: asValue('RATE_LIMIT_EXCEEDED'),
+      retryAfter: asOptional(asNumber),
+      limit: asOptional(asNumber),
+      windowMs: asOptional(asNumber)
+    }).withRest
+  )
+)
+
+// Backoff for a rate-limited call. Houdini is an aggregator whose per-pair
+// availability fluctuates, so a 429 must never be mistaken for a missing
+// route: the call is retried behind `retryAfter` and, once the retries are
+// spent, fails with a message that says rate limit rather than unavailable.
+const RATE_LIMIT_MAX_RETRIES = 3
+const RATE_LIMIT_MIN_DELAY_MS = 1000
+const RATE_LIMIT_MAX_DELAY_MS = 30000
+
+/**
+ * How long to wait before retrying a 429, given the attempt number and the
+ * `retryAfter` seconds the API reported (if any).
+ *
+ * `RATE_LIMIT_MAX_DELAY_MS` bounds OUR OWN doubling; it is not a ceiling on
+ * the window the provider asked for. Houdini's 1-per-minute exchange budget
+ * reports `retryAfter` near 60, so capping that at 30s retried while still
+ * inside the window, drew another 429, and spent the retries for nothing.
+ */
+export function rateLimitDelayMs(
+  attempt: number,
+  retryAfterSec: number | undefined
+): number {
+  // `retryAfter` is the floor the API asked for; the doubling on top of it
+  // keeps a burst from re-colliding at the moment the window reopens.
+  const apiFloorMs = retryAfterSec == null ? 0 : retryAfterSec * 1000
+  const baseMs = Math.max(apiFloorMs, RATE_LIMIT_MIN_DELAY_MS)
+  const backoffMs = Math.min(baseMs * 2 ** attempt, RATE_LIMIT_MAX_DELAY_MS)
+  return Math.max(backoffMs, apiFloorMs)
+}
+
+/**
+ * Houdini quotes live about a minute. `validUntil` is the API's own word on it
+ * when present; the constant is the documented default for when it is not.
+ */
+const QUOTE_LIFETIME_MS = 60000
+
+export function quoteValidUntilMs(quote: HoudiniQuote): number {
+  const { validUntil } = quote
+  if (validUntil != null) {
+    // The API reports this as Unix SECONDS inside a string ("1783037880"),
+    // which `new Date` reads as an invalid date rather than as a timestamp.
+    const seconds = Number(validUntil)
+    if (isFinite(seconds) && seconds > 0) return seconds * 1000
+
+    const parsed = new Date(validUntil).valueOf()
+    if (!isNaN(parsed)) return parsed
+  }
+  return Date.now() + QUOTE_LIFETIME_MS
+}
+
+const asHoudiniOrder = asObject({
+  houdiniId: asString,
+  depositAddress: asString,
+  /**
+   * Deposit tag/memo for a memo-based deposit chain (an XRP destination tag,
+   * an XLM memo). `asOptionalBlank(asNumberString)` rather than
+   * `asOptional(asString)`: a NUMERIC tag (the common shape, including the
+   * valid tag `0`) fails a string-only cleaner and takes the whole order down
+   * with it, and an EMPTY STRING becomes an empty `EdgeMemo` on the deposit,
+   * which sends an effectively untagged deposit. Both are lost-funds paths on
+   * those chains. No response Houdini has returned in testing carried this
+   * field, so its shape is the repo convention rather than observed.
+   */
+  depositTag: asOptionalBlank(asNumberString),
+  expires: asOptional(asDate),
+  inAmount: asNumber,
+  outAmount: asNumber
+})
+
+/**
+ * The order behind a dex route. It has no deposit address: the source wallet
+ * signs the contract call in `metadata` itself. `offChain` marks a route that
+ * Houdini broadcasts on the user's behalf, which this plugin does not take.
+ */
+const asHoudiniDexOrder = asObject({
+  houdiniId: asString,
+  expires: asOptional(asDate),
+  outAmount: asOptional(asNumber),
+  metadata: asObject({
+    offChain: asOptional(asBoolean),
+    to: asOptional(asString),
+    data: asOptional(asString),
+    /** Wei, as a decimal or `0x` hex string, or a number. */
+    value: asOptional(asEither(asString, asNumber))
+  })
+})
+
+/** A dex order also carries the id `dex/confirmTx` needs after broadcast. */
+type HoudiniSwapOrder = SwapOrder & { dexOrderId?: string }
+
+/**
+ * Convert a JSON float to a decimal string, expanding any scientific notation
+ * (Houdini returns amounts as BSON doubles, so very small/large values can come
+ * back as e.g. `2.53e-05`). biggystring needs a plain decimal string.
+ */
+function floatToDecimalString(value: number): string {
+  if (!isFinite(value)) return '0'
+  const str = String(value)
+  if (!str.includes('e') && !str.includes('E')) return str
+
+  // `toFixed` only expands the small end: at magnitudes >= 1e21 it returns the
+  // same exponential string it was given, so a large amount would reach
+  // biggystring still in scientific notation. Expand the mantissa by hand for
+  // those, and let `toFixed` handle the negative exponents it does cover.
+  const [mantissa, exponent] = str.split(/[eE]/)
+  const power = Number(exponent)
+  if (power < 0) return value.toFixed(20).replace(/0+$/, '').replace(/\.$/, '')
+
+  const sign = mantissa.startsWith('-') ? '-' : ''
+  const [whole, fraction = ''] = mantissa.replace('-', '').split('.')
+  const digits = whole + fraction
+  const zeros = power - fraction.length
+  return zeros >= 0
+    ? sign + digits + '0'.repeat(zeros)
+    : sign + digits.slice(0, digits.length + zeros) + '.' + digits.slice(zeros)
+}
+
+/**
+ * Convert a provider amount in display units to a WHOLE atomic-unit native
+ * string. `denominationToNative` is a plain multiply, so a Houdini amount
+ * carrying more decimals than the asset's denomination yields a fractional
+ * native string, which Edge's native-amount contract does not allow.
+ *
+ * The rounding DIRECTION is load-bearing, per the pre-PR checklist in
+ * `docs/CREATING_AN_EXCHANGE_PLUGIN.md`:
+ * - `'up'` for a minimum, so the floor Edge enforces never lands BELOW the
+ *   provider's real floor and the deposit is rejected on arrival
+ * - `'down'` for a maximum, for the receive amount and for the deposit
+ *   amount, so none of them is ever larger than what the provider honors
+ */
+function decimalToNativeAmount(
+  wallet: EdgeCurrencyWallet,
+  decimalAmount: string,
+  tokenId: EdgeTokenId,
+  rounding: 'up' | 'down'
+): string {
+  const native = denominationToNative(wallet, decimalAmount, tokenId)
+  return rounding === 'up' ? ceil(native, 0) : floor(native, 0)
+}
+
+function floatToNativeAmount(
+  wallet: EdgeCurrencyWallet,
+  value: number,
+  tokenId: EdgeTokenId,
+  rounding: 'up' | 'down'
+): string {
+  return decimalToNativeAmount(
+    wallet,
+    floatToDecimalString(value),
+    tokenId,
+    rounding
+  )
+}
+
+export function makeHoudiniPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
+  const { io, log } = opts
+  const { fetchCors = io.fetch } = io
+  const { apiKey, apiSecret } = asInitOptions(opts.initOptions)
+
+  const headers = {
+    'Content-Type': 'application/json',
+    Accept: 'application/json',
+    Authorization: `${apiKey}:${apiSecret}`
+  }
+
+  // Houdini's partner API is server-to-server and rejects browser-origin
+  // requests: the core runs plugins inside a WebView, so `io.fetch` carries an
+  // Origin / Sec-Fetch-* header set that Houdini answers with HTTP 403. Force
+  // Edge's CORS proxy (`corsBypass: 'always'`) so each call is made host-side,
+  // matching the server-to-server contract the API expects.
+  const corsBypass = 'always' as const
+
+  /**
+   * Run a cleaner over a response body, logging the payload when it does not
+   * fit. A cleaner failure is the one error whose message says nothing about
+   * what actually arrived, and the payload is what a report needs to be
+   * actionable. Prescribed by `src/swap/central/template.ts`.
+   */
+  function cleanResponse<T>(cleaner: (raw: any) => T, raw: unknown): T {
+    try {
+      return cleaner(raw)
+    } catch (error: unknown) {
+      log.warn('Unexpected Houdini API response:', JSON.stringify(raw))
+      throw error
+    }
+  }
+
+  /**
+   * Every call to the partner API. Retries a rate-limited call behind the
+   * window the API reports, and turns an exhausted retry budget into an error
+   * that names the rate limit. Any other status is handed back untouched for
+   * the caller to interpret.
+   *
+   * `validUntilMs` is the moment the thing being sent goes stale (a quote id
+   * expires about 60s after it is issued). Waiting out a window that outlives
+   * it retries something the API will reject anyway, so the call fails as a
+   * rate limit right away rather than hanging the user for the full window and
+   * then reporting an expired quote.
+   */
+  async function fetchHoudini(
+    path: string,
+    init: { method?: string; body?: string } = {},
+    validUntilMs?: number
+  ): Promise<EdgeFetchResponse> {
+    for (let attempt = 0; ; ++attempt) {
+      const response = await fetchCors(uri + path, {
+        ...init,
+        headers,
+        corsBypass
+      })
+      if (response.status !== 429) return response
+
+      const text = await response.text()
+      const rateLimit = asHoudiniRateLimitError(text)
+      if (attempt >= RATE_LIMIT_MAX_RETRIES) {
+        throw new Error(
+          'HoudiniSwap: rate limit exceeded, please try again shortly'
+        )
+      }
+
+      const delayMs = rateLimitDelayMs(attempt, rateLimit?.retryAfter)
+      if (validUntilMs != null && Date.now() + delayMs >= validUntilMs) {
+        log.warn(
+          `Houdini rate limited for ${delayMs}ms, longer than this quote lives`
+        )
+        throw new Error(
+          'HoudiniSwap: rate limit exceeded, please try again shortly'
+        )
+      }
+      log.warn(
+        `Houdini rate limited (${
+          rateLimit?.limit ?? '?'
+        }/window), retrying in ${delayMs}ms`
+      )
+      await snooze(delayMs)
+    }
+  }
+
+  /**
+   * Memoized chain -> (addressKey -> tokenId) lookups, so repeat quotes on the
+   * same assets do not re-hit `GET /tokens`.
+   *
+   * A cached `undefined` is a MISS the provider answered: it listed this chain's
+   * tokens and none matched. That is a stable fact for the session, and caching
+   * it is what keeps a chain the provider serves no native for from spending a
+   * rate-limited call on every quote. This is the whole mechanism by which an
+   * unserved chain declines cheaply, so the chain table never has to assert
+   * which chains are served.
+   *
+   * Entries are the in-flight promises, so concurrent askers share one call.
+   *
+   * Entries EXPIRE. Houdini renames, delists and relists assets, so a hit
+   * cached for the life of the plugin eventually names a token id the provider
+   * has dropped, and a cached miss refuses a pair the provider has since
+   * listed. `.cursor/BUGBOT.md`'s `catalog-cache-expiry` is explicit that "these
+   * do not change" is not a reason to skip the TTL.
+   */
+  const TOKEN_ID_CACHE_TTL_MS = 10 * 60 * 1000
+  interface TokenIdCacheEntry {
+    lookup: Promise<string | undefined>
+    expires: number
+  }
+  const tokenIdCache = new Map<string, TokenIdCacheEntry>()
+
+  async function resolveTokenId(
+    chain: string,
+    contractAddress: string | undefined
+  ): Promise<string | undefined> {
+    const addressKey = contractAddress?.toLowerCase() ?? 'native'
+    const cacheKey = `${chain}:${addressKey}`
+    const cached = tokenIdCache.get(cacheKey)
+    if (cached != null && cached.expires > Date.now())
+      return await cached.lookup
+
+    // The IN-FLIGHT promise is what gets cached, not its result. A quote
+    // resolves both legs with `Promise.all`, so a same-asset quote asks the
+    // same question twice at once; caching only on completion lets both miss
+    // and spend two calls on one answer.
+    const lookup = fetchTokenId(chain, contractAddress, addressKey)
+    const entry: TokenIdCacheEntry = {
+      lookup,
+      expires: Date.now() + TOKEN_ID_CACHE_TTL_MS
+    }
+    tokenIdCache.set(cacheKey, entry)
+    // A rejected lookup must not stick, for the same reason a failure is not a
+    // decline: the provider never answered. Only evict THIS entry: a retry may
+    // already have replaced it, and dropping the newer one would spend an extra
+    // call to learn the same answer.
+    lookup.catch(() => {
+      if (tokenIdCache.get(cacheKey) === entry) tokenIdCache.delete(cacheKey)
+    })
+    return await lookup
+  }
+
+  async function fetchTokenId(
+    chain: string,
+    contractAddress: string | undefined,
+    addressKey: string
+  ): Promise<string | undefined> {
+    // The lowercased key goes on the wire, not Edge's own spelling. EVM token
+    // metadata carries checksummed (mixed-case) contract addresses, and a
+    // case-sensitive filter on the provider's side answers a checksummed
+    // address with no tokens at all, which this plugin would then report as a
+    // pair Houdini cannot route. Matching below is lowercased for the same
+    // reason, so sending the same form keeps query and match in agreement.
+    const query =
+      contractAddress != null
+        ? `tokens?chain=${chain}&address=${addressKey}&pageSize=100`
+        : `tokens?chain=${chain}&mainnet=true&pageSize=100`
+    const response = await fetchHoudini(query)
+    if (!response.ok) {
+      // Nothing is cached, and nothing is RETURNED either. Returning a miss
+      // here would be indistinguishable from the provider answering "no such
+      // token", so a bad minute at the API would read to the user as a pair
+      // Houdini cannot route. Throwing names the real cause, the same way the
+      // quote path surfaces its own failures.
+      const text = await response.text()
+      log.warn('Houdini tokens lookup error:', text)
+      throw new Error(`Houdini tokens returned ${response.status}: ${text}`)
+    }
+    const { tokens } = cleanResponse(
+      asHoudiniTokensResponse,
+      await response.json()
+    )
+
+    // The query already scopes the answer: `mainnet=true` is the catalogue's own
+    // definition of a chain's coin, and `address=` names one contract. Testing
+    // the rows again only adds ways to miss. A coin's address field is not a
+    // reliable signal (`null` on most chains, `""` on some, a contract-style
+    // address on TON), and a row's `chain` is not always the name the query
+    // used (a `bitcoincash` query answers with rows on `bch`).
+    const match = tokens.find(
+      token =>
+        token != null &&
+        (contractAddress == null || token.address?.toLowerCase() === addressKey)
+    )
+
+    return match?.id
+  }
+
+  /**
+   * Tells Houdini a dex order's transaction is on chain, which is what starts
+   * the order on its side. The funds have already left the wallet by then, so
+   * a failure here is logged for support rather than reported as a failed
+   * send.
+   */
+  async function confirmDexTx(id: string, txHash: string): Promise<void> {
+    try {
+      const response = await fetchHoudini('dex/confirmTx', {
+        method: 'POST',
+        body: JSON.stringify({ id, txHash })
+      })
+      if (!response.ok) {
+        log.warn('Houdini dex/confirmTx error:', await response.text())
+      }
+    } catch (error: unknown) {
+      log.warn('Houdini dex/confirmTx failed:', String(error))
+    }
+  }
+
+  const fetchSwapQuoteInner = async (
+    request: EdgeSwapRequestPlugin,
+    probeOnly: boolean = false
+  ): Promise<HoudiniSwapOrder> => {
+    const { fromWallet, toWallet, quoteFor, nativeAmount } = request
+
+    // A `max` request is resolved to a balance-sized `from` request by
+    // `getMaxSwappable` before it reaches this function.
+    const reverseQuote = quoteFor === 'to'
+
+    const fromMainnet =
+      MAINNET_CODE_TRANSCRIPTION[
+        fromWallet.currencyInfo.pluginId as EdgeCurrencyPluginId
+      ]
+    const toMainnet =
+      MAINNET_CODE_TRANSCRIPTION[
+        toWallet.currencyInfo.pluginId as EdgeCurrencyPluginId
+      ]
+    if (fromMainnet == null || toMainnet == null) {
+      throw new SwapCurrencyError(swapInfo, request)
+    }
+
+    const { fromContractAddress, toContractAddress } = getContractAddresses(
+      request
+    )
+
+    // A synthetic (swap-to-address) destination holds exactly one pasted,
+    // caller-validated address, so a typed-address lookup does not apply.
+    const isSyntheticDestination = toWallet.id.startsWith(
+      SYNTHETIC_WALLET_ID_PREFIX
+    )
+    const toAddressType = isSyntheticDestination
+      ? undefined
+      : addressTypeMap[toWallet.currencyInfo.pluginId]
+
+    const [
+      fromTokenId,
+      toTokenId,
+      fromAddress,
+      toAddress,
+      toMemos
+    ] = await Promise.all([
+      resolveTokenId(fromMainnet, fromContractAddress),
+      resolveTokenId(toMainnet, toContractAddress),
+      getAddress(fromWallet, addressTypeMap[fromWallet.currencyInfo.pluginId]),
+      getAddress(toWallet, toAddressType),
+      getDestinationMemos(toWallet)
+    ])
+
+    if (fromTokenId == null || toTokenId == null) {
+      throw new SwapCurrencyError(swapInfo, request)
+    }
+
+    // The quote amount is in the display units of whichever side the caller
+    // fixed: the `from` amount normally, or the `to` (receive) amount for a
+    // reverse quote, which Houdini prices via `amountType=receive`.
+    const exchangeAmount = reverseQuote
+      ? nativeToDenomination(toWallet, nativeAmount, request.toTokenId)
+      : nativeToDenomination(fromWallet, nativeAmount, request.fromTokenId)
+
+    // Fetch quotes and keep the best private route. Pricing by the receive
+    // amount (`amountType=receive`) is only offered on fixed-rate quotes.
+    const quoteResponse = await fetchHoudini(
+      `quotes?amount=${exchangeAmount}&from=${fromTokenId}&to=${toTokenId}` +
+        (reverseQuote ? '&amountType=receive&fixed=true' : '')
+    )
+    if (!quoteResponse.ok) {
+      const text = await quoteResponse.text()
+      // Surface the API's own human-readable message when it carries one
+      // (e.g. "Amount is too low, minimum is 25 USD") instead of raw JSON:
+      const apiMessage = houdiniErrorMessage(text)
+      throw new Error(
+        apiMessage != null
+          ? `HoudiniSwap: ${apiMessage}`
+          : `Houdini quotes returned ${quoteResponse.status}: ${text}`
+      )
+    }
+    const { quotes } = cleanResponse(
+      asHoudiniQuotesResponse,
+      await quoteResponse.json()
+    )
+
+    // A `max` probe deliberately quotes the full PRE-FEE balance to discover
+    // the ceiling, so its answer must CLAMP through `getMaxSpendable` rather
+    // than reject the swap outright: a balance above the route's maximum still
+    // makes a perfectly good max swap once the network fee is subtracted.
+    // Minimums still apply to the probe, since no amount below the floor is
+    // reachable by trimming.
+    const enforceMax = !probeOnly
+
+    // Forward limits (`min`/`max`) are in the `from` token's display units;
+    // reverse limits (`minOut`/`maxOut`) are in the `to` token's. A reverse
+    // quote must also clear the route's from-side bounds with its own priced
+    // send amount (`amountIn`), which the API enforces at order creation.
+    const isWithinLimits = (candidate: HoudiniQuote): boolean => {
+      if (reverseQuote) {
+        const amountIn =
+          candidate.amountIn == null
+            ? undefined
+            : floatToDecimalString(candidate.amountIn)
+        return (
+          (candidate.minOut == null ||
+            !lt(exchangeAmount, floatToDecimalString(candidate.minOut))) &&
+          (!enforceMax ||
+            candidate.maxOut == null ||
+            !gt(exchangeAmount, floatToDecimalString(candidate.maxOut))) &&
+          (amountIn == null ||
+            candidate.min == null ||
+            !lt(amountIn, floatToDecimalString(candidate.min))) &&
+          (!enforceMax ||
+            amountIn == null ||
+            candidate.max == null ||
+            !gt(amountIn, floatToDecimalString(candidate.max)))
+        )
+      }
+      return (
+        (candidate.min == null ||
+          !lt(exchangeAmount, floatToDecimalString(candidate.min))) &&
+        (!enforceMax ||
+          candidate.max == null ||
+          !gt(exchangeAmount, floatToDecimalString(candidate.max)))
+      )
+    }
+
+    // A request that demands privacy takes `private` (multi-exchange) routes
+    // only, since a `standard` route settles through a single exchange leg
+    // that can relink the two sides. Everything else may also take standard
+    // routes, which matters below Houdini's 25 USD private floor, where
+    // standard is the only thing on offer down to 10 USD. Private stays
+    // preferred wherever the API offers it.
+    //
+    // Houdini prices exact-out on fixed-rate quotes alone, which its private
+    // routing does not serve, so a private request priced by the receive side
+    // finds nothing and declines. That is the honest answer: the caller can
+    // re-price by the send side and keep its privacy, which is what the send
+    // scene's fixed-to fallback does.
+    const privateOnly = request.privacy === 'required'
+
+    // A dex route is an on-chain contract call that the user's own wallet
+    // signs, so it links the two sides in public. That rules it out for any
+    // request that asked for privacy. A plain request may take one, ranked
+    // after every exchange route, because some destinations are served in no
+    // other way: every route into Monad is a dex route. It is taken only in
+    // the shape this plugin can execute: a native coin on an EVM chain, priced
+    // on the send side (dex routes serve no receive-priced quote), with no
+    // token approval to sign first.
+    const dexAllowed =
+      !privateOnly &&
+      !reverseQuote &&
+      request.fromTokenId == null &&
+      fromWallet.currencyInfo.evmChainId != null
+    const routeRank = (type: string): number =>
+      type === 'private' ? 0 : type === 'standard' ? 1 : 2
+
+    const candidateQuotes = quotes
+      .filter(
+        (quote): quote is HoudiniQuote =>
+          quote != null &&
+          (quote.type === 'private' ||
+            (!privateOnly && quote.type === 'standard') ||
+            (dexAllowed &&
+              quote.type === 'dex' &&
+              quote.requiresApproval !== true))
+      )
+      // Rank private routes first, then standard, then dex, and within a type
+      // by best rate: highest output for a
+      // fixed input, or lowest input for a fixed output. Comparison runs
+      // through biggystring on the expanded decimal strings rather than on the
+      // JSON floats, per `.cursor/BUGBOT.md`'s `biggystring-not-floats`, which
+      // covers sorting as well as arithmetic.
+      .sort((a, b) => {
+        if (a.type !== b.type) return routeRank(a.type) - routeRank(b.type)
+        if (reverseQuote) {
+          // A route that priced no send amount sorts last: there is nothing to
+          // rank it by, and the order call would have no amount to bound.
+          if (a.amountIn == null || b.amountIn == null) {
+            return a.amountIn == null ? (b.amountIn == null ? 0 : 1) : -1
+          }
+          const aIn = floatToDecimalString(a.amountIn)
+          const bIn = floatToDecimalString(b.amountIn)
+          return lt(aIn, bIn) ? -1 : gt(aIn, bIn) ? 1 : 0
+        }
+        const aOut = floatToDecimalString(a.amountOut)
+        const bOut = floatToDecimalString(b.amountOut)
+        return gt(aOut, bOut) ? -1 : lt(aOut, bOut) ? 1 : 0
+      })
+
+    if (candidateQuotes.length === 0) {
+      throw new SwapCurrencyError(swapInfo, request)
+    }
+
+    // Keep the routes that actually accept this amount, rather than
+    // rejecting the swap when only the top route is out of range.
+    const inRangeQuotes = candidateQuotes.filter(isWithinLimits)
+    if (inRangeQuotes.length === 0) {
+      // No route accepts the amount. Surface the most permissive limit, in
+      // the units (and direction) of the side the caller fixed. The widest
+      // bound is picked with biggystring on the expanded decimal strings, not
+      // `Math.min`/`Math.max` over the JSON floats.
+      const widest = (
+        pick: (candidate: HoudiniQuote) => number | undefined,
+        wider: (a: string, b: string) => boolean
+      ): string | undefined =>
+        candidateQuotes
+          .map(pick)
+          .filter((value): value is number => value != null)
+          .map(floatToDecimalString)
+          .reduce<string | undefined>(
+            (best, value) =>
+              best == null || wider(value, best) ? value : best,
+            undefined
+          )
+      const smallestMin = widest(
+        candidate => (reverseQuote ? candidate.minOut : candidate.min),
+        lt
+      )
+      const largestMax = widest(
+        candidate => (reverseQuote ? candidate.maxOut : candidate.max),
+        gt
+      )
+      const limitWallet = reverseQuote ? toWallet : fromWallet
+      const limitTokenId = reverseQuote
+        ? request.toTokenId
+        : request.fromTokenId
+      const limitDirection = reverseQuote ? 'to' : 'from'
+      if (smallestMin != null && lt(exchangeAmount, smallestMin)) {
+        throw new SwapBelowLimitError(
+          swapInfo,
+          // A minimum rounds UP, so the floor Edge enforces is never below the
+          // provider's own.
+          decimalToNativeAmount(limitWallet, smallestMin, limitTokenId, 'up'),
+          limitDirection
+        )
+      }
+      if (largestMax != null && gt(exchangeAmount, largestMax)) {
+        throw new SwapAboveLimitError(
+          swapInfo,
+          // A maximum rounds DOWN, so the ceiling Edge offers is never above
+          // the provider's own.
+          decimalToNativeAmount(limitWallet, largestMax, limitTokenId, 'down'),
+          limitDirection
+        )
+      }
+
+      // A reverse quote can also fail the route's from-side bounds with its
+      // priced send amount. Report those in from units, and against the WIDEST
+      // from-side bound across the candidates rather than the top route's own:
+      // the to-side check above already reads every candidate, and reporting
+      // the best-ranked route's narrower floor told the user a limit no route
+      // actually imposes.
+      if (reverseQuote) {
+        const bestIn =
+          candidateQuotes[0].amountIn == null
+            ? undefined
+            : floatToDecimalString(candidateQuotes[0].amountIn)
+        const smallestFromMin = widest(candidate => candidate.min, lt)
+        const largestFromMax = widest(candidate => candidate.max, gt)
+        if (
+          bestIn != null &&
+          smallestFromMin != null &&
+          lt(bestIn, smallestFromMin)
+        ) {
+          throw new SwapBelowLimitError(
+            swapInfo,
+            decimalToNativeAmount(
+              fromWallet,
+              smallestFromMin,
+              request.fromTokenId,
+              'up'
+            ),
+            'from'
+          )
+        }
+        if (
+          bestIn != null &&
+          largestFromMax != null &&
+          gt(bestIn, largestFromMax)
+        ) {
+          throw new SwapAboveLimitError(
+            swapInfo,
+            decimalToNativeAmount(
+              fromWallet,
+              largestFromMax,
+              request.fromTokenId,
+              'down'
+            ),
+            'from'
+          )
+        }
+      }
+      throw new SwapCurrencyError(swapInfo, request)
+    }
+
+    // Create the exchange. Assets and amounts ride on the quote; only the
+    // destination (and optional refund) addresses go on the order, plus the
+    // destination memo (e.g. an XRP destination tag) when one was provided.
+    // A fixed-rate route's static deposit address can be held by another live
+    // order (HTTP 409 STATIC_DEPOSIT_IN_USE); fall through to the next-best
+    // in-range route when that happens.
+    const destinationTag = toMemos.length > 0 ? toMemos[0].value : undefined
+    let order: ReturnType<typeof asHoudiniOrder> | undefined
+    let lastError = ''
+    // The route the order was created on, for the trust boundary below: on a
+    // reverse quote its published from-side ceiling is the only local bound
+    // the deposit amount has.
+    let usedQuote: HoudiniQuote | undefined
+
+    if (probeOnly) {
+      // A `max` request runs this function twice: once for `getMaxSwappable`
+      // to learn the shape of the spend, then again for the real quote at the
+      // adjusted amount. `getMaxSwappable` reads nothing but `spendInfo`, so
+      // creating a real exchange for that probe spends one of Houdini's
+      // one-per-minute exchange slots and guarantees the follow-up create is
+      // rate limited, stalling every max quote for the retry window. Stand in
+      // the user's own refund address, which is on the from chain exactly as
+      // the deposit address would be, so fee estimation sees the same shape.
+      const best = inRangeQuotes[0]
+      usedQuote = best
+      return makeHoudiniSwapOrder(
+        {
+          houdiniId: '',
+          depositAddress: fromAddress,
+          depositTag: undefined,
+          expires: undefined,
+          inAmount: best.amountIn ?? 0,
+          outAmount: best.amountOut
+        },
+        true
+      )
+    }
+
+    for (const candidate of inRangeQuotes.slice(0, 3)) {
+      if (candidate.type === 'dex') {
+        const dexOrder = await createDexOrder(candidate)
+        if (dexOrder != null) return makeDexSwapOrder(dexOrder, candidate)
+        continue
+      }
+      const orderBody = {
+        addressTo: toAddress,
+        quoteId: candidate.quoteId,
+        refundAddress: fromAddress,
+        ...(destinationTag == null ? {} : { destinationTag })
+      }
+      const orderResponse = await fetchHoudini(
+        'exchanges',
+        { method: 'POST', body: JSON.stringify(orderBody) },
+        quoteValidUntilMs(candidate)
+      )
+      if (orderResponse.ok) {
+        order = cleanResponse(asHoudiniOrder, await orderResponse.json())
+        usedQuote = candidate
+        break
+      }
+      const text = await orderResponse.text()
+      const apiMessage = houdiniErrorMessage(text)
+      lastError =
+        apiMessage != null
+          ? `HoudiniSwap: ${apiMessage}`
+          : `Houdini exchange returned ${orderResponse.status}: ${text}`
+      if (
+        orderResponse.status !== 409 ||
+        houdiniErrorCode(text) !== 'STATIC_DEPOSIT_IN_USE'
+      ) {
+        throw new Error(lastError)
+      }
+    }
+    if (order == null) {
+      throw new Error(lastError)
+    }
+    return makeHoudiniSwapOrder(order)
+
+    function makeHoudiniSwapOrder(
+      order: ReturnType<typeof asHoudiniOrder>,
+      isProbe: boolean = false
+    ): SwapOrder {
+      // Both amounts round DOWN: the deposit so it never exceeds what the user
+      // asked to send, and the receive amount so the figure shown is never
+      // larger than what actually arrives.
+      const fromNativeAmount = floatToNativeAmount(
+        fromWallet,
+        order.inAmount,
+        request.fromTokenId,
+        'down'
+      )
+      const toNativeAmount = floatToNativeAmount(
+        toWallet,
+        order.outAmount,
+        request.toTokenId,
+        'down'
+      )
+
+      // TRUST BOUNDARY. `order.inAmount` comes back from Houdini and becomes a
+      // SIGNED SPEND below, so it is bounded before it can move funds: a
+      // malformed or compromised response must not be able to spend more of
+      // the source asset than the quote justified.
+      //
+      // A `from` quote pins the source amount locally, so the request's own
+      // amount is the bound. A reverse (`to`) quote pins the RECEIVE amount
+      // instead, so the send side is Houdini's to price; the bound there is
+      // the route's published from-side ceiling, which the API enforces at
+      // order creation anyway. A route that publishes no ceiling leaves
+      // nothing to check, which is the honest state rather than a guess.
+      const requestedBound =
+        request.quoteFor === 'from'
+          ? request.nativeAmount
+          : usedQuote?.max == null
+          ? undefined
+          : floatToNativeAmount(
+              fromWallet,
+              usedQuote.max,
+              request.fromTokenId,
+              'down'
+            )
+      if (requestedBound != null && gt(fromNativeAmount, requestedBound)) {
+        throw new Error(
+          'HoudiniSwap returned a deposit amount above the requested amount'
+        )
+      }
+
+      const memos: EdgeMemo[] =
+        order.depositTag == null
+          ? []
+          : [
+              {
+                type: memoType(fromWallet.currencyInfo.pluginId),
+                value: order.depositTag
+              }
+            ]
+
+      const spendInfo: EdgeSpendInfo = {
+        tokenId: request.fromTokenId,
+        spendTargets: [
+          {
+            nativeAmount: fromNativeAmount,
+            publicAddress: order.depositAddress
+          }
+        ],
+        memos,
+        networkFeeOption: 'high',
+        // The probe spend is NEVER broadcast: it exists only so
+        // `getMaxSpendable` can price the network fee before a real order (and
+        // its deposit address) exists, so it targets the user's OWN from-chain
+        // address. Engines that compare the spend target against their own
+        // public key reject that with `SpendToSelfError` (every EVM chain,
+        // where the public key IS the address), and that error escapes
+        // `getMaxSwappable` and fails every max swap from an EVM wallet. The
+        // real order below keeps all checks.
+        ...(isProbe ? { skipChecks: true } : {}),
+        assetAction: {
+          assetActionType: 'swap'
+        },
+        savedAction: makeSwapAction(
+          order.houdiniId,
+          fromNativeAmount,
+          toNativeAmount
+        )
+      }
+
+      return {
+        request,
+        spendInfo,
+        swapInfo,
+        fromNativeAmount,
+        expirationDate: ensureInFuture(order.expires)
+      }
+    }
+
+    /**
+     * Creates the order behind a dex route and returns it when this plugin can
+     * execute it: an on-chain call with a target, calldata and a value. A route
+     * Houdini would broadcast itself, or one missing any of those, sets
+     * `lastError` and yields nothing, so the next candidate gets its turn.
+     */
+    async function createDexOrder(
+      candidate: HoudiniQuote
+    ): Promise<ReturnType<typeof asHoudiniDexOrder> | undefined> {
+      const orderResponse = await fetchHoudini(
+        'exchanges',
+        {
+          method: 'POST',
+          body: JSON.stringify({
+            addressFrom: fromAddress,
+            addressTo: toAddress,
+            quoteId: candidate.quoteId,
+            signatures: [],
+            ...(destinationTag == null ? {} : { destinationTag })
+          })
+        },
+        quoteValidUntilMs(candidate)
+      )
+      if (!orderResponse.ok) {
+        const text = await orderResponse.text()
+        const apiMessage = houdiniErrorMessage(text)
+        throw new Error(
+          apiMessage != null
+            ? `HoudiniSwap: ${apiMessage}`
+            : `Houdini exchange returned ${orderResponse.status}: ${text}`
+        )
+      }
+      const dexOrder = cleanResponse(
+        asHoudiniDexOrder,
+        await orderResponse.json()
+      )
+      const { offChain = false, to, data, value } = dexOrder.metadata
+      if (offChain || to == null || data == null || value == null) {
+        lastError = 'HoudiniSwap: this route needs a step Edge cannot sign'
+        return undefined
+      }
+      return dexOrder
+    }
+
+    function makeDexSwapOrder(
+      dexOrder: ReturnType<typeof asHoudiniDexOrder>,
+      candidate: HoudiniQuote
+    ): HoudiniSwapOrder {
+      const { to = '', data = '', value = '0' } = dexOrder.metadata
+
+      // TRUST BOUNDARY, as for a deposit: the value is signed below, so it may
+      // not exceed what the user asked to send. A dex route is taken on a
+      // send-priced request only, so the request's own amount is the bound.
+      const fromNativeAmount = add(String(value), '0')
+      if (gt(fromNativeAmount, request.nativeAmount)) {
+        throw new Error(
+          'HoudiniSwap returned a transaction value above the requested amount'
+        )
+      }
+      const toNativeAmount = floatToNativeAmount(
+        toWallet,
+        dexOrder.outAmount ?? candidate.amountOut,
+        request.toTokenId,
+        'down'
+      )
+
+      const spendInfo: EdgeSpendInfo = {
+        tokenId: null,
+        spendTargets: [{ nativeAmount: fromNativeAmount, publicAddress: to }],
+        memos: [{ type: 'hex', value: data.replace(/^0x/, '') }],
+        networkFeeOption: 'high',
+        assetAction: {
+          assetActionType: 'swap'
+        },
+        savedAction: makeSwapAction(
+          dexOrder.houdiniId,
+          fromNativeAmount,
+          toNativeAmount
+        )
+      }
+
+      return {
+        request,
+        spendInfo,
+        swapInfo,
+        fromNativeAmount,
+        expirationDate: ensureInFuture(dexOrder.expires),
+        dexOrderId: dexOrder.houdiniId
+      }
+    }
+
+    function makeSwapAction(
+      orderId: string,
+      fromNativeAmount: string,
+      toNativeAmount: string
+    ): EdgeTxActionSwap {
+      return {
+        actionType: 'swap',
+        swapInfo,
+        orderId,
+        orderUri: orderUri + orderId,
+        // Only the exact-out path asks for `fixed=true`, and Houdini serves
+        // fixed rates on that path alone: a forward quote floats, private,
+        // standard or dex. Reporting every quote as fixed showed users a
+        // locked receive amount for a leg whose rate can still move.
+        isEstimate: !reverseQuote,
+        toAsset: {
+          pluginId: toWallet.currencyInfo.pluginId,
+          tokenId: request.toTokenId,
+          nativeAmount: toNativeAmount
+        },
+        fromAsset: {
+          pluginId: fromWallet.currencyInfo.pluginId,
+          tokenId: request.fromTokenId,
+          nativeAmount: fromNativeAmount
+        },
+        payoutAddress: toAddress,
+        payoutWalletId: toWallet.id,
+        refundAddress: fromAddress
+      }
+    }
+  }
+
+  const out: EdgeSwapPlugin = {
+    swapInfo,
+
+    async fetchSwapQuote(req: EdgeSwapRequest): Promise<EdgeSwapQuote> {
+      const request = convertRequest(req)
+
+      // Same-asset is allowed here where other plugins reject it: routing an
+      // asset to itself through the mixer is this provider's main flow, not a
+      // user mistake. The blocked-token checks still apply.
+      checkInvalidTokenIds(INVALID_TOKEN_IDS, request, swapInfo, {
+        allowSameAsset: true
+      })
+      checkWhitelistedMainnetCodes(
+        MAINNET_CODE_TRANSCRIPTION,
+        request,
+        swapInfo
+      )
+
+      // The probe flag rides the extra argument `getMaxSwappable` forwards, so
+      // only the max-sizing pass skips creating an exchange.
+      const newRequest = await getMaxSwappable(
+        fetchSwapQuoteInner,
+        request,
+        true
+      )
+      const swapOrder = await fetchSwapQuoteInner(newRequest)
+      const quote = await makeSwapPluginQuote(swapOrder)
+      const { dexOrderId } = swapOrder
+      if (dexOrderId == null) return quote
+
+      // A dex order starts on Houdini's side only once it is told the
+      // transaction is out, so the approval reports the txid after broadcast.
+      return {
+        ...quote,
+        async approve(opts?: EdgeSwapApproveOptions): Promise<EdgeSwapResult> {
+          const result = await quote.approve(opts)
+          await confirmDexTx(dexOrderId, result.transaction.txid)
+          return result
+        }
+      }
+    }
+  }
+  return out
+}
