@@ -11,6 +11,7 @@ import { makeLetsExchangePlugin } from './swap/central/letsexchange'
 import { makeNexchangePlugin } from './swap/central/nexchange'
 import { makeNymPlugin } from './swap/central/nym'
 import { makeSideshiftPlugin } from './swap/central/sideshift'
+import { makeSwapsXyzPlugin } from './swap/central/swapsxyz'
 import { makeSwapterPlugin } from './swap/central/swapter'
 import { makeSwapuzPlugin } from './swap/central/swapuz'
 import { makeXgramPlugin } from './swap/central/xgram'
@@ -20,6 +21,7 @@ import { makeCosmosIbcPlugin } from './swap/defi/cosmosIbc'
 import { makeFantomSonicUpgradePlugin } from './swap/defi/fantomSonicUpgrade'
 import { makeLifiPlugin } from './swap/defi/lifi'
 import { makeRangoPlugin } from './swap/defi/rango'
+import { makeSwapsXyzDefiPlugin } from './swap/defi/swapsxyzDefi'
 import { makeMayaProtocolPlugin } from './swap/defi/thorchain/mayaprotocol'
 import { makeSwapKitPlugin } from './swap/defi/thorchain/swapkit'
 import { makeSwapKitV3Plugin } from './swap/defi/thorchain/swapkitV3'
@@ -47,6 +49,8 @@ const plugins = {
   rango: makeRangoPlugin,
   sideshift: makeSideshiftPlugin,
   spookySwap: makeSpookySwapPlugin,
+  swapsxyz: makeSwapsXyzPlugin,
+  swapsxyzdefi: makeSwapsXyzDefiPlugin,
   swapter: makeSwapterPlugin,
   swapuz: makeSwapuzPlugin,
   mayaprotocol: makeMayaProtocolPlugin,
