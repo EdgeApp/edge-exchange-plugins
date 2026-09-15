@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- added: CypherGoat swap provider, a rate aggregator that prices a pair across many underlying exchanges and routes the order to the best-paying one. Source-amount (`from`) and `max` quotes only; CypherGoat cannot price from a destination amount, so reverse quotes report as unsupported.
+
 ## 2.55.0 (2026-09-07)
 
 - added: Robinhood Chain swaps via SideShift, LI.FI, Rango, ChangeNow, Swapuz and LetsExchange.

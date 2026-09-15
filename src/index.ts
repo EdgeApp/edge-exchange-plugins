@@ -5,6 +5,7 @@ import type { EdgeCorePlugins } from 'edge-core-js/types'
 import { makeChangeHeroPlugin } from './swap/central/changehero'
 import { makeChangellyPlugin } from './swap/central/changelly'
 import { makeChangeNowPlugin } from './swap/central/changenow'
+import { makeCypherGoatPlugin } from './swap/central/cyphergoat'
 import { makeExolixPlugin } from './swap/central/exolix'
 import { makeGodexPlugin } from './swap/central/godex'
 import { makeLetsExchangePlugin } from './swap/central/letsexchange'
@@ -38,6 +39,7 @@ const plugins = {
   changelly: makeChangellyPlugin,
   changenow: makeChangeNowPlugin,
   cosmosibc: makeCosmosIbcPlugin,
+  cyphergoat: makeCypherGoatPlugin,
   exolix: makeExolixPlugin,
   godex: makeGodexPlugin,
   letsexchange: makeLetsExchangePlugin,
