@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- added: Arc swaps via LI.FI
+
 ## 2.56.0 (2026-09-16)
 
 - added: (Rango) Tron swaps
