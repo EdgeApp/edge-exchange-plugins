@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- added: (Rango) Tron swaps
+- changed: (Rango) Send the API key as the `apikey` query parameter
+
 ## 2.55.0 (2026-09-07)
 
 - added: Robinhood Chain swaps via SideShift, LI.FI, Rango, ChangeNow, Swapuz and LetsExchange.
