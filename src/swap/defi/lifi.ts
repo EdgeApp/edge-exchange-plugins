@@ -1,4 +1,4 @@
-import { mul, round } from 'biggystring'
+import { add, div, gt, lt, mul, round } from 'biggystring'
 import {
   asArray,
   asNumber,
@@ -9,12 +9,15 @@ import {
 } from 'cleaners'
 import {
   EdgeCorePluginOptions,
+  EdgeCurrencyConfig,
   EdgeSpendInfo,
   EdgeSwapInfo,
   EdgeSwapPlugin,
   EdgeSwapQuote,
   EdgeSwapRequest,
+  EdgeTokenId,
   EdgeTransaction,
+  InsufficientFundsError,
   SwapBelowLimitError,
   SwapCurrencyError
 } from 'edge-core-js/types'
@@ -28,6 +31,7 @@ import {
   InvalidTokenIds,
   makeSwapPluginQuote,
   mapToStringMap,
+  NATIVE_ERC20_INTERFACES,
   SwapOrder
 } from '../../util/swapHelpers'
 import {
@@ -68,6 +72,8 @@ const LIFI_SERVERS_DEFAULT = ['https://li.quest']
 const EXPIRATION_MS = 1000 * 60
 const EXCHANGE_INFO_UPDATE_FREQ_MS = 60000
 
+const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000'
+
 // https://li.quest/v1/chains
 const getParentTokenContractAddress = (pluginId: string): string => {
   switch (pluginId) {
@@ -94,8 +100,123 @@ const getParentTokenContractAddress = (pluginId: string): string => {
       return '0xDeadDeAddeAddEAddeadDEaDDEAdDeaDDeAD0000'
     }
     default: {
-      return '0x0000000000000000000000000000000000000000'
+      return ZERO_ADDRESS
     }
+  }
+}
+
+/** One side of a swap, as LI.FI names and counts it. */
+export interface LifiAsset {
+  /** The token LI.FI quotes, such as 0x3600…0000 for Arc's USDC */
+  address: string
+  /** LI.FI's decimals for it, checked against the quote's `action` */
+  decimals: number
+  /** Wallet native units per LI.FI unit: '1' unless LI.FI counts coarser */
+  scale: string
+}
+
+const getDecimals = (multiplier: string): number => multiplier.length - 1
+
+/**
+ * Resolves the asset LI.FI trades for one side of a request, or undefined
+ * when the token has no contract address to quote.
+ */
+export const getLifiAsset = (
+  currencyConfig: Pick<EdgeCurrencyConfig, 'allTokens' | 'currencyInfo'>,
+  tokenId: EdgeTokenId
+): LifiAsset | undefined => {
+  if (tokenId != null) {
+    const token = currencyConfig.allTokens[tokenId]
+    const address: unknown = token?.networkLocation?.contractAddress
+    if (typeof address !== 'string') return
+    return {
+      address,
+      decimals: getDecimals(token.denominations[0].multiplier),
+      scale: '1'
+    }
+  }
+
+  const { denominations, pluginId } = currencyConfig.currencyInfo
+  const { multiplier } = denominations[0]
+  const nativeInterface = NATIVE_ERC20_INTERFACES[pluginId]
+  if (nativeInterface != null) {
+    return {
+      address: nativeInterface.contractAddress,
+      decimals: getDecimals(nativeInterface.multiplier),
+      scale: div(multiplier, nativeInterface.multiplier)
+    }
+  }
+  return {
+    address: getParentTokenContractAddress(pluginId),
+    decimals: getDecimals(multiplier),
+    scale: '1'
+  }
+}
+
+/**
+ * Converts a wallet amount to LI.FI's units, dropping the digits LI.FI
+ * cannot express.
+ */
+export const toLifiAmount = (nativeAmount: string, from: LifiAsset): string => {
+  const lifiAmount = div(nativeAmount, from.scale)
+  if (lifiAmount === '0') {
+    throw new SwapBelowLimitError(swapInfo, from.scale, 'from')
+  }
+  return lifiAmount
+}
+
+/** Converts a quote's amounts from LI.FI's units to each wallet's. */
+export const toWalletAmounts = (
+  estimate: { fromAmount: string; toAmount: string; toAmountMin: string },
+  from: LifiAsset,
+  to: LifiAsset
+): { fromAmount: string; toAmount: string; toAmountMin: string } => ({
+  fromAmount: mul(estimate.fromAmount, from.scale),
+  toAmount: mul(estimate.toAmount, to.scale),
+  toAmountMin: mul(estimate.toAmountMin, to.scale)
+})
+
+/**
+ * Fails the quote when LI.FI priced a different token, or the same token at
+ * a different precision, than the request assumed. Every amount is scaled on
+ * that assumption, so a mismatch would show amounts off by a power of ten.
+ */
+export const checkLifiToken = (
+  token: { address: string; decimals: number },
+  expected: LifiAsset,
+  request: EdgeSwapRequest
+): void => {
+  if (
+    token.address.toLowerCase() !== expected.address.toLowerCase() ||
+    token.decimals !== expected.decimals
+  ) {
+    throw new SwapCurrencyError(swapInfo, request)
+  }
+}
+
+/**
+ * A swap either sends its source asset as the call's value, or has LI.FI's
+ * contract pull it against an approval. Tokens are always pulled. A native
+ * asset is pulled when the call carries no value, which is how LI.FI trades
+ * Arc's USDC today.
+ */
+export const pullsFromWallet = (
+  fromTokenId: EdgeTokenId,
+  transactionValue: string
+): boolean => fromTokenId != null || hexToDecimal(transactionValue) === '0'
+
+/**
+ * The spend and the approval both take LI.FI's amount, so a quote spending
+ * more than was asked would take more than the user agreed to.
+ */
+export const checkQuotedAmount = (
+  quotedAmount: string,
+  requestedAmount: string
+): void => {
+  if (gt(quotedAmount, requestedAmount)) {
+    throw new Error(
+      `LI.FI quoted ${quotedAmount}, above the requested ${requestedAmount}`
+    )
   }
 }
 
@@ -138,23 +259,15 @@ const asExchangeInfo = asObject({
   })
 })
 
-// const asToken = asObject({
-//   address: asString, // "0x2791bca1f2de4661ed88a30c99a7a9449aa84174",
-//   chainId: asNumber, // 137,
-//   symbol: asString, // "USDC",
-//   decimals: asNumber, // 6,
-//   name: asString, // "USDC",
-//   priceUSD: asNumberString, // "1",
-//   coinKey: asString // "USDC"
-// })
+const asToken = asObject({
+  address: asString, // "0x2791bca1f2de4661ed88a30c99a7a9449aa84174",
+  decimals: asNumber // 6,
+})
 
-// const asAction = asObject({
-//   fromChainId: asNumber,
-//   fromAmount: asNumberString,
-//   fromToken: asToken,
-//   toChainId: asNumber,
-//   toToken: asToken
-// })
+const asAction = asObject({
+  fromToken: asToken,
+  toToken: asToken
+})
 
 // const asFeeCost = asObject({
 //   amount: asNumberString, // "56495962827064236208",
@@ -199,7 +312,7 @@ const asV1Quote = asObject({
   type: asString,
   estimate: asEstimate,
   includedSteps: asArray(asIncludedStep),
-  // action: asAction,
+  action: asAction,
   transactionRequest: asUnknown
 })
 
@@ -217,13 +330,17 @@ export function makeLifiPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
     'Content-Type': 'application/json'
   }
 
+  /**
+   * `maxProbe` skips the plugin's own balance check on a pulled native asset:
+   * the probe quotes the whole balance to learn the fees a max swap leaves
+   * room for. The quote the user gets is checked like any other.
+   */
   const fetchSwapQuoteInner = async (
-    request: EdgeSwapRequestPlugin
+    request: EdgeSwapRequestPlugin,
+    maxProbe: boolean = false
   ): Promise<SwapOrder> => {
     const {
-      fromCurrencyCode,
       fromTokenId,
-      toCurrencyCode,
       toTokenId,
       nativeAmount,
       fromWallet,
@@ -234,29 +351,9 @@ export function makeLifiPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
       throw new SwapCurrencyError(swapInfo, request)
     }
 
-    const fromToken = fromWallet.currencyConfig.allTokens[fromTokenId ?? '']
-    let fromContractAddress
-    let sendingToken = false
-    if (fromCurrencyCode === fromWallet.currencyInfo.currencyCode) {
-      fromContractAddress = getParentTokenContractAddress(
-        fromWallet.currencyInfo.pluginId
-      )
-    } else {
-      sendingToken = true
-      fromContractAddress = fromToken?.networkLocation?.contractAddress
-    }
-
-    const toToken = toWallet.currencyConfig.allTokens[toTokenId ?? '']
-    let toContractAddress
-    if (toCurrencyCode === toWallet.currencyInfo.currencyCode) {
-      toContractAddress = getParentTokenContractAddress(
-        toWallet.currencyInfo.pluginId
-      )
-    } else {
-      toContractAddress = toToken?.networkLocation?.contractAddress
-    }
-
-    if (fromContractAddress == null || toContractAddress == null) {
+    const from = getLifiAsset(fromWallet.currencyConfig, fromTokenId)
+    const to = getLifiAsset(toWallet.currencyConfig, toTokenId)
+    if (from == null || to == null) {
       throw new SwapCurrencyError(swapInfo, request)
     }
 
@@ -323,12 +420,14 @@ export function makeLifiPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
       slippage = lifi?.slippage
     }
 
+    const lifiFromAmount = toLifiAmount(nativeAmount, from)
+
     const params = makeQueryParams({
       fromChain: fromMainnetCode,
       toChain: toMainnetCode,
-      fromToken: fromContractAddress,
-      toToken: toContractAddress,
-      fromAmount: nativeAmount,
+      fromToken: from.address,
+      toToken: to.address,
+      fromAmount: lifiFromAmount,
       fromAddress,
       toAddress,
       integrator,
@@ -359,14 +458,26 @@ export function makeLifiPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
 
     const quote = asV1Quote(quoteJson)
     const {
+      action,
       estimate,
       includedSteps,
       transactionRequest: transactionRequestRaw
     } = quote
+    checkLifiToken(action.fromToken, from, request)
+    checkLifiToken(action.toToken, to, request)
+    checkQuotedAmount(estimate.fromAmount, lifiFromAmount)
+
     const providers = includedSteps.map(s => s.toolDetails.name)
     const providersStr = providers.join(' -> ')
     const metadataNotes = `DEX Providers: ${providersStr}`
-    const { approvalAddress, toAmount, toAmountMin, fromAmount } = estimate
+    const { approvalAddress } = estimate
+    // Everything below is in wallet units. `estimate.fromAmount` stays in
+    // LI.FI's units for the approval, which the token contract reads.
+    const { fromAmount, toAmount, toAmountMin } = toWalletAmounts(
+      estimate,
+      from,
+      to
+    )
 
     const preTxs: EdgeTransaction[] = []
     let spendInfo: EdgeSpendInfo
@@ -384,7 +495,7 @@ export function makeLifiPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
               // address other than the wallet's own. No address in the quote
               // is one on every route, so use the asset's own address: the
               // system program for SOL, or the mint for a token.
-              publicAddress: fromContractAddress
+              publicAddress: from.address
             }
           ],
           otherParams: { unsignedTx: data },
@@ -454,7 +565,7 @@ export function makeLifiPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
         // Return SwapOrder with makeTxParams for SUI
         return {
           expirationDate: new Date(Date.now() + EXPIRATION_MS),
-          fromNativeAmount: nativeAmount,
+          fromNativeAmount: fromAmount,
           metadataNotes,
           minReceiveAmount: toAmountMin,
           makeTxParams,
@@ -464,15 +575,26 @@ export function makeLifiPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
       }
       default: {
         const transactionRequest = asTransactionRequest(transactionRequestRaw)
-        const { data, gasLimit, gasPrice } = transactionRequest
+        const { data, gasLimit, gasPrice, value } = transactionRequest
+        const pulled = pullsFromWallet(fromTokenId, value)
         const gasPriceDecimal = hexToDecimal(gasPrice)
         const gasPriceGwei = bufferSwapGasPrice(gasPriceDecimal)
 
-        if (sendingToken) {
+        // XXX Hack. Lifi doesn't properly estimate ethereum gas limits. Increase by 40%
+        const swapGasLimit = round(mul(hexToDecimal(gasLimit), '1.4'), 0)
+
+        // A pulled native asset needs a token contract to approve, which
+        // only a chain with an ERC-20 interface to its native balance has:
+        if (pulled && fromTokenId == null && from.address === ZERO_ADDRESS) {
+          throw new SwapCurrencyError(swapInfo, request)
+        }
+
+        if (pulled) {
           const approvalTxs = await createEvmApprovalEdgeTransactions({
             request,
-            approvalAmount: fromAmount,
-            tokenContractAddress: fromContractAddress,
+            approvalAmount: estimate.fromAmount,
+            savedActionAmount: fromAmount,
+            tokenContractAddress: from.address,
             recipientAddress: approvalAddress,
             networkFeeOption: 'custom',
             customNetworkFee: {
@@ -482,19 +604,36 @@ export function makeLifiPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
           preTxs.push(...approvalTxs)
         }
 
+        // A pulled token is spent as a token transfer, which the engine
+        // checks against the token balance. A pulled native asset has no
+        // such spend: the call sends no value, so the engine's balance check
+        // covers only its fee while LI.FI's contract spends the balance.
+        const pulledNative = pulled && fromTokenId == null
+        if (pulledNative && !maxProbe) {
+          // The swap must leave room for itself and for the approval fees.
+          const swapFee = mul(swapGasLimit, mul(gasPriceGwei, '1000000000'))
+          const fees = preTxs.reduce(
+            (sum, preTx) => add(sum, preTx.networkFee),
+            swapFee
+          )
+          const balance = fromWallet.balanceMap.get(null) ?? '0'
+          if (lt(balance, add(fromAmount, fees))) {
+            throw new InsufficientFundsError({ tokenId: null })
+          }
+        }
+
         spendInfo = {
           tokenId: request.fromTokenId,
           spendTargets: [
             {
-              nativeAmount: fromAmount,
+              nativeAmount: pulledNative ? '0' : fromAmount,
               publicAddress: approvalAddress
             }
           ],
           memos: [{ type: 'hex', value: data.replace(/^0x/, '') }],
           networkFeeOption: 'custom',
           customNetworkFee: {
-            // XXX Hack. Lifi doesn't properly estimate ethereum gas limits. Increase by 40%
-            gasLimit: round(mul(hexToDecimal(gasLimit), '1.4'), 0),
+            gasLimit: swapGasLimit,
             gasPrice: gasPriceGwei
           },
           assetAction: {
@@ -524,7 +663,7 @@ export function makeLifiPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
 
     return {
       expirationDate: new Date(Date.now() + EXPIRATION_MS),
-      fromNativeAmount: nativeAmount,
+      fromNativeAmount: fromAmount,
       metadataNotes,
       minReceiveAmount: toAmountMin,
       preTxs,
@@ -551,10 +690,7 @@ export function makeLifiPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
             quoteFor: 'from'
           }
         } else {
-          newRequest = await getMaxSwappable(
-            async r => await fetchSwapQuoteInner(r),
-            request
-          )
+          newRequest = await getMaxSwappable(fetchSwapQuoteInner, request, true)
         }
       }
       const swapOrder = await fetchSwapQuoteInner(newRequest)

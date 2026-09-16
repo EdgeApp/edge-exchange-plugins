@@ -7,7 +7,7 @@
  *
  * Supported networks: ALGO, ATOM, SOL, BCH, BTC, DASH, DOGE, DOT, EOS, TON,
  * HBAR, LTC, XLM, XRP, XTZ, ZEC, TRON, ADA, BASE, POL, ETH, AVAXC, BSC,
- * ETC, ARB, OP, FTM, SONIC, SUI, HYPE, FIL, XMR
+ * ETC, ARB, OP, FTM, SONIC, SUI, HYPE, FIL, XMR, ARC
  */
 
 import { EdgeCurrencyPluginId } from '../util/edgeCurrencyPluginIds'
@@ -17,6 +17,7 @@ nexchange.set('abstract', null)
 nexchange.set('algorand', 'ALGO')
 nexchange.set('amoy', null)
 nexchange.set('arbitrum', 'ARB')
+nexchange.set('arc', 'ARC')
 nexchange.set('avalanche', 'AVAXC')
 nexchange.set('axelar', null)
 nexchange.set('badcoin', null)

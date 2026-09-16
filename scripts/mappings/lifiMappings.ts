@@ -10,6 +10,9 @@ lifi.set('ape', null)
 // Display Name: Arbitrum
 lifi.set('arb', 'arbitrum')
 
+// Display Name: Arc
+lifi.set('arc', 'arc')
+
 // Display Name: Aurora
 lifi.set('aur', null)
 

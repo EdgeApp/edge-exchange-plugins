@@ -6,6 +6,8 @@ changelly.set('algorand', 'algorand')
 
 changelly.set('arbitrum', 'arbitrum')
 
+changelly.set('arc', 'arc')
+
 changelly.set('avaxc', 'avalanche')
 
 changelly.set('base', 'base')

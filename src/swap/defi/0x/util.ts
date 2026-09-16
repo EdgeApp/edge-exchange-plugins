@@ -1,7 +1,10 @@
 import { secp256k1 } from '@noble/curves/secp256k1'
+import { div } from 'biggystring'
 import { EdgeCurrencyWallet, EdgeTokenId } from 'edge-core-js/types'
 
+import { NATIVE_ERC20_INTERFACES } from '../../../util/swapHelpers'
 import { hexToDecimal } from '../../../util/utils'
+import { NATIVE_TOKEN_ADDRESS } from './constants'
 import { SignatureStruct, SignatureType } from './zeroXApiTypes'
 
 /**
@@ -36,7 +39,7 @@ export const getCurrencyCode = (
  * @returns the contract address of the token, or null for native token (e.g. ETH)
  */
 export const getTokenAddress = (
-  wallet: EdgeCurrencyWallet,
+  wallet: Pick<EdgeCurrencyWallet, 'currencyConfig'>,
   tokenId: EdgeTokenId
 ): string | null => {
   const edgeToken =
@@ -46,6 +49,36 @@ export const getTokenAddress = (
   if (address == null)
     throw new Error('Missing contractAddress in EdgeToken networkLocation')
   return address
+}
+
+/** One side of a swap, as 0x names and counts it. */
+export interface ZeroXAsset {
+  /** The token address 0x quotes, such as 0x3600…0000 for Arc's USDC */
+  address: string
+  /** Wallet native units per 0x unit: '1' unless 0x counts coarser */
+  scale: string
+}
+
+/**
+ * Resolves the asset 0x trades for one side of a request. A native asset is
+ * the ERC-7528 address, except on chains listed in `NATIVE_ERC20_INTERFACES`.
+ */
+export const getZeroXAsset = (
+  wallet: Pick<EdgeCurrencyWallet, 'currencyConfig' | 'currencyInfo'>,
+  tokenId: EdgeTokenId
+): ZeroXAsset => {
+  const tokenAddress = getTokenAddress(wallet, tokenId)
+  if (tokenAddress != null) return { address: tokenAddress, scale: '1' }
+
+  const { denominations, pluginId } = wallet.currencyInfo
+  const nativeInterface = NATIVE_ERC20_INTERFACES[pluginId]
+  if (nativeInterface == null) {
+    return { address: NATIVE_TOKEN_ADDRESS, scale: '1' }
+  }
+  return {
+    address: nativeInterface.contractAddress,
+    scale: div(denominations[0].multiplier, nativeInterface.multiplier)
+  }
 }
 
 /**

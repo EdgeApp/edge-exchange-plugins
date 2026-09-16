@@ -2,6 +2,16 @@
   "solToPol": {
     "id": "bc6a15d1-fbef-4994-8907-0ac44fc73229:0",
     "type": "lifi",
+    "action": {
+      "fromToken": {
+        "address": "11111111111111111111111111111111",
+        "decimals": 9
+      },
+      "toToken": {
+        "address": "0x0000000000000000000000000000000000000000",
+        "decimals": 18
+      }
+    },
     "tool": "mayan",
     "estimate": {
       "fromAmount": "100000000",
@@ -47,6 +57,16 @@
   "usdcToBaseUsdc": {
     "id": "e2b072a8-1d3d-4e34-b3a6-d716990f34fe:0",
     "type": "lifi",
+    "action": {
+      "fromToken": {
+        "address": "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
+        "decimals": 6
+      },
+      "toToken": {
+        "address": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
+        "decimals": 6
+      }
+    },
     "tool": "relaydepository",
     "estimate": {
       "fromAmount": "10000000",

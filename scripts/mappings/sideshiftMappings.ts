@@ -10,6 +10,9 @@ sideshift.set('aptos', null)
 // Display Name: arbitrum
 sideshift.set('arbitrum', 'arbitrum')
 
+// Display Name: arc
+sideshift.set('arc', 'arc')
+
 // Display Name: avax
 sideshift.set('avax', 'avalanche')
 
@@ -24,9 +27,6 @@ sideshift.set('bitcoin', 'bitcoin')
 
 // Display Name: bitcoincash
 sideshift.set('bitcoincash', 'bitcoincash')
-
-// Display Name: blast
-sideshift.set('blast', null)
 
 // Display Name: bsc
 sideshift.set('bsc', 'binancesmartchain')
@@ -64,6 +64,9 @@ sideshift.set('ethereum', 'ethereum')
 // WARNING: Not included by the synchronizer synchronization
 sideshift.set('fantom', 'fantom')
 
+// Display Name: fetch
+sideshift.set('fetch', null)
+
 // WARNING: Not included by the synchronizer synchronization
 sideshift.set('grs', 'groestlcoin')
 
@@ -81,6 +84,9 @@ sideshift.set('liquid', null)
 
 // Display Name: litecoin
 sideshift.set('litecoin', 'litecoin')
+
+// Display Name: mantle
+sideshift.set('mantle', null)
 
 // Display Name: monad
 sideshift.set('monad', 'monad')
@@ -115,9 +121,6 @@ sideshift.set('ronin', null)
 // Display Name: rootstock
 sideshift.set('rootstock', 'rsk')
 
-// Display Name: scroll
-sideshift.set('scroll', null)
-
 // WARNING: Not included by the synchronizer synchronization
 sideshift.set('shielded', 'zcash')
 
@@ -129,6 +132,9 @@ sideshift.set('sonic', 'sonic')
 
 // Display Name: stacks
 sideshift.set('stacks', null)
+
+// Display Name: starknet
+sideshift.set('starknet', null)
 
 // Display Name: stellar
 sideshift.set('stellar', 'stellar')

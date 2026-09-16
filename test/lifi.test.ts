@@ -29,17 +29,24 @@ interface FakeWalletOpts {
 
 const makeFakeWallet = (opts: FakeWalletOpts): EdgeCurrencyWallet => {
   const { address, currencyCode, pluginId, spendLog = [], tokens = {} } = opts
-  const currencyInfo = { pluginId, currencyCode }
+  const multiplier = pluginId === 'solana' ? '1000000000' : '1'.padEnd(19, '0')
+  const currencyInfo = {
+    pluginId,
+    currencyCode,
+    denominations: [{ name: currencyCode, multiplier }]
+  }
 
   const allTokens: {
     [tokenId: string]: {
       currencyCode: string
+      denominations: Array<{ name: string; multiplier: string }>
       networkLocation: { contractAddress: string }
     }
   } = {}
   for (const tokenId of Object.keys(tokens)) {
     allTokens[tokenId] = {
       currencyCode: 'USDC',
+      denominations: [{ name: 'USDC', multiplier: '1000000' }],
       networkLocation: { contractAddress: tokens[tokenId] }
     }
   }

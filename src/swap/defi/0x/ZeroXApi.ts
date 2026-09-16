@@ -43,6 +43,8 @@ export class ZeroXApi {
     switch (pluginId) {
       case 'arbitrum':
         return ChainId.Arbitrum
+      case 'arc':
+        return ChainId.Arc
       case 'avalanche':
         return ChainId.Avalanche
       case 'base':
