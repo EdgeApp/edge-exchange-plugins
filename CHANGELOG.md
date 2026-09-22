@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- added: WizardSwap swap provider
+
 ## 2.56.0 (2026-09-16)
 
 - added: (Rango) Tron swaps
