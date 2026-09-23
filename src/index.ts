@@ -13,6 +13,7 @@ import { makeNymPlugin } from './swap/central/nym'
 import { makeSideshiftPlugin } from './swap/central/sideshift'
 import { makeSwapterPlugin } from './swap/central/swapter'
 import { makeSwapuzPlugin } from './swap/central/swapuz'
+import { makeWizardSwapPlugin } from './swap/central/wizardswap'
 import { makeXgramPlugin } from './swap/central/xgram'
 import { make0xGaslessPlugin } from './swap/defi/0x/0xGasless'
 import { makeBridgelessPlugin } from './swap/defi/bridgeless'
@@ -57,6 +58,7 @@ const plugins = {
   transfer: makeTransferPlugin,
   unizen: makeUnizenPlugin,
   velodrome: makeVelodromePlugin,
+  wizardswap: makeWizardSwapPlugin,
   xgram: makeXgramPlugin,
   xrpdex,
   fantomsonicupgrade: makeFantomSonicUpgradePlugin,

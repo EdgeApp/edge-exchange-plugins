@@ -154,6 +154,11 @@ export const asTestConfig = asObject({
       projectId: asOptional(asString, '')
     }).withRest
   ),
+  WIZARDSWAP_INIT: asCorePluginInit(
+    asObject({
+      apiKey: asOptional(asString)
+    }).withRest
+  ),
   XRPDEX_INIT: asCorePluginInit(
     asObject({
       appId: asOptional(asString, 'edge')

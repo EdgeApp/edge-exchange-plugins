@@ -19,6 +19,7 @@ import { makeSideShiftSynchronizer } from './synchronizers/sideshift/sideshiftSy
 import { makeSwapKitSynchronizer } from './synchronizers/swapkit/swapkitSynchronizer'
 import { makeSwapuzSynchronizer } from './synchronizers/swapuz/swapuzSynchronizer'
 import { makeThorchainSynchronizer } from './synchronizers/thorchain/thorchainSynchronizer'
+import { makeWizardSwapSynchronizer } from './synchronizers/wizardswap/wizardswapSynchronizer'
 import { makeXgramSynchronizer } from './synchronizers/xgram/xgramSynchronizer'
 import { SwapSynchronizer } from './types'
 
@@ -35,5 +36,6 @@ export const synchronizers: SwapSynchronizer[] = [
   makeSwapKitSynchronizer(config),
   makeSwapuzSynchronizer(config),
   makeThorchainSynchronizer(config),
+  makeWizardSwapSynchronizer(config),
   makeXgramSynchronizer(config)
 ]
