@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 2.57.0 (2026-09-25)
+
 - added: MoonPay Trade swap provider
 
 ## 2.56.0 (2026-09-16)
