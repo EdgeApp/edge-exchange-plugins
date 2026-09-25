@@ -8,6 +8,7 @@ import { makeChangeNowPlugin } from './swap/central/changenow'
 import { makeExolixPlugin } from './swap/central/exolix'
 import { makeGodexPlugin } from './swap/central/godex'
 import { makeLetsExchangePlugin } from './swap/central/letsexchange'
+import { makeMpTradePlugin } from './swap/central/mptrade'
 import { makeNexchangePlugin } from './swap/central/nexchange'
 import { makeNymPlugin } from './swap/central/nym'
 import { makeSideshiftPlugin } from './swap/central/sideshift'
@@ -19,6 +20,7 @@ import { makeBridgelessPlugin } from './swap/defi/bridgeless'
 import { makeCosmosIbcPlugin } from './swap/defi/cosmosIbc'
 import { makeFantomSonicUpgradePlugin } from './swap/defi/fantomSonicUpgrade'
 import { makeLifiPlugin } from './swap/defi/lifi'
+import { makeMpTradeDefiPlugin } from './swap/defi/mptradeDefi'
 import { makeRangoPlugin } from './swap/defi/rango'
 import { makeMayaProtocolPlugin } from './swap/defi/thorchain/mayaprotocol'
 import { makeSwapKitPlugin } from './swap/defi/thorchain/swapkit'
@@ -47,6 +49,8 @@ const plugins = {
   rango: makeRangoPlugin,
   sideshift: makeSideshiftPlugin,
   spookySwap: makeSpookySwapPlugin,
+  mptrade: makeMpTradePlugin,
+  mptradedefi: makeMpTradeDefiPlugin,
   swapter: makeSwapterPlugin,
   swapuz: makeSwapuzPlugin,
   mayaprotocol: makeMayaProtocolPlugin,
