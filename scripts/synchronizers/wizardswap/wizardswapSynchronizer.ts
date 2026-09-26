@@ -14,6 +14,10 @@ const NAME = 'wizardswap'
  * `GET /api/currency` is the authoritative list. `GET /api/pairs` names two more
  * tickers (`ada`, `onion`) that `/api/currency` omits, and a quote for one of
  * those is refused, so the pair list is not used here.
+ *
+ * WizardSwap's `firo` maps to Edge's `zcoin` currency plugin, which IS Firo
+ * (assetDisplayName 'Firo', code FIRO). The names differ, so a re-sync cannot
+ * match them by similarity and the mapping file carries the pair explicitly.
  */
 export const makeWizardSwapSynchronizer = (
   _config: MapctlConfig

@@ -17,14 +17,12 @@ wizardswap.set('doge', 'dogecoin')
 wizardswap.set('eth', 'ethereum')
 
 // Display Name: Firo
-// Edge's `zcoin` currency plugin IS Firo (assetDisplayName 'Firo', code FIRO).
 wizardswap.set('firo', 'zcoin')
 
 // Display Name: Litecoin
 wizardswap.set('ltc', 'litecoin')
 
 // Display Name: Particl
-// Edge has no Particl currency plugin.
 wizardswap.set('part', null)
 
 // Display Name: PIVX
@@ -37,6 +35,4 @@ wizardswap.set('xmr', 'monero')
 wizardswap.set('zano', 'zano')
 
 // Display Name: Zcash *taddr only*
-// WizardSwap only accepts transparent addresses; ../../src/swap/central/wizardswap.ts
-// asks the Zcash wallet for `transparentAddress` rather than its default unified one.
 wizardswap.set('zec', 'zcash')
