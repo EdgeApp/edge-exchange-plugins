@@ -407,6 +407,32 @@ describe('wizardswap estimate failures', function () {
     assert.equal(quote.fromNativeAmount, HALF_ETH)
   })
 
+  it('rejects a zero estimate before creating an order', async function () {
+    // A deposit that prices to nothing would otherwise pass the amount test
+    // and open a live order that pays out zero.
+    const requestLog: string[] = []
+    const plugin = makePlugin({ estimatedAmount: '0', requestLog })
+
+    await assertRejects(
+      async () =>
+        await plugin.fetchSwapQuote(ethToXmr(), undefined, { infoPayload: {} }),
+      'SwapBelowLimitError'
+    )
+    assert.equal(countCalls(requestLog, 'exchange'), 0)
+  })
+
+  it('orders exactly the deposit amount it estimated', async function () {
+    const requestLog: string[] = []
+    const plugin = makePlugin({ requestLog })
+
+    await plugin.fetchSwapQuote(ethToXmr(), undefined, { infoPayload: {} })
+
+    const amounts = requestLog.map(
+      entry => JSON.parse(entry.slice(entry.indexOf(' ') + 1)).amount_from
+    )
+    assert.deepEqual(amounts, ['0.5', '0.5'])
+  })
+
   it('accepts a JSON number small enough to stringify as an exponent', async function () {
     // `String(1e-7)` is '1e-7', which is not a plain decimal. It must still
     // price as an amount, not surface as an unknown provider error.
@@ -712,6 +738,22 @@ describe('wizardswap init options', function () {
 
     await plugin.fetchSwapQuote(ethToXmr(), undefined, { infoPayload: {} })
 
+    for (const entry of requestLog) {
+      assert.notInclude(entry, 'api_key')
+    }
+  })
+
+  it('treats a blank api key as unset', async function () {
+    const requestLog: string[] = []
+    const plugin = makeWizardSwapPlugin(({
+      io: makeFakeIo({ requestLog }),
+      initOptions: { apiKey: '' },
+      log: Object.assign(() => {}, { warn() {} })
+    } as unknown) as EdgeCorePluginOptions)
+
+    await plugin.fetchSwapQuote(ethToXmr(), undefined, { infoPayload: {} })
+
+    assert.equal(requestLog.length, 2)
     for (const entry of requestLog) {
       assert.notInclude(entry, 'api_key')
     }

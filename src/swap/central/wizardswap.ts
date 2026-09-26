@@ -5,7 +5,6 @@ import {
   asMaybe,
   asNumber,
   asObject,
-  asOptional,
   asString,
   asValue
 } from 'cleaners'
@@ -54,8 +53,9 @@ const asInitOptions = asObject({
    * WizardSwap treats the key as optional: it identifies an affiliate for the
    * referral share and changes nothing else about quoting or ordering. The
    * plugin therefore works unconfigured, and `api_key` is only sent when set.
+   * A blank key counts as unset, so an empty env value never reaches the wire.
    */
-  apiKey: asOptional(asString)
+  apiKey: asOptionalBlank(asString)
 })
 
 /**
@@ -255,15 +255,17 @@ export function makeWizardSwapPlugin(
    * This step creates NO order, which is what makes it safe to run as the
    * `getMaxSwappable` probe (see `fetchProbeOrder`).
    *
-   * `/estimate` prices only in the deposit direction, so the returned amount is
-   * always the RECEIVE side and the deposit amount is exactly what was sent.
+   * The estimate only GATES the pair: an amount that fails here never reaches
+   * the order step. Its figure is not returned, because the order's own
+   * `amount_to` is what the user is quoted. The deposit amount it was priced
+   * for is returned, so the order carries exactly the amount that was estimated.
    */
   const fetchEstimate = async (
     request: EdgeSwapRequestPlugin
   ): Promise<{
-    toDenominatedAmount: string
     fromChainCode: string
     toChainCode: string
+    fromDenominatedAmount: string
     fromAddress: string
     toAddress: string
   }> => {
@@ -344,11 +346,16 @@ export function makeWizardSwapPlugin(
     if (!AMOUNT_REGEX.test(toDenominatedAmount)) {
       handleEstimateError(toDenominatedAmount, request)
     }
+    // A deposit that prices to nothing is too small to swap. Letting it through
+    // would create a live order that pays out zero.
+    if (!gt(toDenominatedAmount, '0')) {
+      throw new SwapBelowLimitError(swapInfo, undefined, 'from')
+    }
 
     return {
-      toDenominatedAmount,
       fromChainCode,
       toChainCode,
+      fromDenominatedAmount,
       fromAddress,
       toAddress
     }
@@ -414,6 +421,7 @@ export function makeWizardSwapPlugin(
     const {
       fromChainCode,
       toChainCode,
+      fromDenominatedAmount,
       fromAddress,
       toAddress
     } = await fetchEstimate(request)
@@ -421,11 +429,7 @@ export function makeWizardSwapPlugin(
     const orderJson = await fetchJson('exchange', {
       currency_from: fromChainCode,
       currency_to: toChainCode,
-      amount_from: nativeToDenomination(
-        fromWallet,
-        request.nativeAmount,
-        request.fromTokenId
-      ),
+      amount_from: fromDenominatedAmount,
       address_to: toAddress,
       refund_address: fromAddress,
       ...(apiKey == null ? {} : { api_key: apiKey })
