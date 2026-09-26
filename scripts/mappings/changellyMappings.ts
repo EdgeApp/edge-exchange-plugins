@@ -97,3 +97,11 @@ changelly.set('zcash', 'zcash')
 changelly.set('firo', 'zcoin')
 
 changelly.set('zksync', 'zksync')
+
+changelly.set('Fantom', 'fantom')
+
+changelly.set('hyperevm', 'hyperevm')
+
+changelly.set('mon', 'monad')
+
+changelly.set('WAX', 'wax')
