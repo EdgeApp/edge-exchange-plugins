@@ -17,7 +17,12 @@ import {
   SwapCurrencyError
 } from 'edge-core-js/types'
 
-import { EdgeSwapRequestPlugin, MakeTxParams, StringMap } from '../swap/types'
+import {
+  EdgeSwapRequestPlugin,
+  EdgeTxActionSwapPlugin,
+  MakeTxParams,
+  StringMap
+} from '../swap/types'
 import { EdgeCurrencyPluginId } from './edgeCurrencyPluginIds'
 
 const likeKindAssets = [
@@ -121,9 +126,12 @@ export async function makeSwapPluginQuote(
       tx.currencyCode = request.fromCurrencyCode
     }
   }
-  const action = tx.savedAction
+  // `swapSend` is typed locally until the installed core declares it:
+  const action = tx.savedAction as EdgeTxActionSwapPlugin | undefined
 
-  if (action?.actionType !== 'swap') throw new Error(`Invalid swap action type`)
+  if (action?.actionType !== 'swap' && action?.actionType !== 'swapSend') {
+    throw new Error(`Invalid swap action type`)
+  }
 
   const toNativeAmount = action?.toAsset.nativeAmount
   const destinationAddress = action?.payoutAddress

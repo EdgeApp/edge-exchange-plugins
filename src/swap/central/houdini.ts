@@ -27,7 +27,7 @@ import {
   EdgeSwapRequest,
   EdgeSwapResult,
   EdgeTokenId,
-  EdgeTxActionSwap,
+  EdgeTxAction,
   SwapAboveLimitError,
   SwapBelowLimitError,
   SwapCurrencyError
@@ -55,7 +55,12 @@ import {
   nativeToDenomination,
   snooze
 } from '../../util/utils'
-import { asNumberString, EdgeSwapRequestPlugin, StringMap } from '../types'
+import {
+  asNumberString,
+  EdgeSwapRequestPlugin,
+  EdgeTxActionSwapPlugin,
+  StringMap
+} from '../types'
 import { asOptionalBlank } from './changenow'
 
 const pluginId = 'houdini'
@@ -1190,13 +1195,14 @@ export function makeHoudiniPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
       }
     }
 
+    // `spendInfo.savedAction` takes the installed core's `EdgeTxAction`, which
+    // predates `swapSend`, so the send shape is cast through it.
     function makeSwapAction(
       orderId: string,
       fromNativeAmount: string,
       toNativeAmount: string
-    ): EdgeTxActionSwap {
-      return {
-        actionType: 'swap',
+    ): EdgeTxAction {
+      const action = {
         swapInfo,
         orderId,
         orderUri: orderUri + orderId,
@@ -1216,9 +1222,19 @@ export function makeHoudiniPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
           nativeAmount: fromNativeAmount
         },
         payoutAddress: toAddress,
-        payoutWalletId: toWallet.id,
         refundAddress: fromAddress
       }
+      // A synthetic destination is a pasted address, so the order is a send:
+      // there is no payout wallet to name, and the recipient stays on the
+      // action for the transaction details to show or hide.
+      const swapAction: EdgeTxActionSwapPlugin = isSyntheticDestination
+        ? {
+            ...action,
+            actionType: 'swapSend',
+            privacy: request.privacy === 'required'
+          }
+        : { ...action, actionType: 'swap', payoutWalletId: toWallet.id }
+      return swapAction as EdgeTxAction
     }
   }
 

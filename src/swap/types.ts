@@ -10,9 +10,11 @@ import {
 } from 'cleaners'
 import {
   EdgeAssetAction,
+  EdgeAssetAmount,
   EdgeCurrencyWallet,
   EdgeMemo,
   EdgeMetadata,
+  EdgeSwapInfo,
   EdgeTransaction,
   EdgeTxAction,
   EdgeTxActionSwap,
@@ -38,6 +40,29 @@ export interface EdgeSwapRequestPlugin {
    */
   privacy?: 'required'
 }
+
+/**
+ * A swap whose payout goes to a pasted address rather than one of the user's
+ * wallets. Mirrors `EdgeTxActionSwapSend` from `edge-core-js`, declared here
+ * because the installed `edge-core-js` types predate it.
+ */
+export interface EdgeTxActionSwapSend {
+  actionType: 'swapSend'
+  swapInfo: EdgeSwapInfo
+  orderId?: string
+  orderUri?: string
+  isEstimate: boolean
+  fromAsset: EdgeAssetAmount
+  toAsset: EdgeAssetAmount
+  /** The recipient. */
+  payoutAddress: string
+  refundAddress?: string
+  /** Routed privately (a Stealth send). */
+  privacy: boolean
+}
+
+/** The saved actions a swap plugin writes. */
+export type EdgeTxActionSwapPlugin = EdgeTxActionSwap | EdgeTxActionSwapSend
 
 export const asNumberString = (raw: any): string => {
   const n = asEither(asString, asNumber)(raw)

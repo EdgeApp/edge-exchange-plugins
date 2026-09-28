@@ -1432,6 +1432,46 @@ describe('houdini offline behaviors', function () {
     expect(reverse.quoteUrls[0]).contains('fixed=true')
   })
 
+  it('names the payout wallet on a swap into one of the user wallets', async function () {
+    const run = makeScriptedPlugin({
+      nativeAddress: '',
+      quotes: [privateQuote]
+    })
+    await quoteSonicToStellar(run)
+    const action = capture.savedAction as Record<string, unknown>
+    expect(action.actionType).equals('swap')
+    expect(action.payoutWalletId).equals(stellarWallet.id)
+  })
+
+  it('writes a send action for a pasted-address destination', async function () {
+    // A pasted address has no wallet behind it, so the action is a send: it
+    // carries the recipient and whether the route was private, and names no
+    // payout wallet (the synthetic id resolves to nothing).
+    const toAddress = 'GBRPYHIL2CI3FNQ4BXLFMNDLFJUNPU2HY3ZMFSHONUCEOASW7QC7OX2H'
+    const stellarDestination = makeFakeSyntheticDestination({
+      pluginId: 'stellar',
+      currencyCode: 'XLM',
+      decimals: 7,
+      toAddress
+    })
+
+    for (const privacy of [undefined, 'required'] as const) {
+      const run = makeScriptedPlugin({
+        nativeAddress: '',
+        quotes: [privateQuote]
+      })
+      await quoteSonicToStellar(run, ({
+        toWallet: stellarDestination,
+        privacy
+      } as unknown) as Partial<EdgeSwapRequest>)
+      const action = capture.savedAction as Record<string, unknown>
+      expect(action.actionType).equals('swapSend')
+      expect(action.payoutAddress).equals(toAddress)
+      expect(action.privacy).equals(privacy === 'required')
+      expect(action).not.to.have.property('payoutWalletId')
+    }
+  })
+
   it('retries a rate-limited call behind the window the API reports', async function () {
     const run = makeScriptedPlugin({
       nativeAddress: '',
