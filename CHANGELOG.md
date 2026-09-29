@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 2.57.1 (2026-09-29)
+
 - fixed: (Swapter) Disable swaps into HYPE to avoid payouts on HyperCore
 - fixed: (LetsExchange) Map HyperEVM to its HyperEVM network, not HyperCore
 
