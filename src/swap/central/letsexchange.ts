@@ -100,8 +100,7 @@ export const SPECIAL_MAINNET_CASES: EdgeIdSwapIdMap = new Map([
   ],
   ['ethereum', new Map([[null, { chainCode: 'ETH', tokenCode: 'ETH' }]])],
   ['rsk', new Map([[null, { chainCode: 'RBTC', tokenCode: 'RBTC' }]])],
-  ['tron', new Map([[null, { chainCode: 'TRX', tokenCode: 'TRX' }]])],
-  ['hyperevm', new Map([[null, { chainCode: 'HYPEEVM', tokenCode: 'HYPE' }]])]
+  ['tron', new Map([[null, { chainCode: 'TRX', tokenCode: 'TRX' }]])]
 ])
 
 // Provider data

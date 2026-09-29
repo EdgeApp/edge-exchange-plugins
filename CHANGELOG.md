@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- fixed: (Swapter) Disable swaps into HYPE to avoid payouts on HyperCore
+- fixed: (LetsExchange) Map HyperEVM to its HyperEVM network, not HyperCore
+
 ## 2.57.0 (2026-09-25)
 
 - added: MoonPay Trade swap provider
