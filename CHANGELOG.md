@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- fixed: Rango swaps report the Rango request id as their order id
+
 ## 2.57.0 (2026-09-25)
 
 - added: MoonPay Trade swap provider

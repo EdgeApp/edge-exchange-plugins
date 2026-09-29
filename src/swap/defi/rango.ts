@@ -793,6 +793,9 @@ export function makeRangoPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
       swap.requestId ?? swap.id ?? swap.uuid ?? swap.transactionId ?? ''
     const orderUriValue =
       trackingId !== '' ? `${orderUri}${trackingId}` : `${orderUri}${toAddress}`
+    // Reports keys Rango orders by this same id, so the swap result carries it
+    // as the order id instead of falling back to the transaction hash:
+    const orderId = trackingId !== '' ? trackingId : undefined
     log(`Rango tracking: id=${trackingId}, uri=${orderUriValue}`)
 
     switch (tx.type) {
@@ -829,6 +832,7 @@ export function makeRangoPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
             actionType: 'swap',
             swapInfo,
             orderUri: orderUriValue,
+            orderId,
             isEstimate: true,
             toAsset: {
               pluginId: toWallet.currencyInfo.pluginId,
@@ -863,6 +867,7 @@ export function makeRangoPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
               actionType: 'swap',
               swapInfo,
               orderUri: orderUriValue,
+              orderId,
               isEstimate: true,
               toAsset: {
                 pluginId: toWallet.currencyInfo.pluginId,
@@ -948,6 +953,7 @@ export function makeRangoPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
             actionType: 'swap',
             swapInfo,
             orderUri: orderUriValue,
+            orderId,
             isEstimate: true,
             toAsset: {
               pluginId: toWallet.currencyInfo.pluginId,
@@ -979,6 +985,7 @@ export function makeRangoPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
           actionType: 'swap' as const,
           swapInfo,
           orderUri: orderUriValue,
+          orderId,
           isEstimate: true,
           toAsset: {
             pluginId: toWallet.currencyInfo.pluginId,
@@ -1064,6 +1071,7 @@ export function makeRangoPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
             actionType: 'swap',
             swapInfo,
             orderUri: orderUriValue,
+            orderId,
             isEstimate: true,
             toAsset: {
               pluginId: toWallet.currencyInfo.pluginId,
