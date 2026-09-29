@@ -54,10 +54,16 @@ const EXPIRATION_MS = 1000 * 60 * 30
  * a native zkSync quote reaches the API and is rejected as a coin/network
  * combination that does not exist. Blocking the null tokenId keeps the network
  * mapped, which is what makes its tokens quotable.
+ *
+ * Swapter takes HYPE deposits natively on HyperEVM but pays HYPE out on
+ * HyperCore (its withdraw contract is the HyperCore spot token
+ * `HYPE:0x0d01dc56dcaaca66ad901c959b4011ec`), which an Edge HyperEVM wallet
+ * never sees. Block HYPE only as the destination: selling HYPE deposits on
+ * HyperEVM, and HyperEVM tokens list the same contract both ways.
  */
 const INVALID_TOKEN_IDS: InvalidTokenIds = {
   from: { zksync: [null] },
-  to: { zksync: [null] }
+  to: { hyperevm: [null], zksync: [null] }
 }
 
 /** How long a fetched `/data/coins` ticker map is reused. */
