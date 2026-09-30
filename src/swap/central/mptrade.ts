@@ -860,8 +860,9 @@ export function makeMpTradeBasedPlugin(
     const action = asMpTradeAction(responseJson)
 
     // Every route model this plugin executes is driven off the SOURCE chain's
-    // `vmId`. `hypercore` has no Edge currency plugin, and a non-DEFAULT
-    // execution type (gasless and friends) needs machinery we do not have.
+    // `vmId`. A `hypercore` source signs an action rather than a transaction,
+    // and a non-DEFAULT execution type (gasless and friends) needs machinery
+    // we do not have.
     if (!SUPPORTED_VM_IDS.includes(action.vmId)) {
       throw new SwapCurrencyError(swapInfo, request)
     }

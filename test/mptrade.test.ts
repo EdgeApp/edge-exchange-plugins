@@ -1106,8 +1106,8 @@ describe('mptrade fetchSwapQuote getAction error classification', function () {
 
 describe('mptrade fetchSwapQuote success-response guards', function () {
   it('rejects a hypercore route (vmId) with SwapCurrencyError', async function () {
-    // The plugin executes evm, solana and alt-vm routes; hypercore has no Edge
-    // currency plugin, so there is nothing to execute it with.
+    // The plugin executes evm, solana and alt-vm routes; a hypercore route
+    // signs an action rather than a transaction, which it cannot execute.
     await expectErrorName(
       makePlugin(okAction({ vmId: 'hypercore' })),
       usdcRequest(),

@@ -19,8 +19,7 @@
  *
  * Non-EVM chains ARE mapped. `GET /getChainList` tags each chain with a `vmId`
  * (`evm`, `solana`, `alt-vm`, `hypercore`) that names the execution model of a
- * route SOURCED there, and the plugin dispatches on it. `hypercore` is absent
- * because Edge ships no currency plugin for that chain.
+ * route SOURCED there, and the plugin dispatches on it.
  *
  * The `vmId` also disambiguates the chains whose numeric id belongs to an EVM
  * sibling: 314 is tagged `alt-vm`, and a live `getAction` from it returns an
@@ -83,6 +82,7 @@ mptrade.set('fio', null) // not on getChainList
 mptrade.set('groestlcoin', null) // not on getChainList
 mptrade.set('hedera', '295')
 mptrade.set('holesky', null) // Ethereum testnet
+mptrade.set('hypercore', '1337')
 mptrade.set('hyperevm', '999')
 mptrade.set('liberland', null) // not on getChainList
 mptrade.set('liberlandtestnet', null) // testnet

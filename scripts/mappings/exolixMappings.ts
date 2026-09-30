@@ -315,7 +315,7 @@ exolix.set('HIVE', null)
 exolix.set('HTR', null)
 
 // Display Name: Hyperliquid
-exolix.set('HYPE', null)
+exolix.set('HYPE', 'hypercore')
 
 // Display Name: Internet Computer
 // Short Name: ICP

@@ -44,6 +44,7 @@ export const edgeCurrencyPluginIds = [
   'groestlcoin',
   'hedera',
   'holesky',
+  'hypercore',
   'hyperevm',
   'liberland',
   'liberlandtestnet',
