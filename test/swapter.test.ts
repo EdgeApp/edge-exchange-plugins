@@ -18,6 +18,7 @@ const DEPOSIT_ADDRESS = '0x1111111111111111111111111111111111111111'
 const ZEC_UNIFIED_ADDRESS = 'u1qqqqq0unifiedzcashaddress'
 const ZEC_TRANSPARENT_ADDRESS = 't1XyZtransparentzcashaddress'
 const HYPE_ADDRESS = '0x2B3c4D5e6F7a8B9c0D1e2F3a4B5c6D7e8F9a0B1c'
+const HYPERCORE_ADDRESS = '0x3C4d5E6f7A8b9C0d1E2f3A4b5C6d7E8f9A0b1C2d'
 
 /** What the Ethereum engine holds back for the network fee. */
 const ETH_FEE = '196600000000000'
@@ -256,6 +257,14 @@ const makeHypeWallet = (): EdgeCurrencyWallet =>
     multiplier: '1000000000000000000'
   })
 
+const makeHyperCoreWallet = (): EdgeCurrencyWallet =>
+  makeFakeWallet({
+    pluginId: 'hypercore',
+    currencyCode: 'HYPE',
+    address: HYPERCORE_ADDRESS,
+    multiplier: '100000000'
+  })
+
 const makeRequest = (
   nativeAmount: string,
   overrides: Partial<EdgeSwapRequest> = {}
@@ -480,7 +489,7 @@ describe('swapter', function () {
     assert.lengthOf(log.createBodies, 1)
   })
 
-  it('refuses to swap into HYPE, which Swapter pays out on HyperCore', async function () {
+  it('refuses to swap into HyperEVM HYPE, which Swapter pays out on HyperCore', async function () {
     // An Edge HyperEVM wallet never sees a HyperCore payout, so the quote must
     // fail as an unsupported pair before any order exists.
     const log = makeLog()
@@ -509,5 +518,31 @@ describe('swapter', function () {
     assert.equal(createBody.deposit.coin, 'HYPE')
     assert.equal(createBody.deposit.network, 'HYPEREVM')
     assert.equal(createBody.info.refundAddress, HYPE_ADDRESS)
+  })
+
+  it('swaps into HyperCore HYPE through the HyperEVM listing', async function () {
+    const log = makeLog()
+    await fetchQuote(
+      makePlugin(log),
+      makeRequest(IN_RANGE_NATIVE, { toWallet: makeHyperCoreWallet() })
+    )
+
+    const [createBody] = log.createBodies
+    assert.equal(createBody.withdraw.coin, 'HYPE')
+    assert.equal(createBody.withdraw.network, 'HYPEREVM')
+    assert.equal(createBody.withdraw.address, HYPERCORE_ADDRESS)
+  })
+
+  it('refuses to sell HyperCore HYPE, which Swapter takes on HyperEVM', async function () {
+    const log = makeLog()
+    const error = await expectError(
+      fetchQuote(
+        makePlugin(log),
+        makeRequest(IN_RANGE_NATIVE, { fromWallet: makeHyperCoreWallet() })
+      )
+    )
+
+    assert.equal(error.name, 'SwapCurrencyError')
+    assert.lengthOf(log.createBodies, 0)
   })
 })
