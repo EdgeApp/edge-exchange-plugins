@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 2.57.2 (2026-09-30)
+
 - fixed: (MoonPay Trade) Link swap orders to the new Swaps Scanner order page
 
 ## 2.57.1 (2026-09-29)
