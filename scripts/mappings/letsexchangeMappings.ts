@@ -575,8 +575,7 @@ letsexchange.set('HUAHUA', null)
 letsexchange.set('HYDRA', null)
 
 // Display Name: HYPE
-// Hyperliquid's HyperCore network, not HyperEVM
-letsexchange.set('HYPE', null)
+letsexchange.set('HYPE', 'hypercore')
 
 // Display Name: HYPEEVM
 letsexchange.set('HYPEEVM', 'hyperevm')

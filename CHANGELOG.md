@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+- added: HyperCore swaps via LI.FI, MoonPay Trade, Exolix and LetsExchange
+- added: (Swapter) Swaps into HyperCore HYPE
+- fixed: Swap quotes label token-denominated fees with their token
+- fixed: (LI.FI) Quotes from Solana
+- fixed: (LetsExchange) Report inactive networks as unsupported rather than as a quote failure
+
 ## 2.57.1 (2026-09-29)
 
 - fixed: (Swapter) Disable swaps into HYPE to avoid payouts on HyperCore

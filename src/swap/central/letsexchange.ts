@@ -135,7 +135,12 @@ export function makeLetsExchangePlugin(
     const response = await fetchCors(url, { method: 'POST', body, headers })
     if (!response.ok) {
       const message = await response.text()
-      if (response.status === 422) {
+      // A coin or network LetsExchange does not list, or lists as inactive,
+      // is a 404 like `{"error":"HYPE(HYPE) not available."}`:
+      if (
+        response.status === 422 ||
+        (response.status === 404 && /\(\w+\) not available/.test(message))
+      ) {
         throw new SwapCurrencyError(swapInfo, request)
       }
       throw new Error(
