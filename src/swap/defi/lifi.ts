@@ -202,6 +202,9 @@ const asTransactionRequest = asObject({
   gasLimit: asString // '0x08a3df'
 })
 
+/** Stands in as the spend target of a native SOL source. */
+const SOLANA_SYSTEM_PROGRAM_ID = '11111111111111111111111111111111'
+
 const asTransactionRequestSolana = asObject({
   data: asString
 })
@@ -668,11 +671,18 @@ export function makeLifiPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
     let spendInfo: EdgeSpendInfo
     switch (fromWallet.currencyInfo.pluginId) {
       case 'solana': {
-        const publicAddress = includedSteps[0].estimate?.approvalAddress
-        if (publicAddress == null) {
+        const approvalAddress = includedSteps[0].estimate?.approvalAddress
+        if (approvalAddress == null) {
           log.warn('No public address provided in quote')
           throw new SwapCurrencyError(swapInfo, request)
         }
+        // LI.FI reports the EVM zero address as the approval address of
+        // Solana routes, which is no Solana key. The engine executes the
+        // prebuilt transaction instead, so, as with rango and mptrade, the
+        // system program or the token mint stands in as the spend target:
+        const publicAddress = approvalAddress.startsWith('0x')
+          ? request.fromTokenId ?? SOLANA_SYSTEM_PROGRAM_ID
+          : approvalAddress
         const { data } = asTransactionRequestSolana(transactionRequestRaw)
 
         spendInfo = {

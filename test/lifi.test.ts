@@ -14,6 +14,7 @@ import { makeLifiPlugin } from '../src/swap/defi/lifi'
 /** HyperCore USDC, as the currency plugin stores its 16-byte token id. */
 const HYPERCORE_USDC = '0x6d1e7cde53ba9467b783cb7c530ce054'
 const ARBITRUM_USDC = '0xaf88d065e77c8cc2239327c5edb3a432268e5831'
+const SOLANA_USDC = 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v'
 
 const makeFakeWallet = (
   pluginId: string,
@@ -336,5 +337,85 @@ describe('lifi HyperCore', function () {
       fromWallet: arbitrumWallet
     }).catch((error: unknown) => error)
     assert.equal((error as Error).name, 'SwapCurrencyError')
+  })
+})
+
+describe('lifi Solana', function () {
+  it('names the token mint in place of an EVM approval address', async function () {
+    const SOLANA_ADDRESS = '9WzDXwBbmkg8ZTbNMqUxvQRAyrZzDsGYdLVL9zYtAWWM'
+    const spendTargets: unknown[] = []
+    const currencyInfo = {
+      pluginId: 'solana',
+      currencyCode: 'SOL',
+      denominations: [{ name: 'SOL', multiplier: '1000000000' }]
+    }
+    const solanaWallet = ({
+      id: 'solana-wallet',
+      currencyInfo,
+      currencyConfig: {
+        currencyInfo,
+        allTokens: { [SOLANA_USDC]: makeToken('USDC', SOLANA_USDC) }
+      },
+      async getAddresses() {
+        return [{ addressType: 'publicAddress', publicAddress: SOLANA_ADDRESS }]
+      },
+      async makeSpend(spendInfo: {
+        spendTargets: unknown[]
+        savedAction: unknown
+      }) {
+        spendTargets.push(...spendInfo.spendTargets)
+        return ({
+          networkFees: [],
+          networkFee: '0',
+          savedAction: spendInfo.savedAction
+        } as unknown) as EdgeTransaction
+      }
+    } as unknown) as EdgeCurrencyWallet
+
+    const estimate = {
+      fromAmount: '7000000',
+      toAmount: '6900000',
+      toAmountMin: '6800000',
+      approvalAddress: '0x0000000000000000000000000000000000000000',
+      executionDuration: 1
+    }
+    const plugin = makeLifiPlugin(({
+      io: {
+        fetchCors: async (uri: string) =>
+          uri.includes('v1/quote?')
+            ? {
+                ok: true,
+                status: 200,
+                json: async () => ({
+                  id: 'step-id',
+                  type: 'lifi',
+                  estimate,
+                  includedSteps: [
+                    { estimate, toolDetails: { name: 'Mayan (Swift)' } }
+                  ],
+                  transactionRequest: { data: 'AQ==' }
+                })
+              }
+            : { ok: false, status: 400, text: async () => 'test' }
+      },
+      initOptions: {},
+      log: Object.assign(() => {}, { warn() {} })
+    } as unknown) as EdgeCorePluginOptions)
+
+    await plugin.fetchSwapQuote(
+      {
+        fromWallet: solanaWallet,
+        fromTokenId: SOLANA_USDC,
+        toWallet: hyperCoreWallet,
+        toTokenId: 'usdc',
+        nativeAmount: '7000000',
+        quoteFor: 'from'
+      },
+      undefined,
+      { infoPayload: {} }
+    )
+    assert.deepEqual(spendTargets, [
+      { nativeAmount: '7000000', publicAddress: SOLANA_USDC }
+    ])
   })
 })
