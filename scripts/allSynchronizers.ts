@@ -11,7 +11,6 @@ import { makeChangeHeroSynchronizer } from './synchronizers/changehero/changeher
 import { makeChangeNowSynchronizer } from './synchronizers/changenow/changenowSynchronizer'
 import { makeExolixSynchronizer } from './synchronizers/exolix/exolixSynchronizer'
 import { makeGodexSynchronizer } from './synchronizers/godex/godexSynchronizer'
-import { makeLetsExchangeSynchronizer } from './synchronizers/letsexchange/letsexchangeSynchronizer'
 import { makeLifiSynchronizer } from './synchronizers/lifi/lifiSynchronizer'
 import { makeMayaProtocolSynchronizer } from './synchronizers/mayaprotocol/mayaprotocolSynchronizer'
 import { makeRangoSynchronizer } from './synchronizers/rango/rangoSynchronizer'
@@ -27,7 +26,6 @@ export const synchronizers: SwapSynchronizer[] = [
   makeChangeNowSynchronizer(config),
   makeExolixSynchronizer(config),
   makeGodexSynchronizer(config),
-  makeLetsExchangeSynchronizer(config),
   makeLifiSynchronizer(config),
   makeMayaProtocolSynchronizer(config),
   makeRangoSynchronizer(config),
