@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 2.57.3 (2026-09-30)
+
 - added: (Changelly) TON, BNB Smart Chain BNB and Avalanche C-Chain AVAX swaps
 - fixed: (Changelly) L2 ETH swaps no longer pay out on Ethereum mainnet
 - fixed: (Changelly) Base and zkSync tokens are swappable
