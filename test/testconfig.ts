@@ -79,11 +79,6 @@ export const asTestConfig = asObject({
     }).withRest
   ),
   KOVAN_INIT: asCorePluginInit(asEvmApiKeys),
-  LETSEXCHANGE_INIT: asCorePluginInit(
-    asObject({
-      apiKey: asOptional(asString, '')
-    }).withRest
-  ),
   NEXCHANGE_INIT: asCorePluginInit(
     asObject({
       apiKey: asOptional(asString, ''),

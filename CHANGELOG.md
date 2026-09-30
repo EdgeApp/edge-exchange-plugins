@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- removed: LetsExchange swap provider
+
 ## 2.57.2 (2026-09-30)
 
 - fixed: (MoonPay Trade) Link swap orders to the new Swaps Scanner order page
