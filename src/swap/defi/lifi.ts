@@ -1,20 +1,25 @@
-import { mul, round } from 'biggystring'
+import { lte, mul, round } from 'biggystring'
 import {
   asArray,
+  asMaybe,
   asNumber,
   asObject,
   asOptional,
   asString,
-  asUnknown
+  asUnknown,
+  asValue
 } from 'cleaners'
 import {
   EdgeCorePluginOptions,
   EdgeSpendInfo,
+  EdgeSwapApproveOptions,
   EdgeSwapInfo,
   EdgeSwapPlugin,
   EdgeSwapQuote,
   EdgeSwapRequest,
+  EdgeSwapResult,
   EdgeTransaction,
+  EdgeTxAction,
   SwapBelowLimitError,
   SwapCurrencyError
 } from 'edge-core-js/types'
@@ -24,6 +29,7 @@ import { lifi as lifiMapping } from '../../mappings/lifi'
 import { div18 } from '../../util/biggystringplus'
 import {
   checkInvalidTokenIds,
+  getCurrencyMultiplier,
   getMaxSwappable,
   InvalidTokenIds,
   makeSwapPluginQuote,
@@ -37,7 +43,8 @@ import {
   getAddress,
   hexToDecimal,
   makeQueryParams,
-  promiseWithTimeout
+  promiseWithTimeout,
+  snooze
 } from '../../util/utils'
 import {
   asNumberString,
@@ -93,11 +100,26 @@ const getParentTokenContractAddress = (pluginId: string): string => {
     case 'metis': {
       return '0xDeadDeAddeAddEAddeadDEaDDEAdDeaDDeAD0000'
     }
+
+    // chainType HyperCore, addressed like its spot tokens (see below)
+    case 'hypercore': {
+      return '0x0D01DC56DcaaCa66aD901c959B4011ec00000000'
+    }
     default: {
       return '0x0000000000000000000000000000000000000000'
     }
   }
 }
+
+/**
+ * LI.FI names a HyperCore spot token by its 16-byte token id, zero-padded to
+ * an EVM-sized address. Edge stores the bare 16-byte id.
+ */
+const getLifiTokenAddress = (
+  pluginId: string,
+  contractAddress: string
+): string =>
+  pluginId === 'hypercore' ? `${contractAddress}00000000` : contractAddress
 
 export const INVALID_TOKEN_IDS: InvalidTokenIds = {
   from: {},
@@ -204,6 +226,103 @@ const asV1Quote = asObject({
   transactionRequest: asUnknown
 })
 
+/**
+ * A step that runs by signing messages LI.FI relays, rather than by sending a
+ * transaction. This is how LI.FI moves funds out of HyperCore.
+ */
+const asV1MessageStep = asObject({
+  executionType: asValue('message'),
+  typedData: asArray(
+    asObject({ primaryType: asString, message: asUnknown }).withRest
+  )
+})
+
+/** Ties the relay's deposit to our address. */
+const asNonceMapping = asObject({
+  wallet: asString,
+  depositor: asString
+})
+
+/** The HyperCore transfer that funds the route. */
+const asSendAsset = asObject({
+  sourceDex: asValue('spot'),
+  fromSubAccount: asValue(''),
+  token: asString,
+  amount: asString,
+  nonce: asNumber
+})
+
+const asMaybeNonceMapping = asMaybe(asNonceMapping)
+const asMaybeSendAsset = asMaybe(asSendAsset)
+
+/**
+ * Checks that a message route signs only a nonce mapping for our own address
+ * and one spot transfer of the quoted token, for no more than the amount
+ * the user requested. Anything else, such as the agent keys and orders of Hyperliquid
+ * trading steps, would let LI.FI's payload move funds the user never saw.
+ * Returns the transfer's nonce, or undefined to refuse the route.
+ */
+const checkMessageStep = (
+  typedData: Array<{ primaryType: string; message: unknown }>,
+  fromAddress: string,
+  lifiTokenAddress: string,
+  maxAmount: string,
+  multiplier: string
+): number | undefined => {
+  // LI.FI pads the 16-byte token id that HyperCore names tokens by:
+  const tokenId = lifiTokenAddress.toLowerCase().slice(0, -8)
+  const sends: number[] = []
+  for (const { primaryType, message } of typedData) {
+    if (primaryType === 'NonceMapping') {
+      const mapping = asMaybeNonceMapping(message)
+      if (
+        mapping == null ||
+        mapping.wallet.toLowerCase() !== fromAddress.toLowerCase() ||
+        mapping.depositor.toLowerCase() !== fromAddress.toLowerCase()
+      ) {
+        return
+      }
+    } else if (primaryType === 'HyperliquidTransaction:SendAsset') {
+      const send = asMaybeSendAsset(message)
+      if (
+        send == null ||
+        send.token.split(':')[1]?.toLowerCase() !== tokenId ||
+        !lte(mul(send.amount, multiplier), maxAmount)
+      ) {
+        return
+      }
+      sends.push(send.nonce)
+    } else {
+      return
+    }
+  }
+  return sends.length === 1 ? sends[0] : undefined
+}
+
+const asRelayResponse = asObject({
+  status: asValue('ok'),
+  data: asObject({
+    taskId: asString
+  })
+})
+
+const asRelayStatus = asObject({
+  status: asString,
+  substatusMessage: asOptional(asString),
+  sending: asOptional(
+    asObject({
+      txHash: asOptional(asString)
+    })
+  )
+})
+
+const RELAY_STATUS_POLL_MS = 2000
+const RELAY_STATUS_TIMEOUT_MS = 1000 * 60 * 2
+
+const asMaybeV1MessageStep = asMaybe(asV1MessageStep)
+const asMaybeRelayResponse = asMaybe(asRelayResponse)
+const asMaybeRelayStatus = asMaybe(asRelayStatus)
+
 type ExchangeInfo = ReturnType<typeof asExchangeInfo>
 
 let exchangeInfo: ExchangeInfo | undefined
@@ -220,7 +339,7 @@ export function makeLifiPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
 
   const fetchSwapQuoteInner = async (
     request: EdgeSwapRequestPlugin
-  ): Promise<SwapOrder> => {
+  ): Promise<SwapOrder | EdgeSwapQuote> => {
     const {
       fromCurrencyCode,
       fromTokenId,
@@ -244,7 +363,15 @@ export function makeLifiPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
       )
     } else {
       sendingToken = true
-      fromContractAddress = fromToken?.networkLocation?.contractAddress
+      const contractAddress: string | undefined =
+        fromToken?.networkLocation?.contractAddress
+      fromContractAddress =
+        contractAddress == null
+          ? undefined
+          : getLifiTokenAddress(
+              fromWallet.currencyInfo.pluginId,
+              contractAddress
+            )
     }
 
     const toToken = toWallet.currencyConfig.allTokens[toTokenId ?? '']
@@ -254,7 +381,12 @@ export function makeLifiPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
         toWallet.currencyInfo.pluginId
       )
     } else {
-      toContractAddress = toToken?.networkLocation?.contractAddress
+      const contractAddress: string | undefined =
+        toToken?.networkLocation?.contractAddress
+      toContractAddress =
+        contractAddress == null
+          ? undefined
+          : getLifiTokenAddress(toWallet.currencyInfo.pluginId, contractAddress)
     }
 
     if (fromContractAddress == null || toContractAddress == null) {
@@ -334,6 +466,17 @@ export function makeLifiPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
       toAddress,
       integrator,
       fee: affiliateFee,
+      // Routes out of HyperCore only exist as signed messages:
+      ...(fromWallet.currencyInfo.pluginId === 'hypercore'
+        ? { executionType: 'all' }
+        : {}),
+      // LI.FI scales Mayan's 6-decimal HyperCore USDC amounts by its own
+      // 8-decimal token, quoting 100 times too little, so Mayan stays off
+      // HyperCore routes:
+      ...(fromWallet.currencyInfo.pluginId === 'hypercore' ||
+      toWallet.currencyInfo.pluginId === 'hypercore'
+        ? { denyBridges: 'mayan' }
+        : {}),
       // Omitting `slippage` lets LI.FI pick it per pair, which is far tighter
       // than a blanket maximum on liquid pairs and shrinks the window a
       // sandwich bot can extract. `makeQueryParams` emits a valueless key for
@@ -368,6 +511,158 @@ export function makeLifiPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
     const providersStr = providers.join(' -> ')
     const metadataNotes = `DEX Providers: ${providersStr}`
     const { approvalAddress, toAmount, toAmountMin, fromAmount } = estimate
+
+    const messageStep = asMaybeV1MessageStep(quoteJson)
+    if (messageStep != null) {
+      const { typedData } = messageStep
+      const nonce =
+        fromWallet.currencyInfo.pluginId === 'hypercore'
+          ? checkMessageStep(
+              typedData,
+              fromAddress,
+              fromContractAddress,
+              nativeAmount,
+              getCurrencyMultiplier(
+                fromWallet.currencyInfo,
+                fromWallet.currencyConfig.allTokens,
+                fromTokenId
+              )
+            )
+          : undefined
+      if (nonce == null) {
+        throw new SwapCurrencyError(swapInfo, request)
+      }
+
+      const savedAction: EdgeTxAction = {
+        actionType: 'swap',
+        swapInfo,
+        isEstimate: true,
+        toAsset: {
+          pluginId: toWallet.currencyInfo.pluginId,
+          tokenId: toTokenId,
+          nativeAmount: toAmount
+        },
+        fromAsset: {
+          pluginId: fromWallet.currencyInfo.pluginId,
+          tokenId: fromTokenId,
+          nativeAmount
+        },
+        payoutAddress: toAddress,
+        payoutWalletId: toWallet.id,
+        refundAddress: fromAddress
+      }
+
+      const approve = async (
+        approveOpts?: EdgeSwapApproveOptions
+      ): Promise<EdgeSwapResult> => {
+        const signedTypedData: unknown[] = []
+        for (const entry of typedData) {
+          const signature = await fromWallet.signMessage(
+            JSON.stringify(entry),
+            { otherParams: { typedData: true } }
+          )
+          signedTypedData.push({ ...entry, signature })
+        }
+
+        const relayResponse = await fetchWaterfall(
+          fetchCors,
+          lifiServers,
+          'v1/advanced/relay',
+          {
+            method: 'POST',
+            headers,
+            body: JSON.stringify({ ...quoteJson, typedData: signedTypedData })
+          }
+        )
+        const relayText = await relayResponse.text()
+        const relay = relayResponse.ok
+          ? asMaybeRelayResponse(JSON.parse(relayText))
+          : undefined
+        if (relay == null) {
+          throw new Error(`Lifi could not relay the swap: ${relayText}`)
+        }
+        const { taskId } = relay.data
+
+        // The swap is committed once the relay accepts it. Wait for the
+        // source-chain hash, which is also the wallet's own txid:
+        const statusParams = makeQueryParams({
+          taskId,
+          fromChain: fromMainnetCode,
+          toChain: toMainnetCode
+        })
+        const deadline = Date.now() + RELAY_STATUS_TIMEOUT_MS
+        let txid: string | undefined
+        while (txid == null && Date.now() < deadline) {
+          await snooze(RELAY_STATUS_POLL_MS)
+          const statusResponse = await fetchWaterfall(
+            fetchCors,
+            lifiServers,
+            `v1/status?${statusParams}`,
+            { headers }
+          )
+          if (!statusResponse.ok) continue
+          const status = asMaybeRelayStatus(await statusResponse.json())
+          txid = status?.sending?.txHash
+          if (txid == null && status?.status === 'FAILED') {
+            throw new Error(
+              `Lifi relay task ${taskId} failed: ${
+                status.substatusMessage ?? 'unknown'
+              }`
+            )
+          }
+        }
+        // A slow hash does not undo the transfer. Save it under the stand-in
+        // txid the HyperCore engine gives the ledger entry with this nonce:
+        txid ??= `hypercore-nonce-${nonce}`
+
+        const transaction: EdgeTransaction = {
+          assetAction: { assetActionType: 'swap' },
+          blockHeight: 0,
+          currencyCode: request.fromCurrencyCode,
+          date: Date.now() / 1000,
+          isSend: true,
+          memos: [],
+          metadata: {
+            ...approveOpts?.metadata,
+            notes:
+              approveOpts?.metadata?.notes != null
+                ? `${metadataNotes}\n\n${approveOpts.metadata.notes}`
+                : metadataNotes
+          },
+          nativeAmount: `-${nativeAmount}`,
+          // HyperCore charges no gas for the relayed transfer:
+          networkFee: '0',
+          networkFees: [],
+          ourReceiveAddresses: [],
+          savedAction: { ...savedAction, orderId: taskId },
+          signedTx: '',
+          tokenId: fromTokenId,
+          txid,
+          walletId: fromWallet.id
+        }
+        await fromWallet.saveTx(transaction)
+
+        return { orderId: taskId, transaction }
+      }
+
+      return {
+        approve,
+        close: async () => {},
+        expirationDate: new Date(Date.now() + EXPIRATION_MS),
+        fromNativeAmount: nativeAmount,
+        isEstimate: true,
+        minReceiveAmount: toAmountMin,
+        networkFee: {
+          currencyCode: fromWallet.currencyInfo.currencyCode,
+          nativeAmount: '0',
+          tokenId: null
+        },
+        pluginId,
+        request,
+        swapInfo,
+        toNativeAmount: toAmount
+      }
+    }
 
     const preTxs: EdgeTransaction[] = []
     let spendInfo: EdgeSpendInfo
@@ -543,7 +838,11 @@ export function makeLifiPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
 
       let newRequest = request
       if (request.quoteFor === 'max') {
-        if (request.fromTokenId != null) {
+        // HyperCore transfers carry no gas, so its whole balance is swappable:
+        if (
+          request.fromTokenId != null ||
+          request.fromWallet.currencyInfo.pluginId === 'hypercore'
+        ) {
           const maxAmount =
             request.fromWallet.balanceMap.get(request.fromTokenId) ?? '0'
           newRequest = {
@@ -552,14 +851,15 @@ export function makeLifiPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
             quoteFor: 'from'
           }
         } else {
-          newRequest = await getMaxSwappable(
-            async r => await fetchSwapQuoteInner(r),
-            request
-          )
+          newRequest = await getMaxSwappable(async r => {
+            const order = await fetchSwapQuoteInner(r)
+            if ('approve' in order) throw new SwapCurrencyError(swapInfo, r)
+            return order
+          }, request)
         }
       }
-      const swapOrder = await fetchSwapQuoteInner(newRequest)
-      return await makeSwapPluginQuote(swapOrder)
+      const order = await fetchSwapQuoteInner(newRequest)
+      return 'approve' in order ? order : await makeSwapPluginQuote(order)
     }
   }
   return out

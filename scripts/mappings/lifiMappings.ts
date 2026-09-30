@@ -77,7 +77,7 @@ lifi.set('gra', null)
 lifi.set('hmi', null)
 
 // Display Name: Hyperliquid
-lifi.set('hpl', null)
+lifi.set('hpl', 'hypercore')
 
 // Display Name: HyperEVM
 lifi.set('hyp', 'hyperevm')
