@@ -139,16 +139,6 @@ export async function makeSwapPluginQuote(
     )
   }
 
-  let nativeAmount =
-    tx.parentNetworkFee != null ? tx.parentNetworkFee : tx.networkFee
-
-  for (const preTx of preTxs) {
-    nativeAmount = add(
-      nativeAmount,
-      preTx.parentNetworkFee != null ? preTx.parentNetworkFee : preTx.networkFee
-    )
-  }
-
   const out: EdgeSwapQuote = {
     canBePartial,
     expirationDate,
@@ -156,11 +146,7 @@ export async function makeSwapPluginQuote(
     isEstimate,
     maxFulfillmentSeconds,
     minReceiveAmount,
-    networkFee: {
-      currencyCode: fromWallet.currencyInfo.currencyCode,
-      nativeAmount,
-      tokenId: null
-    },
+    networkFee: getSwapNetworkFee(fromWallet, [...preTxs, tx]),
     pluginId: swapInfo.pluginId,
     request,
     swapInfo,
@@ -232,6 +218,57 @@ export async function makeSwapPluginQuote(
     async close() {}
   }
   return out
+}
+
+/**
+ * Totals the network fees of a swap's transactions. Fees normally come
+ * out of the parent currency, but some chains charge them in a token
+ * (such as the HyperCore account activation fee), which the transactions
+ * report through `networkFees`.
+ */
+export function getSwapNetworkFee(
+  wallet: EdgeCurrencyWallet,
+  txs: EdgeTransaction[]
+): EdgeSwapQuote['networkFee'] {
+  const feeTokenId = getSharedFeeTokenId(txs)
+  const feeToken =
+    feeTokenId == null ? undefined : wallet.currencyConfig.allTokens[feeTokenId]
+  if (feeTokenId != null && feeToken != null) {
+    let nativeAmount = '0'
+    for (const tx of txs) {
+      nativeAmount = add(nativeAmount, tx.networkFees[0].nativeAmount)
+    }
+    return {
+      currencyCode: feeToken.currencyCode,
+      nativeAmount,
+      tokenId: feeTokenId
+    }
+  }
+
+  let nativeAmount = '0'
+  for (const tx of txs) {
+    nativeAmount = add(nativeAmount, tx.parentNetworkFee ?? tx.networkFee)
+  }
+  return {
+    currencyCode: wallet.currencyInfo.currencyCode,
+    nativeAmount,
+    tokenId: null
+  }
+}
+
+/**
+ * Returns the token every transaction pays its single fee in, if any.
+ */
+const getSharedFeeTokenId = (txs: EdgeTransaction[]): EdgeTokenId => {
+  // Transactions from `otherMethods.makeTx` may predate `networkFees`:
+  const feeLists = txs.map(tx => tx.networkFees ?? [])
+  const [firstFees] = feeLists
+  if (firstFees == null || firstFees.length !== 1) return null
+  const { tokenId } = firstFees[0]
+  const isShared = feeLists.every(
+    fees => fees.length === 1 && fees[0].tokenId === tokenId
+  )
+  return isShared ? tokenId : null
 }
 
 export const getMaxSwappable = async <T extends any[]>(
