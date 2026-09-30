@@ -1,7 +1,8 @@
-import { ceil, floor, gt, lt, mul } from 'biggystring'
+import { ceil, eq, floor, gt, lt, mul } from 'biggystring'
 import {
   asArray,
   asBoolean,
+  asEither,
   asMaybe,
   asNumber,
   asObject,
@@ -12,12 +13,14 @@ import {
 } from 'cleaners'
 import {
   EdgeCorePluginOptions,
+  EdgeCurrencyWallet,
   EdgeMemo,
   EdgeSpendInfo,
   EdgeSwapInfo,
   EdgeSwapPlugin,
   EdgeSwapQuote,
   EdgeSwapRequest,
+  EdgeTokenId,
   EdgeTransaction,
   JsonObject,
   SwapAboveLimitError,
@@ -168,6 +171,8 @@ const MAINNET_CODE_TRANSCRIPTION: StringMap = mapToStringMap(mptradeMapping)
  *   deserializes it out of `otherParams.unsignedTx`.
  * - `alt-vm`: a deposit address on the source chain, with `toExtra` carrying
  *   the memo/tag when that chain needs one.
+ * - `hypercore`: a Hyperliquid `sendAsset` user action paying a deposit
+ *   address from the spot balance, with `amount` as a decimal string.
  */
 const asMpTradeEvmTx = asObject({
   to: asString,
@@ -188,10 +193,20 @@ const asMpTradeAltVmTx = asObject({
   value: asString
 })
 
+const asMpTradeHyperCoreTx = asObject({
+  type: asValue('sendAsset'),
+  destination: asString,
+  sourceDex: asValue('spot'),
+  destinationDex: asString,
+  token: asString,
+  amount: asString
+})
+
 const asMpTradeAmount = asObject({
   amount: asString,
   address: asString,
-  isNative: asBoolean
+  isNative: asBoolean,
+  decimals: asOptional(asNumber)
 })
 
 /**
@@ -228,13 +243,22 @@ const asMpTradeAmountLimits = asObject({
 
 const asMpTradePath = asObject({
   chainId: asNumber,
+  /** Either `'all'` or the explicit list of destination tokens. */
+  tokens: asOptional(
+    asEither(asValue('all'), asArray(asObject({ address: asString }))),
+    'all'
+  ),
   supportsExactAmountIn: asOptional(asBoolean, true),
   amountLimits: asOptional(asMpTradeAmountLimits)
 })
 
-/** The source token's own limits, plus the decimals that scale them. */
+/**
+ * The source token's own limits, plus the decimals that scale them. The API
+ * leaves `decimals` out for tokens it holds no metadata for, as with every
+ * HyperCore source.
+ */
 const asMpTradeSrcToken = asObject({
-  decimals: asNumber,
+  decimals: asOptional(asNumber),
   minAmount: asOptional(asString),
   maxAmount: asOptional(asString)
 })
@@ -339,7 +363,7 @@ interface MpTradeRoute {
 }
 
 /** Source-chain VMs this plugin knows how to execute. */
-const SUPPORTED_VM_IDS = ['evm', 'solana', 'alt-vm']
+const SUPPORTED_VM_IDS = ['evm', 'solana', 'alt-vm', 'hypercore']
 
 /**
  * Context resolved from the swap request, passed to the pure spend-info
@@ -370,6 +394,8 @@ export interface MpTradeSpendContext {
  *   descriptive only.
  * - `alt-vm`: pay `tx.value` to the deposit address at `tx.to`, carrying
  *   `tx.toExtra` as the chain's memo when the route supplies one.
+ * - `hypercore`: pay `amountIn` to `tx.destination`, passing the destination
+ *   dex so the engine signs the same `sendAsset` the route describes.
  *
  * Pure and synchronous for testability.
  */
@@ -403,6 +429,13 @@ export const makeMpTradeSpendInfo = (
         ? SOLANA_SYSTEM_PROGRAM_ID
         : amountIn.address
       otherParams = { unsignedTx: tx.base64Tx }
+      break
+    }
+    case 'hypercore': {
+      const tx = asMpTradeHyperCoreTx(action.tx)
+      fromNativeAmount = amountIn.amount
+      publicAddress = tx.destination
+      otherParams = { destinationDex: tx.destinationDex }
       break
     }
     case 'alt-vm': {
@@ -610,6 +643,17 @@ const throwMpTradeError = (
   throw providerError
 }
 
+const getMultiplier = (
+  wallet: EdgeCurrencyWallet,
+  tokenId: EdgeTokenId
+): string => {
+  const { denominations } =
+    tokenId == null
+      ? wallet.currencyInfo
+      : wallet.currencyConfig.allTokens[tokenId]
+  return denominations[0].multiplier
+}
+
 export function makeMpTradeBasedPlugin(
   opts: EdgeCorePluginOptions,
   variant: MpTradeVariant
@@ -731,11 +775,14 @@ export function makeMpTradeBasedPlugin(
       throw new SwapCurrencyError(swapInfo, request)
     }
 
+    // HyperCore lists its destination tokens explicitly, but naming one of
+    // them as `dstToken` returns no paths at all, so that filter is left off
+    // and the token is looked up in the route's list instead.
     const pathsParams = makeQueryParams({
       srcChainId: fromChainId,
       srcToken: fromTokenAddress,
       dstChainId: toChainId,
-      dstToken: toTokenAddress
+      ...(toPluginId === 'hypercore' ? {} : { dstToken: toTokenAddress })
     })
     const pathsResponse = await fetchCors(
       `${MPTRADE_API_URL}/getPaths?${pathsParams}`,
@@ -763,7 +810,14 @@ export function makeMpTradeBasedPlugin(
     // An unsupported chain or token pair comes back as HTTP 200 with an empty
     // `paths` array, not as an error body.
     const path = paths.find(entry => entry.chainId === Number(toChainId))
-    if (path == null || !path.supportsExactAmountIn) {
+    if (
+      path == null ||
+      !path.supportsExactAmountIn ||
+      (path.tokens !== 'all' &&
+        !path.tokens.some(
+          token => token.address.toLowerCase() === toTokenAddress.toLowerCase()
+        ))
+    ) {
       throw new SwapCurrencyError(swapInfo, request)
     }
 
@@ -771,7 +825,16 @@ export function makeMpTradeBasedPlugin(
     // `amountLimits` are deprecated in the API reference and kept only as a
     // fallback. Both arrive as decimal strings, so they have to be scaled into
     // the base units `nativeAmount` uses before any compare.
-    const { decimals } = srcToken
+    // Only HyperCore sources arrive without decimals; their limits are in the
+    // token's own units:
+    const decimals =
+      srcToken.decimals ??
+      (fromPluginId === 'hypercore'
+        ? getMultiplier(fromWallet, fromTokenId).length - 1
+        : undefined)
+    if (decimals == null) {
+      throw new Error('MoonPay Trade getPaths returned no source decimals')
+    }
     const minLimit = srcToken.minAmount ?? path.amountLimits?.minAmount
     const maxLimit = srcToken.maxAmount ?? path.amountLimits?.maxAmount
     const minAmount =
@@ -860,10 +923,13 @@ export function makeMpTradeBasedPlugin(
     const action = asMpTradeAction(responseJson)
 
     // Every route model this plugin executes is driven off the SOURCE chain's
-    // `vmId`. A `hypercore` source signs an action rather than a transaction,
-    // and a non-DEFAULT execution type (gasless and friends) needs machinery
-    // we do not have.
-    if (!SUPPORTED_VM_IDS.includes(action.vmId)) {
+    // `vmId`, and only the HyperCore engine can sign a `hypercore` action. A
+    // non-DEFAULT execution type (gasless and friends) needs machinery we do
+    // not have.
+    if (
+      !SUPPORTED_VM_IDS.includes(action.vmId) ||
+      (action.vmId === 'hypercore') !== (fromPluginId === 'hypercore')
+    ) {
       throw new SwapCurrencyError(swapInfo, request)
     }
     if (action.executionsType !== 'DEFAULT') {
@@ -885,6 +951,23 @@ export function makeMpTradeBasedPlugin(
       }
     }
     rejectOverRequest(action.amountIn.amount)
+
+    // MoonPay Trade scales some HyperCore tokens by their display decimals
+    // rather than the chain's own, so a HyperCore leg only quotes when both
+    // sides agree on the unit.
+    if (action.vmId === 'hypercore') {
+      const { amount } = asMpTradeHyperCoreTx(action.tx)
+      const multiplier = getMultiplier(fromWallet, fromTokenId)
+      if (!eq(mul(amount, multiplier), action.amountIn.amount)) {
+        throw new SwapCurrencyError(swapInfo, request)
+      }
+    }
+    if (toPluginId === 'hypercore') {
+      const multiplier = getMultiplier(toWallet, toTokenId)
+      if (action.amountOut.decimals !== multiplier.length - 1) {
+        throw new SwapCurrencyError(swapInfo, request)
+      }
+    }
 
     // ERC20 sources must approve the router (`tx.to`) before the swap. Only an
     // EVM route has a router to approve; the other models pay an address.

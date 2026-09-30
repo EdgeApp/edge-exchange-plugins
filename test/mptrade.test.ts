@@ -39,16 +39,32 @@ const LTC_SENDER = 'ltc1qexample'
 const XRP_DEPOSIT = 'rKKbNYZRqwPgZYkFWvqNUFBuscEyiFyCE'
 const SOLANA_SYSTEM_PROGRAM = '11111111111111111111111111111111'
 const SENDER = '0x0b0901e9cef9eaed5753519177e3c7cfd0ef96ef'
+// A HyperCore route in the shape live getAction returns: a `sendAsset` from
+// the spot balance to a Relay deposit address's perp balance.
+const HYPERCORE_DEPOSIT = '0xdf1a80dc7f9525414c389ed10ec1da690d9e3dea'
+const HYPERCORE_USDC = '0x6d1e7cde53ba9467b783cb7c530ce054'
+const HYPERCORE_TX = {
+  type: 'sendAsset',
+  destination: HYPERCORE_DEPOSIT,
+  amount: '5.0',
+  chainId: 1337,
+  sourceDex: 'spot',
+  destinationDex: '',
+  token: `USDC:${HYPERCORE_USDC}`,
+  fromSubAccount: ''
+}
 const RECIPIENT = '0x1234567890123456789012345678901234567890'
 
 const makeAmount = (
   amount: string,
   address: string,
-  isNative: boolean
+  isNative: boolean,
+  decimals?: number
 ): MpTradeAction['amountIn'] => ({
   amount,
   address,
-  isNative
+  isNative,
+  decimals
 })
 
 /**
@@ -291,6 +307,30 @@ describe('mptrade makeMpTradeSpendInfo route models', function () {
     // No memo slot on this chain, and no calldata to attach either.
     assert.deepEqual(spendInfo.memos, [])
     assert.isUndefined(spendInfo.otherParams)
+  })
+
+  it('pays the deposit address with a sendAsset on a hypercore route', function () {
+    const spendInfo = makeMpTradeSpendInfo({
+      action: makeAction({
+        vmId: 'hypercore',
+        tx: HYPERCORE_TX,
+        amountIn: makeAmount('500000000', HYPERCORE_USDC, false, 8)
+      }),
+      swapInfo: mpTradeSwapInfo,
+      fromPluginId: 'hypercore',
+      toPluginId: 'arbitrum',
+      fromTokenId: USDC,
+      toTokenId: USDC,
+      fromAddress: SENDER,
+      toAddress: SENDER,
+      toWalletId: 'wallet-arbitrum'
+    })
+
+    assert.deepEqual(spendInfo.spendTargets, [
+      { nativeAmount: '500000000', publicAddress: HYPERCORE_DEPOSIT }
+    ])
+    assert.deepEqual(spendInfo.memos, [])
+    assert.deepEqual(spendInfo.otherParams, { destinationDex: '' })
   })
 
   it('carries toExtra as the chain memo when an alt-vm route needs one', function () {
@@ -593,6 +633,20 @@ const ethWallet = (
     balanceMap
   })
 
+/** Paths that reach one destination chain, for routes off Ethereum mainnet. */
+const pathsTo = (chainId: number): FakeResponse =>
+  openPaths({
+    paths: [
+      {
+        chainId,
+        tokens: 'all',
+        supportsExactAmountIn: true,
+        supportsExactAmountOut: true,
+        amountLimits: { minAmount: null, maxAmount: null }
+      }
+    ]
+  })
+
 const usdcRequest = (
   overrides: Partial<EdgeSwapRequest> = {}
 ): EdgeSwapRequest => ({
@@ -609,6 +663,36 @@ const usdcRequest = (
   quoteFor: 'from',
   ...overrides
 })
+
+const hypercoreWallet = (spendLog?: EdgeSpendInfo[]): EdgeCurrencyWallet =>
+  makeFakeWallet({
+    pluginId: 'hypercore',
+    currencyCode: 'HYPE',
+    address: SENDER,
+    balanceMap: new Map([[USDC, '1000000000']]),
+    spendLog
+  })
+
+/** HyperCore USDC to Arbitrum USDC, the route live getAction serves. */
+const hypercoreRequest = (
+  overrides: Partial<EdgeSwapRequest> & { spendLog?: EdgeSpendInfo[] } = {}
+): EdgeSwapRequest => {
+  const { spendLog, ...rest } = overrides
+  return {
+    fromWallet: hypercoreWallet(spendLog),
+    fromTokenId: USDC,
+    toWallet: makeFakeWallet({
+      pluginId: 'arbitrum',
+      currencyCode: 'ETH',
+      address: SENDER,
+      evmChainId: 42161
+    }),
+    toTokenId: USDC,
+    nativeAmount: '5000000',
+    quoteFor: 'from',
+    ...rest
+  }
+}
 
 const expectErrorName = async (
   plugin: EdgeSwapPlugin,
@@ -839,6 +923,43 @@ describe('mptrade fetchSwapQuote getPaths pre-check', function () {
       }),
       'SwapBelowLimitError'
     )
+  })
+
+  it('scales HyperCore limits by the wallet decimals when getPaths omits them', async function () {
+    // The live API leaves `srcToken.decimals` out for HyperCore tokens. The
+    // fake USDC has 6 decimals, so a 10 USDC floor is 10000000.
+    await expectErrorName(
+      makePlugin(
+        okAction(),
+        openPaths({
+          srcToken: { decimals: undefined, minAmount: '10', maxAmount: null },
+          paths: [
+            { chainId: 42161, tokens: 'all', supportsExactAmountIn: true }
+          ]
+        })
+      ),
+      hypercoreRequest(),
+      'SwapBelowLimitError'
+    )
+  })
+
+  it('rejects other sources when getPaths omits their decimals', async function () {
+    await makePlugin(
+      okAction(),
+      openPaths({
+        srcToken: { decimals: undefined, minAmount: '0.05', maxAmount: null },
+        paths: [{ chainId: 1, supportsExactAmountIn: true }]
+      })
+    )
+      .fetchSwapQuote(
+        usdcRequest({ nativeAmount: '40000000000000000' }),
+        undefined,
+        { infoPayload: {} }
+      )
+      .then(
+        () => assert.fail('expected an error'),
+        (error: unknown) => assert.match(String(error), /no source decimals/)
+      )
   })
 
   it('falls back to the source token limits when the route carries none', async function () {
@@ -1105,12 +1226,40 @@ describe('mptrade fetchSwapQuote getAction error classification', function () {
 })
 
 describe('mptrade fetchSwapQuote success-response guards', function () {
-  it('rejects a hypercore route (vmId) with SwapCurrencyError', async function () {
-    // The plugin executes evm, solana and alt-vm routes; a hypercore route
-    // signs an action rather than a transaction, which it cannot execute.
+  it('rejects a hypercore route (vmId) from another chain with SwapCurrencyError', async function () {
+    // Only the HyperCore engine can sign a hypercore action.
     await expectErrorName(
       makePlugin(okAction({ vmId: 'hypercore' })),
       usdcRequest(),
+      'SwapCurrencyError'
+    )
+  })
+
+  it('rejects a hypercore action scaled by other decimals', async function () {
+    // The fake USDC has 6 decimals, so `5.0` is 5000000, not 500000000.
+    await expectErrorName(
+      makePlugin(
+        okAction({
+          vmId: 'hypercore',
+          tx: HYPERCORE_TX,
+          amountIn: makeAmount('500000000', HYPERCORE_USDC, false, 8)
+        }),
+        pathsTo(42161)
+      ),
+      hypercoreRequest({ nativeAmount: '500000000' }),
+      'SwapCurrencyError'
+    )
+  })
+
+  it('rejects a HyperCore payout scaled by other decimals', async function () {
+    await expectErrorName(
+      makePlugin(
+        okAction({
+          amountOut: makeAmount('997000000', HYPERCORE_USDC, false, 8)
+        }),
+        pathsTo(1337)
+      ),
+      usdcRequest({ toWallet: hypercoreWallet() }),
       'SwapCurrencyError'
     )
   })
@@ -1192,6 +1341,84 @@ describe('mptrade fetchSwapQuote success', function () {
     assert.equal(quote.minReceiveAmount, undefined)
     assert.equal(quote.toNativeAmount, '18964852')
     assert.equal(quote.isEstimate, false)
+  })
+
+  it('builds a sendAsset quote for a HyperCore source', async function () {
+    const spendLog: EdgeSpendInfo[] = []
+    const quote = await makePlugin(
+      okAction({
+        vmId: 'hypercore',
+        tx: HYPERCORE_TX,
+        amountIn: makeAmount('5000000', HYPERCORE_USDC, false, 6),
+        amountOut: makeAmount('4838720', `0x${USDC}`, false, 6),
+        amountOutMin: makeAmount('4790332', `0x${USDC}`, false, 6)
+      }),
+      pathsTo(42161)
+    ).fetchSwapQuote(hypercoreRequest({ spendLog }), undefined, {
+      infoPayload: {}
+    })
+
+    assert.equal(quote.fromNativeAmount, '5000000')
+    assert.equal(quote.toNativeAmount, '4790332')
+    const [spendInfo] = spendLog
+    assert.deepEqual(spendInfo.spendTargets, [
+      { nativeAmount: '5000000', publicAddress: HYPERCORE_DEPOSIT }
+    ])
+    assert.deepEqual(spendInfo.otherParams, { destinationDex: '' })
+  })
+
+  it('builds a quote paying out to HyperCore', async function () {
+    const quote = await makePlugin(
+      okAction({
+        amountOut: makeAmount('997000000', HYPERCORE_USDC, false, 6),
+        amountOutMin: makeAmount('997000000', HYPERCORE_USDC, false, 6)
+      }),
+      pathsTo(1337)
+    ).fetchSwapQuote(usdcRequest({ toWallet: hypercoreWallet() }), undefined, {
+      infoPayload: {}
+    })
+    assert.equal(quote.toNativeAmount, '997000000')
+  })
+
+  it('looks a HyperCore destination up in the route token list', async function () {
+    // Live getPaths returns no paths when `dstToken` names a HyperCore token,
+    // so the request leaves it off and the listed tokens decide.
+    const uriLog: string[] = []
+    const listing = (address: string): FakeResponse =>
+      openPaths({
+        paths: [
+          {
+            chainId: 1337,
+            tokens: [{ address, symbol: 'USDC', decimals: 8 }],
+            supportsExactAmountIn: true
+          }
+        ]
+      })
+    const quote = await makePlugin(
+      okAction({
+        amountOut: makeAmount('997000000', HYPERCORE_USDC, false, 6),
+        amountOutMin: makeAmount('997000000', HYPERCORE_USDC, false, 6)
+      }),
+      // The fake wallets share one token table, so this is the address the
+      // HyperCore wallet reports for its USDC.
+      listing(`0x${USDC}`),
+      undefined,
+      uriLog
+    ).fetchSwapQuote(usdcRequest({ toWallet: hypercoreWallet() }), undefined, {
+      infoPayload: {}
+    })
+    assert.equal(quote.toNativeAmount, '997000000')
+    const pathsUri = uriLog.find(uri => uri.includes('/getPaths')) ?? ''
+    assert.notInclude(pathsUri, 'dstToken')
+
+    await expectErrorName(
+      makePlugin(
+        okAction(),
+        listing('0x2222222222222222222222222222222222222222')
+      ),
+      usdcRequest({ toWallet: hypercoreWallet() }),
+      'SwapCurrencyError'
+    )
   })
 
   it('builds a quote for an alt-vm source', async function () {
