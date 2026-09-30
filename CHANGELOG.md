@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- fixed: (MoonPay Trade) Link swap orders to the new Swaps Scanner order page
+
 ## 2.57.1 (2026-09-29)
 
 - fixed: (Swapter) Disable swaps into HYPE to avoid payouts on HyperCore
