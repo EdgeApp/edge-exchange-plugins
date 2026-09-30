@@ -117,7 +117,7 @@ describe('mptrade makeMpTradeSpendInfo', function () {
         },
         orderId: '0x99b16cbed2445ffdc34133e030cdda451bcdd73c',
         orderUri:
-          'https://explorer.swaps.xyz/tx/0x99b16cbed2445ffdc34133e030cdda451bcdd73c',
+          'https://scan.swaps.xyz/transactions/0x99b16cbed2445ffdc34133e030cdda451bcdd73c',
         isEstimate: false,
         toAsset: {
           pluginId: 'ethereum',

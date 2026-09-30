@@ -149,7 +149,7 @@ const MAJOR_CURRENCY_CODES = new Set([
 const REGISTER_RETRY_DELAYS_MS = [250, 500, 1000, 2000]
 
 // MoonPay Trade explorer base for the saved swap action.
-const ORDER_URI = 'https://explorer.swaps.xyz/tx/'
+const ORDER_URI = 'https://scan.swaps.xyz/transactions/'
 // Solana has no "zero address"; the system program stands in as the spend
 // target's public address, matching how rango names a native SOL source. The
 // engine ignores it and executes `otherParams.unsignedTx`.
