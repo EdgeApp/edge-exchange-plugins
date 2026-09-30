@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- added: (Changelly) TON, BNB Smart Chain BNB and Avalanche C-Chain AVAX swaps
+- fixed: (Changelly) L2 ETH swaps no longer pay out on Ethereum mainnet
+- fixed: (Changelly) Base and zkSync tokens are swappable
+
 ## 2.57.2 (2026-09-30)
 
 - fixed: (MoonPay Trade) Link swap orders to the new Swaps Scanner order page

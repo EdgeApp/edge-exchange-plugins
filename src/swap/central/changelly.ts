@@ -2,6 +2,7 @@ import { gt, lt } from 'biggystring'
 import { asObject, asString } from 'cleaners'
 import {
   EdgeCorePluginOptions,
+  EdgeCurrencyWallet,
   EdgeFetchFunction,
   EdgeMemo,
   EdgeSpendInfo,
@@ -17,11 +18,13 @@ import {
 import { base64 } from 'rfc4648'
 
 import { changelly as changellyMapping } from '../../mappings/changelly'
+import { EdgeCurrencyPluginId } from '../../util/edgeCurrencyPluginIds'
 import {
   ChainCodeTickerMap,
   checkInvalidTokenIds,
   checkWhitelistedMainnetCodes,
   CurrencyPluginIdSwapChainCodeMap,
+  EdgeIdSwapIdMap,
   getChainAndTokenCodes,
   getMaxSwappable,
   InvalidTokenIds,
@@ -39,6 +42,13 @@ import {
 import { EdgeSwapRequestPlugin, StringMap } from '../types'
 
 const pluginId = 'changelly'
+
+export const swapInfo: EdgeSwapInfo = {
+  pluginId,
+  isDex: false,
+  displayName: 'Changelly',
+  supportEmail: 'support@changelly.com'
+}
 
 const CHANGELLY_V2_URL = 'https://api-relay.changelly.com/'
 
@@ -119,7 +129,8 @@ interface CurrenciesResponse {
   transactionUrl: string
   protocol: string
   blockchain: string
-  contractAddress: string
+  // Absent on native coins:
+  contractAddress?: string
 }
 
 interface EstimationRequest {
@@ -328,6 +339,85 @@ function createClient(
   }
 }
 
+/**
+ * Groups the fix-rate assets by the chain code our mapping uses.
+ * Changelly's `blockchain` casing is inconsistent (`BASE`, `ZKSYNC`),
+ * so it is matched case-insensitively.
+ */
+export const makeChainCodeTickerMap = (
+  assets: CurrenciesResponse[]
+): ChainCodeTickerMap => {
+  const chainCodes = new Map<string, string>()
+  for (const chainCode of Object.values(MAINNET_CODE_TRANSCRIPTION)) {
+    if (chainCode != null) chainCodes.set(chainCode.toLowerCase(), chainCode)
+  }
+
+  const out: ChainCodeTickerMap = new Map()
+  for (const asset of assets) {
+    // Quotes go through the fix-rate API exclusively, so an asset without
+    // fixRateEnabled would surface as swappable and fail at quote time.
+    if (!asset.enabled || !asset.fixRateEnabled) continue
+    const chainCode = chainCodes.get(asset.blockchain.toLowerCase())
+    if (chainCode == null) continue
+    const tokenCodes = out.get(chainCode) ?? []
+    tokenCodes.push({
+      tokenCode: asset.ticker,
+      contractAddress:
+        asset.contractAddress == null || asset.contractAddress === ''
+          ? null
+          : asset.contractAddress
+    })
+    out.set(chainCode, tokenCodes)
+  }
+  return out
+}
+
+// Native tickers that don't start with the wallet's currency code.
+// Changelly lists Toncoin under its original name:
+const NATIVE_TICKER_OVERRIDES: { [pluginId: string]: string } = {
+  ton: 'gram'
+}
+
+/**
+ * Changelly's API takes no network parameter: the ticker alone selects the
+ * chain, so each chain's native coin has its own ticker (`etharb`,
+ * `ethbase`, `bnbbsc`). Without an entry here the shared helper falls back to
+ * the wallet's currency code, which sends L2 ETH as mainnet `eth`.
+ * The native coin must also match the wallet's currency code (or a listed
+ * override), so another contract-less asset on the chain is never mistaken
+ * for it. A chain with no matching listing gets an empty entry, so its
+ * native coin is unsupported instead of guessed.
+ */
+export const makeNativeCases = (
+  wallets: EdgeCurrencyWallet[],
+  chainCodeTickerMap: ChainCodeTickerMap
+): EdgeIdSwapIdMap => {
+  const out: EdgeIdSwapIdMap = new Map()
+  for (const wallet of wallets) {
+    const edgePluginId = wallet.currencyInfo.pluginId as EdgeCurrencyPluginId
+    const chainCode = MAINNET_CODE_TRANSCRIPTION[edgePluginId]
+    if (chainCode == null) continue
+
+    const natives = (chainCodeTickerMap.get(chainCode) ?? []).filter(
+      asset => asset.contractAddress == null
+    )
+    const override = NATIVE_TICKER_OVERRIDES[edgePluginId]
+    const code = wallet.currencyInfo.currencyCode.toLowerCase()
+    const native =
+      override != null
+        ? natives.find(asset => asset.tokenCode === override)
+        : natives.find(asset => asset.tokenCode === code) ??
+          natives.find(asset => asset.tokenCode.startsWith(code))
+    out.set(
+      edgePluginId,
+      new Map(
+        native == null ? [] : [[null, { chainCode, tokenCode: native.tokenCode }]]
+      )
+    )
+  }
+  return out
+}
+
 let chainCodeTickerMap: ChainCodeTickerMap = new Map()
 let lastUpdated = 0
 const EXPIRATION = 1000 * 60 * 60
@@ -344,13 +434,6 @@ export function makeChangellyPlugin({
   }
   const client = createClient(fetch, apiKey, partnerId)
 
-  const swapInfo: EdgeSwapInfo = {
-    pluginId,
-    isDex: false,
-    displayName: 'Changelly',
-    supportEmail: 'support@changelly.com'
-  }
-
   const fetchSupportedAssets = async (): Promise<void> => {
     if (lastUpdated > Date.now() - EXPIRATION) return
 
@@ -365,26 +448,15 @@ export function makeChangellyPlugin({
         throw new Error('Currencies result cannot be processed')
       }
 
-      const chaincodeArray = Object.values(MAINNET_CODE_TRANSCRIPTION).filter(Boolean)
-      const out: ChainCodeTickerMap = new Map()
-      for (const asset of data.result) {
-        // Quotes go through the fix-rate API exclusively, so an asset without
-        // fixRateEnabled would surface as swappable and fail at quote time.
-        if (!asset.enabled || !asset.fixRateEnabled) continue
-        if (!chaincodeArray.includes(asset.blockchain)) continue
-        const tokenCodes = out.get(asset.blockchain) ?? []
-        tokenCodes.push({
-          tokenCode: asset.ticker,
-          contractAddress:
-            asset.contractAddress === '' ? null : asset.contractAddress
-        })
-        out.set(asset.blockchain, tokenCodes)
-      }
-
-      chainCodeTickerMap = out
+      chainCodeTickerMap = makeChainCodeTickerMap(data.result)
       lastUpdated = Date.now()
     } catch (e: unknown) {
       log.warn('Changelly: Error updating supported assets', e)
+      // Without a first successful load there are no native tickers, so
+      // every pair would read as unsupported. Report the outage instead:
+      if (lastUpdated === 0) {
+        throw new Error('Changelly: supported assets unavailable')
+      }
     }
   }
 
@@ -411,7 +483,11 @@ export function makeChangellyPlugin({
       request,
       swapInfo,
       chainCodeTickerMap,
-      MAINNET_CODE_TRANSCRIPTION
+      MAINNET_CODE_TRANSCRIPTION,
+      makeNativeCases(
+        [request.fromWallet, request.toWallet],
+        chainCodeTickerMap
+      )
     )
 
     const quoteAmount = reverseQuote
