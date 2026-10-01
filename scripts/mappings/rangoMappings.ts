@@ -7,6 +7,9 @@ rango.set('AKASH', null)
 // Display Name: Arbitrum
 rango.set('ARBITRUM', 'arbitrum')
 
+// Display Name: Arc
+rango.set('ARC', 'arc')
+
 // Display Name: Aurora
 rango.set('AURORA', null)
 
@@ -64,6 +67,9 @@ rango.set('CELO', 'celo')
 // Display Name: Chihuahua
 rango.set('CHIHUAHUA', null)
 
+// Display Name: Citrea
+rango.set('CITREA', null)
+
 // Display Name: Comdex
 rango.set('COMDEX', null)
 
@@ -112,6 +118,12 @@ rango.set('HARMONY', null)
 // Display Name: Heco
 rango.set('HECO', null)
 
+// Display Name: HyperEVM
+rango.set('HYPEREVM', null)
+
+// Display Name: Hyperliquid
+rango.set('HYPERLIQUID', null)
+
 // Display Name: Injective
 rango.set('INJECTIVE', null)
 
@@ -123,6 +135,9 @@ rango.set('IRIS', null)
 
 // Display Name: Juno
 rango.set('JUNO', null)
+
+// Display Name: Katana
+rango.set('KATANA', null)
 
 // Display Name: Kcc
 rango.set('KCC', null)
@@ -154,6 +169,9 @@ rango.set('MAYA', 'mayachain')
 // Display Name: MediBloc
 rango.set('MEDIBLOC', null)
 
+// Display Name: MegaETH
+rango.set('MEGAETH', null)
+
 // Display Name: Metis
 rango.set('METIS', null)
 
@@ -168,6 +186,9 @@ rango.set('MOONBEAM', null)
 
 // Display Name: MoonRiver
 rango.set('MOONRIVER', null)
+
+// Display Name: Near
+rango.set('NEAR', null)
 
 // Display Name: Neutron
 rango.set('NEUTRON', null)
@@ -186,6 +207,9 @@ rango.set('OSMOSIS', 'osmosis')
 
 // Display Name: Persistence
 rango.set('PERSISTENCE', null)
+
+// Display Name: Plasma
+rango.set('PLASMA', null)
 
 // Display Name: Polygon
 rango.set('POLYGON', 'polygon')
@@ -223,6 +247,9 @@ rango.set('SONEIUM', null)
 // Display Name: Sonic
 rango.set('SONIC', 'sonic')
 
+// Display Name: Stable
+rango.set('STABLE', null)
+
 // Display Name: Stargaze
 rango.set('STARGAZE', null)
 
@@ -231,6 +258,9 @@ rango.set('STARKNET', null)
 
 // Display Name: Starname
 rango.set('STARNAME', null)
+
+// Display Name: Stellar
+rango.set('STELLAR', null)
 
 // Display Name: Stride
 rango.set('STRIDE', null)
@@ -270,6 +300,9 @@ rango.set('XLAYER', null)
 
 // Display Name: XRPL
 rango.set('XRPL', 'ripple')
+
+// Display Name: ZCash
+rango.set('ZCASH', null)
 
 // Display Name: ZetaChain
 rango.set('ZETA_CHAIN', null)

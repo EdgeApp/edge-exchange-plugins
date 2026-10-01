@@ -40,6 +40,9 @@ swapuz.set('AR', null)
 // Display Name: ARBITRUM ONE (ARBITRUM)
 swapuz.set('ARB', 'arbitrum')
 
+// Display Name: ARC
+swapuz.set('ARC', 'arc')
+
 // WARNING: Not included by the synchronizer synchronization
 swapuz.set('ARBITRUM', 'arbitrum')
 

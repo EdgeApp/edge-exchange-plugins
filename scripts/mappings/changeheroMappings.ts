@@ -1,27 +1,35 @@
 import { EdgeCurrencyPluginId } from '../../src/util/edgeCurrencyPluginIds'
 
 export const changehero = new Map<string, EdgeCurrencyPluginId | null>()
+// Currency Count: 1
+// Display Name: adi
+changehero.set('adi', null)
+
 // Currency Count: 2
 // Display Name: algorand
 changehero.set('algorand', 'algorand')
 
-// Currency Count: 5
+// Currency Count: 8
 // Display Name: arbitrum
 changehero.set('arbitrum', 'arbitrum')
 
 // Currency Count: 1
-// Display Name: ardor
-changehero.set('ardor', null)
+// Display Name: arc
+changehero.set('arc', 'arc')
+
+// Currency Count: 1
+// Display Name: aurora
+changehero.set('aurora', null)
 
 // Currency Count: 3
 // Display Name: avalanche_(c-chain)
 changehero.set('avalanche_(c-chain)', 'avalanche')
 
-// Currency Count: 7
+// Currency Count: 11
 // Display Name: base
 changehero.set('base', 'base')
 
-// Currency Count: 31
+// Currency Count: 52
 // Display Name: binance_smart_chain
 changehero.set('binance_smart_chain', 'binancesmartchain')
 
@@ -45,10 +53,6 @@ changehero.set('cardano', 'cardano')
 // Display Name: cosmos
 changehero.set('cosmos', 'cosmoshub')
 
-// Currency Count: 3
-// Display Name: cro
-changehero.set('cro', null)
-
 // Currency Count: 1
 // Display Name: dash
 changehero.set('dash', 'dash')
@@ -65,7 +69,7 @@ changehero.set('doge', 'dogecoin')
 // Display Name: elrond
 changehero.set('elrond', null)
 
-// Currency Count: 100
+// Currency Count: 119
 // Display Name: ethereum
 changehero.set('ethereum', 'ethereum')
 
@@ -100,7 +104,7 @@ changehero.set('icp', null)
 // Display Name: kaspa
 changehero.set('kaspa', null)
 
-// Currency Count: 4
+// Currency Count: 5
 // Display Name: linea
 changehero.set('linea', null)
 
@@ -129,10 +133,6 @@ changehero.set('nano', null)
 changehero.set('near', null)
 
 // Currency Count: 1
-// Display Name: nevm
-changehero.set('nevm', null)
-
-// Currency Count: 1
 // Display Name: nimiq
 changehero.set('nimiq', null)
 
@@ -144,7 +144,7 @@ changehero.set('optimism', 'optimism')
 // Display Name: polkadot
 changehero.set('polkadot', 'polkadot')
 
-// Currency Count: 7
+// Currency Count: 6
 // Display Name: polygon
 changehero.set('polygon', 'polygon')
 
@@ -153,14 +153,14 @@ changehero.set('polygon', 'polygon')
 changehero.set('qtum', 'qtum')
 
 // Currency Count: 1
+// Display Name: quai
+changehero.set('quai', null)
+
+// Currency Count: 2
 // Display Name: ripple
 changehero.set('ripple', 'ripple')
 
-// Currency Count: 1
-// Display Name: rollux
-changehero.set('rollux', null)
-
-// Currency Count: 40
+// Currency Count: 59
 // Display Name: solana
 changehero.set('solana', 'solana')
 
@@ -181,10 +181,6 @@ changehero.set('sui', 'sui')
 changehero.set('supra', null)
 
 // Currency Count: 1
-// Display Name: syscoin utxo
-changehero.set('syscoin utxo', null)
-
-// Currency Count: 1
 // Display Name: tezos
 changehero.set('tezos', 'tezos')
 
@@ -192,7 +188,7 @@ changehero.set('tezos', 'tezos')
 // Display Name: ton
 changehero.set('ton', 'ton')
 
-// Currency Count: 6
+// Currency Count: 7
 // Display Name: tron
 changehero.set('tron', 'tron')
 
@@ -211,6 +207,5 @@ changehero.set('xdc', null)
 // WARNING: Not included by the synchronizer synchronization
 changehero.set('xec', 'ecash')
 
-// Currency Count: 1
-// Display Name: zcash
+// WARNING: Not included by the synchronizer synchronization
 changehero.set('zcash', 'zcash')

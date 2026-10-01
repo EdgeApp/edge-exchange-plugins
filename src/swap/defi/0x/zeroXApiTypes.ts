@@ -14,6 +14,7 @@ import {
 // https://0x.org/docs/developer-resources/supported-chains
 export enum ChainId {
   Arbitrum = 42161,
+  Arc = 5042,
   Avalanche = 43114,
   Base = 8453,
   // Blast = 81457

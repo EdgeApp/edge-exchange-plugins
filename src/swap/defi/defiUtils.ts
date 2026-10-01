@@ -118,13 +118,20 @@ const NON_STANDARD_APPROVAL_TOKENS: { [pluginId: string]: string[] } = {
 export const createEvmApprovalEdgeTransactions = async ({
   request,
   approvalAmount,
+  savedActionAmount = approvalAmount,
   tokenContractAddress,
   recipientAddress,
   networkFeeOption,
   customNetworkFee
 }: {
   request: EdgeSwapRequestPlugin
+  /** The allowance, in the token contract's own units */
   approvalAmount: string
+  /**
+   * The same allowance in the wallet's native units, for the saved action.
+   * Only differs when the contract counts the asset at another precision.
+   */
+  savedActionAmount?: string
   tokenContractAddress: string
   recipientAddress: string
   networkFeeOption?: EdgeSpendInfo['networkFeeOption']
@@ -132,7 +139,10 @@ export const createEvmApprovalEdgeTransactions = async ({
 }): Promise<EdgeTransaction[]> => {
   const out: EdgeTransaction[] = []
 
-  const createApprovalTx = async (amount: string): Promise<EdgeTransaction> => {
+  const createApprovalTx = async (
+    amount: string,
+    savedAmount: string
+  ): Promise<EdgeTransaction> => {
     const approvalData = getEvmApprovalData({
       contractAddress: recipientAddress,
       nativeAmount: amount
@@ -157,7 +167,7 @@ export const createEvmApprovalEdgeTransactions = async ({
         tokenApproved: {
           pluginId: request.fromWallet.currencyInfo.pluginId,
           tokenId: request.fromTokenId,
-          nativeAmount: amount
+          nativeAmount: savedAmount
         },
         tokenContractAddress: tokenContractAddress,
         contractAddress: recipientAddress
@@ -173,11 +183,11 @@ export const createEvmApprovalEdgeTransactions = async ({
       request.fromWallet.currencyInfo.pluginId
     ]?.includes(request.fromTokenId)
   ) {
-    const preTx = await createApprovalTx('0')
+    const preTx = await createApprovalTx('0', '0')
     out.push(preTx)
   }
 
-  const preTx = await createApprovalTx(approvalAmount)
+  const preTx = await createApprovalTx(approvalAmount, savedActionAmount)
   out.push(preTx)
 
   return out

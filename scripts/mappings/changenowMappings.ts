@@ -1,7 +1,7 @@
 import { EdgeCurrencyPluginId } from '../../src/util/edgeCurrencyPluginIds'
 
 export const changenow = new Map<string, EdgeCurrencyPluginId | null>()
-// Currency Count: 4
+// Currency Count: 5
 // Display Name: ada
 changenow.set('ada', 'cardano')
 
@@ -13,17 +13,13 @@ changenow.set('aed', null)
 // Display Name: akt
 changenow.set('akt', null)
 
-// Currency Count: 3
+// Currency Count: 2
 // Display Name: algo
 changenow.set('algo', 'algorand')
 
 // Currency Count: 1
 // Display Name: all
 changenow.set('all', null)
-
-// Currency Count: 1
-// Display Name: amb
-changenow.set('amb', null)
 
 // Currency Count: 1
 // Display Name: amd
@@ -33,15 +29,19 @@ changenow.set('amd', null)
 // Display Name: ang
 changenow.set('ang', null)
 
-// Currency Count: 1
+// Currency Count: 5
 // Display Name: apt
 changenow.set('apt', null)
 
-// Currency Count: 24
+// Currency Count: 26
 // Display Name: arbitrum
 changenow.set('arbitrum', 'arbitrum')
 
 // Currency Count: 1
+// Display Name: arc
+changenow.set('arc', 'arc')
+
+// Currency Count: 2
 // Display Name: assethub
 changenow.set('assethub', null)
 
@@ -76,7 +76,7 @@ changenow.set('bam', null)
 // Display Name: band
 changenow.set('band', null)
 
-// Currency Count: 46
+// Currency Count: 48
 // Display Name: base
 changenow.set('base', 'base')
 
@@ -123,7 +123,7 @@ changenow.set('bob', null)
 // Display Name: brl
 changenow.set('brl', null)
 
-// Currency Count: 327
+// Currency Count: 328
 // Display Name: bsc
 changenow.set('bsc', 'binancesmartchain')
 
@@ -182,8 +182,7 @@ changenow.set('cop', null)
 // Display Name: core
 changenow.set('core', null)
 
-// Currency Count: 1
-// Display Name: coreum
+// WARNING: Not included by the synchronizer synchronization
 changenow.set('coreum', 'coreum')
 
 // Currency Count: 1
@@ -247,14 +246,10 @@ changenow.set('egld', null)
 changenow.set('egp', null)
 
 // Currency Count: 1
-// Display Name: epic
-changenow.set('epic', null)
-
-// Currency Count: 1
 // Display Name: etc
 changenow.set('etc', 'ethereumclassic')
 
-// Currency Count: 517
+// Currency Count: 502
 // Display Name: eth
 changenow.set('eth', 'ethereum')
 
@@ -285,10 +280,6 @@ changenow.set('flr', null)
 changenow.set('ftm', 'fantom')
 
 // Currency Count: 1
-// Display Name: ftn
-changenow.set('ftn', null)
-
-// Currency Count: 1
 // Display Name: gbp
 changenow.set('gbp', null)
 
@@ -316,7 +307,7 @@ changenow.set('hkd', null)
 // Display Name: hnl
 changenow.set('hnl', null)
 
-// Currency Count: 3
+// Currency Count: 8
 // Display Name: hood
 changenow.set('hood', 'robinhood')
 
@@ -329,8 +320,8 @@ changenow.set('hrk', null)
 changenow.set('huf', null)
 
 // Currency Count: 1
-// Display Name: icx
-changenow.set('icx', null)
+// Display Name: hyperevm
+changenow.set('hyperevm', null)
 
 // Currency Count: 1
 // Display Name: idr
@@ -369,10 +360,6 @@ changenow.set('jmd', null)
 changenow.set('jod', null)
 
 // Currency Count: 1
-// Display Name: joy
-changenow.set('joy', null)
-
-// Currency Count: 1
 // Display Name: jpy
 changenow.set('jpy', null)
 
@@ -403,10 +390,6 @@ changenow.set('khr', null)
 // Currency Count: 1
 // Display Name: klv
 changenow.set('klv', null)
-
-// Currency Count: 1
-// Display Name: kmd
-changenow.set('kmd', null)
 
 // Currency Count: 1
 // Display Name: krw
@@ -456,7 +439,7 @@ changenow.set('mad', null)
 // Display Name: manta
 changenow.set('manta', null)
 
-// Currency Count: 26
+// Currency Count: 20
 // Display Name: matic
 changenow.set('matic', 'polygon')
 
@@ -464,11 +447,15 @@ changenow.set('matic', 'polygon')
 // Display Name: mdl
 changenow.set('mdl', null)
 
+// Currency Count: 2
+// Display Name: megaeth
+changenow.set('megaeth', null)
+
 // Currency Count: 1
 // Display Name: mkd
 changenow.set('mkd', null)
 
-// Currency Count: 2
+// Currency Count: 3
 // Display Name: mnt
 changenow.set('mnt', null)
 
@@ -501,16 +488,16 @@ changenow.set('mzn', null)
 changenow.set('nad', null)
 
 // Currency Count: 1
-// Display Name: nano
-changenow.set('nano', null)
-
-// Currency Count: 1
 // Display Name: near
 changenow.set('near', null)
 
 // Currency Count: 1
 // Display Name: ngn
 changenow.set('ngn', null)
+
+// Currency Count: 1
+// Display Name: nibi
+changenow.set('nibi', null)
 
 // Currency Count: 1
 // Display Name: nok
@@ -520,6 +507,10 @@ changenow.set('nok', null)
 // Display Name: nzd
 changenow.set('nzd', null)
 
+// Currency Count: 2
+// Display Name: okb
+changenow.set('okb', null)
+
 // Currency Count: 1
 // Display Name: omr
 changenow.set('omr', null)
@@ -528,11 +519,7 @@ changenow.set('omr', null)
 // Display Name: one
 changenow.set('one', null)
 
-// Currency Count: 2
-// Display Name: ont
-changenow.set('ont', null)
-
-// Currency Count: 13
+// Currency Count: 14
 // Display Name: op
 changenow.set('op', 'optimism')
 
@@ -585,7 +572,10 @@ changenow.set('pyg', null)
 changenow.set('qar', null)
 
 // Currency Count: 1
-// Display Name: qtum
+// Display Name: qie
+changenow.set('qie', null)
+
+// WARNING: Not included by the synchronizer synchronization
 changenow.set('qtum', 'qtum')
 
 // Currency Count: 1
@@ -604,11 +594,7 @@ changenow.set('rvn', 'ravencoin')
 // Display Name: sar
 changenow.set('sar', null)
 
-// Currency Count: 1
-// Display Name: sei
-changenow.set('sei', null)
-
-// Currency Count: 1
+// Currency Count: 2
 // Display Name: seievm
 changenow.set('seievm', null)
 
@@ -620,7 +606,11 @@ changenow.set('sek', null)
 // Display Name: sgd
 changenow.set('sgd', null)
 
-// Currency Count: 140
+// Currency Count: 1
+// Display Name: skpx
+changenow.set('skpx', null)
+
+// Currency Count: 155
 // Display Name: sol
 changenow.set('sol', 'solana')
 
@@ -636,17 +626,17 @@ changenow.set('strk', null)
 // Display Name: stx
 changenow.set('stx', null)
 
-// Currency Count: 1
+// Currency Count: 5
 // Display Name: sui
 changenow.set('sui', 'sui')
 
 // Currency Count: 1
-// Display Name: sxp
-changenow.set('sxp', null)
-
-// Currency Count: 1
 // Display Name: sysevm
 changenow.set('sysevm', null)
+
+// Currency Count: 1
+// Display Name: tao
+changenow.set('tao', null)
 
 // Currency Count: 1
 // Display Name: thb
@@ -660,7 +650,7 @@ changenow.set('theta', null)
 // Display Name: tia
 changenow.set('tia', null)
 
-// Currency Count: 22
+// Currency Count: 19
 // Display Name: ton
 changenow.set('ton', 'ton')
 
@@ -705,10 +695,6 @@ changenow.set('vet', null)
 changenow.set('vnd', null)
 
 // Currency Count: 1
-// Display Name: waves
-changenow.set('waves', null)
-
-// Currency Count: 1
 // Display Name: wemix
 changenow.set('wemix', null)
 
@@ -745,6 +731,10 @@ changenow.set('xmr', 'monero')
 changenow.set('xof', null)
 
 // Currency Count: 1
+// Display Name: xpl
+changenow.set('xpl', null)
+
+// Currency Count: 1
 // Display Name: xrp
 changenow.set('xrp', 'ripple')
 
@@ -768,7 +758,7 @@ changenow.set('zec', 'zcash')
 // Display Name: zil
 changenow.set('zil', null)
 
-// Currency Count: 2
+// Currency Count: 3
 // Display Name: zksync
 changenow.set('zksync', 'zksync')
 

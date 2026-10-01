@@ -22,6 +22,7 @@ import {
   checkInvalidTokenIds,
   checkWhitelistedMainnetCodes,
   CurrencyPluginIdSwapChainCodeMap,
+  EdgeIdSwapIdMap,
   getChainAndTokenCodes,
   getMaxSwappable,
   InvalidTokenIds,
@@ -64,6 +65,16 @@ const asInitOptions = asObject({
 
 export const MAINNET_CODE_TRANSCRIPTION: CurrencyPluginIdSwapChainCodeMap =
   mapToRecord(changellyMapping)
+
+/**
+ * Changelly identifies an asset by a single ticker with no network argument,
+ * and `getChainAndTokenCodes` sends a chain's native asset as the wallet's
+ * currency code. Arc's native asset is USDC, and Changelly's `usdc` ticker is
+ * the Ethereum token, so Arc's native asset needs its own ticker here.
+ */
+const SPECIAL_MAINNET_CASES: EdgeIdSwapIdMap = new Map([
+  ['arc', new Map([[null, { chainCode: 'arc', tokenCode: 'usdcarc' }]])]
+])
 
 // // Unused for now
 // const CHANGELLY_STATUS_MAP: { [status: string]: string } = {
@@ -411,7 +422,8 @@ export function makeChangellyPlugin({
       request,
       swapInfo,
       chainCodeTickerMap,
-      MAINNET_CODE_TRANSCRIPTION
+      MAINNET_CODE_TRANSCRIPTION,
+      SPECIAL_MAINNET_CASES
     )
 
     const quoteAmount = reverseQuote

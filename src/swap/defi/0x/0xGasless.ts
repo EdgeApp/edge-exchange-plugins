@@ -1,3 +1,4 @@
+import { div, mul } from 'biggystring'
 import {
   EdgeAssetAction,
   EdgeCorePluginFactory,
@@ -6,14 +7,15 @@ import {
   EdgeSwapQuote,
   EdgeSwapResult,
   EdgeTransaction,
-  EdgeTxAction
+  EdgeTxAction,
+  SwapBelowLimitError
 } from 'edge-core-js/types'
 
 import { due } from '../../../util/due'
 import { snooze } from '../../../util/utils'
-import { EXPIRATION_MS, NATIVE_TOKEN_ADDRESS } from './constants'
+import { EXPIRATION_MS } from './constants'
 import { asInitOptions } from './types'
-import { getCurrencyCode, getTokenAddress, makeSignatureStruct } from './util'
+import { getCurrencyCode, getZeroXAsset, makeSignatureStruct } from './util'
 import { ZeroXApi } from './ZeroXApi'
 import {
   GaslessSwapStatusResponse,
@@ -47,14 +49,11 @@ export const make0xGaslessPlugin: EdgeCorePluginFactory = opts => {
         throw new Error('Swap between different wallets is not supported')
       }
 
-      const fromTokenAddress = getTokenAddress(
+      const fromAsset = getZeroXAsset(
         swapRequest.fromWallet,
         swapRequest.fromTokenId
       )
-      const toTokenAddress = getTokenAddress(
-        swapRequest.toWallet,
-        swapRequest.toTokenId
-      )
+      const toAsset = getZeroXAsset(swapRequest.toWallet, swapRequest.toTokenId)
 
       const swapNativeAmount: string = due(() => {
         if (swapRequest.quoteFor === 'max') {
@@ -67,6 +66,13 @@ export const make0xGaslessPlugin: EdgeCorePluginFactory = opts => {
           return swapRequest.nativeAmount
         }
       })
+
+      // 0x may count the asset coarser than the wallet does, so drop the
+      // digits it cannot express:
+      const sellAmount = div(swapNativeAmount, fromAsset.scale)
+      if (sellAmount === '0') {
+        throw new SwapBelowLimitError(swapInfo, fromAsset.scale, 'from')
+      }
 
       // From wallet address
       const {
@@ -84,14 +90,14 @@ export const make0xGaslessPlugin: EdgeCorePluginFactory = opts => {
       const swapFeeBps = Math.round(initOptions.feePercentage * 10000)
 
       const apiSwapQuote = await api.gaslessSwapQuote(swapInfo, chainId, {
-        sellAmount: swapNativeAmount, // v2 only supports sellAmount
-        buyToken: toTokenAddress ?? NATIVE_TOKEN_ADDRESS,
+        sellAmount, // v2 only supports sellAmount
+        buyToken: toAsset.address,
         checkApproval: true,
-        sellToken: fromTokenAddress ?? NATIVE_TOKEN_ADDRESS,
+        sellToken: fromAsset.address,
         taker: fromWalletAddress,
         swapFeeBps,
         swapFeeRecipient: initOptions.feeReceiveAddress,
-        swapFeeToken: fromTokenAddress ?? NATIVE_TOKEN_ADDRESS,
+        swapFeeToken: fromAsset.address,
         tradeSurplusRecipient: initOptions.feeReceiveAddress
       })
 
@@ -108,6 +114,10 @@ export const make0xGaslessPlugin: EdgeCorePluginFactory = opts => {
       ) {
         throw new Error('Approval is required but gasless is not available')
       }
+
+      // The quote's amounts, in each wallet's units:
+      const fromNativeAmount = mul(apiSwapQuote.sellAmount, fromAsset.scale)
+      const toNativeAmount = mul(apiSwapQuote.buyAmount, toAsset.scale)
 
       return {
         approve: async (
@@ -194,7 +204,7 @@ export const make0xGaslessPlugin: EdgeCorePluginFactory = opts => {
             fromAsset: {
               pluginId: swapRequest.fromWallet.currencyInfo.pluginId,
               tokenId: swapRequest.fromTokenId,
-              nativeAmount: swapNativeAmount
+              nativeAmount: fromNativeAmount
             },
             orderId,
             orderUri,
@@ -208,7 +218,7 @@ export const make0xGaslessPlugin: EdgeCorePluginFactory = opts => {
             toAsset: {
               pluginId: swapRequest.toWallet.currencyInfo.pluginId,
               tokenId: swapRequest.toTokenId,
-              nativeAmount: apiSwapQuote.buyAmount
+              nativeAmount: toNativeAmount
             }
           }
 
@@ -226,7 +236,7 @@ export const make0xGaslessPlugin: EdgeCorePluginFactory = opts => {
             date: Date.now() / 1000,
             isSend: true,
             memos: [],
-            nativeAmount: swapNativeAmount,
+            nativeAmount: fromNativeAmount,
             // There is no fee for a gasless swap
             networkFee: '0',
             networkFees: [],
@@ -248,7 +258,7 @@ export const make0xGaslessPlugin: EdgeCorePluginFactory = opts => {
         },
         close: async () => {},
         expirationDate: new Date(Date.now() + EXPIRATION_MS),
-        fromNativeAmount: apiSwapQuote.sellAmount,
+        fromNativeAmount,
         isEstimate: false,
         networkFee: {
           currencyCode: swapRequest.fromWallet.currencyInfo.currencyCode,
@@ -258,7 +268,7 @@ export const make0xGaslessPlugin: EdgeCorePluginFactory = opts => {
         pluginId: swapInfo.pluginId,
         request: swapRequest,
         swapInfo: swapInfo,
-        toNativeAmount: apiSwapQuote.buyAmount
+        toNativeAmount
       }
     }
   }
