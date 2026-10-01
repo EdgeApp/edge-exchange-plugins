@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 2.57.4 (2026-10-01)
+
 - fixed: (Exolix) Log readable JSON swap error responses instead of "[object Object]".
 
 ## 2.57.3 (2026-09-30)
