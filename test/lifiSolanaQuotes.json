@@ -1,0 +1,182 @@
+{
+  "solToPolMayan": {
+    "id": "bb6449fd-2bbc-4ec2-84bd-62b5b61ba867:0",
+    "type": "lifi",
+    "tool": "mayan",
+    "action": {
+      "fromChainId": 1151111081099710,
+      "toChainId": 137,
+      "fromToken": {
+        "address": "11111111111111111111111111111111",
+        "decimals": 9
+      },
+      "toToken": {
+        "address": "0x0000000000000000000000000000000000000000",
+        "decimals": 18
+      },
+      "fromAmount": "50000000",
+      "fromAddress": "5tzFkiKscXHK5ZXCGbXZxdw7gTjjD1mBwuoFbhUvuAi9",
+      "toAddress": "0x0b0901e9cef9eaed5753519177e3c7cfd0ef96ef"
+    },
+    "estimate": {
+      "fromAmount": "50000000",
+      "toAmount": "54423207636632900000",
+      "toAmountMin": "54151091598449800000",
+      "approvalAddress": "0x1231DEB6f5749EF6cE6943a275A1D3E7486F4EaE",
+      "executionDuration": 3
+    },
+    "includedSteps": [
+      {
+        "type": "protocol",
+        "tool": "feeCollection",
+        "toolDetails": {
+          "name": "Integrator Fee"
+        },
+        "estimate": {
+          "fromAmount": "50000000",
+          "toAmount": "49750000",
+          "toAmountMin": "49750000",
+          "approvalAddress": "0x0000000000000000000000000000000000000000",
+          "executionDuration": 0
+        }
+      },
+      {
+        "type": "cross",
+        "tool": "mayan",
+        "toolDetails": {
+          "name": "Mayan (Swift)"
+        },
+        "estimate": {
+          "fromAmount": "49750000",
+          "toAmount": "54423207636632900000",
+          "toAmountMin": "54151091598449800000",
+          "approvalAddress": "0x0b0901e9cef9eaed5753519177e3c7cfd0ef96ef",
+          "executionDuration": 3
+        }
+      }
+    ],
+    "transactionRequest": {
+      "data": "AQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACAAQAGDEjAG1BZAFRV2dywxrzs3LT7Wy6rwamoK1c5K6qkDwTm+UDSvPVK8EkQHmscWK06eeGZj89d23WtvuKS7doC0C1mMgszfK8U6UZJu0HnduHuivnMM8scfYqSJ61y0dsqimz5uLtYYTC+z2E0xxl1vf4xWFqVe8MGAUh/xbzv51B+DYTBcZh4nuZY/ExVoXe+VhcKeYw1s4VzwTqmZSIGHCzexN5EZPC5fF7Dn+SK+CEsx3/tGVLagUl0jVROYkvrAAMGRm/lIRcy/+ytunLDm+e8jOW7xfcSayxDmzpAAAAAKD0N0oI1T+8K47DiJ9N82JyiZvsX3fj3y3zO++Tr3FVQKAFPTgdisOZOSKsNm73zK9Qp0MxgBZPPbSTi68OBQwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAtCPlnWlpkuqreRQnU8Cb1tgTWqlAT2NSRxIcSdKfQ5UEedVb8jHAbu50xW7OaBUH/bGy3qP0jlECsc2iVrwTj4U8frlSjPuBCoNj8oDyUHFRPeiytVSTMr0E4rGDqOQxCwYABQLAXBUABgAJAx/JAAAAAAAABwIQCAkA48luJC6iRAAJAgAMDAIAAAB8kgAAAAAAAAkCAAEMAgAAAADsCQAAAAAACgcRAAIDEgkTAAoDCQAEDAIAAADwH/cCAAAAAAoCEwQBEQsWAAQFFBITEwIVCxkADQ4PBAUTExYaCyi7ZPrMMcSvFPAf9wIAAAAAHCNaAAAAAABkAAAAAAABAAAAjQEQJwABCgQTBAAAAQkKCxcAAAMCBRcSGBMJxgEgTCkMJ6KE2yoQWgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACwkB6c756u1XU1GRd+PHz9Dvlu8FAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAJwLEQgEAAAAAAAAAAAAAACoMAAAAAAAAs1EAAAAAAABcBL9qAAAAAB6MT6uJlElMjx5cEodEWykX1gxDx5qpWRYvXWAAWY0yAAACikYavEQhUd4l6knomnUMeVC1nKeel+Jm1Dv4ds8Dml0C2cMN+5YRja4DNaX11bThHmwP8vCzdRYtSPXpFGWT2KsBRAkoBhEFMDQqgSBqqcPrNb0kOj4f4oBo3tqeUfk5BcRkq+duwyJjby342QOFhIACgoc="
+    }
+  },
+  "solToArbUsdcRelay": {
+    "id": "fd491e7c-bbf1-44ba-a2cd-011de107ccd6:0",
+    "type": "lifi",
+    "tool": "relaydepository",
+    "action": {
+      "fromChainId": 1151111081099710,
+      "toChainId": 42161,
+      "fromToken": {
+        "address": "11111111111111111111111111111111",
+        "decimals": 9
+      },
+      "toToken": {
+        "address": "0xaf88d065e77c8cC2239327C5EDb3A432268e5831",
+        "decimals": 6
+      },
+      "fromAmount": "50000000",
+      "fromAddress": "5tzFkiKscXHK5ZXCGbXZxdw7gTjjD1mBwuoFbhUvuAi9",
+      "toAddress": "0x0b0901e9cef9eaed5753519177e3c7cfd0ef96ef"
+    },
+    "estimate": {
+      "fromAmount": "50000000",
+      "toAmount": "5854039",
+      "toAmountMin": "5824769",
+      "approvalAddress": "0x1231DEB6f5749EF6cE6943a275A1D3E7486F4EaE",
+      "executionDuration": 1
+    },
+    "includedSteps": [
+      {
+        "type": "protocol",
+        "tool": "feeCollection",
+        "toolDetails": {
+          "name": "Integrator Fee"
+        },
+        "estimate": {
+          "fromAmount": "50000000",
+          "toAmount": "49750000",
+          "toAmountMin": "49750000",
+          "approvalAddress": "0x0000000000000000000000000000000000000000",
+          "executionDuration": 0
+        }
+      },
+      {
+        "type": "cross",
+        "tool": "relaydepository",
+        "toolDetails": {
+          "name": "Relay"
+        },
+        "estimate": {
+          "fromAmount": "49750000",
+          "toAmount": "5854039",
+          "toAmountMin": "5824769",
+          "approvalAddress": "G9sGMKGAdDDqTwPDuqYnxBPSoQk6A2KPbcJGoHpq2HPV",
+          "executionDuration": 1
+        }
+      }
+    ],
+    "transactionRequest": {
+      "data": "AQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACAAQAGCUjAG1BZAFRV2dywxrzs3LT7Wy6rwamoK1c5K6qkDwTmHoxPq4mUSUyPHlwSh0RbKRfWDEPHmqlZFi9dYABZjTL5QNK89UrwSRAeaxxYrTp54ZmPz13bda2+4pLt2gLQLQMGRm/lIRcy/+ytunLDm+e8jOW7xfcSayxDmzpAAAAAKD0N0oI1T+8K47DiJ9N82JyiZvsX3fj3y3zO++Tr3FUGp9UXGMd0yShWY5hpHV62i164o5tLbVxzVVshAAAAAFAoAU9OB2Kw5k5Iqw2bvfMr1CnQzGAFk89tJOLrw4FDAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAB5Jok3js1R2AQG6wyqO2J5W+sQtsXclrwuDfA8v+4av1D/SroM1ZI9q4fTpIgK8Ir3nLwW96Q6l6N5tDK0/jT6BgMABQIQ6wkAAwAJA1DDAAAAAAAABAIFBgkAv91Vp/AopwAHAgABDAIAAAB8kgAAAAAAAAcCAAIMAgAAAADsCQAAAAAACAUKAAAJBzANng3fX9UcBvAf9wIAAAAA4iAIUym779skOYjlWgRErSIeZKs65I9fICnAEHSbivcB+QpXl9KdVthNAcDQuuP5xYxGl07rlcoOT9Un+uH/7wIBAgEB"
+    }
+  },
+  "solUsdcToArbUsdcLayerswap": {
+    "id": "fa394416-18be-4d29-854c-6b01bcdb211e:0",
+    "type": "lifi",
+    "tool": "layerswap",
+    "action": {
+      "fromChainId": 1151111081099710,
+      "toChainId": 42161,
+      "fromToken": {
+        "address": "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
+        "decimals": 6
+      },
+      "toToken": {
+        "address": "0xaf88d065e77c8cC2239327C5EDb3A432268e5831",
+        "decimals": 6
+      },
+      "fromAmount": "5000000",
+      "fromAddress": "5tzFkiKscXHK5ZXCGbXZxdw7gTjjD1mBwuoFbhUvuAi9",
+      "toAddress": "0x0b0901e9cef9eaed5753519177e3c7cfd0ef96ef"
+    },
+    "estimate": {
+      "fromAmount": "5000000",
+      "toAmount": "4969447",
+      "toAmountMin": "4964477",
+      "approvalAddress": "0x1231DEB6f5749EF6cE6943a275A1D3E7486F4EaE",
+      "executionDuration": 4
+    },
+    "includedSteps": [
+      {
+        "type": "protocol",
+        "tool": "feeCollection",
+        "toolDetails": {
+          "name": "Integrator Fee"
+        },
+        "estimate": {
+          "fromAmount": "5000000",
+          "toAmount": "4975000",
+          "toAmountMin": "4975000",
+          "approvalAddress": "0x0000000000000000000000000000000000000000",
+          "executionDuration": 0
+        }
+      },
+      {
+        "type": "cross",
+        "tool": "layerswap",
+        "toolDetails": {
+          "name": "Layerswap"
+        },
+        "estimate": {
+          "fromAmount": "4975000",
+          "toAmount": "4969447",
+          "toAmountMin": "4964477",
+          "approvalAddress": "G9sGMKGAdDDqTwPDuqYnxBPSoQk6A2KPbcJGoHpq2HPV",
+          "executionDuration": 4
+        }
+      }
+    ],
+    "transactionRequest": {
+      "data": "AQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACAAQAKD0jAG1BZAFRV2dywxrzs3LT7Wy6rwamoK1c5K6qkDwTm3sTeRGTwuXxew5/kivghLMd/7RlS2oFJdI1UTmJL6wBy9EWzoZrASNKpKP4HdM97i176fGRXy8y8guzw6sk8eSH5yWqkSyzvPhUIm+AIX1SJAivKvYvabbas4bv8/BFEPBztXJpg8qEDv06APDnxIMBuFcFFzo7Ful1UcbVhL3UDBkZv5SEXMv/srbpyw5vnvIzlu8X3EmssQ5s6QAAAACg9DdKCNU/vCuOw4ifTfNicomb7F93498t8zvvk69xVBqfVFxjHdMkoVmOYaR1etoteuKObS21cc1VbIQAAAABQKAFPTgdisOZOSKsNm73zK9Qp0MxgBZPPbSTi68OBQwbd9uHXZaGT2cvhRs7reawctIXtX1s3kTqM9YV+/wCpxvp6877brTo9ZfNqq8l0MbG75MLS9uDkfKYCA0UvXWGMlyWPTiSJ8bs9ECkUjg2DC1oTmdr/EIQEjnvY2+n4WflA0rz1SvBJEB5rHFitOnnhmY/PXdt1rb7iku3aAtAtAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAFSlNQ+F3IgtYUpVZyeIopbd8eq6vQpgZ4iEky9O72oPRXIBQARhZbuaMT1mu8J0KuywY8QCxrhJEd/YtAjXOlCAUABQIQ6wkABQAJA2DqAAAAAAAABgIHCAkAGBrDjkan0AAJBAEKAgAKDKYOAAAAAAAABgsGAAMMCg0JAQEJBAEKAwAKDAJTAAAAAAAABgkEAQoEAAoMmOlLAAAAAAAGDgEADzQyMDAwMDAxODMzNjc0MwA="
+    }
+  }
+}

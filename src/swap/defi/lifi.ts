@@ -373,11 +373,6 @@ export function makeLifiPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
     let spendInfo: EdgeSpendInfo
     switch (fromWallet.currencyInfo.pluginId) {
       case 'solana': {
-        const publicAddress = includedSteps[0].estimate?.approvalAddress
-        if (publicAddress == null) {
-          log.warn('No public address provided in quote')
-          throw new SwapCurrencyError(swapInfo, request)
-        }
         const { data } = asTransactionRequestSolana(transactionRequestRaw)
 
         spendInfo = {
@@ -385,7 +380,14 @@ export function makeLifiPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
           spendTargets: [
             {
               nativeAmount: fromAmount,
-              publicAddress: publicAddress
+              // The engine signs LI.FI's prebuilt transaction and only needs
+              // a valid Solana address here. The quote does not carry one
+              // reliably: its approval addresses are EVM addresses on most
+              // routes, and the fee step's is the zero address. So we use the
+              // system program for SOL and the mint for a token, as the Rango
+              // plugin does. Our own address is not an option, since the
+              // engine rejects a spend to self:
+              publicAddress: fromContractAddress
             }
           ],
           otherParams: { unsignedTx: data },
