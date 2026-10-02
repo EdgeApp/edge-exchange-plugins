@@ -189,7 +189,6 @@ const asTransactionRequestSui = asObject({
 })
 
 const asIncludedStep = asObject({
-  estimate: asOptional(asEstimate),
   toolDetails: asObject({
     name: asString
   })
@@ -373,11 +372,6 @@ export function makeLifiPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
     let spendInfo: EdgeSpendInfo
     switch (fromWallet.currencyInfo.pluginId) {
       case 'solana': {
-        const publicAddress = includedSteps[0].estimate?.approvalAddress
-        if (publicAddress == null) {
-          log.warn('No public address provided in quote')
-          throw new SwapCurrencyError(swapInfo, request)
-        }
         const { data } = asTransactionRequestSolana(transactionRequestRaw)
 
         spendInfo = {
@@ -385,7 +379,12 @@ export function makeLifiPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
           spendTargets: [
             {
               nativeAmount: fromAmount,
-              publicAddress: publicAddress
+              // The engine signs the prebuilt `unsignedTx` and only checks
+              // balances against this target, so it has to be a Solana
+              // address other than the wallet's own. No address in the quote
+              // is one on every route, so use the asset's own address: the
+              // system program for SOL, or the mint for a token.
+              publicAddress: fromContractAddress
             }
           ],
           otherParams: { unsignedTx: data },
