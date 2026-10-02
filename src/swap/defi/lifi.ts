@@ -31,6 +31,7 @@ import {
   InvalidTokenIds,
   makeSwapPluginQuote,
   mapToStringMap,
+  NATIVE_ERC20_INTERFACES,
   SwapOrder
 } from '../../util/swapHelpers'
 import {
@@ -71,20 +72,7 @@ const LIFI_SERVERS_DEFAULT = ['https://li.quest']
 const EXPIRATION_MS = 1000 * 60
 const EXCHANGE_INFO_UPDATE_FREQ_MS = 60000
 
-/**
- * Chains whose native asset LI.FI trades as an ERC-20 interface to the native
- * balance, at the interface's precision. On Arc, LI.FI's native token is USDC
- * at 0x3600…0000 with 6 decimals, while the wallet counts the same balance in
- * 18, and a swap from it is an approval plus a call that sends no value.
- */
-const NATIVE_ERC20_INTERFACES: {
-  [pluginId: string]: { contractAddress: string; multiplier: string }
-} = {
-  arc: {
-    contractAddress: '0x3600000000000000000000000000000000000000',
-    multiplier: '1000000'
-  }
-}
+const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000'
 
 // https://li.quest/v1/chains
 const getParentTokenContractAddress = (pluginId: string): string => {
@@ -112,7 +100,7 @@ const getParentTokenContractAddress = (pluginId: string): string => {
       return '0xDeadDeAddeAddEAddeadDEaDDEAdDeaDDeAD0000'
     }
     default: {
-      return '0x0000000000000000000000000000000000000000'
+      return ZERO_ADDRESS
     }
   }
 }
@@ -172,7 +160,7 @@ export const getLifiAsset = (
 export const toLifiAmount = (nativeAmount: string, from: LifiAsset): string => {
   const lifiAmount = div(nativeAmount, from.scale)
   if (lifiAmount === '0') {
-    throw new SwapBelowLimitError(swapInfo, undefined, 'from')
+    throw new SwapBelowLimitError(swapInfo, from.scale, 'from')
   }
   return lifiAmount
 }
@@ -218,10 +206,10 @@ export const pullsFromWallet = (
 ): boolean => fromTokenId != null || hexToDecimal(transactionValue) === '0'
 
 /**
- * An approval takes LI.FI's amount, and the contract pulls against it, so a
- * quote spending more than was asked would take more than the user agreed to.
+ * The spend and the approval both take LI.FI's amount, so a quote spending
+ * more than was asked would take more than the user agreed to.
  */
-export const checkPullAmount = (
+export const checkQuotedAmount = (
   quotedAmount: string,
   requestedAmount: string
 ): void => {
@@ -344,12 +332,13 @@ export function makeLifiPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
   }
 
   /**
-   * `fromMaxSwap` skips the plugin's own balance check on a pulled native
-   * asset: a max request sizes itself from this quote's fees.
+   * `maxProbe` skips the plugin's own balance check on a pulled native asset:
+   * the probe quotes the whole balance to learn the fees a max swap leaves
+   * room for. The quote the user gets is checked like any other.
    */
   const fetchSwapQuoteInner = async (
     request: EdgeSwapRequestPlugin,
-    fromMaxSwap: boolean = false
+    maxProbe: boolean = false
   ): Promise<SwapOrder> => {
     const {
       fromTokenId,
@@ -477,6 +466,7 @@ export function makeLifiPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
     } = quote
     checkLifiToken(action.fromToken, from, request)
     checkLifiToken(action.toToken, to, request)
+    checkQuotedAmount(estimate.fromAmount, lifiFromAmount)
 
     const providers = includedSteps.map(s => s.toolDetails.name)
     const providersStr = providers.join(' -> ')
@@ -576,7 +566,7 @@ export function makeLifiPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
         // Return SwapOrder with makeTxParams for SUI
         return {
           expirationDate: new Date(Date.now() + EXPIRATION_MS),
-          fromNativeAmount: nativeAmount,
+          fromNativeAmount: fromAmount,
           metadataNotes,
           minReceiveAmount: toAmountMin,
           makeTxParams,
@@ -594,8 +584,13 @@ export function makeLifiPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
         // XXX Hack. Lifi doesn't properly estimate ethereum gas limits. Increase by 40%
         const swapGasLimit = round(mul(hexToDecimal(gasLimit), '1.4'), 0)
 
+        // A pulled native asset needs a token contract to approve, which
+        // only a chain with an ERC-20 interface to its native balance has:
+        if (pulled && fromTokenId == null && from.address === ZERO_ADDRESS) {
+          throw new SwapCurrencyError(swapInfo, request)
+        }
+
         if (pulled) {
-          checkPullAmount(estimate.fromAmount, lifiFromAmount)
           const approvalTxs = await createEvmApprovalEdgeTransactions({
             request,
             approvalAmount: estimate.fromAmount,
@@ -615,7 +610,7 @@ export function makeLifiPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
         // such spend: the call sends no value, so the engine's balance check
         // covers only its fee while LI.FI's contract spends the balance.
         const pulledNative = pulled && fromTokenId == null
-        if (pulledNative && !fromMaxSwap) {
+        if (pulledNative && !maxProbe) {
           // The swap must leave room for itself and for the approval fees.
           const swapFee = mul(swapGasLimit, mul(gasPriceGwei, '1000000000'))
           const fees = preTxs.reduce(
@@ -699,10 +694,7 @@ export function makeLifiPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
           newRequest = await getMaxSwappable(fetchSwapQuoteInner, request, true)
         }
       }
-      const swapOrder = await fetchSwapQuoteInner(
-        newRequest,
-        request.quoteFor === 'max'
-      )
+      const swapOrder = await fetchSwapQuoteInner(newRequest)
       return await makeSwapPluginQuote(swapOrder)
     }
   }

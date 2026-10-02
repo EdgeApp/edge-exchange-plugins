@@ -739,3 +739,19 @@ export const denominationToNative = (
   )
   return mul(denominatedAmount, multiplier)
 }
+
+/**
+ * Chains whose native asset swap providers trade as an ERC-20 interface to the
+ * native balance, at the interface's precision. Arc's native asset is USDC,
+ * which the wallet counts in 18 decimals. LI.FI and 0x trade the same balance
+ * as the token at 0x3600…0000 in 6, and a swap from it is an approval plus a
+ * call that sends no value.
+ */
+export const NATIVE_ERC20_INTERFACES: {
+  [pluginId: string]: { contractAddress: string; multiplier: string }
+} = {
+  arc: {
+    contractAddress: '0x3600000000000000000000000000000000000000',
+    multiplier: '1000000'
+  }
+}

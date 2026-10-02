@@ -10,7 +10,7 @@ import { describe, it } from 'mocha'
 import { decodeEvmApprovalData } from '../src/swap/defi/defiUtils'
 import {
   checkLifiToken,
-  checkPullAmount,
+  checkQuotedAmount,
   getLifiAsset,
   LifiAsset,
   makeLifiPlugin,
@@ -236,15 +236,15 @@ describe('lifi pullsFromWallet', function () {
   })
 })
 
-describe('lifi checkPullAmount', function () {
+describe('lifi checkQuotedAmount', function () {
   it('accepts a quote at or below the requested amount', function () {
-    checkPullAmount('2500000', '2500000')
-    checkPullAmount('2499999', '2500000')
+    checkQuotedAmount('2500000', '2500000')
+    checkQuotedAmount('2499999', '2500000')
   })
 
   it('throws on a quote above the requested amount', function () {
     assert.throws(
-      () => checkPullAmount('2500001', '2500000'),
+      () => checkQuotedAmount('2500001', '2500000'),
       'LI.FI quoted 2500001, above the requested 2500000'
     )
   })
@@ -258,6 +258,7 @@ describe('lifi fetchSwapQuote', function () {
       nativeAmount: string,
       fromTokenId?: EdgeTokenId
     ) => Promise<EdgeSwapQuote>
+    fetchMaxQuote: (maxSpendable: string) => Promise<EdgeSwapQuote>
   }
 
   /** A deep copy of the captured Arc USDC to EURC quote, edited by `edit` */
@@ -274,6 +275,7 @@ describe('lifi fetchSwapQuote', function () {
   const makeHarness = (quoteJson: unknown, balance: string): Harness => {
     const quoteUrls: string[] = []
     const spends: EdgeSpendInfo[] = []
+    let maxSpendable = '0'
 
     const fetch = async (url: string): Promise<unknown> => {
       if (url.includes('v1/quote')) {
@@ -290,6 +292,7 @@ describe('lifi fetchSwapQuote', function () {
       currencyConfig: arcConfig,
       currencyInfo: arcConfig.currencyInfo,
       getAddresses: async () => [{ publicAddress: OUR_ADDRESS }],
+      getMaxSpendable: async () => maxSpendable,
       makeSpend: async (spendInfo: EdgeSpendInfo) => {
         spends.push(spendInfo)
         return {
@@ -323,7 +326,24 @@ describe('lifi fetchSwapQuote', function () {
       })
     }
 
-    return { quoteUrls, spends, fetchQuote }
+    /** A max request, where the engine reports `amount` as spendable */
+    const fetchMaxQuote = async (amount: string): Promise<EdgeSwapQuote> => {
+      maxSpendable = amount
+      const request: EdgeSwapRequest = {
+        fromWallet: wallet,
+        toWallet: wallet,
+        fromTokenId: null,
+        toTokenId: EURC_TOKEN_ID,
+        nativeAmount: '0',
+        quoteFor: 'max'
+      }
+      return await plugin.fetchSwapQuote(request, undefined, {
+        infoPayload: {},
+        promoCode: undefined
+      })
+    }
+
+    return { quoteUrls, spends, fetchQuote, fetchMaxQuote }
   }
 
   it('pulls Arc USDC through an approval when the call sends no value', async function () {
@@ -468,6 +488,28 @@ describe('lifi fetchSwapQuote', function () {
     // Exactly the swap amount, with nothing left for either network fee:
     const { fetchQuote } = makeHarness(arcQuote(), '2500000000000000000')
     await expectRejection(fetchQuote('2500000000000000000'), error => {
+      assert.equal(error.name, 'InsufficientFundsError')
+    })
+  })
+
+  it('quotes a max swap that leaves room for its fees', async function () {
+    const { quoteUrls, fetchMaxQuote } = makeHarness(
+      arcQuote(),
+      '10000000000000000000'
+    )
+    // The engine leaves the swap fee, and the plugin the approval fee:
+    const quote = await fetchMaxQuote('2501000000000000000')
+
+    assert.equal(quoteUrls.length, 2)
+    assert.include(quoteUrls[0], '&fromAmount=10000000&')
+    assert.include(quoteUrls[1], '&fromAmount=2500000&')
+    assert.equal(quote.fromNativeAmount, '2500000000000000000')
+  })
+
+  it('checks the balance on the quote a max swap returns', async function () {
+    // The balance covers the amount, but not the fees the final quote names:
+    const { fetchMaxQuote } = makeHarness(arcQuote(), '2500000000000000001')
+    await expectRejection(fetchMaxQuote('2501000000000000000'), error => {
       assert.equal(error.name, 'InsufficientFundsError')
     })
   })

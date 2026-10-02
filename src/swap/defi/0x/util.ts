@@ -2,8 +2,9 @@ import { secp256k1 } from '@noble/curves/secp256k1'
 import { div } from 'biggystring'
 import { EdgeCurrencyWallet, EdgeTokenId } from 'edge-core-js/types'
 
+import { NATIVE_ERC20_INTERFACES } from '../../../util/swapHelpers'
 import { hexToDecimal } from '../../../util/utils'
-import { NATIVE_ERC20_INTERFACES, NATIVE_TOKEN_ADDRESS } from './constants'
+import { NATIVE_TOKEN_ADDRESS } from './constants'
 import { SignatureStruct, SignatureType } from './zeroXApiTypes'
 
 /**
