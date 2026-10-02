@@ -1,0 +1,92 @@
+{
+  "solToPol": {
+    "id": "bc6a15d1-fbef-4994-8907-0ac44fc73229:0",
+    "type": "lifi",
+    "tool": "mayan",
+    "estimate": {
+      "fromAmount": "100000000",
+      "toAmount": "109094515494230000000",
+      "toAmountMin": "108549042916758000000",
+      "approvalAddress": "0x1231DEB6f5749EF6cE6943a275A1D3E7486F4EaE",
+      "executionDuration": 3
+    },
+    "includedSteps": [
+      {
+        "type": "protocol",
+        "tool": "feeCollection",
+        "toolDetails": {
+          "name": "Integrator Fee"
+        },
+        "estimate": {
+          "fromAmount": "100000000",
+          "toAmount": "99500000",
+          "toAmountMin": "99500000",
+          "approvalAddress": "0x0000000000000000000000000000000000000000",
+          "executionDuration": 0
+        }
+      },
+      {
+        "type": "cross",
+        "tool": "mayan",
+        "toolDetails": {
+          "name": "Mayan (Swift)"
+        },
+        "estimate": {
+          "fromAmount": "99500000",
+          "toAmount": "109094515494230000000",
+          "toAmountMin": "108549042916758000000",
+          "approvalAddress": "0x0b0901e9cef9eaed5753519177e3c7cfd0ef96ef",
+          "executionDuration": 3
+        }
+      }
+    ],
+    "transactionRequest": {
+      "data": "AQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACAAQAHDWdSBVwgs+nYdGZW3fc4VVB/h6tth1I+THan+jYJapnr+UDSvPVK8EkQHmscWK06eeGZj89d23WtvuKS7doC0C2SxZNGza1tx9fwwaLOjopoL+gpKT+ZdAj4NBVrzZpaHxhEZuXVFKljW7nLVzIlelKDcLIj/3dGh1EDsY6ZA8K/aHmrnmkcx0NIc27t/FOc8Y8CQU23Amo0q0aptZ6+X6ykTqbyus+/B3iFE3O1Go6HtCYUWNf9k4ccnNp5Dw4bJgMGRm/lIRcy/+ytunLDm+e8jOW7xfcSayxDmzpAAAAAKD0N0oI1T+8K47DiJ9N82JyiZvsX3fj3y3zO++Tr3FVQKAFPTgdisOZOSKsNm73zK9Qp0MxgBZPPbSTi68OBQwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAtCPlnWlpkuqreRQnU8Cb1tgTWqlAT2NSRxIcSdKfQ5UEedVb8jHAbu50xW7OaBUH/bGy3qP0jlECsc2iVrwTj/zRPaBBVZATz0rroahO1wI61P8hqEdH/zsFqzD6ggfD3UWKVv6ITNpFggdFpuD4e+MiIsxAXXWrXubFmNwpOPYMBgAFAsBcFQAGAAkDUMMAAAAAAAAHAhEICQByOt6DUwU2AAkCAA0MAgAAAPgkAQAAAAAACQIAAQwCAAAAKHwGAAAAAAAKBxIAAgMTCRQACgcSAAQAFQkUAQEKAwkABAwCAAAA4D/uBQAAAAAKAhQEARELGQAEBRUTFBQCFgsaAA4EBQ8QFRMbHBcUFAwou2T6zDHErxTgP+4FAAAAAIcntgAAAAAAZAAAAAAAAQAAAJcAECcAAQoEFAQAAAEJCgsYAAADAgUYExkUCcYBIEwpDCeihNtPAbYAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAsJAenO+ertV1NRkXfjx8/Q75bvBQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAOOxAIcCAAAAAAAAAAAAAABhDAAAAAAAAJ5SAAAAAAAA9SO/agAAAAAejE+riZRJTI8eXBKHRFspF9YMQ8eaqVkWL11gAFmNMgAAAnAC/OayYDFURz0TyqxVbbIEU5oLA+8erKSH27m/hjrfAtnDDfuWEY2uAzWl9dW04R5sD/Lws3UWLUj16RRlk9irAUQJKAYRBTA0KoEgtQ4ft8S/G/nU4iNQ3DOvYX1x0GnpYwrcIoCFMHsZKVED8ervA4XyMQ=="
+    }
+  },
+  "usdcToBaseUsdc": {
+    "id": "e2b072a8-1d3d-4e34-b3a6-d716990f34fe:0",
+    "type": "lifi",
+    "tool": "relaydepository",
+    "estimate": {
+      "fromAmount": "10000000",
+      "toAmount": "9924244",
+      "toAmountMin": "9914320",
+      "approvalAddress": "0x1231DEB6f5749EF6cE6943a275A1D3E7486F4EaE",
+      "executionDuration": 2
+    },
+    "includedSteps": [
+      {
+        "type": "protocol",
+        "tool": "feeCollection",
+        "toolDetails": {
+          "name": "Integrator Fee"
+        },
+        "estimate": {
+          "fromAmount": "10000000",
+          "toAmount": "9950000",
+          "toAmountMin": "9950000",
+          "approvalAddress": "0x0000000000000000000000000000000000000000",
+          "executionDuration": 0
+        }
+      },
+      {
+        "type": "cross",
+        "tool": "relaydepository",
+        "toolDetails": {
+          "name": "Relay"
+        },
+        "estimate": {
+          "fromAmount": "9950000",
+          "toAmount": "9924244",
+          "toAmountMin": "9914320",
+          "approvalAddress": "G9sGMKGAdDDqTwPDuqYnxBPSoQk6A2KPbcJGoHpq2HPV",
+          "executionDuration": 2
+        }
+      }
+    ],
+    "transactionRequest": {
+      "data": "AQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACAAQAGCmdSBVwgs+nYdGZW3fc4VVB/h6tth1I+THan+jYJapnrpE6m8rrPvwd4hRNztRqOh7QmFFjX/ZOHHJzaeQ8OGyZy9EWzoZrASNKpKP4HdM97i176fGRXy8y8guzw6sk8eSH5yWqkSyzvPhUIm+AIX1SJAivKvYvabbas4bv8/BFEAwZGb+UhFzL/7K26csOb57yM5bvF9xJrLEObOkAAAAAoPQ3SgjVP7wrjsOIn03zYnKJm+xfd+PfLfM775OvcVQan1RcYx3TJKFZjmGkdXraLXrijm0ttXHNVWyEAAAAAUCgBT04HYrDmTkirDZu98yvUKdDMYAWTz20k4uvDgUMG3fbh12Whk9nL4UbO63msHLSF7V9bN5E6jPWFfv8AqXkmiTeOzVHYBAbrDKo7Ynlb6xC2xdyWvC4N8Dy/7hq/Feq5TYIr7NieZBSsCPdVJ+rhFIxtctlJXu4bQbf0ebEGBAAFAhDrCQAEAAkDUMMAAAAAAAAFAgYHCQCAYNHvuy9nAAgEAQsCAAoMTB0AAAAAAAAGCAQBCwMACgwEpgAAAAAAAAYJCgwAAA0LAQoIDg8wC5xg2iejtBMw05cAAAAAAAcm/LQc8VrTUKiUlnbXXftAUgjmUBliZqt/6Re5zEZwAfkKV5fSnVbYTQHA0Lrj+cWMRpdO65XKDk/VJ/rh/+8CAQcFBQECEA4="
+    }
+  }
+}

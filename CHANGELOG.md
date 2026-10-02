@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- fixed: (LI.FI) Swaps from SOL and Solana tokens failing with "Non-base58 character"
+
 ## 2.57.4 (2026-10-01)
 
 - fixed: (Exolix) Log readable JSON swap error responses instead of "[object Object]".
