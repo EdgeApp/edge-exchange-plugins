@@ -17,7 +17,12 @@ import {
   SwapCurrencyError
 } from 'edge-core-js/types'
 
-import { EdgeSwapRequestPlugin, MakeTxParams, StringMap } from '../swap/types'
+import {
+  EdgeSwapRequestPlugin,
+  EdgeTxActionSwapPlugin,
+  MakeTxParams,
+  StringMap
+} from '../swap/types'
 import { EdgeCurrencyPluginId } from './edgeCurrencyPluginIds'
 
 const likeKindAssets = [
@@ -121,9 +126,12 @@ export async function makeSwapPluginQuote(
       tx.currencyCode = request.fromCurrencyCode
     }
   }
-  const action = tx.savedAction
+  // `swapSend` is typed locally until the installed core declares it:
+  const action = tx.savedAction as EdgeTxActionSwapPlugin | undefined
 
-  if (action?.actionType !== 'swap') throw new Error(`Invalid swap action type`)
+  if (action?.actionType !== 'swap' && action?.actionType !== 'swapSend') {
+    throw new Error(`Invalid swap action type`)
+  }
 
   const toNativeAmount = action?.toAsset.nativeAmount
   const destinationAddress = action?.payoutAddress
@@ -360,14 +368,26 @@ const defaultInvalidCodes: InvalidTokenIds = {
   to: { ethereum: ['1985365e9f78359a9b6ad760e32412f4a445e862' /* REP */] }
 }
 
+interface CheckInvalidTokenIdsOpts {
+  /**
+   * Permit a swap from an asset to ITSELF. Rejected by default, since for an
+   * ordinary provider it is a no-op the user cannot have meant. A privacy
+   * provider is the exception: routing an asset to itself through a mixer is
+   * the point, not a mistake, so those plugins opt out.
+   */
+  allowSameAsset?: boolean
+}
+
 /**
  * Throws if either currency code has been disabled by the plugin
  */
 export function checkInvalidTokenIds(
   invalidCodes: InvalidTokenIds,
   request: EdgeSwapRequestPlugin,
-  swapInfo: EdgeSwapInfo
+  swapInfo: EdgeSwapInfo,
+  opts: CheckInvalidTokenIdsOpts = {}
 ): void {
+  const { allowSameAsset = false } = opts
   const { fromPluginId, toPluginId } = getPluginIds(request)
   const { fromTokenId, toTokenId } = request
 
@@ -394,7 +414,7 @@ export function checkInvalidTokenIds(
     check(defaultInvalidCodes, 'from', fromPluginId, fromTokenId) ||
     check(invalidCodes, 'to', toPluginId, toTokenId) ||
     check(defaultInvalidCodes, 'to', toPluginId, toTokenId) ||
-    isSameAsset(request)
+    (!allowSameAsset && isSameAsset(request))
   )
     throw new SwapCurrencyError(swapInfo, request)
 }

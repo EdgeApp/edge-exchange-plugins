@@ -1,0 +1,5 @@
+{
+  "status": 409,
+  "ok": false,
+  "body": "{\"code\":\"STATIC_DEPOSIT_IN_USE\",\"requestId\":\"a63dbaba-e067-45e2-a64f-a88d15eed6c3\",\"message\":\"Deposit address for ch BTC is in use by another live order\"}"
+}
