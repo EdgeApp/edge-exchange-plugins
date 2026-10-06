@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 2.58.1 (2026-10-06)
+
 - removed: LetsExchange swap provider
 
 ## 2.58.0 (2026-10-05)
