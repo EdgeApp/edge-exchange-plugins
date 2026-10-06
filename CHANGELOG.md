@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- removed: LetsExchange swap provider
+
 ## 2.58.0 (2026-10-05)
 
 - added: HoudiniSwap swap plugin with privacy routing, receive-amount quotes, and swap-to-address with memo support

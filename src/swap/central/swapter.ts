@@ -81,8 +81,7 @@ const asInitOptions = asObject({ apiKey: asString })
 /**
  * Chains whose default address is not the one a CEX can pay or refund. Zcash
  * lists its unified address first, which Swapter cannot send to or refund, so
- * the deposit or the payout would be stranded. Matches `changenow` and
- * `letsexchange`.
+ * the deposit or the payout would be stranded. Matches `changenow`.
  */
 const addressTypeMap: StringMap = {
   zcash: 'transparentAddress'
