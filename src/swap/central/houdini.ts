@@ -1223,7 +1223,8 @@ export function makeHoudiniPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
     }
 
     // `spendInfo.savedAction` takes the installed core's `EdgeTxAction`, which
-    // predates `swapSend`, so the send shape is cast through it.
+    // predates `swapSend` and the swap `privacy` flag, so both shapes are cast
+    // through it.
     function makeSwapAction(
       orderId: string,
       fromNativeAmount: string,
@@ -1253,14 +1254,18 @@ export function makeHoudiniPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
       }
       // A synthetic destination is a pasted address, so the order is a send:
       // there is no payout wallet to name, and the recipient stays on the
-      // action for the transaction details to show or hide.
+      // action for the transaction details to show or hide. Either shape says
+      // whether the caller demanded a private route, which is the only record
+      // of it: this provider serves transparent routes too.
+      const privacy = request.privacy === 'required'
       const swapAction: EdgeTxActionSwapPlugin = isSyntheticDestination
-        ? {
+        ? { ...action, actionType: 'swapSend', privacy }
+        : {
             ...action,
-            actionType: 'swapSend',
-            privacy: request.privacy === 'required'
+            actionType: 'swap',
+            payoutWalletId: toWallet.id,
+            privacy
           }
-        : { ...action, actionType: 'swap', payoutWalletId: toWallet.id }
       return swapAction as EdgeTxAction
     }
   }
