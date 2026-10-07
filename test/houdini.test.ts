@@ -1501,6 +1501,21 @@ describe('houdini offline behaviors', function () {
     expect(action.payoutWalletId).equals(stellarWallet.id)
   })
 
+  it('links an order to its status page on the Houdini app', async function () {
+    // The status page is served by the app host and reads the order id from a
+    // query parameter. The marketing site has no order route.
+    const run = makeScriptedPlugin({
+      nativeAddress: '',
+      quotes: [privateQuote]
+    })
+    await quoteSonicToStellar(run)
+    const action = capture.savedAction as Record<string, unknown>
+    expect(action.orderId).equals('order-q-private')
+    expect(action.orderUri).equals(
+      'https://app.houdiniswap.com/order-details?houdiniId=order-q-private'
+    )
+  })
+
   it('writes a send action for a pasted-address destination', async function () {
     // A pasted address has no wallet behind it, so the action is a send: it
     // carries the recipient and whether the route was private, and names no

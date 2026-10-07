@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- fixed: (HoudiniSwap) Order link opens the order status page instead of "Page Not Found"
+
 ## 2.59.0 (2026-10-08)
 
 - added: Arc swaps via LI.FI, 0x Gasless, ChangeHero, ChangeNOW, Changelly, n.exchange, Rango, SideShift, and Swapter
