@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- fixed: (Houdini) Mark private wallet-to-wallet swaps on the saved action
+
 ## 2.58.1 (2026-10-06)
 
 - removed: LetsExchange swap provider

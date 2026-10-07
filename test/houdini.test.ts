@@ -1501,6 +1501,23 @@ describe('houdini offline behaviors', function () {
     expect(action.payoutWalletId).equals(stellarWallet.id)
   })
 
+  it('marks a swap into a user wallet private only when privacy was required', async function () {
+    // The same private route serves both requests, so the route type cannot
+    // name the flow: only the request's demand does.
+    for (const privacy of [undefined, 'required'] as const) {
+      const run = makeScriptedPlugin({
+        nativeAddress: '',
+        quotes: [privateQuote]
+      })
+      await quoteSonicToStellar(run, ({
+        privacy
+      } as unknown) as Partial<EdgeSwapRequest>)
+      const action = capture.savedAction as Record<string, unknown>
+      expect(action.actionType).equals('swap')
+      expect(action.privacy).equals(privacy === 'required')
+    }
+  })
+
   it('writes a send action for a pasted-address destination', async function () {
     // A pasted address has no wallet behind it, so the action is a send: it
     // carries the recipient and whether the route was private, and names no
