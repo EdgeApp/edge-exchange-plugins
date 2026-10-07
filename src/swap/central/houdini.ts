@@ -79,7 +79,9 @@ const asInitOptions = asObject({
   apiSecret: asString
 })
 
-const orderUri = 'https://houdiniswap.com/order/'
+// The order status page is on the app host, keyed by a query parameter. The
+// marketing site (houdiniswap.com) has no order route.
+const orderUri = 'https://app.houdiniswap.com/order-details?houdiniId='
 const uri = 'https://api-partner.houdiniswap.com/v2/'
 
 // Houdini quotes/exchanges are keyed by an opaque token id, so destination
