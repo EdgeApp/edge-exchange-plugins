@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- fixed: (HoudiniSwap) Order link opens the order status page instead of "Page Not Found"
+
 ## 2.58.1 (2026-10-06)
 
 - removed: LetsExchange swap provider
