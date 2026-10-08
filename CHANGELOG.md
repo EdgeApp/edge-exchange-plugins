@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 2.59.0 (2026-10-08)
+
 - added: Arc swaps via LI.FI, 0x Gasless, ChangeHero, ChangeNOW, Changelly, n.exchange, Rango, SideShift, and Swapter
 - fixed: (Rango) Accept quotes whose amount restriction has no minimum or maximum
 
