@@ -3,6 +3,7 @@ export const edgeCurrencyPluginIds = [
   'algorand',
   'amoy',
   'arbitrum',
+  'arc',
   'avalanche',
   'axelar',
   'badcoin',

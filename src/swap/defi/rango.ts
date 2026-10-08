@@ -215,8 +215,8 @@ const asSwapFee = asObject({
 })
 
 const asAmountRestriction = asObject({
-  min: asString,
-  max: asString,
+  min: asOptional(asString),
+  max: asOptional(asString),
   type: asString // "EXCLUSIVE"
 })
 
@@ -751,9 +751,9 @@ export function makeRangoPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
         }
         const { min, max } = amountRestriction
 
-        if (gte(nativeAmount, max)) {
+        if (max != null && gte(nativeAmount, max)) {
           throw new SwapAboveLimitError(swapInfo, max, fromTo)
-        } else if (lte(nativeAmount, min)) {
+        } else if (min != null && lte(nativeAmount, min)) {
           throw new SwapBelowLimitError(swapInfo, min, fromTo)
         }
       }
