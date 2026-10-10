@@ -256,8 +256,17 @@ const makeFakeSyntheticDestination = (params: {
   decimals: number
   toAddress: string
   toMemos?: EdgeMemo[]
+  /** Core backs the synthetic wallet with the chain's real token list. */
+  tokens?: { [tokenId: string]: FakeToken }
 }): EdgeCurrencyWallet => {
-  const { pluginId, currencyCode, decimals, toAddress, toMemos = [] } = params
+  const {
+    pluginId,
+    currencyCode,
+    decimals,
+    toAddress,
+    toMemos = [],
+    tokens = {}
+  } = params
   const multiplier = `1${'0'.repeat(decimals)}`
   const currencyInfo = {
     pluginId,
@@ -267,7 +276,7 @@ const makeFakeSyntheticDestination = (params: {
   const wallet = {
     id: `synthetic://${pluginId}`,
     currencyInfo,
-    currencyConfig: { currencyInfo, allTokens: {} },
+    currencyConfig: { currencyInfo, allTokens: tokens },
     getAddresses: async () => [
       { publicAddress: toAddress, addressType: 'publicAddress' }
     ],
@@ -412,6 +421,66 @@ describe('houdini', function () {
     const orderBody = JSON.parse(lastExchangeBody ?? '{}')
     expect(orderBody.addressTo).equals('rPT1Sjq2YGrBMTttX4GZHjKu9dyfzbpAYe')
     expect(orderBody.destinationTag).equals('12345')
+  })
+
+  it('orders a token payout to a pasted address', async function () {
+    // TRX -> USDT on Tron, sent to an address with no wallet behind it. The
+    // destination token is found by its contract address on the synthetic
+    // wallet, the same way a token in a user wallet is.
+    const usdtTronContract = 'TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t'
+    const toAddress = 'TGnZMLjixwXGR2WUWAuo81AuBjXA7F74qw'
+    const trxWallet = makeFakeWallet(
+      {
+        pluginId: 'tron',
+        currencyCode: 'TRX',
+        decimals: 6,
+        address: 'TFs8neQAL35CVf96qDnHbdf6tLV9GKUbk8'
+      },
+      capture
+    )
+    const usdtDestination = makeFakeSyntheticDestination({
+      pluginId: 'tron',
+      currencyCode: 'TRX',
+      decimals: 6,
+      toAddress,
+      tokens: {
+        [usdtTronContract]: {
+          currencyCode: 'USDT',
+          denominations: [{ name: 'USDT', multiplier: '1000000' }],
+          networkLocation: { contractAddress: usdtTronContract }
+        }
+      }
+    })
+
+    const quote = await fetchQuote({
+      fromWallet: trxWallet,
+      toWallet: usdtDestination,
+      fromTokenId: null,
+      toTokenId: usdtTronContract,
+      nativeAmount: '1000000000', // 1000 TRX
+      quoteFor: 'from'
+    })
+
+    expect(quote.fromNativeAmount).equals('1000000000')
+    // The recorded order pays out 325.587589 USDT, in the token's 6 decimals:
+    expect(quote.toNativeAmount).equals('325587589')
+    expect(capture.depositAddress).is.a('string')
+
+    // The order pays the pasted address:
+    expect(lastExchangeBody).is.a('string')
+    const orderBody = JSON.parse(lastExchangeBody ?? '{}')
+    expect(orderBody.addressTo).equals(toAddress)
+
+    // The transaction records a send of the token, not of TRX:
+    const action = capture.savedAction as {
+      actionType: string
+      payoutAddress: string
+      toAsset: { pluginId: string; tokenId: string | null }
+    }
+    expect(action.actionType).equals('swapSend')
+    expect(action.payoutAddress).equals(toAddress)
+    expect(action.toAsset.pluginId).equals('tron')
+    expect(action.toAsset.tokenId).equals(usdtTronContract)
   })
 })
 
