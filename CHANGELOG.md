@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 2.59.1 (2026-10-14)
+
 - fixed: (HoudiniSwap) Order link opens the order status page instead of "Page Not Found"
 
 ## 2.59.0 (2026-10-08)
