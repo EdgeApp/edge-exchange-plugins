@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 2.59.2 (2026-10-15)
+
 - fixed: (Houdini) Mark private wallet-to-wallet swaps on the saved action
 
 ## 2.59.1 (2026-10-14)
