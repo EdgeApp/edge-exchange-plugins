@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- fixed: (Houdini) Mark private wallet-to-wallet swaps on the saved action
+
 ## 2.59.1 (2026-10-14)
 
 - fixed: (HoudiniSwap) Order link opens the order status page instead of "Page Not Found"

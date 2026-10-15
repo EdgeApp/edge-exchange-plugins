@@ -61,8 +61,20 @@ export interface EdgeTxActionSwapSend {
   privacy: boolean
 }
 
+/**
+ * A swap between two of the user's wallets. Adds the `privacy` flag that
+ * `EdgeTxActionSwap` carries in `edge-core-js`, declared here because the
+ * installed `edge-core-js` types predate it.
+ */
+export interface EdgeTxActionSwapPrivacy extends EdgeTxActionSwap {
+  /** Routed privately (a Stealth swap). */
+  privacy?: boolean
+}
+
 /** The saved actions a swap plugin writes. */
-export type EdgeTxActionSwapPlugin = EdgeTxActionSwap | EdgeTxActionSwapSend
+export type EdgeTxActionSwapPlugin =
+  | EdgeTxActionSwapPrivacy
+  | EdgeTxActionSwapSend
 
 export const asNumberString = (raw: any): string => {
   const n = asEither(asString, asNumber)(raw)
