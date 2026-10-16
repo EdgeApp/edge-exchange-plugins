@@ -92,10 +92,16 @@ const addressTypeMap: StringMap = {
 }
 
 /**
+ * Houdini's own validation for a Zcash payout address. Anything else (a
+ * unified `u1` or a Sapling `zs` address) fails the order request.
+ */
+const ZCASH_TRANSPARENT_ADDRESS = /^t1[1-9A-HJ-NP-Za-km-z]{33}$/
+
+/**
  * A swap-to-address destination arrives as a core-built synthetic wallet whose
- * id carries this prefix. Synthetic wallets hold exactly one pasted address
- * (already validated by the caller), so typed-address lookups do not apply,
- * and they may expose destination memos through a `getMemos` method.
+ * id carries this prefix. Synthetic wallets hold the caller's destination
+ * addresses (already validated by the caller), first entry being the payout
+ * address, and they may expose destination memos through a `getMemos` method.
  */
 const SYNTHETIC_WALLET_ID_PREFIX = 'synthetic://'
 
@@ -124,6 +130,28 @@ async function getDestinationMemos(
   // bridged object, and a bridge proxy's methods need their receiver to route
   // the call. Every other wallet call in this plugin reads the same way.
   return await synthetic.getMemos()
+}
+
+/**
+ * The payout address. A real wallet must hold the address type Houdini needs
+ * for its chain. A synthetic destination holds whatever the caller passed: a
+ * pasted address alone, or a picked wallet's full address list. The needed
+ * type wins when the list carries it, and the first entry is used otherwise.
+ */
+async function getPayoutAddress(
+  toWallet: EdgeCurrencyWallet,
+  isSyntheticDestination: boolean
+): Promise<string> {
+  const addressType = addressTypeMap[toWallet.currencyInfo.pluginId]
+  if (!isSyntheticDestination) {
+    return await getAddress(toWallet, addressType)
+  }
+
+  const addresses = await toWallet.getAddresses({ tokenId: null })
+  const typedAddress = addresses.find(
+    address => address.addressType === addressType
+  )
+  return (typedAddress ?? addresses[0]).publicAddress
 }
 
 /**
@@ -217,9 +245,12 @@ function readHoudiniFailure(
     }
   }
 
+  // The API can report one failure under several keys (`body.addressTo` and
+  // `addressTo`), so each distinct message is reported once:
   const fieldMessages = Object.values(apiError.fields ?? {})
     .map(field => field?.message)
     .filter((message): message is string => message != null && message !== '')
+    .filter((message, index, messages) => messages.indexOf(message) === index)
   const reason =
     fieldMessages.length > 0 ? fieldMessages.join('; ') : apiError.message
   return { code: apiError.code, message: `HoudiniSwap: ${reason}` }
@@ -653,14 +684,9 @@ export function makeHoudiniPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
       request
     )
 
-    // A synthetic (swap-to-address) destination holds exactly one pasted,
-    // caller-validated address, so a typed-address lookup does not apply.
     const isSyntheticDestination = toWallet.id.startsWith(
       SYNTHETIC_WALLET_ID_PREFIX
     )
-    const toAddressType = isSyntheticDestination
-      ? undefined
-      : addressTypeMap[toWallet.currencyInfo.pluginId]
 
     const [
       fromTokenId,
@@ -672,12 +698,23 @@ export function makeHoudiniPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
       resolveTokenId(fromMainnet, fromContractAddress),
       resolveTokenId(toMainnet, toContractAddress),
       getAddress(fromWallet, addressTypeMap[fromWallet.currencyInfo.pluginId]),
-      getAddress(toWallet, toAddressType),
+      getPayoutAddress(toWallet, isSyntheticDestination),
       getDestinationMemos(toWallet)
     ])
 
     if (fromTokenId == null || toTokenId == null) {
       throw new SwapCurrencyError(swapInfo, request)
+    }
+
+    // A unified address is longer than Houdini's address field allows, so the
+    // API would only answer with a bare "maxLength 200":
+    if (
+      toWallet.currencyInfo.pluginId === 'zcash' &&
+      !ZCASH_TRANSPARENT_ADDRESS.test(toAddress)
+    ) {
+      throw new Error(
+        'HoudiniSwap supports transparent (t1) Zcash addresses only'
+      )
     }
 
     // The quote amount is in the display units of whichever side the caller
