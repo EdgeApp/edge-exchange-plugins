@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- fixed: (0x Gasless) Save swaps under the transaction hash that mines, not a submitted one the relayer can replace and leave pending
+
 ## 2.59.2 (2026-10-15)
 
 - fixed: (Houdini) Mark private wallet-to-wallet swaps on the saved action

@@ -2,14 +2,20 @@ import { assert } from 'chai'
 import {
   EdgeCorePluginOptions,
   EdgeCurrencyWallet,
+  EdgeLog,
   EdgeSwapPlugin,
-  EdgeSwapRequest
+  EdgeSwapRequest,
+  EdgeTransaction
 } from 'edge-core-js/types'
 import { describe, it } from 'mocha'
 
-import { make0xGaslessPlugin } from '../src/swap/defi/0x/0xGasless'
+import {
+  make0xGaslessPlugin,
+  waitForMinedTxid
+} from '../src/swap/defi/0x/0xGasless'
 import { NATIVE_TOKEN_ADDRESS } from '../src/swap/defi/0x/constants'
 import { getZeroXAsset } from '../src/swap/defi/0x/util'
+import { GaslessSwapStatusResponse } from '../src/swap/defi/0x/zeroXApiTypes'
 
 const ARC_INTERFACE = '0x3600000000000000000000000000000000000000'
 const EURC = '0xbEf5f6d51CB62b58e6A8f77868681825C6fe21c1'
@@ -86,7 +92,8 @@ const makePlugin = (
         }
       }
     },
-    initOptions: { apiKey: 'test-key' }
+    initOptions: { apiKey: 'test-key' },
+    log: () => {}
   } as unknown) as EdgeCorePluginOptions) as EdgeSwapPlugin
 
 const makeRequest = (
@@ -179,5 +186,162 @@ describe('0xgasless fetchSwapQuote on Arc', function () {
     }
     assert.equal(error?.name, 'SwapBelowLimitError')
     assert.equal(error?.nativeMin, '1000000000000')
+  })
+})
+
+const SUBMITTED_HASH = '0x' + 'a'.repeat(64)
+const MINED_HASH = '0x' + 'b'.repeat(64)
+
+const fakeLog: EdgeLog = Object.assign(() => {}, {
+  breadcrumb: () => {},
+  crash: () => {},
+  error: () => {},
+  warn: () => {}
+})
+
+const tx = (hash: string): { hash: string; timestamp: number } => ({
+  hash,
+  timestamp: 1
+})
+
+/** Hands out the scripted statuses in order, repeating the last one. */
+const makeGetStatus = (
+  statuses: GaslessSwapStatusResponse[]
+): (() => Promise<GaslessSwapStatusResponse>) => {
+  let index = 0
+  return async () => statuses[Math.min(index++, statuses.length - 1)]
+}
+
+const waitFast = async (
+  statuses: GaslessSwapStatusResponse[],
+  timeoutMs: number = 1000
+): Promise<string> =>
+  await waitForMinedTxid({
+    getStatus: makeGetStatus(statuses),
+    log: fakeLog,
+    pollMs: 1,
+    timeoutMs
+  })
+
+const catchError = async (promise: Promise<unknown>): Promise<Error> => {
+  try {
+    await promise
+  } catch (error: unknown) {
+    if (error instanceof Error) return error
+  }
+  throw new Error('Expected a rejection')
+}
+
+describe('0xgasless waitForMinedTxid', function () {
+  it('keeps polling through submitted and returns the mined hash', async function () {
+    const txid = await waitFast([
+      { status: 'pending', transactions: [] },
+      { status: 'submitted', transactions: [tx(MINED_HASH)] },
+      { status: 'succeeded', transactions: [tx(MINED_HASH)] }
+    ])
+    assert.equal(txid, MINED_HASH)
+  })
+
+  it('returns the mined hash when the relayer replaced the submitted one', async function () {
+    const txid = await waitFast([
+      { status: 'submitted', transactions: [tx(SUBMITTED_HASH)] },
+      {
+        status: 'submitted',
+        transactions: [tx(SUBMITTED_HASH), tx(MINED_HASH)]
+      },
+      { status: 'succeeded', transactions: [tx(MINED_HASH)] }
+    ])
+    assert.equal(txid, MINED_HASH)
+  })
+
+  it('throws the reason on failed, even with no transactions', async function () {
+    const error = await catchError(
+      waitFast([
+        { status: 'submitted', transactions: [tx(SUBMITTED_HASH)] },
+        { status: 'failed', transactions: [], reason: 'order_expired' }
+      ])
+    )
+    assert.equal(error.message, 'Swap failed: order_expired')
+  })
+
+  it('times out when the trade never mines', async function () {
+    const error = await catchError(
+      waitFast(
+        [{ status: 'submitted', transactions: [tx(SUBMITTED_HASH)] }],
+        20
+      )
+    )
+    assert.match(error.message, /^Swap timed out after 0.02 seconds/)
+    assert.include(error.message, `submitted [${SUBMITTED_HASH}]`)
+  })
+})
+
+describe('0xgasless approve', function () {
+  it('saves the swap under the mined hash, not the submitted one', async function () {
+    this.timeout(5000)
+    const getStatus = makeGetStatus([
+      { status: 'submitted', transactions: [tx(SUBMITTED_HASH)] },
+      { status: 'succeeded', transactions: [tx(MINED_HASH)] }
+    ])
+    const respond = (body: unknown): unknown => ({
+      ok: true,
+      status: 200,
+      text: async () => JSON.stringify(body)
+    })
+    const plugin = make0xGaslessPlugin(({
+      io: {
+        fetch: async (uri: string) => {
+          if (uri.includes('/gasless/quote')) {
+            return respond(makeQuote('1000000', '1129000'))
+          }
+          if (uri.includes('/gasless/submit')) {
+            return respond({
+              type: 'settler_metatransaction',
+              tradeHash: '0x3'
+            })
+          }
+          return respond(await getStatus())
+        }
+      },
+      initOptions: { apiKey: 'test-key' },
+      log: () => {}
+    } as unknown) as EdgeCorePluginOptions) as EdgeSwapPlugin
+
+    const savedTxs: EdgeTransaction[] = []
+    const arc = makeWallet('arc', 'USDC')
+    const wallet = {
+      ...arc,
+      currencyInfo: {
+        ...arc.currencyInfo,
+        transactionExplorer: 'https://arcscan.app/tx/%s'
+      },
+      async signMessage() {
+        return '0x' + '1'.repeat(64) + '2'.repeat(64) + '1b'
+      },
+      async saveTx(transaction: EdgeTransaction) {
+        savedTxs.push(transaction)
+      }
+    }
+    const quote = await plugin.fetchSwapQuote(
+      {
+        ...makeRequest(EURC_TOKEN_ID, null, '1000000'),
+        fromWallet: wallet,
+        toWallet: wallet
+      },
+      undefined,
+      { infoPayload: {} }
+    )
+    const result = await quote.approve()
+
+    assert.equal(result.orderId, MINED_HASH)
+    assert.equal(
+      result.transaction.savedAction?.actionType === 'swap'
+        ? result.transaction.savedAction.orderUri
+        : undefined,
+      `https://arcscan.app/tx/${MINED_HASH}`
+    )
+    assert.equal(result.transaction.txid, MINED_HASH)
+    assert.equal(savedTxs.length, 1)
+    assert.equal(savedTxs[0].txid, MINED_HASH)
   })
 })
