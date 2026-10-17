@@ -2,6 +2,7 @@ import { div, mul } from 'biggystring'
 import {
   EdgeAssetAction,
   EdgeCorePluginFactory,
+  EdgeLog,
   EdgeSwapApproveOptions,
   EdgeSwapInfo,
   EdgeSwapQuote,
@@ -13,7 +14,12 @@ import {
 
 import { due } from '../../../util/due'
 import { snooze } from '../../../util/utils'
-import { EXPIRATION_MS } from './constants'
+import {
+  EXPIRATION_MS,
+  STATUS_MAX_BACKOFF_MS,
+  STATUS_POLL_MS,
+  STATUS_TIMEOUT_MS
+} from './constants'
 import { asInitOptions } from './types'
 import { getCurrencyCode, getZeroXAsset, makeSignatureStruct } from './util'
 import { ZeroXApi } from './ZeroXApi'
@@ -30,7 +36,7 @@ const swapInfo: EdgeSwapInfo = {
 }
 
 export const make0xGaslessPlugin: EdgeCorePluginFactory = opts => {
-  const { io } = opts
+  const { io, log } = opts
   const initOptions = asInitOptions(opts.initOptions)
 
   const api = new ZeroXApi(io, initOptions.apiKey)
@@ -157,39 +163,19 @@ export const make0xGaslessPlugin: EdgeCorePluginFactory = opts => {
             trade: tradeData
           })
 
-          let apiSwapStatus: GaslessSwapStatusResponse
-          do {
-            // Wait before checking
-            await snooze(500)
-            apiSwapStatus = await api.gaslessSwapStatus(
-              chainId,
-              apiSwapSubmission.tradeHash
-            )
-            if (
-              apiSwapStatus.status === 'succeeded' &&
-              apiSwapStatus.transactions.length > 1
-            ) {
-              throw new Error(
-                `Swap failed: Unexpected multiple transactions for 'succeeded' status: ${apiSwapStatus.transactions.length}`
-              )
-            }
-          } while (
-            apiSwapStatus.status === 'pending' ||
-            // If status==='submitted' there may be multiple transaction
-            // competing. Wait until there's only one (status is 'succeeded'
-            // or 'confirmed')
-            apiSwapStatus.transactions.length !== 1
-          )
-
-          if (apiSwapStatus.status === 'failed') {
-            throw new Error(`Swap failed: ${apiSwapStatus.reason ?? 'unknown'}`)
-          }
+          const txid = await waitForMinedTxid({
+            getStatus: async () =>
+              await api.gaslessSwapStatus(chainId, apiSwapSubmission.tradeHash),
+            log,
+            pollMs: STATUS_POLL_MS,
+            timeoutMs: STATUS_TIMEOUT_MS
+          })
 
           const assetAction: EdgeAssetAction = {
             assetActionType: 'swap'
           }
 
-          const orderId: string = apiSwapStatus.transactions[0].hash
+          const orderId = txid
 
           let orderUri: string | undefined
           const { transactionExplorer } = swapRequest.fromWallet.currencyInfo
@@ -244,7 +230,7 @@ export const make0xGaslessPlugin: EdgeCorePluginFactory = opts => {
             savedAction,
             signedTx: '', // Signing is done by the tx-relay server
             tokenId: swapRequest.fromTokenId,
-            txid: apiSwapStatus.transactions[0].hash,
+            txid,
             walletId: swapRequest.fromWallet.id
           }
 
@@ -272,4 +258,81 @@ export const make0xGaslessPlugin: EdgeCorePluginFactory = opts => {
       }
     }
   }
+}
+
+const TXID_REGEX = /^0x[0-9a-f]{64}$/i
+
+interface WaitForMinedTxidOptions {
+  getStatus: () => Promise<GaslessSwapStatusResponse>
+  log: EdgeLog
+  pollMs: number
+  timeoutMs: number
+}
+
+/**
+ * Polls a submitted gasless trade until 0x reports it mined, and returns
+ * the hash of the mined transaction.
+ *
+ * A "submitted" trade can list transactions the relayer later replaces,
+ * so only "succeeded" (in a block) or "confirmed" names the hash to save.
+ * A failed status request is retried with a doubling delay until the
+ * deadline, because 0x already holds the signed trade and may still mine it.
+ */
+export async function waitForMinedTxid(
+  opts: WaitForMinedTxidOptions
+): Promise<string> {
+  const { getStatus, log, pollMs, timeoutMs } = opts
+  const deadline = Date.now() + timeoutMs
+
+  let delayMs = pollMs
+  let lastStatus = 'none'
+  while (Date.now() < deadline) {
+    await snooze(delayMs)
+
+    let apiSwapStatus: GaslessSwapStatusResponse
+    try {
+      apiSwapStatus = await getStatus()
+    } catch (error: unknown) {
+      log.warn(`0x gasless status check failed: ${String(error)}`)
+      delayMs = Math.min(delayMs * 2, STATUS_MAX_BACKOFF_MS)
+      continue
+    }
+    delayMs = pollMs
+
+    const hashes = apiSwapStatus.transactions.map(tx => tx.hash)
+    const status = `${apiSwapStatus.status} [${hashes.join(', ')}]`
+    if (status !== lastStatus) {
+      log.warn(`0x gasless status: ${status}`)
+      lastStatus = status
+    }
+
+    if (apiSwapStatus.status === 'failed') {
+      throw new Error(`Swap failed: ${apiSwapStatus.reason}`)
+    }
+    if (
+      apiSwapStatus.status === 'succeeded' ||
+      apiSwapStatus.status === 'confirmed'
+    ) {
+      if (hashes.length > 1) {
+        throw new Error(
+          `Swap failed: Unexpected multiple transactions for '${apiSwapStatus.status}' status: ${hashes.length}`
+        )
+      }
+      if (hashes.length === 1) {
+        const [hash] = hashes
+        if (!TXID_REGEX.test(hash)) {
+          throw new Error(
+            `Swap failed: Invalid transaction hash for '${apiSwapStatus.status}' status: ${hash}`
+          )
+        }
+        return hash
+      }
+    }
+  }
+
+  throw new Error(
+    `Swap timed out after ${
+      timeoutMs / 1000
+    } seconds waiting for 0x to mine it (last status: ${lastStatus}). It may still complete.`
+  )
 }

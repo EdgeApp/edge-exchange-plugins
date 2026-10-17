@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- fixed: (0x Gasless) Save swaps under the transaction hash that mines, not a submitted one the relayer can replace and leave pending
+
 ## 2.62.0 (2026-11-13)
 
 - added: (Houdini) Pay a pasted Zcash unified address out to its transparent receiver
