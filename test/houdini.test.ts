@@ -289,7 +289,16 @@ const makeFakeSyntheticDestination = (params: {
 const ZCASH_TRANSPARENT_ADDRESS = 't1Hsc1LR8yKnbbe3twRp88p6vFfC5t7DLbs'
 const ZCASH_SAPLING_ADDRESS =
   'zs1z7rejlpsa98s2rrrfkwmaxu53e4ue0ulcrw0h4x5g8jl04tak0d3mm47vdtahatqrlkngh9sly'
-const ZCASH_UNIFIED_ADDRESS = `u1${'q'.repeat(211)}`
+/** A ZIP-316 test vector with a P2PKH receiver, and that receiver's t1. */
+const ZCASH_UNIFIED_ADDRESS =
+  'u1pg2aaph7jp8rpf6yhsza25722sg5fcn3vaca6ze27hqjw7jvvhhuxkpcg0ge9xh6drsgdkda8qjq5chpehkcpxf87rnjryjqwymdheptpvnljqqrjqzjwkc2ma6hcq666kgwfytxwac8eyex6ndgr6ezte66706e3vaqrd25dzvzkc69kw0jgywtd0cmq52q5lkw6uh7hyvzjse8ksx'
+const ZCASH_UNIFIED_RECEIVER = 't1cN2ZVWzWcVRrnfeQzmkpLhzQ4dYRv8yRY'
+/** A ZIP-316 test vector with shielded receivers only. */
+const ZCASH_SHIELDED_UNIFIED_ADDRESS =
+  'u1ay3aawlldjrmxqnjf5medr5ma6p3acnet464ht8lmwplq5cd3ugytcmlf96rrmtgwldc75x94qn4n8pgen36y8tywlq6yjk7lkf3fa8wzjrav8z2xpxqnrnmjxh8tmz6jhfh425t7f3vy6p4pd3zmqayq49efl2c4xydc0gszg660q9p'
+/** A unified address whose transparent receiver is P2SH (t3). */
+const ZCASH_P2SH_UNIFIED_ADDRESS =
+  'u1pcx39dfudzx9uaas89vu34vgna22q0nz3hgcvx46y87uev2e0f74cr3vd2ukgj0u9fsng2j68hfdyzu0s76k4gdwj6u9mh3fla6kum859dt8z7dgsw5n747lwaxaf0n982yxw56zlxj'
 
 /** 1300 S, the send amount the sim drive used. */
 const SONIC_NATIVE_AMOUNT = '1300000000000000000000'
@@ -1198,8 +1207,58 @@ describe('houdini offline behaviors', function () {
     expect(action.payoutAddress).equals(ZCASH_TRANSPARENT_ADDRESS)
   })
 
-  it('refuses a Zcash address that is not transparent before quoting', async function () {
-    for (const toAddress of [ZCASH_UNIFIED_ADDRESS, ZCASH_SAPLING_ADDRESS]) {
+  it('pays a pasted unified address out to its transparent receiver', async function () {
+    const zcashDestination = makeFakeSyntheticDestination({
+      pluginId: 'zcash',
+      currencyCode: 'ZEC',
+      decimals: 8,
+      toAddress: ZCASH_UNIFIED_ADDRESS
+    })
+    const run = makeScriptedPlugin({
+      nativeAddress: '',
+      quotes: [privateQuote]
+    })
+    await quoteSonicToStellar(run, ({
+      toWallet: zcashDestination
+    } as unknown) as Partial<EdgeSwapRequest>)
+
+    expect(JSON.parse(run.orderBodies[0]).addressTo).equals(
+      ZCASH_UNIFIED_RECEIVER
+    )
+    const action = capture.savedAction as Record<string, unknown>
+    expect(action.actionType).equals('swapSend')
+    expect(action.payoutAddress).equals(ZCASH_UNIFIED_ADDRESS)
+  })
+
+  it('pays a pasted transparent address out unchanged', async function () {
+    const zcashDestination = makeFakeSyntheticDestination({
+      pluginId: 'zcash',
+      currencyCode: 'ZEC',
+      decimals: 8,
+      toAddress: ZCASH_TRANSPARENT_ADDRESS
+    })
+    const run = makeScriptedPlugin({
+      nativeAddress: '',
+      quotes: [privateQuote]
+    })
+    await quoteSonicToStellar(run, ({
+      toWallet: zcashDestination
+    } as unknown) as Partial<EdgeSwapRequest>)
+
+    expect(JSON.parse(run.orderBodies[0]).addressTo).equals(
+      ZCASH_TRANSPARENT_ADDRESS
+    )
+    const action = capture.savedAction as Record<string, unknown>
+    expect(action.payoutAddress).equals(ZCASH_TRANSPARENT_ADDRESS)
+  })
+
+  it('refuses a Zcash address without a t1 receiver before quoting', async function () {
+    for (const toAddress of [
+      ZCASH_SHIELDED_UNIFIED_ADDRESS,
+      ZCASH_P2SH_UNIFIED_ADDRESS,
+      ZCASH_SAPLING_ADDRESS,
+      `u1${'q'.repeat(211)}`
+    ]) {
       const zcashDestination = makeFakeSyntheticDestination({
         pluginId: 'zcash',
         currencyCode: 'ZEC',

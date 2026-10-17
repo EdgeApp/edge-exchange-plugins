@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- added: (HoudiniSwap) Pay a pasted Zcash unified address out to its transparent receiver
 - fixed: (HoudiniSwap) Pay a picked Zcash destination wallet out to its transparent address
 - fixed: (HoudiniSwap) Explain that only transparent (t1) Zcash payout addresses work, instead of "maxLength 200; maxLength 200"
 

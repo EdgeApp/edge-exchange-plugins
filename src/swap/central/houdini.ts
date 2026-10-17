@@ -55,6 +55,7 @@ import {
   nativeToDenomination,
   snooze
 } from '../../util/utils'
+import { getUnifiedTransparentAddress } from '../../util/zcashUnifiedAddress'
 import {
   asNumberString,
   EdgeSwapRequestPlugin,
@@ -96,6 +97,30 @@ const addressTypeMap: StringMap = {
  * unified `u1` or a Sapling `zs` address) fails the order request.
  */
 const ZCASH_TRANSPARENT_ADDRESS = /^t1[1-9A-HJ-NP-Za-km-z]{33}$/
+
+/**
+ * The Zcash address an order pays out to: a t1 address as-is, or the t1
+ * receiver of a unified `u1` address. Houdini would answer anything else with
+ * a bare validation failure (a unified address alone overruns its 200
+ * character limit), so those fail here with a clear message instead. That
+ * includes a unified address whose only transparent receiver is P2SH (t3).
+ */
+function getZcashOrderAddress(address: string): string {
+  if (ZCASH_TRANSPARENT_ADDRESS.test(address)) return address
+  let transparent: string | undefined
+  try {
+    transparent = getUnifiedTransparentAddress(address)
+  } catch (error: unknown) {
+    // Not a mainnet unified address, so it gets the same message as any
+    // other address Houdini would refuse.
+  }
+  if (transparent == null || !ZCASH_TRANSPARENT_ADDRESS.test(transparent)) {
+    throw new Error(
+      'HoudiniSwap supports transparent (t1) Zcash addresses only'
+    )
+  }
+  return transparent
+}
 
 /**
  * A swap-to-address destination arrives as a core-built synthetic wallet whose
@@ -706,16 +731,12 @@ export function makeHoudiniPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
       throw new SwapCurrencyError(swapInfo, request)
     }
 
-    // A unified address is longer than Houdini's address field allows, so the
-    // API would only answer with a bare "maxLength 200":
-    if (
-      toWallet.currencyInfo.pluginId === 'zcash' &&
-      !ZCASH_TRANSPARENT_ADDRESS.test(toAddress)
-    ) {
-      throw new Error(
-        'HoudiniSwap supports transparent (t1) Zcash addresses only'
-      )
-    }
+    // The order pays out to an address Houdini accepts, while the saved action
+    // keeps the address the user entered:
+    const orderAddress =
+      toWallet.currencyInfo.pluginId === 'zcash'
+        ? getZcashOrderAddress(toAddress)
+        : toAddress
 
     // The quote amount is in the display units of whichever side the caller
     // fixed: the `from` amount normally, or the `to` (receive) amount for a
@@ -1008,7 +1029,7 @@ export function makeHoudiniPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
         continue
       }
       const orderBody = {
-        addressTo: toAddress,
+        addressTo: orderAddress,
         quoteId: candidate.quoteId,
         refundAddress: fromAddress,
         ...(destinationTag == null ? {} : { destinationTag })
@@ -1186,7 +1207,7 @@ export function makeHoudiniPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
           method: 'POST',
           body: JSON.stringify({
             addressFrom: fromAddress,
-            addressTo: toAddress,
+            addressTo: orderAddress,
             quoteId: candidate.quoteId,
             signatures: [],
             ...(destinationTag == null ? {} : { destinationTag })
