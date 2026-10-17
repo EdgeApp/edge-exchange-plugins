@@ -23,7 +23,7 @@ thorchain.set('DOGE', 'dogecoin')
 thorchain.set('ETH', 'ethereum')
 
 // Display Name: GAIA
-thorchain.set('GAIA', null)
+thorchain.set('GAIA', 'cosmoshub')
 
 // Display Name: LTC
 thorchain.set('LTC', 'litecoin')
