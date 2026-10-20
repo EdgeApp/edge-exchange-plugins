@@ -19,6 +19,7 @@ import { expect } from 'chai'
 import { makeConfig } from 'cleaner-config'
 import { createHash } from 'crypto'
 import {
+  EdgeAddress,
   EdgeCurrencyWallet,
   EdgeMemo,
   EdgeSwapQuote,
@@ -170,6 +171,8 @@ const makeFakeWallet = (
     maxSpendable?: string
     /** Set on an EVM chain, which is what makes a dex route executable. */
     evmChainId?: number
+    /** What `getAddresses` reports, when the wallet holds several kinds. */
+    addresses?: EdgeAddress[]
   },
   capture: SpendCapture
 ): EdgeCurrencyWallet => {
@@ -181,7 +184,11 @@ const makeFakeWallet = (
     tokens = {},
     balance = '0',
     maxSpendable = balance,
-    evmChainId
+    evmChainId,
+    addresses = [
+      { publicAddress: address, addressType: 'publicAddress' },
+      { publicAddress: address, addressType: 'transparentAddress' }
+    ]
   } = params
   const multiplier = `1${'0'.repeat(decimals)}`
   const currencyInfo = {
@@ -213,10 +220,7 @@ const makeFakeWallet = (
       }
       return maxSpendable
     },
-    getAddresses: async () => [
-      { publicAddress: address, addressType: 'publicAddress' },
-      { publicAddress: address, addressType: 'transparentAddress' }
-    ],
+    getAddresses: async () => addresses,
     makeSpend: async (spendInfo: {
       tokenId: string | null
       spendTargets: Array<{ nativeAmount: string; publicAddress: string }>
@@ -247,17 +251,27 @@ const makeFakeWallet = (
 
 /**
  * Mirrors the core-built synthetic destination wallet of a swap-to-address
- * request: one pasted address (`publicAddress` type only), a `synthetic://`
- * id, no spend methods, and destination memos exposed through `getMemos`.
+ * request: the caller's destination addresses (by default one pasted address
+ * of `publicAddress` type), a `synthetic://` id, no spend methods, and
+ * destination memos exposed through `getMemos`.
  */
 const makeFakeSyntheticDestination = (params: {
   pluginId: string
   currencyCode: string
   decimals: number
   toAddress: string
+  /** A picked wallet's full address list, in place of `toAddress` alone. */
+  toAddresses?: EdgeAddress[]
   toMemos?: EdgeMemo[]
 }): EdgeCurrencyWallet => {
-  const { pluginId, currencyCode, decimals, toAddress, toMemos = [] } = params
+  const {
+    pluginId,
+    currencyCode,
+    decimals,
+    toAddress,
+    toAddresses = [{ publicAddress: toAddress, addressType: 'publicAddress' }],
+    toMemos = []
+  } = params
   const multiplier = `1${'0'.repeat(decimals)}`
   const currencyInfo = {
     pluginId,
@@ -268,13 +282,17 @@ const makeFakeSyntheticDestination = (params: {
     id: `synthetic://${pluginId}`,
     currencyInfo,
     currencyConfig: { currencyInfo, allTokens: {} },
-    getAddresses: async () => [
-      { publicAddress: toAddress, addressType: 'publicAddress' }
-    ],
+    getAddresses: async () => toAddresses,
     getMemos: async () => toMemos
   }
   return (wallet as unknown) as EdgeCurrencyWallet
 }
+
+/** Zcash payout addresses of each kind. Houdini accepts only the `t1` one. */
+const ZCASH_TRANSPARENT_ADDRESS = 't1Hsc1LR8yKnbbe3twRp88p6vFfC5t7DLbs'
+const ZCASH_SAPLING_ADDRESS =
+  'zs1z7rejlpsa98s2rrrfkwmaxu53e4ue0ulcrw0h4x5g8jl04tak0d3mm47vdtahatqrlkngh9sly'
+const ZCASH_UNIFIED_ADDRESS = `u1${'q'.repeat(211)}`
 
 /** 1300 S, the send amount the sim drive used. */
 const SONIC_NATIVE_AMOUNT = '1300000000000000000000'
@@ -1126,6 +1144,127 @@ describe('houdini offline behaviors', function () {
 
     expect(String(error)).contains('Quote has expired')
     expect(String(error)).does.not.contain('Validation Failed')
+  })
+
+  it('reports a field message repeated under two keys once', async function () {
+    // A rejected payout address comes back under both `body.addressTo` and
+    // `addressTo`, which read as "maxLength 200; maxLength 200".
+    const run = makeScriptedPlugin({
+      nativeAddress: '',
+      quotes: [privateQuote],
+      orderError: {
+        code: 'VALIDATION_ERROR',
+        message: 'Validation Failed',
+        fields: {
+          'body.addressTo': { message: 'maxLength 200' },
+          addressTo: { message: 'maxLength 200' }
+        }
+      }
+    })
+    const error = await quoteSonicToStellar(run).then(
+      () => undefined,
+      (error: unknown) => error
+    )
+
+    expect(String(error)).equals('Error: HoudiniSwap: maxLength 200')
+  })
+
+  it('pays a picked Zcash wallet out to its transparent address', async function () {
+    // A wallet picked as a send destination arrives with its whole address
+    // list, unified first, and Houdini only pays out to the `t1` one.
+    const zcashDestination = makeFakeSyntheticDestination({
+      pluginId: 'zcash',
+      currencyCode: 'ZEC',
+      decimals: 8,
+      toAddress: ZCASH_UNIFIED_ADDRESS,
+      toAddresses: [
+        { publicAddress: ZCASH_UNIFIED_ADDRESS, addressType: 'unifiedAddress' },
+        { publicAddress: ZCASH_SAPLING_ADDRESS, addressType: 'saplingAddress' },
+        {
+          publicAddress: ZCASH_TRANSPARENT_ADDRESS,
+          addressType: 'transparentAddress'
+        }
+      ]
+    })
+    const run = makeScriptedPlugin({
+      nativeAddress: '',
+      quotes: [privateQuote]
+    })
+    await quoteSonicToStellar(run, ({
+      toWallet: zcashDestination
+    } as unknown) as Partial<EdgeSwapRequest>)
+
+    expect(JSON.parse(run.orderBodies[0]).addressTo).equals(
+      ZCASH_TRANSPARENT_ADDRESS
+    )
+    const action = capture.savedAction as Record<string, unknown>
+    expect(action.payoutAddress).equals(ZCASH_TRANSPARENT_ADDRESS)
+  })
+
+  it('pays a swap into a Zcash wallet out to its transparent address', async function () {
+    // A real wallet (an Exchange scene swap into ZEC) reports its unified
+    // address first. Taking the first entry would hit the t1 guard.
+    const zcashWallet = makeFakeWallet(
+      {
+        pluginId: 'zcash',
+        currencyCode: 'ZEC',
+        decimals: 8,
+        address: ZCASH_UNIFIED_ADDRESS,
+        addresses: [
+          {
+            publicAddress: ZCASH_UNIFIED_ADDRESS,
+            addressType: 'unifiedAddress'
+          },
+          {
+            publicAddress: ZCASH_SAPLING_ADDRESS,
+            addressType: 'saplingAddress'
+          },
+          {
+            publicAddress: ZCASH_TRANSPARENT_ADDRESS,
+            addressType: 'transparentAddress'
+          }
+        ]
+      },
+      capture
+    )
+    const run = makeScriptedPlugin({
+      nativeAddress: '',
+      quotes: [privateQuote]
+    })
+    await quoteSonicToStellar(run, { toWallet: zcashWallet })
+
+    expect(JSON.parse(run.orderBodies[0]).addressTo).equals(
+      ZCASH_TRANSPARENT_ADDRESS
+    )
+    const action = capture.savedAction as Record<string, unknown>
+    expect(action.payoutWalletId).equals(zcashWallet.id)
+  })
+
+  it('refuses a Zcash address that is not transparent before quoting', async function () {
+    for (const toAddress of [ZCASH_UNIFIED_ADDRESS, ZCASH_SAPLING_ADDRESS]) {
+      const zcashDestination = makeFakeSyntheticDestination({
+        pluginId: 'zcash',
+        currencyCode: 'ZEC',
+        decimals: 8,
+        toAddress
+      })
+      const run = makeScriptedPlugin({
+        nativeAddress: '',
+        quotes: [privateQuote]
+      })
+      const error = await quoteSonicToStellar(run, ({
+        toWallet: zcashDestination
+      } as unknown) as Partial<EdgeSwapRequest>).then(
+        () => undefined,
+        (error: unknown) => error
+      )
+
+      expect(String(error)).contains(
+        'HoudiniSwap supports transparent (t1) Zcash addresses only'
+      )
+      expect(run.quoteUrls.length).equals(0)
+      expect(run.orderBodies.length).equals(0)
+    }
   })
 
   it('creates one exchange for a max quote, not two', async function () {

@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- fixed: (HoudiniSwap) Pay a picked Zcash destination wallet out to its transparent address
+- fixed: (HoudiniSwap) Explain that only transparent (t1) Zcash payout addresses work, instead of "maxLength 200; maxLength 200"
+
 ## 2.59.2 (2026-10-15)
 
 - fixed: (Houdini) Mark private wallet-to-wallet swaps on the saved action
