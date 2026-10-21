@@ -34,6 +34,14 @@ stealthex.set('algorand', {
   tokenNetwork: 'algo'
 })
 stealthex.set('amoy', null)
+// Arc's native asset is USDC, which StealthEX lists under its ERC-20 interface
+// address. The pair still names it, the same way the pseudo-contracts on other
+// natives do:
+stealthex.set('arc', {
+  mainnetSymbol: 'usdc',
+  mainnetNetwork: 'arc',
+  tokenNetwork: null
+})
 stealthex.set('arbitrum', {
   mainnetSymbol: 'eth',
   mainnetNetwork: 'arbitrum',
@@ -232,12 +240,18 @@ stealthex.set('qtum', {
   mainnetNetwork: 'mainnet',
   tokenNetwork: null
 })
-stealthex.set('ravencoin', null)
+stealthex.set('ravencoin', {
+  mainnetSymbol: 'rvn',
+  mainnetNetwork: 'mainnet',
+  tokenNetwork: null
+})
 stealthex.set('ripple', {
   mainnetSymbol: 'xrp',
   mainnetNetwork: 'mainnet',
   tokenNetwork: 'xrp'
 })
+// StealthEX lists only a token on Robinhood Chain, not its native ETH:
+stealthex.set('robinhood', null)
 stealthex.set('rsk', null)
 stealthex.set('sepolia', null)
 stealthex.set('smartcash', null)
