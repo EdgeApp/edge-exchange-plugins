@@ -697,6 +697,9 @@ export function makeBridgelessPlugin(
             if (savedAction.orderId != null) {
               savedAction.orderUri = `${ORDER_URL}/check/${savedAction.orderId}`
             }
+            // The result still carries the quote's {{TXID}} placeholder, which
+            // conversion events would report as the order id
+            swapResult = { ...swapResult, orderId: savedAction.orderId }
 
             const [chainId, , txNonce] = savedAction.orderId.split('/')
 
