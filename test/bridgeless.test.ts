@@ -36,10 +36,10 @@ describe('getBridgelessAmounts', function () {
       getBridgelessAmounts({
         ...usdt,
         quoteFor: 'to',
-        nativeAmount: '19999999'
+        nativeAmount: '20199999'
       })
     )
-    assert.equal(nativeMin, '20000000')
+    assert.equal(nativeMin, '20200000')
     assert.equal(direction, 'to')
 
     const amounts = getBridgelessAmounts({
@@ -47,7 +47,7 @@ describe('getBridgelessAmounts', function () {
       quoteFor: 'to',
       nativeAmount: nativeMin
     })
-    assert.deepEqual(amounts, { fromAmount: '20060180', toAmount: '20000000' })
+    assert.deepEqual(amounts, { fromAmount: '20260782', toAmount: '20200000' })
   })
 
   it('rejects a deposit below the minimum', function () {
@@ -55,10 +55,10 @@ describe('getBridgelessAmounts', function () {
       getBridgelessAmounts({
         ...usdt,
         quoteFor: 'from',
-        nativeAmount: '20060179'
+        nativeAmount: '20260781'
       })
     )
-    assert.equal(nativeMin, '20060180')
+    assert.equal(nativeMin, '20260782')
     assert.equal(direction, 'from')
 
     // The reported minimum pays out exactly the minimum after commission:
@@ -67,7 +67,18 @@ describe('getBridgelessAmounts', function () {
       quoteFor: 'from',
       nativeAmount: nativeMin
     })
-    assert.equal(amounts.toAmount, '20000000')
+    assert.equal(amounts.toAmount, '20200000')
+  })
+
+  it('keeps a margin inside the published minimum', function () {
+    const { nativeMin } = catchBelowLimit(() =>
+      getBridgelessAmounts({
+        ...usdt,
+        quoteFor: 'to',
+        nativeAmount: usdt.minWithdrawalAmount
+      })
+    )
+    assert.equal(nativeMin, '20200000')
   })
 
   it('quotes a payout', function () {

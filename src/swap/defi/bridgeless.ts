@@ -156,6 +156,11 @@ export const scaleNativeAmount = (
   return whole
 }
 
+// Quotes stay this far inside the published withdrawal minimum, so a
+// commission or limit change between quote and deposit does not strand the
+// deposit
+const LIMIT_MARGIN = '0.01'
+
 interface BridgelessAmountParams {
   quoteFor: EdgeSwapRequest['quoteFor']
   nativeAmount: string
@@ -173,6 +178,7 @@ interface BridgelessAmounts {
 /**
  * Computes the deposit and payout amounts for a quote, enforcing the
  * destination token's minimum withdrawal against the payout after commission.
+ * The minimum is tightened by LIMIT_MARGIN.
  */
 export const getBridgelessAmounts = (
   params: BridgelessAmountParams
@@ -182,9 +188,12 @@ export const getBridgelessAmounts = (
     nativeAmount,
     fromDecimals,
     toDecimals,
-    commissionRate,
-    minWithdrawalAmount
+    commissionRate
   } = params
+  const minWithdrawalAmount = ceil(
+    mul(params.minWithdrawalAmount, add('1', LIMIT_MARGIN)),
+    0
+  )
 
   // Bridgeless keeps floor(bridged * commissionRate) as its commission
   const payoutFor = (bridged: string): string =>
