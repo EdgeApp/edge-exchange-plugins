@@ -1,6 +1,6 @@
 import { base16, base58 } from '@scure/base'
 import { beginCell } from '@ton/core'
-import { add, ceil, lt, mul, sub } from 'biggystring'
+import { add, ceil, div, floor, gt, lt, mul, sub } from 'biggystring'
 import {
   asArray,
   asBoolean,
@@ -26,6 +26,7 @@ import {
   EdgeToken,
   EdgeTokenId,
   EdgeTxActionSwap,
+  SwapAboveLimitError,
   SwapBelowLimitError,
   SwapCurrencyError
 } from 'edge-core-js/types'
@@ -73,6 +74,8 @@ const asTokenInfo = asObject({
   token_id: asString,
   commission_rate: asString,
   min_withdrawal_amount: asString,
+  // Missing or '0' means the token has no withdrawal cap
+  max_withdrawal_amount: asOptional(asString),
   is_wrapped: asBoolean
 })
 type TokenInfo = ReturnType<typeof asTokenInfo>
@@ -154,6 +157,123 @@ export const scaleNativeAmount = (
   }
 
   return whole
+}
+
+// Quotes stay this far inside the published withdrawal limits, so a commission
+// or limit change between quote and deposit does not strand the deposit
+const LIMIT_MARGIN = '0.01'
+
+interface BridgelessAmountParams {
+  quoteFor: EdgeSwapRequest['quoteFor']
+  nativeAmount: string
+  fromDecimals: number
+  toDecimals: number
+  commissionRate: string
+  minWithdrawalAmount: string
+  maxWithdrawalAmount: string | undefined
+}
+
+interface BridgelessAmounts {
+  fromAmount: string
+  toAmount: string
+}
+
+/**
+ * Computes the deposit and payout amounts for a quote, enforcing the
+ * destination token's withdrawal limits.
+ *
+ * The minimum is checked against the payout after commission, and the cap
+ * against the bridged amount before commission. Each is the stricter side, so
+ * a quote that passes stays within the limits whether Bridgeless applies them
+ * to the gross or the net withdrawal. Both limits are tightened by
+ * LIMIT_MARGIN.
+ */
+export const getBridgelessAmounts = (
+  params: BridgelessAmountParams
+): BridgelessAmounts => {
+  const {
+    quoteFor,
+    nativeAmount,
+    fromDecimals,
+    toDecimals,
+    commissionRate
+  } = params
+  const minWithdrawalAmount = ceil(
+    mul(params.minWithdrawalAmount, add('1', LIMIT_MARGIN)),
+    0
+  )
+  const maxWithdrawalAmount =
+    params.maxWithdrawalAmount == null || params.maxWithdrawalAmount === '0'
+      ? undefined
+      : floor(mul(params.maxWithdrawalAmount, sub('1', LIMIT_MARGIN)), 0)
+
+  // Bridgeless keeps floor(bridged * commissionRate) as its commission
+  const payoutFor = (bridged: string): string =>
+    ceil(mul(bridged, sub('1', commissionRate)), 0)
+  // The smallest bridged amount whose payout reaches `payout`
+  const bridgedFor = (payout: string): string =>
+    add(floor(div(sub(payout, '1'), sub('1', commissionRate), 18), 0), '1')
+
+  let fromAmount: string
+  let toAmount: string
+  if (quoteFor === 'to') {
+    toAmount = nativeAmount
+
+    if (lt(toAmount, minWithdrawalAmount)) {
+      throw new SwapBelowLimitError(swapInfo, minWithdrawalAmount, 'to')
+    }
+
+    fromAmount = scaleNativeAmount(
+      bridgedFor(toAmount),
+      toDecimals,
+      fromDecimals,
+      'up'
+    )
+  } else {
+    fromAmount = nativeAmount
+    toAmount = payoutFor(
+      scaleNativeAmount(fromAmount, fromDecimals, toDecimals, 'down')
+    )
+
+    if (lt(toAmount, minWithdrawalAmount)) {
+      const minFromAmount = scaleNativeAmount(
+        bridgedFor(minWithdrawalAmount),
+        toDecimals,
+        fromDecimals,
+        'up'
+      )
+      throw new SwapBelowLimitError(swapInfo, minFromAmount, 'from')
+    }
+  }
+
+  if (maxWithdrawalAmount != null) {
+    const bridgedToAmount = scaleNativeAmount(
+      fromAmount,
+      fromDecimals,
+      toDecimals,
+      'down'
+    )
+    if (gt(bridgedToAmount, maxWithdrawalAmount)) {
+      // The largest deposit whose bridged amount stays within the cap
+      const maxFromAmount = scaleNativeAmount(
+        maxWithdrawalAmount,
+        toDecimals,
+        fromDecimals,
+        'down'
+      )
+      if (quoteFor !== 'to') {
+        throw new SwapAboveLimitError(swapInfo, maxFromAmount, 'from')
+      }
+
+      // The payout of that largest deposit
+      const maxToAmount = payoutFor(
+        scaleNativeAmount(maxFromAmount, fromDecimals, toDecimals, 'down')
+      )
+      throw new SwapAboveLimitError(swapInfo, maxToAmount, 'to')
+    }
+  }
+
+  return { fromAmount, toAmount }
 }
 
 const BRIDGELESS_EVM_ABI = [
@@ -337,51 +457,15 @@ export function makeBridgelessPlugin(
     // paid out of that commission by Bridgeless.
     const commissionRate = toTokenInfo.commission_rate
 
-    // The minimum amount is enforced by the amount of toToken received
-    let fromAmount: string
-    let toAmount: string
-    if (request.quoteFor === 'to') {
-      toAmount = request.nativeAmount
-
-      if (lt(toAmount, toTokenInfo.min_withdrawal_amount)) {
-        throw new SwapBelowLimitError(
-          swapInfo,
-          toTokenInfo.min_withdrawal_amount,
-          'to'
-        )
-      }
-
-      const grossToAmount = ceil(mul(toAmount, add('1', commissionRate)), 0)
-      fromAmount = scaleNativeAmount(
-        grossToAmount,
-        toDecimals,
-        fromDecimals,
-        'up'
-      )
-    } else {
-      fromAmount = request.nativeAmount
-      const bridgedToAmount = scaleNativeAmount(
-        fromAmount,
-        fromDecimals,
-        toDecimals,
-        'down'
-      )
-      toAmount = ceil(mul(bridgedToAmount, sub('1', commissionRate)), 0)
-
-      const minGrossToAmount = ceil(
-        mul(toTokenInfo.min_withdrawal_amount, add('1', commissionRate)),
-        0
-      )
-      const minFromAmount = scaleNativeAmount(
-        minGrossToAmount,
-        toDecimals,
-        fromDecimals,
-        'up'
-      )
-      if (lt(toAmount, toTokenInfo.min_withdrawal_amount)) {
-        throw new SwapBelowLimitError(swapInfo, minFromAmount, 'from')
-      }
-    }
+    const { fromAmount, toAmount } = getBridgelessAmounts({
+      quoteFor: request.quoteFor,
+      nativeAmount: request.nativeAmount,
+      fromDecimals,
+      toDecimals,
+      commissionRate,
+      minWithdrawalAmount: toTokenInfo.min_withdrawal_amount,
+      maxWithdrawalAmount: toTokenInfo.max_withdrawal_amount
+    })
 
     // chainId/txid/outputIndex
     // output index is 0 for both Bitcoin (output of actual deposit) and Zano (index of serviceEntries with deposit instructions)
