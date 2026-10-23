@@ -156,6 +156,80 @@ export const scaleNativeAmount = (
   return whole
 }
 
+interface BridgelessAmountParams {
+  quoteFor: EdgeSwapRequest['quoteFor']
+  nativeAmount: string
+  fromDecimals: number
+  toDecimals: number
+  commissionRate: string
+  minWithdrawalAmount: string
+}
+
+interface BridgelessAmounts {
+  fromAmount: string
+  toAmount: string
+}
+
+/**
+ * Computes the deposit and payout amounts for a quote, enforcing the
+ * destination token's minimum withdrawal against the payout after commission.
+ */
+export const getBridgelessAmounts = (
+  params: BridgelessAmountParams
+): BridgelessAmounts => {
+  const {
+    quoteFor,
+    nativeAmount,
+    fromDecimals,
+    toDecimals,
+    commissionRate,
+    minWithdrawalAmount
+  } = params
+
+  let fromAmount: string
+  let toAmount: string
+  if (quoteFor === 'to') {
+    toAmount = nativeAmount
+
+    if (lt(toAmount, minWithdrawalAmount)) {
+      throw new SwapBelowLimitError(swapInfo, minWithdrawalAmount, 'to')
+    }
+
+    const grossToAmount = ceil(mul(toAmount, add('1', commissionRate)), 0)
+    fromAmount = scaleNativeAmount(
+      grossToAmount,
+      toDecimals,
+      fromDecimals,
+      'up'
+    )
+  } else {
+    fromAmount = nativeAmount
+    const bridgedToAmount = scaleNativeAmount(
+      fromAmount,
+      fromDecimals,
+      toDecimals,
+      'down'
+    )
+    toAmount = ceil(mul(bridgedToAmount, sub('1', commissionRate)), 0)
+
+    if (lt(toAmount, minWithdrawalAmount)) {
+      const minGrossToAmount = ceil(
+        mul(minWithdrawalAmount, add('1', commissionRate)),
+        0
+      )
+      const minFromAmount = scaleNativeAmount(
+        minGrossToAmount,
+        toDecimals,
+        fromDecimals,
+        'up'
+      )
+      throw new SwapBelowLimitError(swapInfo, minFromAmount, 'from')
+    }
+  }
+
+  return { fromAmount, toAmount }
+}
+
 const BRIDGELESS_EVM_ABI = [
   'function depositERC20(address token_, uint256 amount_, string receiver_, string network_, bool isWrapped_, uint16 referralId_)',
   'function depositNative(string receiver_, string network_, uint16 referralId_) payable'
@@ -337,51 +411,14 @@ export function makeBridgelessPlugin(
     // paid out of that commission by Bridgeless.
     const commissionRate = toTokenInfo.commission_rate
 
-    // The minimum amount is enforced by the amount of toToken received
-    let fromAmount: string
-    let toAmount: string
-    if (request.quoteFor === 'to') {
-      toAmount = request.nativeAmount
-
-      if (lt(toAmount, toTokenInfo.min_withdrawal_amount)) {
-        throw new SwapBelowLimitError(
-          swapInfo,
-          toTokenInfo.min_withdrawal_amount,
-          'to'
-        )
-      }
-
-      const grossToAmount = ceil(mul(toAmount, add('1', commissionRate)), 0)
-      fromAmount = scaleNativeAmount(
-        grossToAmount,
-        toDecimals,
-        fromDecimals,
-        'up'
-      )
-    } else {
-      fromAmount = request.nativeAmount
-      const bridgedToAmount = scaleNativeAmount(
-        fromAmount,
-        fromDecimals,
-        toDecimals,
-        'down'
-      )
-      toAmount = ceil(mul(bridgedToAmount, sub('1', commissionRate)), 0)
-
-      const minGrossToAmount = ceil(
-        mul(toTokenInfo.min_withdrawal_amount, add('1', commissionRate)),
-        0
-      )
-      const minFromAmount = scaleNativeAmount(
-        minGrossToAmount,
-        toDecimals,
-        fromDecimals,
-        'up'
-      )
-      if (lt(toAmount, toTokenInfo.min_withdrawal_amount)) {
-        throw new SwapBelowLimitError(swapInfo, minFromAmount, 'from')
-      }
-    }
+    const { fromAmount, toAmount } = getBridgelessAmounts({
+      quoteFor: request.quoteFor,
+      nativeAmount: request.nativeAmount,
+      fromDecimals,
+      toDecimals,
+      commissionRate,
+      minWithdrawalAmount: toTokenInfo.min_withdrawal_amount
+    })
 
     // chainId/txid/outputIndex
     // output index is 0 for both Bitcoin (output of actual deposit) and Zano (index of serviceEntries with deposit instructions)
