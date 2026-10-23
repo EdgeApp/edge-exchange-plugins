@@ -1,6 +1,6 @@
 import { base16, base58 } from '@scure/base'
 import { beginCell } from '@ton/core'
-import { add, ceil, lt, mul, sub } from 'biggystring'
+import { add, ceil, div, floor, lt, mul, sub } from 'biggystring'
 import {
   asArray,
   asBoolean,
@@ -186,6 +186,13 @@ export const getBridgelessAmounts = (
     minWithdrawalAmount
   } = params
 
+  // Bridgeless keeps floor(bridged * commissionRate) as its commission
+  const payoutFor = (bridged: string): string =>
+    ceil(mul(bridged, sub('1', commissionRate)), 0)
+  // The smallest bridged amount whose payout reaches `payout`
+  const bridgedFor = (payout: string): string =>
+    add(floor(div(sub(payout, '1'), sub('1', commissionRate), 18), 0), '1')
+
   let fromAmount: string
   let toAmount: string
   if (quoteFor === 'to') {
@@ -195,30 +202,21 @@ export const getBridgelessAmounts = (
       throw new SwapBelowLimitError(swapInfo, minWithdrawalAmount, 'to')
     }
 
-    const grossToAmount = ceil(mul(toAmount, add('1', commissionRate)), 0)
     fromAmount = scaleNativeAmount(
-      grossToAmount,
+      bridgedFor(toAmount),
       toDecimals,
       fromDecimals,
       'up'
     )
   } else {
     fromAmount = nativeAmount
-    const bridgedToAmount = scaleNativeAmount(
-      fromAmount,
-      fromDecimals,
-      toDecimals,
-      'down'
+    toAmount = payoutFor(
+      scaleNativeAmount(fromAmount, fromDecimals, toDecimals, 'down')
     )
-    toAmount = ceil(mul(bridgedToAmount, sub('1', commissionRate)), 0)
 
     if (lt(toAmount, minWithdrawalAmount)) {
-      const minGrossToAmount = ceil(
-        mul(minWithdrawalAmount, add('1', commissionRate)),
-        0
-      )
       const minFromAmount = scaleNativeAmount(
-        minGrossToAmount,
+        bridgedFor(minWithdrawalAmount),
         toDecimals,
         fromDecimals,
         'up'
