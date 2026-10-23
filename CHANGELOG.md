@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- added: (Bridgeless) Reject quotes above the destination token's withdrawal cap
+- changed: (Bridgeless) Keep quotes 1% inside the bridge's withdrawal limits
+- fixed: (Bridgeless) Minimum deposit and 'to' quote amounts cover the bridge commission exactly
+
 ## 2.59.3 (2026-10-20)
 
 - fixed: (HoudiniSwap) Pay a picked Zcash destination wallet out to its transparent address

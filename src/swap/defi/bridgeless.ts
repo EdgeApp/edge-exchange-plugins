@@ -1,6 +1,6 @@
 import { base16, base58 } from '@scure/base'
 import { beginCell } from '@ton/core'
-import { add, ceil, div, floor, lt, mul, sub } from 'biggystring'
+import { add, ceil, div, floor, gt, lt, mul, sub } from 'biggystring'
 import {
   asArray,
   asBoolean,
@@ -26,6 +26,7 @@ import {
   EdgeToken,
   EdgeTokenId,
   EdgeTxActionSwap,
+  SwapAboveLimitError,
   SwapBelowLimitError,
   SwapCurrencyError
 } from 'edge-core-js/types'
@@ -73,6 +74,8 @@ const asTokenInfo = asObject({
   token_id: asString,
   commission_rate: asString,
   min_withdrawal_amount: asString,
+  // Missing or '0' means the token has no withdrawal cap
+  max_withdrawal_amount: asOptional(asString),
   is_wrapped: asBoolean
 })
 type TokenInfo = ReturnType<typeof asTokenInfo>
@@ -156,9 +159,8 @@ export const scaleNativeAmount = (
   return whole
 }
 
-// Quotes stay this far inside the published withdrawal minimum, so a
-// commission or limit change between quote and deposit does not strand the
-// deposit
+// Quotes stay this far inside the published withdrawal limits, so a commission
+// or limit change between quote and deposit does not strand the deposit
 const LIMIT_MARGIN = '0.01'
 
 interface BridgelessAmountParams {
@@ -168,6 +170,7 @@ interface BridgelessAmountParams {
   toDecimals: number
   commissionRate: string
   minWithdrawalAmount: string
+  maxWithdrawalAmount: string | undefined
 }
 
 interface BridgelessAmounts {
@@ -177,8 +180,13 @@ interface BridgelessAmounts {
 
 /**
  * Computes the deposit and payout amounts for a quote, enforcing the
- * destination token's minimum withdrawal against the payout after commission.
- * The minimum is tightened by LIMIT_MARGIN.
+ * destination token's withdrawal limits.
+ *
+ * The minimum is checked against the payout after commission, and the cap
+ * against the bridged amount before commission. Each is the stricter side, so
+ * a quote that passes stays within the limits whether Bridgeless applies them
+ * to the gross or the net withdrawal. Both limits are tightened by
+ * LIMIT_MARGIN.
  */
 export const getBridgelessAmounts = (
   params: BridgelessAmountParams
@@ -194,6 +202,10 @@ export const getBridgelessAmounts = (
     mul(params.minWithdrawalAmount, add('1', LIMIT_MARGIN)),
     0
   )
+  const maxWithdrawalAmount =
+    params.maxWithdrawalAmount == null || params.maxWithdrawalAmount === '0'
+      ? undefined
+      : floor(mul(params.maxWithdrawalAmount, sub('1', LIMIT_MARGIN)), 0)
 
   // Bridgeless keeps floor(bridged * commissionRate) as its commission
   const payoutFor = (bridged: string): string =>
@@ -231,6 +243,33 @@ export const getBridgelessAmounts = (
         'up'
       )
       throw new SwapBelowLimitError(swapInfo, minFromAmount, 'from')
+    }
+  }
+
+  if (maxWithdrawalAmount != null) {
+    const bridgedToAmount = scaleNativeAmount(
+      fromAmount,
+      fromDecimals,
+      toDecimals,
+      'down'
+    )
+    if (gt(bridgedToAmount, maxWithdrawalAmount)) {
+      // The largest deposit whose bridged amount stays within the cap
+      const maxFromAmount = scaleNativeAmount(
+        maxWithdrawalAmount,
+        toDecimals,
+        fromDecimals,
+        'down'
+      )
+      if (quoteFor !== 'to') {
+        throw new SwapAboveLimitError(swapInfo, maxFromAmount, 'from')
+      }
+
+      // The payout of that largest deposit
+      const maxToAmount = payoutFor(
+        scaleNativeAmount(maxFromAmount, fromDecimals, toDecimals, 'down')
+      )
+      throw new SwapAboveLimitError(swapInfo, maxToAmount, 'to')
     }
   }
 
@@ -424,7 +463,8 @@ export function makeBridgelessPlugin(
       fromDecimals,
       toDecimals,
       commissionRate,
-      minWithdrawalAmount: toTokenInfo.min_withdrawal_amount
+      minWithdrawalAmount: toTokenInfo.min_withdrawal_amount,
+      maxWithdrawalAmount: toTokenInfo.max_withdrawal_amount
     })
 
     // chainId/txid/outputIndex
