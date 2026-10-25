@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- changed: (HoudiniSwap) DEX-route swaps confirm through edge-autobot-server even after the app closes
+
 ## 2.60.0 (2026-10-23)
 
 - added: (Bridgeless) Reject quotes above the destination token's withdrawal cap
