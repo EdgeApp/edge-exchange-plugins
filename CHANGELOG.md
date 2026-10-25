@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- removed: Transfer swap plugin
+
 ## 2.60.0 (2026-10-23)
 
 - added: (Bridgeless) Reject quotes above the destination token's withdrawal cap

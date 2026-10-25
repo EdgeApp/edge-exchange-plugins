@@ -30,7 +30,6 @@ import { makeSpookySwapPlugin } from './swap/defi/uni-v2-based/plugins/spookySwa
 import { makeTombSwapPlugin } from './swap/defi/uni-v2-based/plugins/tombSwap'
 import { makeVelodromePlugin } from './swap/defi/uni-v2-based/plugins/velodrome'
 import { makeUnizenPlugin } from './swap/defi/unizen'
-import { makeTransferPlugin } from './swap/transfer'
 import { xrpdex } from './swap/xrpDexInfo'
 
 const plugins = {
@@ -58,7 +57,6 @@ const plugins = {
   swapkit: makeSwapKitPlugin,
   swapkitv3: makeSwapKitV3Plugin,
   tombSwap: makeTombSwapPlugin,
-  transfer: makeTransferPlugin,
   unizen: makeUnizenPlugin,
   velodrome: makeVelodromePlugin,
   xgram: makeXgramPlugin,
