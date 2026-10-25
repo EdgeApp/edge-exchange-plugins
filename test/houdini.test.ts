@@ -578,6 +578,11 @@ interface Script {
    * rule as `quoteStatuses`.
    */
   confirmStatuses?: number[]
+  /**
+   * HTTP statuses autobot hands to successive dex reports, same repeat-last
+   * rule as `quoteStatuses`.
+   */
+  autobotStatuses?: number[]
 }
 
 interface ScriptedRun {
@@ -590,6 +595,8 @@ interface ScriptedRun {
   orderBodies: string[]
   /** Every `dex/confirmTx` body posted, in order. */
   confirmBodies: string[]
+  /** Every dex report body sent to autobot, in order. */
+  autobotBodies: string[]
   warnings: string[]
 }
 
@@ -615,7 +622,8 @@ const makeScriptedPlugin = (script: Script): ScriptedRun => {
     retryAfter,
     orderOverrides = {},
     dexMetadata = {},
-    confirmStatuses = [200]
+    confirmStatuses = [200],
+    autobotStatuses = [200]
   } = script
   const run: ScriptedRun = {
     plugin: (undefined as unknown) as ReturnType<typeof makeHoudiniPlugin>,
@@ -623,12 +631,14 @@ const makeScriptedPlugin = (script: Script): ScriptedRun => {
     tokenUrls: [],
     orderBodies: [],
     confirmBodies: [],
+    autobotBodies: [],
     warnings: []
   }
   let quoteCall = 0
   let tokenCall = 0
   let orderCall = 0
   let confirmCall = 0
+  let autobotCall = 0
 
   const reply = (status: number, body: unknown): FetchResponseLike => {
     const text = JSON.stringify(body)
@@ -644,6 +654,14 @@ const makeScriptedPlugin = (script: Script): ScriptedRun => {
     url: string,
     opts: { method?: string; body?: string } = {}
   ): Promise<FetchResponseLike> => {
+    if (url === 'https://autobot-wusa1.edge.app/api/houdini') {
+      expect(opts.method).equals('PUT')
+      run.autobotBodies.push(opts.body ?? '')
+      const autobotStatus =
+        autobotStatuses[Math.min(autobotCall++, autobotStatuses.length - 1)]
+      return reply(autobotStatus, autobotStatus === 200 ? {} : 'report failed')
+    }
+
     const path = url.slice(url.indexOf('/v2/') + 4)
 
     if (path.startsWith('tokens')) {
@@ -955,19 +973,44 @@ describe('houdini offline behaviors', function () {
     expect(capture.nativeAmount).equals(SONIC_NATIVE_AMOUNT)
     expect(capture.memos).deep.equals([{ type: 'hex', value: 'abcdef' }])
 
+    // Autobot confirms the order with Houdini, which keeps working after
+    // the app closes, so the plugin does not also confirm it:
     await quote.approve()
+    expect(JSON.parse(run.autobotBodies[0])).deep.equals({
+      orderId: 'order-q-dex',
+      txHash: '0xtxhash'
+    })
+    expect(run.confirmBodies.length).equals(0)
+  })
+
+  it('confirms a dex order directly when autobot cannot take the report', async function () {
+    const run = makeScriptedPlugin({
+      nativeAddress: '',
+      quotes: [dexQuote],
+      autobotStatuses: [503]
+    })
+    const quote = await quoteSonicToStellar(run)
+
+    await quote.approve()
+    expect(run.autobotBodies.length).equals(1)
     expect(JSON.parse(run.confirmBodies[0])).deep.equals({
       id: 'order-q-dex',
       txHash: '0xtxhash'
     })
+    // The fallback names the order and the transaction:
+    const fallbacks = run.warnings.filter(line => line.includes('Autobot'))
+    expect(fallbacks.length).equals(1)
+    expect(fallbacks[0]).contains('order-q-dex')
+    expect(fallbacks[0]).contains('0xtxhash')
   })
 
-  it('retries a dex confirmation the provider failed to take', async function () {
+  it('retries a direct dex confirmation the provider failed to take', async function () {
     // The transaction is already out, so the report is retried rather than
     // dropped on the first 5xx.
     const run = makeScriptedPlugin({
       nativeAddress: '',
       quotes: [dexQuote],
+      autobotStatuses: [503],
       confirmStatuses: [503, 200]
     })
     const quote = await quoteSonicToStellar(run)
@@ -986,6 +1029,7 @@ describe('houdini offline behaviors', function () {
     const run = makeScriptedPlugin({
       nativeAddress: '',
       quotes: [dexQuote],
+      autobotStatuses: [503],
       confirmStatuses: [500]
     })
     const quote = await quoteSonicToStellar(run)
@@ -999,10 +1043,11 @@ describe('houdini offline behaviors', function () {
     ).equals(3)
   })
 
-  it('does not retry a dex confirmation the provider refused', async function () {
+  it('does not retry a direct dex confirmation the provider refused', async function () {
     const run = makeScriptedPlugin({
       nativeAddress: '',
       quotes: [dexQuote],
+      autobotStatuses: [503],
       confirmStatuses: [400]
     })
     const quote = await quoteSonicToStellar(run)
