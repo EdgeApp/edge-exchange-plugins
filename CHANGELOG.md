@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- changed: (Houdini) DEX-route swaps confirm through edge-autobot-server even after the app closes
+
 ## 2.62.1 (2026-11-14)
 
 - fixed: (0x Gasless) Save swaps under the transaction hash that mines, not a submitted one the relayer can replace and leave pending
