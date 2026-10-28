@@ -74,9 +74,23 @@ export const swapInfo: EdgeSwapInfo = {
 
 // Houdini's v2 partner API. Note the auth header is `Authorization: <key>:<secret>`
 // (no `Bearer`); every endpoint returns 402 without it.
-const asInitOptions = asObject({
+const asHoudiniCredentials = asObject({
   apiKey: asString,
   apiSecret: asString
+})
+
+/**
+ * The base `apiKey`/`apiSecret` places plain swaps. Houdini scopes orders and
+ * stats to the partner account that created them and echoes nothing a partner
+ * sends back on the order, so a separate account per app mode is the only way
+ * for reporting to tell the modes apart. A mode without its own account uses
+ * the base one.
+ */
+const asInitOptions = asObject({
+  ...asHoudiniCredentials.shape,
+  swapSend: asOptional(asHoudiniCredentials),
+  stealthSwap: asOptional(asHoudiniCredentials),
+  stealthSwapSend: asOptional(asHoudiniCredentials)
 })
 
 // The order status page is on the app host, keyed by a query parameter. The
@@ -106,6 +120,26 @@ const ZCASH_TRANSPARENT_ADDRESS = /^t1[1-9A-HJ-NP-Za-km-z]{33}$/
  * the list instead (see `getPayoutAddress`).
  */
 const SYNTHETIC_WALLET_ID_PREFIX = 'synthetic://'
+
+/**
+ * The app feature a request comes from: Stealth is a request that requires
+ * privacy, and a send pays out to a pasted address (a synthetic wallet).
+ */
+export type HoudiniMode =
+  | 'swap'
+  | 'swapSend'
+  | 'stealthSwap'
+  | 'stealthSwapSend'
+
+export function getHoudiniMode(
+  request: Pick<EdgeSwapRequestPlugin, 'privacy' | 'toWallet'>
+): HoudiniMode {
+  const isSend = request.toWallet.id.startsWith(SYNTHETIC_WALLET_ID_PREFIX)
+  if (request.privacy === 'required') {
+    return isSend ? 'stealthSwapSend' : 'stealthSwap'
+  }
+  return isSend ? 'swapSend' : 'swap'
+}
 
 /**
  * Assets this plugin refuses outright. Empty: the provider's own token list is
@@ -444,12 +478,20 @@ function floatToNativeAmount(
 export function makeHoudiniPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
   const { io, log } = opts
   const { fetchCors = io.fetch } = io
-  const { apiKey, apiSecret } = asInitOptions(opts.initOptions)
+  const initOptions = asInitOptions(opts.initOptions)
+  const toAuthorization = (
+    credentials: ReturnType<typeof asHoudiniCredentials> = initOptions
+  ): string => `${credentials.apiKey}:${credentials.apiSecret}`
+  const authorizations: { [mode in HoudiniMode]: string } = {
+    swap: toAuthorization(),
+    swapSend: toAuthorization(initOptions.swapSend),
+    stealthSwap: toAuthorization(initOptions.stealthSwap),
+    stealthSwapSend: toAuthorization(initOptions.stealthSwapSend)
+  }
 
   const headers = {
     'Content-Type': 'application/json',
-    Accept: 'application/json',
-    Authorization: `${apiKey}:${apiSecret}`
+    Accept: 'application/json'
   }
 
   // Houdini's partner API is server-to-server and rejects browser-origin
@@ -485,16 +527,21 @@ export function makeHoudiniPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
    * it retries something the API will reject anyway, so the call fails as a
    * rate limit right away rather than hanging the user for the full window and
    * then reporting an expired quote.
+   *
+   * `authorization` picks the partner account the call is made as. Everything
+   * tied to an order (its quotes, the order itself, a dex confirmation) goes
+   * to the account of the request's mode, and the rest uses the base account.
    */
   async function fetchHoudini(
     path: string,
-    init: { method?: string; body?: string } = {},
+    init: { method?: string; body?: string; authorization?: string } = {},
     validUntilMs?: number
   ): Promise<EdgeFetchResponse> {
+    const { authorization = authorizations.swap, ...fetchInit } = init
     for (let attempt = 0; ; ++attempt) {
       const response = await fetchCors(uri + path, {
-        ...init,
-        headers,
+        ...fetchInit,
+        headers: { ...headers, Authorization: authorization },
         corsBypass
       })
       if (response.status !== 429) return response
@@ -636,14 +683,19 @@ export function makeHoudiniPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
    * is tried again. Every failure line names the order and the transaction,
    * which is the pair a manual report needs.
    */
-  async function confirmDexTx(id: string, txHash: string): Promise<void> {
+  async function confirmDexTx(
+    id: string,
+    txHash: string,
+    authorization: string
+  ): Promise<void> {
     for (let attempt = 1; attempt <= DEX_CONFIRM_MAX_ATTEMPTS; ++attempt) {
       let failure: string
       let retryable: boolean
       try {
         const response = await fetchHoudini('dex/confirmTx', {
           method: 'POST',
-          body: JSON.stringify({ id, txHash })
+          body: JSON.stringify({ id, txHash }),
+          authorization
         })
         if (response.ok) return
         failure = `${response.status} ${await response.text()}`
@@ -689,6 +741,7 @@ export function makeHoudiniPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
     const isSyntheticDestination = toWallet.id.startsWith(
       SYNTHETIC_WALLET_ID_PREFIX
     )
+    const authorization = authorizations[getHoudiniMode(request)]
 
     const [
       fromTokenId,
@@ -730,7 +783,8 @@ export function makeHoudiniPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
     // amount (`amountType=receive`) is only offered on fixed-rate quotes.
     const quoteResponse = await fetchHoudini(
       `quotes?amount=${exchangeAmount}&from=${fromTokenId}&to=${toTokenId}` +
-        (reverseQuote ? '&amountType=receive&fixed=true' : '')
+        (reverseQuote ? '&amountType=receive&fixed=true' : ''),
+      { authorization }
     )
     if (!quoteResponse.ok) {
       // Surface the API's own human-readable message when it carries one
@@ -1017,7 +1071,7 @@ export function makeHoudiniPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
       }
       const orderResponse = await fetchHoudini(
         'exchanges',
-        { method: 'POST', body: JSON.stringify(orderBody) },
+        { method: 'POST', body: JSON.stringify(orderBody), authorization },
         quoteValidUntilMs(candidate)
       )
       if (orderResponse.ok) {
@@ -1192,7 +1246,8 @@ export function makeHoudiniPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
             quoteId: candidate.quoteId,
             signatures: [],
             ...(destinationTag == null ? {} : { destinationTag })
-          })
+          }),
+          authorization
         },
         quoteValidUntilMs(candidate)
       )
@@ -1349,7 +1404,11 @@ export function makeHoudiniPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
         ...quote,
         async approve(opts?: EdgeSwapApproveOptions): Promise<EdgeSwapResult> {
           const result = await quote.approve(opts)
-          await confirmDexTx(dexOrderId, result.transaction.txid)
+          await confirmDexTx(
+            dexOrderId,
+            result.transaction.txid,
+            authorizations[getHoudiniMode(request)]
+          )
           return result
         }
       }
