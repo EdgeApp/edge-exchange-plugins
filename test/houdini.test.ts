@@ -30,6 +30,7 @@ import { describe, it } from 'mocha'
 import path from 'path'
 
 import {
+  getHoudiniMode,
   makeHoudiniPlugin,
   quoteValidUntilMs,
   rateLimitDelayMs
@@ -578,6 +579,8 @@ interface Script {
    * rule as `quoteStatuses`.
    */
   confirmStatuses?: number[]
+  /** Fields merged over the base credentials, such as per-mode accounts. */
+  initOptions?: { [key: string]: unknown }
 }
 
 interface ScriptedRun {
@@ -590,6 +593,8 @@ interface ScriptedRun {
   orderBodies: string[]
   /** Every `dex/confirmTx` body posted, in order. */
   confirmBodies: string[]
+  /** The Authorization header of every call, keyed by its endpoint. */
+  authorizations: Array<{ endpoint: string; authorization: string }>
   warnings: string[]
 }
 
@@ -615,7 +620,8 @@ const makeScriptedPlugin = (script: Script): ScriptedRun => {
     retryAfter,
     orderOverrides = {},
     dexMetadata = {},
-    confirmStatuses = [200]
+    confirmStatuses = [200],
+    initOptions = {}
   } = script
   const run: ScriptedRun = {
     plugin: (undefined as unknown) as ReturnType<typeof makeHoudiniPlugin>,
@@ -623,6 +629,7 @@ const makeScriptedPlugin = (script: Script): ScriptedRun => {
     tokenUrls: [],
     orderBodies: [],
     confirmBodies: [],
+    authorizations: [],
     warnings: []
   }
   let quoteCall = 0
@@ -642,9 +649,17 @@ const makeScriptedPlugin = (script: Script): ScriptedRun => {
 
   const scriptedFetch = async (
     url: string,
-    opts: { method?: string; body?: string } = {}
+    opts: {
+      method?: string
+      body?: string
+      headers?: { [name: string]: string }
+    } = {}
   ): Promise<FetchResponseLike> => {
     const path = url.slice(url.indexOf('/v2/') + 4)
+    run.authorizations.push({
+      endpoint: path.replace(/\?.*/, ''),
+      authorization: opts.headers?.Authorization ?? ''
+    })
 
     if (path.startsWith('tokens')) {
       run.tokenUrls.push(path)
@@ -762,7 +777,7 @@ const makeScriptedPlugin = (script: Script): ScriptedRun => {
   })
 
   run.plugin = makeHoudiniPlugin(({
-    initOptions: { apiKey: 'SCRIPTED', apiSecret: 'SCRIPTED' },
+    initOptions: { apiKey: 'SCRIPTED', apiSecret: 'SCRIPTED', ...initOptions },
     io: { fetch: scriptedFetch, fetchCors: scriptedFetch },
     log
   } as unknown) as Parameters<typeof makeHoudiniPlugin>[0])
@@ -1762,6 +1777,110 @@ describe('houdini offline behaviors', function () {
       expect(action.privacy).equals(privacy === 'required')
       expect(action).not.to.have.property('payoutWalletId')
     }
+  })
+
+  it('names the app mode a request comes from', function () {
+    const destination = makeFakeSyntheticDestination({
+      pluginId: 'stellar',
+      currencyCode: 'XLM',
+      decimals: 7,
+      toAddress: 'GBRPYHIL2CI3FNQ4BXLFMNDLFJUNPU2HY3ZMFSHONUCEOASW7QC7OX2H'
+    })
+    expect(getHoudiniMode({ toWallet: stellarWallet })).equals('swap')
+    expect(getHoudiniMode({ toWallet: destination })).equals('swapSend')
+    expect(
+      getHoudiniMode({ toWallet: stellarWallet, privacy: 'required' })
+    ).equals('stealthSwap')
+    expect(
+      getHoudiniMode({ toWallet: destination, privacy: 'required' })
+    ).equals('stealthSwapSend')
+  })
+
+  it('places each mode order on that mode account', async function () {
+    // Houdini scopes orders to the account that created them, so reporting
+    // reads each mode from its own account. Token lookups belong to no order
+    // and stay on the base account.
+    const destination = makeFakeSyntheticDestination({
+      pluginId: 'stellar',
+      currencyCode: 'XLM',
+      decimals: 7,
+      toAddress: 'GBRPYHIL2CI3FNQ4BXLFMNDLFJUNPU2HY3ZMFSHONUCEOASW7QC7OX2H'
+    })
+    const initOptions = {
+      swapSend: { apiKey: 'SEND', apiSecret: 'S1' },
+      stealthSwap: { apiKey: 'STEALTH', apiSecret: 'S2' },
+      stealthSwapSend: { apiKey: 'STEALTHSEND', apiSecret: 'S3' }
+    }
+    const cases = [
+      { overrides: {}, expected: 'SCRIPTED:SCRIPTED' },
+      { overrides: { toWallet: destination }, expected: 'SEND:S1' },
+      { overrides: { privacy: 'required' }, expected: 'STEALTH:S2' },
+      {
+        overrides: { toWallet: destination, privacy: 'required' },
+        expected: 'STEALTHSEND:S3'
+      }
+    ]
+    for (const { overrides, expected } of cases) {
+      const run = makeScriptedPlugin({
+        nativeAddress: '',
+        quotes: [privateQuote],
+        initOptions
+      })
+      await quoteSonicToStellar(
+        run,
+        (overrides as unknown) as Partial<EdgeSwapRequest>
+      )
+      const byEndpoint = (endpoint: string): string[] =>
+        run.authorizations
+          .filter(call => call.endpoint === endpoint)
+          .map(call => call.authorization)
+      expect(byEndpoint('quotes').length).to.be.greaterThan(0)
+      expect(byEndpoint('quotes').every(auth => auth === expected)).equals(true)
+      expect(byEndpoint('exchanges')).deep.equals([expected])
+      expect(
+        byEndpoint('tokens').every(auth => auth === 'SCRIPTED:SCRIPTED')
+      ).equals(true)
+    }
+  })
+
+  it('confirms a dex order on the account that created it', async function () {
+    const run = makeScriptedPlugin({
+      nativeAddress: '',
+      quotes: [dexQuote],
+      initOptions: { swapSend: { apiKey: 'SEND', apiSecret: 'S1' } }
+    })
+    const destination = makeFakeSyntheticDestination({
+      pluginId: 'stellar',
+      currencyCode: 'XLM',
+      decimals: 7,
+      toAddress: 'GBRPYHIL2CI3FNQ4BXLFMNDLFJUNPU2HY3ZMFSHONUCEOASW7QC7OX2H'
+    })
+    const quote = await quoteSonicToStellar(run, ({
+      toWallet: destination
+    } as unknown) as Partial<EdgeSwapRequest>)
+    await quote.approve()
+
+    const confirms = run.authorizations.filter(
+      call => call.endpoint === 'dex/confirmTx'
+    )
+    expect(confirms.map(call => call.authorization)).deep.equals(['SEND:S1'])
+  })
+
+  it('uses the base account for a mode that has none of its own', async function () {
+    const run = makeScriptedPlugin({
+      nativeAddress: '',
+      quotes: [privateQuote],
+      initOptions: { swapSend: { apiKey: 'SEND', apiSecret: 'S1' } }
+    })
+    await quoteSonicToStellar(run, ({
+      privacy: 'required'
+    } as unknown) as Partial<EdgeSwapRequest>)
+
+    expect(
+      run.authorizations.every(
+        call => call.authorization === 'SCRIPTED:SCRIPTED'
+      )
+    ).equals(true)
   })
 
   it('retries a rate-limited call behind the window the API reports', async function () {

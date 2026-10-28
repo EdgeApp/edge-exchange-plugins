@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- added: (Houdini) Optional per-mode partner accounts for swap and send, stealth swap, and stealth swap and send
+
 ## 2.60.0 (2026-10-23)
 
 - added: (Bridgeless) Reject quotes above the destination token's withdrawal cap
