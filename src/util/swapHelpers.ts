@@ -65,21 +65,12 @@ export type SwapOrder = SwapOrderInner & {
   swapInfo: EdgeSwapInfo
 }
 
-export async function makeSwapPluginQuote(
-  order: SwapOrder
-): Promise<EdgeSwapQuote> {
-  const {
-    canBePartial,
-    expirationDate,
-    fromNativeAmount,
-    maxFulfillmentSeconds,
-    metadataNotes,
-    minReceiveAmount,
-    preTxs = [],
-    request,
-    swapInfo
-  } = order
-  const { fromWallet, toWallet } = request
+/**
+ * Builds the transaction that pays for an order.
+ */
+async function makeOrderTx(order: SwapOrder): Promise<EdgeTransaction> {
+  const { preTxs = [], request } = order
+  const { fromWallet } = request
 
   let tx: EdgeTransaction
   if ('spendInfo' in order) {
@@ -126,8 +117,25 @@ export async function makeSwapPluginQuote(
       tx.currencyCode = request.fromCurrencyCode
     }
   }
+  return tx
+}
+
+/**
+ * Reads the swap fields a quote needs out of a transaction's saved action.
+ */
+function readAction(
+  order: SwapOrder,
+  savedAction: EdgeTransaction['savedAction']
+): {
+  destinationAddress: string
+  isEstimate: boolean
+  orderId?: string
+  toNativeAmount: string
+} {
+  const { fromNativeAmount, swapInfo } = order
+
   // `swapSend` is typed locally until the installed core declares it:
-  const action = tx.savedAction as EdgeTxActionSwapPlugin | undefined
+  const action = savedAction as EdgeTxActionSwapPlugin | undefined
 
   if (action?.actionType !== 'swap' && action?.actionType !== 'swapSend') {
     throw new Error(`Invalid swap action type`)
@@ -135,8 +143,6 @@ export async function makeSwapPluginQuote(
 
   const toNativeAmount = action?.toAsset.nativeAmount
   const destinationAddress = action?.payoutAddress
-  const isEstimate = action?.isEstimate ?? false
-  let quoteId = action?.orderId
   if (
     fromNativeAmount == null ||
     toNativeAmount == null ||
@@ -147,6 +153,21 @@ export async function makeSwapPluginQuote(
     )
   }
 
+  return {
+    destinationAddress,
+    isEstimate: action?.isEstimate ?? false,
+    orderId: action?.orderId,
+    toNativeAmount
+  }
+}
+
+/**
+ * Adds up the parent-currency fees of a transaction and its pre-transactions.
+ */
+function sumNetworkFees(
+  tx: EdgeTransaction,
+  preTxs: EdgeTransaction[]
+): string {
   let nativeAmount =
     tx.parentNetworkFee != null ? tx.parentNetworkFee : tx.networkFee
 
@@ -156,6 +177,34 @@ export async function makeSwapPluginQuote(
       preTx.parentNetworkFee != null ? preTx.parentNetworkFee : preTx.networkFee
     )
   }
+  return nativeAmount
+}
+
+export async function makeSwapPluginQuote(
+  order: SwapOrder
+): Promise<EdgeSwapQuote> {
+  const {
+    canBePartial,
+    expirationDate,
+    fromNativeAmount,
+    maxFulfillmentSeconds,
+    metadataNotes,
+    minReceiveAmount,
+    preTxs = [],
+    request,
+    swapInfo
+  } = order
+  const { fromWallet, toWallet } = request
+
+  const tx = await makeOrderTx(order)
+  const {
+    destinationAddress,
+    isEstimate,
+    orderId,
+    toNativeAmount
+  } = readAction(order, tx.savedAction)
+  let quoteId = orderId
+  const nativeAmount = sumNetworkFees(tx, preTxs)
 
   const out: EdgeSwapQuote = {
     canBePartial,
