@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- fixed: (XRPDEX) Report unsupported pairs as a currency error, not insufficient funds
+
 ## 2.60.0 (2026-10-23)
 
 - added: (Bridgeless) Reject quotes above the destination token's withdrawal cap
