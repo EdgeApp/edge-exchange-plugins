@@ -1,5 +1,6 @@
 import { add, div, mul, sub } from 'biggystring'
 import {
+  asMaybeInsufficientFundsError,
   EdgeAssetActionType,
   EdgeCurrencyInfo,
   EdgeCurrencyWallet,
@@ -13,11 +14,13 @@ import {
   EdgeTokenId,
   EdgeTokenMap,
   EdgeTransaction,
+  InsufficientFundsError,
   JsonObject,
   SwapCurrencyError
 } from 'edge-core-js/types'
 
 import {
+  EdgeSwapQuotePlugin,
   EdgeSwapRequestPlugin,
   EdgeTxActionSwapPlugin,
   MakeTxParams,
@@ -65,21 +68,12 @@ export type SwapOrder = SwapOrderInner & {
   swapInfo: EdgeSwapInfo
 }
 
-export async function makeSwapPluginQuote(
-  order: SwapOrder
-): Promise<EdgeSwapQuote> {
-  const {
-    canBePartial,
-    expirationDate,
-    fromNativeAmount,
-    maxFulfillmentSeconds,
-    metadataNotes,
-    minReceiveAmount,
-    preTxs = [],
-    request,
-    swapInfo
-  } = order
-  const { fromWallet, toWallet } = request
+/**
+ * Builds the transaction that pays for an order.
+ */
+async function makeOrderTx(order: SwapOrder): Promise<EdgeTransaction> {
+  const { preTxs = [], request } = order
+  const { fromWallet } = request
 
   let tx: EdgeTransaction
   if ('spendInfo' in order) {
@@ -126,8 +120,25 @@ export async function makeSwapPluginQuote(
       tx.currencyCode = request.fromCurrencyCode
     }
   }
+  return tx
+}
+
+/**
+ * Reads the swap fields a quote needs out of a transaction's saved action.
+ */
+function readAction(
+  order: SwapOrder,
+  savedAction: EdgeTransaction['savedAction']
+): {
+  destinationAddress: string
+  isEstimate: boolean
+  orderId?: string
+  toNativeAmount: string
+} {
+  const { fromNativeAmount, swapInfo } = order
+
   // `swapSend` is typed locally until the installed core declares it:
-  const action = tx.savedAction as EdgeTxActionSwapPlugin | undefined
+  const action = savedAction as EdgeTxActionSwapPlugin | undefined
 
   if (action?.actionType !== 'swap' && action?.actionType !== 'swapSend') {
     throw new Error(`Invalid swap action type`)
@@ -135,8 +146,6 @@ export async function makeSwapPluginQuote(
 
   const toNativeAmount = action?.toAsset.nativeAmount
   const destinationAddress = action?.payoutAddress
-  const isEstimate = action?.isEstimate ?? false
-  let quoteId = action?.orderId
   if (
     fromNativeAmount == null ||
     toNativeAmount == null ||
@@ -147,6 +156,21 @@ export async function makeSwapPluginQuote(
     )
   }
 
+  return {
+    destinationAddress,
+    isEstimate: action?.isEstimate ?? false,
+    orderId: action?.orderId,
+    toNativeAmount
+  }
+}
+
+/**
+ * Adds up the parent-currency fees of a transaction and its pre-transactions.
+ */
+function sumNetworkFees(
+  tx: EdgeTransaction,
+  preTxs: EdgeTransaction[]
+): string {
   let nativeAmount =
     tx.parentNetworkFee != null ? tx.parentNetworkFee : tx.networkFee
 
@@ -156,6 +180,44 @@ export async function makeSwapPluginQuote(
       preTx.parentNetworkFee != null ? preTx.parentNetworkFee : preTx.networkFee
     )
   }
+  return nativeAmount
+}
+
+export async function makeSwapPluginQuote(
+  order: SwapOrder
+): Promise<EdgeSwapQuote> {
+  const {
+    canBePartial,
+    expirationDate,
+    fromNativeAmount,
+    maxFulfillmentSeconds,
+    metadataNotes,
+    minReceiveAmount,
+    preTxs = [],
+    request,
+    swapInfo
+  } = order
+  const { fromWallet, toWallet } = request
+
+  let tx: EdgeTransaction
+  try {
+    tx = await makeOrderTx(order)
+  } catch (error: unknown) {
+    const shortfall = asMaybeInsufficientFundsError(error)
+    if (shortfall == null || request.allowInsufficientFunds !== true) {
+      throw error
+    }
+    return await makeUnfundedQuote(order, shortfall)
+  }
+
+  const {
+    destinationAddress,
+    isEstimate,
+    orderId,
+    toNativeAmount
+  } = readAction(order, tx.savedAction)
+  let quoteId = orderId
+  const nativeAmount = sumNetworkFees(tx, preTxs)
 
   const out: EdgeSwapQuote = {
     canBePartial,
@@ -240,6 +302,89 @@ export async function makeSwapPluginQuote(
     async close() {}
   }
   return out
+}
+
+/**
+ * Quotes an order the wallet cannot pay for, so the caller can show the price.
+ * The quote carries the shortfall, and its `approve` always throws, so nothing
+ * unpaid can reach the network.
+ */
+async function makeUnfundedQuote(
+  order: SwapOrder,
+  shortfall: InsufficientFundsError
+): Promise<EdgeSwapQuote> {
+  const {
+    canBePartial,
+    expirationDate,
+    fromNativeAmount,
+    maxFulfillmentSeconds,
+    minReceiveAmount,
+    preTxs = [],
+    request,
+    swapInfo
+  } = order
+  const { fromWallet } = request
+
+  const tx = await makeUncheckedTx(order)
+  const { isEstimate, toNativeAmount } = readAction(
+    order,
+    tx?.savedAction ?? getOrderSavedAction(order)
+  )
+
+  const out: EdgeSwapQuotePlugin = {
+    canBePartial,
+    expirationDate,
+    fromNativeAmount,
+    insufficientFunds: {
+      tokenId: shortfall.tokenId,
+      networkFee: shortfall.networkFee
+    },
+    isEstimate,
+    maxFulfillmentSeconds,
+    minReceiveAmount,
+    networkFee: {
+      currencyCode: fromWallet.currencyInfo.currencyCode,
+      nativeAmount:
+        tx != null ? sumNetworkFees(tx, preTxs) : shortfall.networkFee ?? '0',
+      tokenId: null
+    },
+    pluginId: swapInfo.pluginId,
+    request,
+    swapInfo,
+    toNativeAmount,
+    async approve(): Promise<EdgeSwapResult> {
+      throw shortfall
+    },
+    async close() {}
+  }
+  return out
+}
+
+/**
+ * Builds a spend without the engine's balance check, for its fee. Returns
+ * undefined for orders with no spend info, and for engines that still refuse,
+ * since the fee is then read from the shortfall instead.
+ */
+async function makeUncheckedTx(
+  order: SwapOrder
+): Promise<EdgeTransaction | undefined> {
+  if (!('spendInfo' in order)) return undefined
+  const spendInfo = { ...order.spendInfo, skipChecks: true }
+  return await makeOrderTx({ ...order, spendInfo }).catch(
+    (_error: unknown) => undefined
+  )
+}
+
+/**
+ * Reads the saved action an order was built with, for when no transaction
+ * exists to read it from.
+ */
+function getOrderSavedAction(order: SwapOrder): EdgeTransaction['savedAction'] {
+  if ('spendInfo' in order) return order.spendInfo.savedAction
+  const { makeTxParams } = order
+  return makeTxParams.type === 'MakeTx'
+    ? makeTxParams.metadata?.savedAction
+    : makeTxParams.savedAction
 }
 
 export const getMaxSwappable = async <T extends any[]>(

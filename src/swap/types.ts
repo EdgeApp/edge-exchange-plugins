@@ -15,6 +15,8 @@ import {
   EdgeMemo,
   EdgeMetadata,
   EdgeSwapInfo,
+  EdgeSwapQuote,
+  EdgeTokenId,
   EdgeTransaction,
   EdgeTxAction,
   EdgeTxActionSwap,
@@ -39,6 +41,25 @@ export interface EdgeSwapRequestPlugin {
    * the installed `edge-core-js` types predate the field.
    */
   privacy?: 'required'
+
+  /**
+   * The caller wants a price even if the wallet cannot pay for the swap, so an
+   * order that fails only on funds comes back as a quote that cannot be
+   * approved. Mirrors `EdgeSwapRequest`, declared here because the installed
+   * `edge-core-js` types predate the field.
+   */
+  allowInsufficientFunds?: boolean
+}
+
+/**
+ * A quote that can report it is short of funds. Mirrors `EdgeSwapQuote` from
+ * `edge-core-js`, declared here because the installed types predate the field.
+ */
+export interface EdgeSwapQuotePlugin extends EdgeSwapQuote {
+  insufficientFunds?: {
+    tokenId: EdgeTokenId
+    networkFee?: string
+  }
 }
 
 /**
