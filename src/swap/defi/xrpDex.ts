@@ -78,24 +78,6 @@ const fetchSwapQuoteInner = async (
     quoteFor
   } = request
 
-  // Only support ripple wallets
-  if (
-    fromWallet.currencyInfo.pluginId !== 'ripple' ||
-    toWallet.currencyInfo.pluginId !== 'ripple'
-  ) {
-    throw new SwapCurrencyError(swapInfo, request)
-  }
-
-  // Source and dest wallet must be the same
-  if (fromWallet.id !== toWallet.id) {
-    throw new Error('XRP DEX must use same wallet for source and destination')
-  }
-
-  // Do not support transfer between same assets
-  if (request.fromTokenId === request.toTokenId) {
-    throw new SwapCurrencyError(swapInfo, request)
-  }
-
   const rippleServers: string[] = RIPPLE_SERVERS_DEFAULT
   const volatilitySpread: number = VOLATILITY_SPREAD_DEFAULT
 
@@ -269,7 +251,30 @@ export async function fetchSwapQuote(
   opts: { promoCode?: string }
 ): Promise<EdgeSwapQuote> {
   const request = convertRequest(req)
-  const { fromTokenId, fromWallet, quoteFor } = request
+  const { fromTokenId, fromWallet, quoteFor, toWallet } = request
+  const { swapInfo } = env
+
+  // Reject unsupported pairs before asking the wallet for its balance. A
+  // non-XRP engine fails that query, and core ranks the resulting
+  // InsufficientFundsError above every other partner's SwapCurrencyError.
+
+  // Only support ripple wallets
+  if (
+    fromWallet.currencyInfo.pluginId !== 'ripple' ||
+    toWallet.currencyInfo.pluginId !== 'ripple'
+  ) {
+    throw new SwapCurrencyError(swapInfo, request)
+  }
+
+  // Source and dest wallet must be the same
+  if (fromWallet.id !== toWallet.id) {
+    throw new Error('XRP DEX must use same wallet for source and destination')
+  }
+
+  // Do not support transfer between same assets
+  if (request.fromTokenId === request.toTokenId) {
+    throw new SwapCurrencyError(swapInfo, request)
+  }
 
   // Get the balance of the wallet minus reserve
   const maxSpendable = await fromWallet.getMaxSpendable({
