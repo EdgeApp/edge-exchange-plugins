@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- fixed: (XRPDEX) Report unsupported pairs as a currency error, not insufficient funds
+
 ## 2.60.1 (2026-11-04)
 
 - fixed: (Maya Protocol) Report amounts below the minimum instead of a generic error
