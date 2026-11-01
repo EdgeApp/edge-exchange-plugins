@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- added: Quote swaps a wallet cannot yet pay for when the request sets `allowInsufficientFunds`
+
 ## 2.60.0 (2026-10-23)
 
 - added: (Bridgeless) Reject quotes above the destination token's withdrawal cap
