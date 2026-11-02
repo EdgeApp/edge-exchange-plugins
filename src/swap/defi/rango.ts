@@ -1,4 +1,4 @@
-import { div, gte, lte, mul, round, sub } from 'biggystring'
+import { div, gte, lt, lte, mul, round, sub } from 'biggystring'
 import {
   asArray,
   asEither,
@@ -614,12 +614,17 @@ export function makeRangoPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
     const { route, tx } = swap
 
     if (swap.resultType !== 'OK') {
-      // Try to handle failed result
-      if (
-        swap.resultType === 'NO_ROUTE' ||
+      const noExchangeError = new Error(
+        `Rango could not proceed with the exchange: ${swap.resultType} ${
+          swap.error ?? ''
+        }`
+      )
+      const blamesAmount =
         swap.resultType === 'INPUT_LIMIT_ISSUE' ||
         (swap.error?.includes('Your input amount might be too low!') ?? false)
-      ) {
+
+      // Try to handle failed result
+      if (swap.resultType === 'NO_ROUTE' || blamesAmount) {
         const amountRestriction = swap.route?.amountRestriction
         const fromTo = request.quoteFor === 'to' ? 'to' : 'from'
 
@@ -743,11 +748,23 @@ export function makeRangoPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
                 })
 
           if (foundMinimum != null) {
-            throw new SwapBelowLimitError(swapInfo, foundMinimum, fromTo)
+            // A working amount at or below this request means something other
+            // than the minimum stopped it, such as a maximum:
+            if (lt(nativeAmount, foundMinimum)) {
+              throw new SwapBelowLimitError(swapInfo, foundMinimum, fromTo)
+            }
+            throw noExchangeError
           }
 
-          // Assume null amountRestrictions means below limit
-          throw new SwapBelowLimitError(swapInfo, undefined, fromTo)
+          if (blamesAmount) {
+            throw new SwapBelowLimitError(swapInfo, undefined, fromTo)
+          }
+
+          // The search needs a rate to run, so without one nothing is known:
+          if (startingNativeAmount == null) throw noExchangeError
+
+          // No amount works, so the limit is not what stopped this swap:
+          throw new SwapCurrencyError(swapInfo, request)
         }
         const { min, max } = amountRestriction
 
@@ -757,11 +774,7 @@ export function makeRangoPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
           throw new SwapBelowLimitError(swapInfo, min, fromTo)
         }
       }
-      throw new Error(
-        `Rango could not proceed with the exchange: ${swap.resultType} ${
-          swap.error ?? ''
-        }`
-      )
+      throw noExchangeError
     }
 
     if (route?.path == null || route.outputAmount === '' || tx == null) {
