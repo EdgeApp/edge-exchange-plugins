@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- fixed: (Maya Protocol) Report amounts below the minimum instead of a generic error
+- fixed: (Rango) Stop reporting a below-limit error when no amount has a route
+
 ## 2.60.0 (2026-10-23)
 
 - added: (Bridgeless) Reject quotes above the destination token's withdrawal cap

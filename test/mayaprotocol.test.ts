@@ -1,12 +1,15 @@
 import { assert } from 'chai'
 import {
   EdgeCurrencyWallet,
+  EdgeFetchFunction,
+  EdgeFetchResponse,
   EdgeSwapInfo,
   EdgeTokenId
 } from 'edge-core-js/types'
 import { describe, it } from 'mocha'
 
 import {
+  getBestQuote,
   getNodeLimitUnits,
   getPool,
   isProviderNativeDeposit
@@ -245,5 +248,118 @@ describe(`getPool`, function () {
       () => getPool(fakeRequest, thorSwapInfo, 'MAYA', 'CACAO', thorPools),
       /does not support/
     )
+  })
+})
+
+interface FakeNodeReply {
+  status: number
+  body: string
+}
+
+// Only the fields getQuote reads:
+const makeFakeResponse = ({ status, body }: FakeNodeReply): EdgeFetchResponse =>
+  (({
+    ok: status >= 200 && status < 300,
+    status,
+    text: async () => body,
+    json: async () => JSON.parse(body)
+  } as unknown) as EdgeFetchResponse)
+
+describe(`getBestQuote`, function () {
+  const validReply: FakeNodeReply = {
+    status: 200,
+    body: JSON.stringify({
+      expected_amount_out: '61409897',
+      expiry: 1692149478,
+      memo: '=:ARB.ETH:0x0',
+      recommended_min_amount_in: '36523853588',
+      streaming_swap_blocks: 0
+    })
+  }
+
+  /** Replies per amount, and records the amounts the plugin asked about. */
+  const quote = async (
+    reply: (amount: number) => FakeNodeReply
+  ): Promise<{ result: unknown; amounts: number[] }> => {
+    const amounts: number[] = []
+    const fetch: EdgeFetchFunction = async uri => {
+      const amount = Number(new URL(uri).searchParams.get('amount'))
+      amounts.push(amount)
+      return makeFakeResponse(reply(amount))
+    }
+    const result = await getBestQuote(
+      mayaSwapInfo,
+      [{ amount: '100000000', from_asset: 'MAYA.CACAO' }],
+      fetch,
+      ['https://node.example'],
+      {},
+      mayachainWallet,
+      'CACAO'
+    ).catch((error: unknown) => error)
+    return { result, amounts }
+  }
+
+  // Mayanode's real replies, which all arrive as HTTP 200:
+  const mayaError = (error: string): FakeNodeReply => ({
+    status: 200,
+    body: JSON.stringify({ error })
+  })
+
+  for (const text of [
+    'failed to simulate swap: not enough asset to pay for fees',
+    'failed to simulate swap: zero emit asset'
+  ]) {
+    it(`maya HTTP 200 "${text}" is below the limit`, async function () {
+      const { result, amounts } = await quote(amount =>
+        amount < 1e10 ? mayaError(text) : validReply
+      )
+      assert.equal((result as Error).name, 'SwapBelowLimitError')
+      assert.deepEqual(amounts, [1e8, 1e9, 1e10])
+    })
+  }
+
+  it('maya HTTP 200 halted trading is not a limit error', async function () {
+    const { result } = await quote(() =>
+      mayaError(
+        "failed to simulate swap: trading is halted, can't process swap"
+      )
+    )
+    assert.equal((result as Error).message, 'Could not get quote')
+  })
+
+  it('thornode HTTP 400 too-small is below the limit', async function () {
+    const { result } = await quote(amount =>
+      amount < 1e10
+        ? {
+            status: 400,
+            body: JSON.stringify({
+              code: 3,
+              message: 'not enough asset to pay for fees'
+            })
+          }
+        : validReply
+    )
+    assert.equal((result as Error).name, 'SwapBelowLimitError')
+  })
+
+  it('thornode HTTP 400 halted trading is not a limit error', async function () {
+    const { result } = await quote(() => ({
+      status: 400,
+      body: JSON.stringify({ code: 3, message: 'trading is halted' })
+    }))
+    assert.equal((result as Error).message, 'Could not get quote')
+  })
+
+  it('stops probing a pool that is too small at any amount', async function () {
+    const { result, amounts } = await quote(() =>
+      mayaError('not enough asset to pay for fees')
+    )
+    assert.equal((result as Error).message, 'Could not get quote')
+    assert.lengthOf(amounts, 16)
+  })
+
+  it('returns a valid quote', async function () {
+    const { result } = await quote(() => validReply)
+    assert.deepInclude(result, { memo: '=:ARB.ETH:0x0' })
   })
 })

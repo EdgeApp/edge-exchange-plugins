@@ -323,6 +323,15 @@ const asQuoteSwap = asObject({
   total_swap_seconds: asOptional(asNumber) // 1020,
 })
 
+const asQuoteErrorBody = asMaybe(asObject({ error: asString }))
+
+/**
+ * A too-small amount is retried at 10x to find the provider's minimum. This
+ * bounds the retries for a pool that never quotes, and still reaches the
+ * minimum from a 1 atomic unit request.
+ */
+const MAX_MIN_AMOUNT_PROBES = 15
+
 type QuoteSwap = ReturnType<typeof asQuoteSwap>
 interface QuoteError {
   error: 'SwapMinError'
@@ -1411,7 +1420,7 @@ const calcSwapTo = async ({
   }
 }
 
-const getBestQuote = async (
+export const getBestQuote = async (
   swapInfo: EdgeSwapInfo,
   params: QueryParams[],
   fetch: EdgeFetchFunction,
@@ -1478,7 +1487,8 @@ const getQuote = async (
   queryParams: QueryParams,
   fetch: EdgeFetchFunction,
   thornodes: string[],
-  thornodesFetchOptions: EdgeFetchOptions
+  thornodesFetchOptions: EdgeFetchOptions,
+  minProbesLeft: number = MAX_MIN_AMOUNT_PROBES
 ): Promise<QuoteSwapFull | undefined> => {
   const params = makeQueryParams(queryParams)
 
@@ -1489,14 +1499,24 @@ const getQuote = async (
       `quote/swap?${params}`,
       thornodesFetchOptions
     )
-    let json
+    let json: unknown
+    let errorText: string | undefined
     try {
-      if (!response.ok) {
-        const text = await response.text()
+      if (response.ok) {
+        json = await response.json()
+        // Mayanode reports a failed quote as HTTP 200 with an `error` field,
+        // while Thornode uses an HTTP error status:
+        errorText = asQuoteErrorBody(json)?.error
+      } else {
+        errorText = await response.text()
+      }
+      if (errorText != null) {
         if (
-          text.includes('swap too small') ||
-          text.includes('not enough asset to pay for fees')
+          errorText.includes('swap too small') ||
+          errorText.includes('not enough asset to pay for fees') ||
+          errorText.includes('zero emit asset')
         ) {
+          if (minProbesLeft <= 0) return
           // Get another quote just to retrieve the min amount.
           const amount: string = mul(String(queryParams.amount), '10')
           const newQueryParams = {
@@ -1507,7 +1527,8 @@ const getQuote = async (
             newQueryParams,
             fetch,
             thornodes,
-            thornodesFetchOptions
+            thornodesFetchOptions,
+            minProbesLeft - 1
           )
           if (quoteSwap == null || 'error' in quoteSwap) return quoteSwap
 
@@ -1517,10 +1538,8 @@ const getQuote = async (
             minThorAmount
           }
         }
-        console.error(text)
+        console.error(errorText)
         return
-      } else {
-        json = await response.json()
       }
     } catch (e) {
       console.error(String(e))
