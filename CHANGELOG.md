@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 2.60.1 (2026-11-04)
+
 - fixed: (Maya Protocol) Report amounts below the minimum instead of a generic error
 - fixed: (Rango) Stop reporting a below-limit error when no amount has a route
 
