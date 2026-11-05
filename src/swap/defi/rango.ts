@@ -63,7 +63,6 @@ const swapInfo: EdgeSwapInfo = {
   displayName: 'Rango Exchange',
   supportEmail: 'support@edge.app'
 }
-const orderUri = 'https://explorer.rango.exchange/search?query='
 
 const EXPIRATION_MS = 1000 * 60
 const EXCHANGE_INFO_UPDATE_FREQ_MS = 60000
@@ -444,6 +443,26 @@ const asSwapResponse = asObject({
   transactionId: asOptional(asString)
 })
 
+/**
+ * Picks the id that identifies a Rango swap: the request id, which reports keys
+ * Rango orders by, or the first other tracking field Rango returned.
+ *
+ * Swaps carry this as their order id and no orderUri. Rango's per-swap page,
+ * https://explorer.rango.exchange/swap/<requestId>, renders an error page, and
+ * its search page rejects request ids, so there is no working status link.
+ * Once the /swap/<requestId> page works, set orderUri to it for Solana and EVM.
+ */
+export const makeRangoOrderId = (swap: {
+  requestId?: string
+  id?: string
+  uuid?: string
+  transactionId?: string
+}): string | undefined => {
+  const trackingId =
+    swap.requestId ?? swap.id ?? swap.uuid ?? swap.transactionId ?? ''
+  return trackingId !== '' ? trackingId : undefined
+}
+
 type ExchangeInfo = ReturnType<typeof asExchangeInfo>
 
 let exchangeInfo: ExchangeInfo | undefined
@@ -785,18 +804,8 @@ export function makeRangoPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
       swapInfo
     }
 
-    // Use Rango's request ID for the order URI so the explorer link opens the
-    // specific swap. Fall back to the destination address (an address-history
-    // link) when no request ID is returned. Applies to every chain Rango
-    // supports, not just Cosmos.
-    const trackingId =
-      swap.requestId ?? swap.id ?? swap.uuid ?? swap.transactionId ?? ''
-    const orderUriValue =
-      trackingId !== '' ? `${orderUri}${trackingId}` : `${orderUri}${toAddress}`
-    // Reports keys Rango orders by this same id, so the swap result carries it
-    // as the order id instead of falling back to the transaction hash:
-    const orderId = trackingId !== '' ? trackingId : undefined
-    log(`Rango tracking: id=${trackingId}, uri=${orderUriValue}`)
+    const orderId = makeRangoOrderId(swap)
+    log(`Rango tracking: id=${orderId ?? 'none'}`)
 
     switch (tx.type) {
       case 'SOLANA': {
@@ -831,7 +840,6 @@ export function makeRangoPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
           savedAction: {
             actionType: 'swap',
             swapInfo,
-            orderUri: orderUriValue,
             orderId,
             isEstimate: true,
             toAsset: {
@@ -866,7 +874,6 @@ export function makeRangoPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
             savedAction: {
               actionType: 'swap',
               swapInfo,
-              orderUri: orderUriValue,
               orderId,
               isEstimate: true,
               toAsset: {
@@ -952,7 +959,6 @@ export function makeRangoPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
           savedAction: {
             actionType: 'swap',
             swapInfo,
-            orderUri: orderUriValue,
             orderId,
             isEstimate: true,
             toAsset: {
@@ -984,7 +990,6 @@ export function makeRangoPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
         const savedAction = {
           actionType: 'swap' as const,
           swapInfo,
-          orderUri: orderUriValue,
           orderId,
           isEstimate: true,
           toAsset: {
@@ -1070,7 +1075,6 @@ export function makeRangoPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
           savedAction: {
             actionType: 'swap',
             swapInfo,
-            orderUri: orderUriValue,
             orderId,
             isEstimate: true,
             toAsset: {

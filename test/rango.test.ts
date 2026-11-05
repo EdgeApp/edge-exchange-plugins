@@ -4,7 +4,8 @@ import { describe, it } from 'mocha'
 import {
   decodeTronApproval,
   hexToTronAddress,
-  makeRangoAuthParams
+  makeRangoAuthParams,
+  makeRangoOrderId
 } from '../src/swap/defi/rango'
 import { makeQueryParams } from '../src/util/utils'
 
@@ -82,5 +83,31 @@ describe(`rango decodeTronApproval`, function () {
 
   it('rejects an approval missing its amount', function () {
     assert.throws(() => decodeTronApproval(approveData.slice(0, 72)))
+  })
+})
+
+describe(`rango makeRangoOrderId`, function () {
+  it('uses the Rango request id', function () {
+    assert.equal(
+      makeRangoOrderId({
+        requestId: 'e63109c5-3752-405c-9adf-84306c26333b',
+        id: 'other-id'
+      }),
+      'e63109c5-3752-405c-9adf-84306c26333b'
+    )
+  })
+
+  it('falls back to the other tracking fields in order', function () {
+    assert.equal(makeRangoOrderId({ id: 'id-1', uuid: 'uuid-1' }), 'id-1')
+    assert.equal(
+      makeRangoOrderId({ uuid: 'uuid-1', transactionId: 'tx-1' }),
+      'uuid-1'
+    )
+    assert.equal(makeRangoOrderId({ transactionId: 'tx-1' }), 'tx-1')
+  })
+
+  it('returns undefined when Rango returns no tracking id', function () {
+    assert.isUndefined(makeRangoOrderId({}))
+    assert.isUndefined(makeRangoOrderId({ requestId: '' }))
   })
 })
