@@ -4,6 +4,7 @@
 
 - fixed: Bridgeless swaps report the resolved deposit order id instead of a `{{TXID}}` placeholder
 - fixed: Rango swaps report the Rango request id as their order id
+- fixed: Rango swaps no longer link to a broken explorer status page
 
 ## 2.57.0 (2026-09-25)
 
