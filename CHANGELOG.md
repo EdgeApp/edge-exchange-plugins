@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 2.60.2 (2026-11-10)
+
 - fixed: (XRPDEX) Report unsupported pairs as a currency error, not insufficient funds
 
 ## 2.60.1 (2026-11-04)
