@@ -68,7 +68,7 @@ const pluginId = 'houdini'
 export const swapInfo: EdgeSwapInfo = {
   pluginId,
   isDex: false,
-  displayName: 'HoudiniSwap',
+  displayName: 'Houdini',
   supportEmail: 'support@houdiniswap.com'
 }
 
@@ -80,8 +80,8 @@ const asInitOptions = asObject({
 })
 
 // The order status page is on the app host, keyed by a query parameter. The
-// marketing site (houdiniswap.com) has no order route.
-const orderUri = 'https://app.houdiniswap.com/order-details?houdiniId='
+// marketing site has no order route.
+const orderUri = 'https://app.houdini.com/order-details?houdiniId='
 const uri = 'https://api-partner.houdiniswap.com/v2/'
 
 // Houdini quotes/exchanges are keyed by an opaque token id, so destination
@@ -255,7 +255,7 @@ function readHoudiniFailure(
     .filter((message, index, messages) => messages.indexOf(message) === index)
   const reason =
     fieldMessages.length > 0 ? fieldMessages.join('; ') : apiError.message
-  return { code: apiError.code, message: `HoudiniSwap: ${reason}` }
+  return { code: apiError.code, message: `Houdini: ${reason}` }
 }
 
 /**
@@ -281,7 +281,7 @@ const RATE_LIMIT_MAX_RETRIES = 3
 const RATE_LIMIT_MIN_DELAY_MS = 1000
 const RATE_LIMIT_MAX_DELAY_MS = 30000
 const RATE_LIMIT_MESSAGE =
-  'HoudiniSwap: rate limit exceeded, please try again shortly'
+  'Houdini: rate limit exceeded, please try again shortly'
 
 // Attempts at `dex/confirmTx`, which runs after the transaction is out. The
 // wait grows by one base delay per attempt (1s, then 2s).
@@ -375,7 +375,7 @@ const asHoudiniDexOrder = asObject({
 })
 
 /** A dex order also carries the id `dex/confirmTx` needs after broadcast. */
-type HoudiniSwapOrder = SwapOrder & { dexOrderId?: string }
+type HoudiniOrder = SwapOrder & { dexOrderId?: string }
 
 /**
  * Convert a JSON float to a decimal string, expanding any scientific notation
@@ -663,7 +663,7 @@ export function makeHoudiniPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
   const fetchSwapQuoteInner = async (
     request: EdgeSwapRequestPlugin,
     probeOnly: boolean = false
-  ): Promise<HoudiniSwapOrder> => {
+  ): Promise<HoudiniOrder> => {
     const { fromWallet, toWallet, quoteFor, nativeAmount } = request
 
     // A `max` request is resolved to a balance-sized `from` request by
@@ -714,9 +714,7 @@ export function makeHoudiniPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
       toWallet.currencyInfo.pluginId === 'zcash' &&
       !ZCASH_TRANSPARENT_ADDRESS.test(toAddress)
     ) {
-      throw new Error(
-        'HoudiniSwap supports transparent (t1) Zcash addresses only'
-      )
+      throw new Error('Houdini supports transparent (t1) Zcash addresses only')
     }
 
     // The quote amount is in the display units of whichever side the caller
@@ -990,7 +988,7 @@ export function makeHoudiniPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
       // anything is signed, and an entered amount is the way through.
       const best = inRangeQuotes[0]
       usedQuote = best
-      return makeHoudiniSwapOrder(
+      return makeHoudiniOrder(
         {
           houdiniId: '',
           depositAddress: fromAddress,
@@ -1041,9 +1039,9 @@ export function makeHoudiniPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
     if (order == null) {
       throw new Error(lastError)
     }
-    return makeHoudiniSwapOrder(order)
+    return makeHoudiniOrder(order)
 
-    function makeHoudiniSwapOrder(
+    function makeHoudiniOrder(
       order: ReturnType<typeof asHoudiniOrder>,
       isProbe: boolean = false
     ): SwapOrder {
@@ -1082,7 +1080,7 @@ export function makeHoudiniPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
           : reverseDepositBound(usedQuote)
       if (requestedBound != null && gt(fromNativeAmount, requestedBound)) {
         throw new Error(
-          'HoudiniSwap returned a deposit amount above the requested amount'
+          'Houdini returned a deposit amount above the requested amount'
         )
       }
 
@@ -1210,7 +1208,7 @@ export function makeHoudiniPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
       )
       const { offChain = false, to, data, value } = dexOrder.metadata
       if (offChain || to == null || data == null || value == null) {
-        lastError = 'HoudiniSwap: this route needs a step Edge cannot sign'
+        lastError = 'Houdini: this route needs a step Edge cannot sign'
         return undefined
       }
       return dexOrder
@@ -1219,7 +1217,7 @@ export function makeHoudiniPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
     function makeDexSwapOrder(
       dexOrder: ReturnType<typeof asHoudiniDexOrder>,
       candidate: HoudiniQuote
-    ): HoudiniSwapOrder {
+    ): HoudiniOrder {
       const { to = '', data = '', value = '0' } = dexOrder.metadata
 
       // TRUST BOUNDARY, as for a deposit: the value is signed below, so it may
@@ -1228,7 +1226,7 @@ export function makeHoudiniPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
       const fromNativeAmount = add(String(value), '0')
       if (gt(fromNativeAmount, request.nativeAmount)) {
         throw new Error(
-          'HoudiniSwap returned a transaction value above the requested amount'
+          'Houdini returned a transaction value above the requested amount'
         )
       }
       const toNativeAmount = floatToNativeAmount(

@@ -1,5 +1,5 @@
 /**
- * Maps Edge `EdgeCurrencyPluginId` -> HoudiniSwap chain `shortName` (v2 `GET /chains`),
+ * Maps Edge `EdgeCurrencyPluginId` -> Houdini chain `shortName` (v2 `GET /chains`),
  * or `null` when Houdini has no compatible chain for that asset.
  *
  * Derived from the live `GET /chains` list intersected with Edge's currency
