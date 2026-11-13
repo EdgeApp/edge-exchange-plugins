@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- changed: (HoudiniSwap) Resolve swap assets from the Edge info server
+
 ## 2.60.2 (2026-11-10)
 
 - fixed: (XRPDEX) Report unsupported pairs as a currency error, not insufficient funds
