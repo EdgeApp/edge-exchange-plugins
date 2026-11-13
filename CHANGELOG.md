@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 2.61.0 (2026-11-13)
+
 - changed: (Houdini) Rename provider from HoudiniSwap to Houdini, including its order link
 
 ## 2.60.2 (2026-11-10)
