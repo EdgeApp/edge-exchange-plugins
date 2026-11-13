@@ -1,5 +1,5 @@
 /**
- * Acceptance tests for the HoudiniSwap plugin.
+ * Acceptance tests for the Houdini plugin.
  *
  * Runs the real `makeHoudiniPlugin` quote -> create-exchange flow. Every
  * Houdini API response is cached to disk (`test/houdiniFixtures/`) on first
@@ -1229,7 +1229,7 @@ describe('houdini offline behaviors', function () {
       (error: unknown) => error
     )
 
-    expect(String(error)).equals('Error: HoudiniSwap: maxLength 200')
+    expect(String(error)).equals('Error: Houdini: maxLength 200')
   })
 
   it('pays a picked Zcash wallet out to its transparent address', async function () {
@@ -1323,7 +1323,7 @@ describe('houdini offline behaviors', function () {
       )
 
       expect(String(error)).contains(
-        'HoudiniSwap supports transparent (t1) Zcash addresses only'
+        'Houdini supports transparent (t1) Zcash addresses only'
       )
       expect(run.quoteUrls.length).equals(0)
       expect(run.orderBodies.length).equals(0)
@@ -1714,7 +1714,7 @@ describe('houdini offline behaviors', function () {
     const action = capture.savedAction as Record<string, unknown>
     expect(action.orderId).equals('order-q-private')
     expect(action.orderUri).equals(
-      'https://app.houdiniswap.com/order-details?houdiniId=order-q-private'
+      'https://app.houdini.com/order-details?houdiniId=order-q-private'
     )
   })
 
