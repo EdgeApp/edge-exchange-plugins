@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 2.62.0 (2026-11-13)
+
 - added: (Houdini) Pay a pasted Zcash unified address out to its transparent receiver
 
 ## 2.61.0 (2026-11-13)
