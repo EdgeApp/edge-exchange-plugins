@@ -6,7 +6,6 @@ import {
   asEither,
   asJSON,
   asMaybe,
-  asNull,
   asNumber,
   asObject,
   asOptional,
@@ -33,26 +32,22 @@ import {
   SwapCurrencyError
 } from 'edge-core-js/types'
 
-import { houdini as houdiniMapping } from '../../mappings/houdini'
-import { EdgeCurrencyPluginId } from '../../util/edgeCurrencyPluginIds'
 import {
   checkInvalidTokenIds,
-  checkWhitelistedMainnetCodes,
-  CurrencyPluginIdSwapChainCodeMap,
   ensureInFuture,
-  getContractAddresses,
   getMaxSwappable,
   InvalidTokenIds,
   makeSwapPluginQuote,
-  mapToRecord,
   SwapOrder
 } from '../../util/swapHelpers'
 import {
   convertRequest,
   denominationToNative,
+  fetchInfo,
   getAddress,
   memoType,
   nativeToDenomination,
+  promiseWithTimeout,
   snooze
 } from '../../util/utils'
 import {
@@ -108,9 +103,10 @@ const ZCASH_TRANSPARENT_ADDRESS = /^t1[1-9A-HJ-NP-Za-km-z]{33}$/
 const SYNTHETIC_WALLET_ID_PREFIX = 'synthetic://'
 
 /**
- * Assets this plugin refuses outright. Empty: the provider's own token list is
- * the authority on what it serves, and anything absent from it already fails
- * the token-id lookup. The shared blocked-token defaults still apply.
+ * Assets this plugin refuses outright. Empty: the info server's asset table
+ * (see `asHoudiniAssetTable`) is the authority on what the provider serves,
+ * and anything absent from it already declines before any Houdini call. The
+ * shared blocked-token defaults still apply.
  */
 const INVALID_TOKEN_IDS: InvalidTokenIds = { from: {}, to: {} }
 
@@ -157,22 +153,57 @@ async function getPayoutAddress(
 }
 
 /**
- * Edge `EdgeCurrencyPluginId` -> Houdini chain `shortName`. Chains that Houdini
- * cannot serve map to `null` and are rejected up front by
- * `checkWhitelistedMainnetCodes`.
+ * The assets Houdini can route, as the Edge info server publishes them at
+ * `v1/houdiniAssets`: Edge pluginId -> the provider's chain name, plus the
+ * provider's id for the chain's coin and for each token, keyed by Edge tokenId.
+ * The info server builds this from Houdini's catalogue every hour, so the
+ * plugin never has to translate an Edge asset into a Houdini one itself.
+ *
+ * A chain without a `coin` lists tokens only (Houdini serves no native coin
+ * there). The id rides in an object so the info server can add fields without
+ * breaking a plugin that predates them.
  */
-export const MAINNET_CODE_TRANSCRIPTION: CurrencyPluginIdSwapChainCodeMap = mapToRecord(
-  houdiniMapping
+const asHoudiniAssetId = asObject({ houdiniId: asString })
+const asHoudiniAssetTable = asObject(
+  asObject({
+    chain: asString,
+    coin: asOptional(asHoudiniAssetId),
+    tokens: asObject(asHoudiniAssetId)
+  })
 )
+type HoudiniAssetTable = ReturnType<typeof asHoudiniAssetTable>
 
-const asHoudiniToken = asObject({
-  id: asString,
-  address: asEither(asNull, asString)
-})
+const ASSET_TABLE_PATH = 'v1/houdiniAssets'
+/**
+ * How long a loaded table is used before it is fetched again. Houdini lists,
+ * renames and delists assets, so the table expires like any other catalogue
+ * (`.cursor/BUGBOT.md` `catalog-cache-expiry`). The info server itself only
+ * refreshes hourly, so ten minutes costs little.
+ */
+const ASSET_TABLE_TTL_MS = 10 * 60 * 1000
+/**
+ * How long a stale table is kept after a failed refresh before the next
+ * attempt, so an info server outage is not asked again on every quote.
+ */
+const ASSET_TABLE_RETRY_MS = 60 * 1000
+const ASSET_TABLE_TIMEOUT_MS = 5000
 
-const asHoudiniTokensResponse = asObject({
-  tokens: asArray(asMaybe(asHoudiniToken))
-})
+/**
+ * The provider's id for an Edge asset, or `undefined` when the table does not
+ * list it. Own-property lookups only: a pluginId or tokenId such as
+ * `constructor` must not resolve to something on the object prototype.
+ */
+function findHoudiniId(
+  table: HoudiniAssetTable,
+  pluginId: string,
+  tokenId: EdgeTokenId
+): string | undefined {
+  if (!Object.prototype.hasOwnProperty.call(table, pluginId)) return
+  const chain = table[pluginId]
+  if (tokenId == null) return chain.coin?.houdiniId
+  if (!Object.prototype.hasOwnProperty.call(chain.tokens, tokenId)) return
+  return chain.tokens[tokenId].houdiniId
+}
 
 const asHoudiniQuote = asObject({
   quoteId: asString,
@@ -522,105 +553,61 @@ export function makeHoudiniPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
   }
 
   /**
-   * Memoized chain -> (addressKey -> tokenId) lookups, so repeat quotes on the
-   * same assets do not re-hit `GET /tokens`.
+   * The asset table, loaded from the info server on first use and refreshed
+   * once it expires. Concurrent askers share one in-flight fetch.
    *
-   * A cached `undefined` is a MISS the provider answered: it listed this chain's
-   * tokens and none matched. That is a stable fact for the session, and caching
-   * it is what keeps a chain the provider serves no native for from spending a
-   * rate-limited call on every quote. This is the whole mechanism by which an
-   * unserved chain declines cheaply, so the chain table never has to assert
-   * which chains are served.
-   *
-   * Entries are the in-flight promises, so concurrent askers share one call.
-   *
-   * Entries EXPIRE. Houdini renames, delists and relists assets, so a hit
-   * cached for the life of the plugin eventually names a token id the provider
-   * has dropped, and a cached miss refuses a pair the provider has since
-   * listed. `.cursor/BUGBOT.md`'s `catalog-cache-expiry` is explicit that "these
-   * do not change" is not a reason to skip the TTL.
+   * A failed refresh keeps the copy already loaded: the table changes slowly,
+   * and an hour-old list beats declining every pair during an info server
+   * outage. With no copy loaded yet there is nothing to resolve against, so
+   * the quote fails with an error naming the info server. That is an outage,
+   * not an unsupported pair, so it is deliberately not a `SwapCurrencyError`
+   * (`.cursor/BUGBOT.md` `outage-is-not-unsupported`).
    */
-  const TOKEN_ID_CACHE_TTL_MS = 10 * 60 * 1000
-  interface TokenIdCacheEntry {
-    lookup: Promise<string | undefined>
-    expires: number
-  }
-  const tokenIdCache = new Map<string, TokenIdCacheEntry>()
+  let assetTable: HoudiniAssetTable | undefined
+  let assetTableExpires = 0
+  let assetTableFetch: Promise<HoudiniAssetTable> | undefined
 
-  async function resolveTokenId(
-    chain: string,
-    contractAddress: string | undefined
-  ): Promise<string | undefined> {
-    const addressKey = contractAddress?.toLowerCase() ?? 'native'
-    const cacheKey = `${chain}:${addressKey}`
-    const cached = tokenIdCache.get(cacheKey)
-    if (cached != null && cached.expires > Date.now())
-      return await cached.lookup
-
-    // The IN-FLIGHT promise is what gets cached, not its result. A quote
-    // resolves both legs with `Promise.all`, so a same-asset quote asks the
-    // same question twice at once; caching only on completion lets both miss
-    // and spend two calls on one answer.
-    const lookup = fetchTokenId(chain, contractAddress, addressKey)
-    const entry: TokenIdCacheEntry = {
-      lookup,
-      expires: Date.now() + TOKEN_ID_CACHE_TTL_MS
+  async function getAssetTable(): Promise<HoudiniAssetTable> {
+    if (assetTable != null && assetTableExpires > Date.now()) return assetTable
+    if (assetTableFetch == null) {
+      assetTableFetch = fetchAssetTable().finally(() => {
+        assetTableFetch = undefined
+      })
     }
-    tokenIdCache.set(cacheKey, entry)
-    // A rejected lookup must not stick, for the same reason a failure is not a
-    // decline: the provider never answered. Only evict THIS entry: a retry may
-    // already have replaced it, and dropping the newer one would spend an extra
-    // call to learn the same answer.
-    lookup.catch(() => {
-      if (tokenIdCache.get(cacheKey) === entry) tokenIdCache.delete(cacheKey)
-    })
-    return await lookup
+    return await assetTableFetch
   }
 
-  async function fetchTokenId(
-    chain: string,
-    contractAddress: string | undefined,
-    addressKey: string
-  ): Promise<string | undefined> {
-    // The lowercased key goes on the wire, not Edge's own spelling. EVM token
-    // metadata carries checksummed (mixed-case) contract addresses, and a
-    // case-sensitive filter on the provider's side answers a checksummed
-    // address with no tokens at all, which this plugin would then report as a
-    // pair Houdini cannot route. Matching below is lowercased for the same
-    // reason, so sending the same form keeps query and match in agreement.
-    const query =
-      contractAddress != null
-        ? `tokens?chain=${chain}&address=${addressKey}&pageSize=100`
-        : `tokens?chain=${chain}&mainnet=true&pageSize=100`
-    const response = await fetchHoudini(query)
-    if (!response.ok) {
-      // Nothing is cached, and nothing is RETURNED either. Returning a miss
-      // here would be indistinguishable from the provider answering "no such
-      // token", so a bad minute at the API would read to the user as a pair
-      // Houdini cannot route. Throwing names the real cause, the same way the
-      // quote path surfaces its own failures.
-      const text = await response.text()
-      log.warn('Houdini tokens lookup error:', text)
-      throw new Error(`Houdini tokens returned ${response.status}: ${text}`)
+  async function fetchAssetTable(): Promise<HoudiniAssetTable> {
+    try {
+      const response = await promiseWithTimeout(
+        fetchInfo(fetchCors, ASSET_TABLE_PATH),
+        ASSET_TABLE_TIMEOUT_MS
+      )
+      if (response.ok !== true) {
+        throw new Error(`HTTP ${String(response.status)}`)
+      }
+      // Cleaned without `cleanResponse`: the table runs to thousands of
+      // entries, and the cleaner error already names the path that failed.
+      const table = asHoudiniAssetTable(await response.json())
+      assetTable = table
+      assetTableExpires = Date.now() + ASSET_TABLE_TTL_MS
+      return table
+    } catch (error: unknown) {
+      if (assetTable == null) {
+        throw new Error(
+          `HoudiniSwap could not load its asset list from the Edge info server: ${String(
+            error
+          )}`
+        )
+      }
+      log.warn(
+        `Houdini asset table refresh failed, keeping the loaded copy: ${String(
+          error
+        )}`
+      )
+      assetTableExpires = Date.now() + ASSET_TABLE_RETRY_MS
+      return assetTable
     }
-    const { tokens } = cleanResponse(
-      asHoudiniTokensResponse,
-      await response.json()
-    )
-
-    // The query already scopes the answer: `mainnet=true` is the catalogue's own
-    // definition of a chain's coin, and `address=` names one contract. Testing
-    // the rows again only adds ways to miss. A coin's address field is not a
-    // reliable signal (`null` on most chains, `""` on some, a contract-style
-    // address on TON), and a row's `chain` is not always the name the query
-    // used (a `bitcoincash` query answers with rows on `bch`).
-    const match = tokens.find(
-      token =>
-        token != null &&
-        (contractAddress == null || token.address?.toLowerCase() === addressKey)
-    )
-
-    return match?.id
   }
 
   /**
@@ -670,43 +657,32 @@ export function makeHoudiniPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
     // `getMaxSwappable` before it reaches this function.
     const reverseQuote = quoteFor === 'to'
 
-    const fromMainnet =
-      MAINNET_CODE_TRANSCRIPTION[
-        fromWallet.currencyInfo.pluginId as EdgeCurrencyPluginId
-      ]
-    const toMainnet =
-      MAINNET_CODE_TRANSCRIPTION[
-        toWallet.currencyInfo.pluginId as EdgeCurrencyPluginId
-      ]
-    if (fromMainnet == null || toMainnet == null) {
+    // An asset the table does not list is one Houdini cannot route, so the
+    // pair declines before any address work or Houdini call:
+    const table = await getAssetTable()
+    const fromHoudiniId = findHoudiniId(
+      table,
+      fromWallet.currencyInfo.pluginId,
+      request.fromTokenId
+    )
+    const toHoudiniId = findHoudiniId(
+      table,
+      toWallet.currencyInfo.pluginId,
+      request.toTokenId
+    )
+    if (fromHoudiniId == null || toHoudiniId == null) {
       throw new SwapCurrencyError(swapInfo, request)
     }
-
-    const { fromContractAddress, toContractAddress } = getContractAddresses(
-      request
-    )
 
     const isSyntheticDestination = toWallet.id.startsWith(
       SYNTHETIC_WALLET_ID_PREFIX
     )
 
-    const [
-      fromTokenId,
-      toTokenId,
-      fromAddress,
-      toAddress,
-      toMemos
-    ] = await Promise.all([
-      resolveTokenId(fromMainnet, fromContractAddress),
-      resolveTokenId(toMainnet, toContractAddress),
+    const [fromAddress, toAddress, toMemos] = await Promise.all([
       getAddress(fromWallet, addressTypeMap[fromWallet.currencyInfo.pluginId]),
       getPayoutAddress(toWallet, isSyntheticDestination),
       getDestinationMemos(toWallet)
     ])
-
-    if (fromTokenId == null || toTokenId == null) {
-      throw new SwapCurrencyError(swapInfo, request)
-    }
 
     // A unified address is longer than Houdini's address field allows, so the
     // API would only answer with a bare "maxLength 200":
@@ -729,7 +705,7 @@ export function makeHoudiniPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
     // Fetch quotes and keep the best private route. Pricing by the receive
     // amount (`amountType=receive`) is only offered on fixed-rate quotes.
     const quoteResponse = await fetchHoudini(
-      `quotes?amount=${exchangeAmount}&from=${fromTokenId}&to=${toTokenId}` +
+      `quotes?amount=${exchangeAmount}&from=${fromHoudiniId}&to=${toHoudiniId}` +
         (reverseQuote ? '&amountType=receive&fixed=true' : '')
     )
     if (!quoteResponse.ok) {
@@ -1325,11 +1301,6 @@ export function makeHoudiniPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
       checkInvalidTokenIds(INVALID_TOKEN_IDS, request, swapInfo, {
         allowSameAsset: request.privacy === 'required'
       })
-      checkWhitelistedMainnetCodes(
-        MAINNET_CODE_TRANSCRIPTION,
-        request,
-        swapInfo
-      )
 
       // The probe flag rides the extra argument `getMaxSwappable` forwards, so
       // only the max-sizing pass skips creating an exchange.

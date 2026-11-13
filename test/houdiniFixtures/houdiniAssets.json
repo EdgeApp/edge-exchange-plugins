@@ -1,0 +1,30 @@
+{
+  "bitcoin": {
+    "chain": "bitcoin",
+    "coin": { "houdiniId": "6689b73ec90e45f3b3e51551" },
+    "tokens": {}
+  },
+  "ethereum": {
+    "chain": "ethereum",
+    "coin": { "houdiniId": "6689b73ec90e45f3b3e51566" },
+    "tokens": {
+      "a0b86991c6218b36c1d19d4a2e9eb0ce3606eb48": {
+        "houdiniId": "6689b73ec90e45f3b3e51554"
+      }
+    }
+  },
+  "ripple": {
+    "chain": "ripple",
+    "coin": { "houdiniId": "6689b73ec90e45f3b3e5155b" },
+    "tokens": {}
+  },
+  "tron": {
+    "chain": "tron",
+    "coin": { "houdiniId": "6689b73ec90e45f3b3e51588" },
+    "tokens": {
+      "TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t": {
+        "houdiniId": "6689b73ec90e45f3b3e5155d"
+      }
+    }
+  }
+}

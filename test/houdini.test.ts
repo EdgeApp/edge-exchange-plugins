@@ -12,8 +12,12 @@
  * the same way other partners are wired; cached replays run with placeholder
  * credentials (the fixture key ignores headers). The on-device pieces a swap
  * quote does not depend on (address derivation, `makeSpend`) are stubbed; the
- * tests exercise token resolution, quoting (both directions), order creation
+ * tests exercise asset resolution, quoting (both directions), order creation
  * (including a destination tag), and `SwapOrder` construction.
+ *
+ * The info server's asset table is served from a committed snapshot
+ * (`houdiniFixtures/houdiniAssets.json`) rather than recorded, so the ids it
+ * holds stay the ones the recorded quotes were made with.
  */
 import { expect } from 'chai'
 import { makeConfig } from 'cleaner-config'
@@ -39,6 +43,7 @@ import { asTestConfig } from './testconfig'
 const config = makeConfig(asTestConfig, './testconfig.json')
 
 const FIXTURE_DIR = path.join(__dirname, 'houdiniFixtures')
+const ASSET_TABLE_FIXTURE = path.join(FIXTURE_DIR, 'houdiniAssets.json')
 
 interface CachedResponse {
   status: number
@@ -87,6 +92,14 @@ const cachingFetch = async (
     body?: string
   } = {}
 ): Promise<FetchResponseLike> => {
+  if (url.endsWith('/v1/houdiniAssets')) {
+    return toResponse({
+      status: 200,
+      ok: true,
+      body: fs.readFileSync(ASSET_TABLE_FIXTURE, 'utf8')
+    })
+  }
+
   const method = opts.method ?? 'GET'
   const body = opts.body ?? ''
   if (method === 'POST' && url.endsWith('/exchanges')) {
@@ -437,8 +450,8 @@ describe('houdini', function () {
 
   it('orders a token payout to a pasted address', async function () {
     // TRX -> USDT on Tron, sent to an address with no wallet behind it. The
-    // destination token is found by its contract address on the synthetic
-    // wallet, the same way a token in a user wallet is.
+    // destination token resolves by its tokenId, the same way a token in a
+    // user wallet does.
     const usdtTronContract = 'TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t'
     const toAddress = 'TGnZMLjixwXGR2WUWAuo81AuBjXA7F74qw'
     const trxWallet = makeFakeWallet(
@@ -517,13 +530,33 @@ interface ScriptedQuote {
 /** The router a scripted dex order asks the source wallet to call. */
 const DEX_ROUTER = '0x3333333333333333333333333333333333333333'
 
+/**
+ * The asset table the scripted info server serves unless a case swaps in its
+ * own: a coin on each chain the wallets below use, one Sonic token, and a
+ * chain (celo) that lists tokens but no coin.
+ */
+const SONIC_TOKEN_ID = '29219dd400f2bf60e5a23d13be72b486d4038894'
+const UNLISTED_SONIC_TOKEN_IDS = [
+  'ffffffffffffffffffffffffffffffffffffffff',
+  'constructor'
+]
+const SCRIPTED_ASSETS = {
+  sonic: {
+    chain: 'sonic',
+    coin: { houdiniId: 'sonic-native' },
+    tokens: { [SONIC_TOKEN_ID]: { houdiniId: 'sonic-usdc' } }
+  },
+  stellar: { chain: 'xlm', coin: { houdiniId: 'xlm-native' }, tokens: {} },
+  zcash: { chain: 'zcash', coin: { houdiniId: 'zec-native' }, tokens: {} },
+  celo: {
+    chain: 'celo',
+    tokens: {
+      '765de816845861e75a25fca122bb6898b8b1282a': { houdiniId: 'celo-cusd' }
+    }
+  }
+}
+
 interface Script {
-  /**
-   * What the token list reports in the native coin's address field. Houdini
-   * spells it `null` on most chains, as an empty string on others, and as a
-   * contract-style address on TON, which is the whole point of these cases.
-   */
-  nativeAddress: string | null
   quotes: ScriptedQuote[]
   /**
    * HTTP statuses handed to successive `quotes` calls. The final entry repeats
@@ -531,18 +564,8 @@ interface Script {
    * rate-limits once.
    */
   quoteStatuses?: number[]
-  /**
-   * Chains the provider lists tokens for but serves no native coin on. The
-   * token list still answers 200 for them, it just holds nothing that matches,
-   * which is how celo, fantom and polkadot actually behave.
-   */
-  unservedChains?: string[]
-  /**
-   * The chain name token rows report, keyed by the name the query used. The
-   * provider does not always echo the query: a `bitcoincash` query answers
-   * with rows whose `chain` is `bch`.
-   */
-  chainAliases?: Record<string, string>
+  /** The table the info server serves, in place of `SCRIPTED_ASSETS`. */
+  assets?: unknown
   /**
    * An error body the create-exchange call answers with (status 400) instead of
    * an order, for asserting how a rejection is phrased to the user.
@@ -555,11 +578,10 @@ interface Script {
    */
   orderStatuses?: number[]
   /**
-   * HTTP statuses handed to successive `tokens` calls, same repeat-last rule as
-   * `quoteStatuses`. A non-200 is the provider failing to answer, which must
-   * not be mistaken for a miss.
+   * HTTP statuses the info server answers successive asset-table fetches
+   * with, same repeat-last rule as `quoteStatuses`.
    */
-  tokenStatuses?: number[]
+  assetStatuses?: number[]
   /** Seconds the rate-limit envelope asks the caller to wait. */
   retryAfter?: number
   /**
@@ -584,8 +606,8 @@ interface ScriptedRun {
   plugin: ReturnType<typeof makeHoudiniPlugin>
   /** Every `quotes` URL requested, in order. */
   quoteUrls: string[]
-  /** Every `tokens` URL requested, in order, to prove lookups are cached. */
-  tokenUrls: string[]
+  /** Every info server asset-table URL requested, to prove it is cached. */
+  assetUrls: string[]
   /** Every `exchanges` body posted, in order. */
   orderBodies: string[]
   /** Every `dex/confirmTx` body posted, in order. */
@@ -604,14 +626,12 @@ interface ScriptedRun {
  */
 const makeScriptedPlugin = (script: Script): ScriptedRun => {
   const {
-    nativeAddress,
     quotes,
     quoteStatuses = [200],
-    unservedChains = [],
-    chainAliases = {},
+    assets = SCRIPTED_ASSETS,
     orderError,
     orderStatuses = [200],
-    tokenStatuses = [200],
+    assetStatuses = [200],
     retryAfter,
     orderOverrides = {},
     dexMetadata = {},
@@ -620,13 +640,13 @@ const makeScriptedPlugin = (script: Script): ScriptedRun => {
   const run: ScriptedRun = {
     plugin: (undefined as unknown) as ReturnType<typeof makeHoudiniPlugin>,
     quoteUrls: [],
-    tokenUrls: [],
+    assetUrls: [],
     orderBodies: [],
     confirmBodies: [],
     warnings: []
   }
   let quoteCall = 0
-  let tokenCall = 0
+  let assetCall = 0
   let orderCall = 0
   let confirmCall = 0
 
@@ -644,40 +664,15 @@ const makeScriptedPlugin = (script: Script): ScriptedRun => {
     url: string,
     opts: { method?: string; body?: string } = {}
   ): Promise<FetchResponseLike> => {
-    const path = url.slice(url.indexOf('/v2/') + 4)
-
-    if (path.startsWith('tokens')) {
-      run.tokenUrls.push(path)
-      const tokenStatus =
-        tokenStatuses[Math.min(tokenCall++, tokenStatuses.length - 1)]
-      if (tokenStatus !== 200) return reply(tokenStatus, { message: 'nope' })
-      const chain = /chain=([^&]*)/.exec(path)?.[1] ?? ''
-      if (unservedChains.includes(chain)) {
-        // The provider answers, it just has no native to offer:
-        return reply(200, { tokens: [] })
-      }
-      const rowChain = chainAliases[chain] ?? chain
-      const native = {
-        id: `${chain}-native`,
-        address: nativeAddress,
-        chain: rowChain
-      }
-      // `mainnet=true` answers with the chain's coin alone, as the live API
-      // does, whatever that coin's address field says:
-      if (path.includes('mainnet=true')) return reply(200, { tokens: [native] })
-      return reply(200, {
-        tokens: [
-          // A contract token on the same chain, to prove an address match is
-          // picking the right entry rather than the first one:
-          {
-            id: `${chain}-token`,
-            address: '0x0000000000000000000000000000000000000001',
-            chain: rowChain
-          },
-          native
-        ]
-      })
+    if (url.endsWith('/v1/houdiniAssets')) {
+      run.assetUrls.push(url)
+      const assetStatus =
+        assetStatuses[Math.min(assetCall++, assetStatuses.length - 1)]
+      if (assetStatus !== 200) return reply(assetStatus, 'unavailable')
+      return reply(200, assets)
     }
+
+    const path = url.slice(url.indexOf('/v2/') + 4)
 
     if (path.startsWith('quotes')) {
       run.quoteUrls.push(path)
@@ -770,6 +765,23 @@ const makeScriptedPlugin = (script: Script): ScriptedRun => {
   return run
 }
 
+/**
+ * Runs `body` with `Date.now` reporting a time `offsetMs` in the future, so a
+ * cache expiry can be crossed without waiting it out.
+ */
+const withClockAhead = async (
+  offsetMs: number,
+  body: () => Promise<void>
+): Promise<void> => {
+  const realNow = Date.now
+  Date.now = () => realNow() + offsetMs
+  try {
+    await body()
+  } finally {
+    Date.now = realNow
+  }
+}
+
 describe('houdini offline behaviors', function () {
   // The rate-limit cases wait out the plugin's own backoff (1s, 2s, 4s):
   this.timeout(30000)
@@ -784,7 +796,25 @@ describe('houdini offline behaviors', function () {
       decimals: 18,
       address: '0x1111111111111111111111111111111111111111',
       balance: SONIC_NATIVE_AMOUNT,
-      evmChainId: 146
+      evmChainId: 146,
+      tokens: {
+        [SONIC_TOKEN_ID]: {
+          currencyCode: 'USDC',
+          denominations: [{ name: 'USDC', multiplier: '1000000' }],
+          networkLocation: { contractAddress: `0x${SONIC_TOKEN_ID}` }
+        },
+        // Tokens the wallet holds but the info server does not list:
+        ...Object.fromEntries(
+          UNLISTED_SONIC_TOKEN_IDS.map(tokenId => [
+            tokenId,
+            {
+              currencyCode: 'UNL',
+              denominations: [{ name: 'UNL', multiplier: '1' }],
+              networkLocation: { contractAddress: tokenId }
+            }
+          ])
+        )
+      }
     },
     capture
   )
@@ -846,15 +876,8 @@ describe('houdini offline behaviors', function () {
     })
   }
 
-  it('resolves a native coin whose contract address is an empty string', async function () {
-    // Both sides of this pair are chains Houdini reports with `address: ""`,
-    // and `"" == null` is false, so a native lookup that tests the address
-    // finds nothing for either and every quote fails before reaching the
-    // provider.
-    const run = makeScriptedPlugin({
-      nativeAddress: '',
-      quotes: [privateQuote]
-    })
+  it('resolves both legs to the ids the info server lists', async function () {
+    const run = makeScriptedPlugin({ quotes: [privateQuote] })
     const quote = await quoteSonicToStellar(run)
 
     expect(quote.pluginId).equals('houdini')
@@ -863,40 +886,12 @@ describe('houdini offline behaviors', function () {
     expect(run.quoteUrls[0]).contains('to=xlm-native')
   })
 
-  it('resolves a native coin whose contract address is null', async function () {
-    const run = makeScriptedPlugin({
-      nativeAddress: null,
-      quotes: [privateQuote]
-    })
-    await quoteSonicToStellar(run)
-    expect(run.quoteUrls[0]).contains('from=sonic-native')
-  })
-
-  it('resolves a native coin that carries a contract-style address', async function () {
-    // TON's coin is listed with an address (`EQAA...M9c`) exactly like a
-    // token. The lookup asks for the chain's coin with `mainnet=true`, so the
-    // row it gets back is the native whatever its address field holds.
-    const run = makeScriptedPlugin({
-      nativeAddress: 'EQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAM9c',
-      quotes: [privateQuote]
-    })
-    await quoteSonicToStellar(run)
-    expect(run.quoteUrls[0]).contains('from=sonic-native')
-    expect(run.quoteUrls[0]).contains('to=xlm-native')
-  })
-
-  it('resolves a native coin whose rows name the chain differently', async function () {
-    // The provider does not always echo the chain it was asked about: a
-    // `bitcoincash` query answers with rows on `bch`. A lookup that matched
-    // rows against the queried name discarded the only row returned, so BCH
-    // could never be quoted in either direction.
-    const run = makeScriptedPlugin({
-      nativeAddress: null,
-      quotes: [privateQuote],
-      chainAliases: { sonic: 'sonic-mainnet', xlm: 'stellar' }
-    })
-    await quoteSonicToStellar(run)
-    expect(run.quoteUrls[0]).contains('from=sonic-native')
+  it('resolves a token by its Edge tokenId', async function () {
+    // The table is keyed by tokenId, so a token needs no contract-address
+    // lookup against the provider: the id comes straight off the table.
+    const run = makeScriptedPlugin({ quotes: [privateQuote] })
+    await quoteSonicToStellar(run, { fromTokenId: SONIC_TOKEN_ID })
+    expect(run.quoteUrls[0]).contains('from=sonic-usdc')
     expect(run.quoteUrls[0]).contains('to=xlm-native')
   })
 
@@ -905,7 +900,6 @@ describe('houdini offline behaviors', function () {
     // dex routes only. Handing one of those to a caller that asked for privacy
     // would be a downgrade it cannot detect, so the plugin declines instead.
     const run = makeScriptedPlugin({
-      nativeAddress: '',
       quotes: [standardQuote, dexQuote]
     })
     let error: unknown
@@ -921,7 +915,6 @@ describe('houdini offline behaviors', function () {
 
   it('takes a standard route when privacy was not requested', async function () {
     const run = makeScriptedPlugin({
-      nativeAddress: '',
       quotes: [standardQuote, dexQuote]
     })
     await quoteSonicToStellar(run)
@@ -932,7 +925,6 @@ describe('houdini offline behaviors', function () {
     // The standard quote pays out more here. Privacy still wins the ranking,
     // because a transparent route is not a cheaper version of a private one.
     const run = makeScriptedPlugin({
-      nativeAddress: '',
       quotes: [standardQuote, privateQuote]
     })
     await quoteSonicToStellar(run)
@@ -943,7 +935,7 @@ describe('houdini offline behaviors', function () {
     // Some destinations are served by dex routes alone (every route into
     // Monad is one). A plain request takes one when nothing else is on offer:
     // the wallet signs the router call itself and reports the txid after.
-    const run = makeScriptedPlugin({ nativeAddress: '', quotes: [dexQuote] })
+    const run = makeScriptedPlugin({ quotes: [dexQuote] })
     const quote = await quoteSonicToStellar(run)
 
     const orderBody = JSON.parse(run.orderBodies[0])
@@ -966,7 +958,6 @@ describe('houdini offline behaviors', function () {
     // The transaction is already out, so the report is retried rather than
     // dropped on the first 5xx.
     const run = makeScriptedPlugin({
-      nativeAddress: '',
       quotes: [dexQuote],
       confirmStatuses: [503, 200]
     })
@@ -984,7 +975,6 @@ describe('houdini offline behaviors', function () {
 
   it('completes the send when a dex confirmation never lands', async function () {
     const run = makeScriptedPlugin({
-      nativeAddress: '',
       quotes: [dexQuote],
       confirmStatuses: [500]
     })
@@ -1001,7 +991,6 @@ describe('houdini offline behaviors', function () {
 
   it('does not retry a dex confirmation the provider refused', async function () {
     const run = makeScriptedPlugin({
-      nativeAddress: '',
       quotes: [dexQuote],
       confirmStatuses: [400]
     })
@@ -1013,7 +1002,6 @@ describe('houdini offline behaviors', function () {
 
   it('declines a dex route that needs a token approval first', async function () {
     const run = makeScriptedPlugin({
-      nativeAddress: '',
       quotes: [{ ...dexQuote, requiresApproval: true }]
     })
     let error: unknown
@@ -1025,7 +1013,7 @@ describe('houdini offline behaviors', function () {
   })
 
   it('declines a dex route from a coin on a chain that is not EVM', async function () {
-    const run = makeScriptedPlugin({ nativeAddress: '', quotes: [dexQuote] })
+    const run = makeScriptedPlugin({ quotes: [dexQuote] })
     let error: unknown
     await quoteSonicToStellar(run, {
       fromWallet: stellarWallet,
@@ -1040,7 +1028,6 @@ describe('houdini offline behaviors', function () {
 
   it('declines a dex route that Houdini would broadcast itself', async function () {
     const run = makeScriptedPlugin({
-      nativeAddress: '',
       quotes: [dexQuote],
       dexMetadata: { offChain: true }
     })
@@ -1053,7 +1040,6 @@ describe('houdini offline behaviors', function () {
 
   it('refuses a dex transaction value above the requested amount', async function () {
     const run = makeScriptedPlugin({
-      nativeAddress: '',
       quotes: [dexQuote],
       dexMetadata: { value: '1300000000000000000001' }
     })
@@ -1069,7 +1055,6 @@ describe('houdini offline behaviors', function () {
     // every other plugin. Routing an asset to itself through the mixer is what
     // Houdini is for, so a private request opts out of that half of the guard.
     const run = makeScriptedPlugin({
-      nativeAddress: '',
       quotes: [privateQuote]
     })
     const quote = await quoteSonicToStellar(run, ({
@@ -1080,16 +1065,10 @@ describe('houdini offline behaviors', function () {
   })
 
   it('declines a chain the provider serves no native coin for', async function () {
-    // Houdini lists celo, fantom and polkadot but has no mainnet native for
-    // any of them. The chain table does not encode that: the decline comes
-    // from the token lookup finding nothing, which is the same
-    // `SwapCurrencyError` the whitelist check raises, so the aggregator moves
-    // on to another provider either way.
-    const run = makeScriptedPlugin({
-      nativeAddress: '',
-      quotes: [privateQuote],
-      unservedChains: ['celo']
-    })
+    // Houdini lists celo tokens but no celo coin. The table says so by leaving
+    // `coin` out, and the decline is the same `SwapCurrencyError` any
+    // unlisted asset gets, so the aggregator moves on to another provider.
+    const run = makeScriptedPlugin({ quotes: [privateQuote] })
     let error: unknown
     await quoteSonicToStellar(run, { toWallet: celoWallet }).catch(
       (caught: unknown) => {
@@ -1101,44 +1080,84 @@ describe('houdini offline behaviors', function () {
     expect(run.quoteUrls).deep.equals([])
   })
 
-  it('asks about an unserved chain once, then remembers', async function () {
-    // The miss is the expensive part: without caching it, every quote naming
-    // an unserved chain spends another call against a rate-limited API to be
-    // told the same thing. Caching it is what lets the chain table stay a
-    // name map instead of a hand-maintained list of what is served.
-    const run = makeScriptedPlugin({
-      nativeAddress: '',
-      quotes: [privateQuote],
-      unservedChains: ['celo']
-    })
-    const swallow = (): void => {}
-    await quoteSonicToStellar(run, { toWallet: celoWallet }).catch(swallow)
-    const afterFirst = run.tokenUrls.filter(url => url.includes('chain=celo'))
-      .length
-    await quoteSonicToStellar(run, { toWallet: celoWallet }).catch(swallow)
-    const afterSecond = run.tokenUrls.filter(url => url.includes('chain=celo'))
-      .length
-
-    expect(afterFirst).equals(1)
-    expect(afterSecond).equals(1)
+  it('declines a token the info server does not list', async function () {
+    // `constructor` proves the lookup reads only the table's own keys, not
+    // something inherited from `Object.prototype`.
+    const run = makeScriptedPlugin({ quotes: [privateQuote] })
+    for (const tokenId of UNLISTED_SONIC_TOKEN_IDS) {
+      let error: unknown
+      await quoteSonicToStellar(run, { fromTokenId: tokenId }).catch(
+        (caught: unknown) => {
+          error = caught
+        }
+      )
+      expect(String(error)).contains('SwapCurrencyError')
+    }
+    expect(run.quoteUrls).deep.equals([])
   })
 
-  it('does not cache a lookup the provider failed to answer', async function () {
-    // A rate limit or a server error says nothing about whether the chain is
-    // served. Caching that would turn one bad minute into a chain that stays
-    // dead for the rest of the session.
-    const run = makeScriptedPlugin({
-      nativeAddress: '',
-      quotes: [privateQuote],
-      tokenStatuses: [500, 200]
-    })
-    const swallow = (): void => {}
-    await quoteSonicToStellar(run).catch(swallow)
-    const afterFailure = run.tokenUrls.length
-    await quoteSonicToStellar(run).catch(swallow)
+  it('loads the asset table once across quotes, concurrent or not', async function () {
+    const run = makeScriptedPlugin({ quotes: [privateQuote] })
+    await Promise.all([quoteSonicToStellar(run), quoteSonicToStellar(run)])
+    await quoteSonicToStellar(run)
+    expect(run.assetUrls.length).equals(1)
+  })
 
-    expect(afterFailure).is.greaterThan(0)
-    expect(run.tokenUrls.length).is.greaterThan(afterFailure)
+  it('refetches the asset table once it expires', async function () {
+    const run = makeScriptedPlugin({ quotes: [privateQuote] })
+    await quoteSonicToStellar(run)
+    await withClockAhead(11 * 60 * 1000, async () => {
+      await quoteSonicToStellar(run)
+    })
+    expect(run.assetUrls.length).equals(2)
+  })
+
+  it('keeps the loaded table when a refresh fails, then retries later', async function () {
+    // An info server outage after a good load must not take Houdini offline:
+    // the last good copy keeps quoting, and the refresh is retried after a
+    // short hold rather than on every quote.
+    const run = makeScriptedPlugin({
+      quotes: [privateQuote],
+      assetStatuses: [200, 503, 200]
+    })
+    await quoteSonicToStellar(run)
+    await withClockAhead(11 * 60 * 1000, async () => {
+      const quote = await quoteSonicToStellar(run)
+      expect(quote.pluginId).equals('houdini')
+      expect(run.assetUrls.length).equals(2)
+      expect(run.warnings.join('\n')).contains('keeping the loaded copy')
+
+      // Inside the hold, no new fetch:
+      await quoteSonicToStellar(run)
+      expect(run.assetUrls.length).equals(2)
+    })
+    await withClockAhead(13 * 60 * 1000, async () => {
+      await quoteSonicToStellar(run)
+    })
+    expect(run.assetUrls.length).equals(3)
+  })
+
+  it('blames the info server when no table was ever loaded', async function () {
+    // With nothing loaded there is no way to tell a routable pair from an
+    // unroutable one, so the error names the outage rather than declining the
+    // pair, and the next quote tries the fetch again.
+    const run = makeScriptedPlugin({
+      quotes: [privateQuote],
+      assetStatuses: [503, 200]
+    })
+    const error = await quoteSonicToStellar(run).then(
+      () => undefined,
+      (error: unknown) => error
+    )
+
+    expect(error == null).equals(false)
+    expect(String(error)).does.not.contain('SwapCurrencyError')
+    expect(String(error)).contains('Edge info server')
+    expect(run.quoteUrls).deep.equals([])
+
+    const quote = await quoteSonicToStellar(run)
+    expect(quote.pluginId).equals('houdini')
+    expect(run.assetUrls.length).equals(2)
   })
 
   it('reads the quote expiry the API actually sends', function () {
@@ -1164,7 +1183,6 @@ describe('houdini offline behaviors', function () {
     // expired quote, so the rate limit is reported straight away instead.
     const start = Date.now()
     const run = makeScriptedPlugin({
-      nativeAddress: '',
       quotes: [
         {
           ...privateQuote,
@@ -1192,7 +1210,6 @@ describe('houdini offline behaviors', function () {
     // Failed" and puts the real reason under `fields.<name>.message`, so
     // reading the top level alone told the user nothing they could act on.
     const run = makeScriptedPlugin({
-      nativeAddress: '',
       quotes: [privateQuote],
       orderError: {
         code: 'VALIDATION_ERROR',
@@ -1213,7 +1230,6 @@ describe('houdini offline behaviors', function () {
     // A rejected payout address comes back under both `body.addressTo` and
     // `addressTo`, which read as "maxLength 200; maxLength 200".
     const run = makeScriptedPlugin({
-      nativeAddress: '',
       quotes: [privateQuote],
       orderError: {
         code: 'VALIDATION_ERROR',
@@ -1250,7 +1266,6 @@ describe('houdini offline behaviors', function () {
       ]
     })
     const run = makeScriptedPlugin({
-      nativeAddress: '',
       quotes: [privateQuote]
     })
     await quoteSonicToStellar(run, ({
@@ -1291,7 +1306,6 @@ describe('houdini offline behaviors', function () {
       capture
     )
     const run = makeScriptedPlugin({
-      nativeAddress: '',
       quotes: [privateQuote]
     })
     await quoteSonicToStellar(run, { toWallet: zcashWallet })
@@ -1312,7 +1326,6 @@ describe('houdini offline behaviors', function () {
         toAddress
       })
       const run = makeScriptedPlugin({
-        nativeAddress: '',
         quotes: [privateQuote]
       })
       const error = await quoteSonicToStellar(run, ({
@@ -1336,7 +1349,6 @@ describe('houdini offline behaviors', function () {
     // spends one of Houdini's one-per-minute exchange slots, so the real
     // create is rate limited and the whole max quote stalls for the window.
     const run = makeScriptedPlugin({
-      nativeAddress: '',
       quotes: [privateQuote]
     })
     await quoteSonicToStellar(run, { quoteFor: 'max' })
@@ -1351,7 +1363,6 @@ describe('houdini offline behaviors', function () {
     // which escapes `getMaxSwappable` and fails every max swap from an EVM
     // wallet unless the probe's spendInfo opts out of the checks.
     const run = makeScriptedPlugin({
-      nativeAddress: '',
       quotes: [privateQuote]
     })
     await quoteSonicToStellar(run, { quoteFor: 'max' })
@@ -1377,7 +1388,6 @@ describe('houdini offline behaviors', function () {
       capture
     )
     const run = makeScriptedPlugin({
-      nativeAddress: '',
       quotes: [{ ...privateQuote, min: 1, max: 1000 }],
       // The scripted exchange echoes the quote's `amountIn` for every request,
       // so the real (trimmed) create needs the trimmed amount spelled out. A
@@ -1406,7 +1416,6 @@ describe('houdini offline behaviors', function () {
     // signed spend, so a response asking for more of the source asset than the
     // user requested must not reach `makeSpend`.
     const run = makeScriptedPlugin({
-      nativeAddress: '',
       quotes: [privateQuote],
       orderOverrides: { inAmount: 2600 }
     })
@@ -1425,7 +1434,6 @@ describe('houdini offline behaviors', function () {
     // valid tag `0` is numeric too. A string-only cleaner rejects both, taking
     // the whole order down; a blank one becomes an empty memo on the deposit.
     const numeric = makeScriptedPlugin({
-      nativeAddress: '',
       quotes: [privateQuote],
       orderOverrides: { depositTag: 0 }
     })
@@ -1433,7 +1441,6 @@ describe('houdini offline behaviors', function () {
     expect(numeric.orderBodies.length).equals(1)
 
     const blank = makeScriptedPlugin({
-      nativeAddress: '',
       quotes: [privateQuote],
       orderOverrides: { depositTag: '' }
     })
@@ -1466,7 +1473,6 @@ describe('houdini offline behaviors', function () {
       )
 
     const belowRun = makeScriptedPlugin({
-      nativeAddress: '',
       quotes: [{ ...privateQuote, min: 1.00000004, max: 1000 }]
     })
     let belowError: any
@@ -1480,7 +1486,6 @@ describe('houdini offline behaviors', function () {
     expect(belowError?.nativeMin).equals('10000001')
 
     const aboveRun = makeScriptedPlugin({
-      nativeAddress: '',
       quotes: [{ ...privateQuote, min: 0.0001, max: 0.90000005 }]
     })
     let aboveError: any
@@ -1502,7 +1507,6 @@ describe('houdini offline behaviors', function () {
     // appeared inside a human-readable message would match a substring test on
     // a response that meant something else.
     const run = makeScriptedPlugin({
-      nativeAddress: '',
       quotes: [privateQuote, { ...privateQuote, quoteId: 'q-private-2' }],
       orderStatuses: [409, 200]
     })
@@ -1519,7 +1523,6 @@ describe('houdini offline behaviors', function () {
     // The route's own published `max` is the local bound that remains, and an
     // order asking for more than it must not become a signed spend.
     const run = makeScriptedPlugin({
-      nativeAddress: '',
       quotes: [
         {
           ...privateQuote,
@@ -1550,7 +1553,6 @@ describe('houdini offline behaviors', function () {
     // The send amount the route quoted is the bound that remains: an order
     // asking for more than it (beyond rounding) disagrees with its own quote.
     const run = makeScriptedPlugin({
-      nativeAddress: '',
       quotes: [
         {
           ...privateQuote,
@@ -1578,7 +1580,6 @@ describe('houdini offline behaviors', function () {
 
   it('accepts a reverse quote order that restates its quote with rounding', async function () {
     const run = makeScriptedPlugin({
-      nativeAddress: '',
       quotes: [
         {
           ...privateQuote,
@@ -1602,7 +1603,6 @@ describe('houdini offline behaviors', function () {
     // Every other plugin rejects a swap from an asset to itself as a no-op.
     // Only a private request makes that route worth paying for.
     const run = makeScriptedPlugin({
-      nativeAddress: '',
       quotes: [privateQuote]
     })
     const error = await quoteSonicToStellar(run, {
@@ -1629,49 +1629,11 @@ describe('houdini offline behaviors', function () {
     expect(rateLimitDelayMs(9, undefined)).equals(30000)
   })
 
-  it('asks once when both legs of a quote want the same token', async function () {
-    // A quote resolves both legs with `Promise.all`, so a same-asset quote asks
-    // the same question twice at once. Caching only on completion let both
-    // miss and spend two calls against a rate-limited API on one answer.
-    const run = makeScriptedPlugin({
-      nativeAddress: '',
-      quotes: [privateQuote]
-    })
-    const swallow = (): void => {}
-    await quoteSonicToStellar(run, ({
-      toWallet: sonicWallet,
-      privacy: 'required'
-    } as unknown) as Partial<EdgeSwapRequest>).catch(swallow)
-
-    const sonicLookups = run.tokenUrls.filter(url => url.includes('sonic'))
-    expect(sonicLookups.length).equals(1)
-  })
-
-  it('blames the provider when a lookup fails, not the pair', async function () {
-    // Returning a miss on a failed lookup would be indistinguishable from the
-    // provider answering "no such token", so a bad minute at the API would
-    // reach the user as a pair Houdini cannot route.
-    const run = makeScriptedPlugin({
-      nativeAddress: '',
-      quotes: [privateQuote],
-      tokenStatuses: [503]
-    })
-    const error = await quoteSonicToStellar(run).then(
-      () => undefined,
-      (error: unknown) => error
-    )
-
-    expect(error == null).equals(false)
-    expect(String(error)).does.not.contain('SwapCurrencyError')
-    expect(String(error)).contains('503')
-  })
-
   it('reports a floating rate on a forward quote and a fixed one on a reverse quote', async function () {
     // Houdini prices exact-out on fixed-rate quotes alone. A forward quote
     // floats whether the route is private or standard, so labelling every
     // quote fixed showed a locked receive amount for a leg that can still move.
     const forward = makeScriptedPlugin({
-      nativeAddress: '',
       quotes: [privateQuote]
     })
     await quoteSonicToStellar(forward)
@@ -1679,7 +1641,6 @@ describe('houdini offline behaviors', function () {
     expect(forwardAction.isEstimate).equals(true)
 
     const reverse = makeScriptedPlugin({
-      nativeAddress: '',
       quotes: [{ ...standardQuote, minOut: 0.01, maxOut: 1000 }]
     })
     await quoteSonicToStellar(reverse, {
@@ -1694,7 +1655,6 @@ describe('houdini offline behaviors', function () {
 
   it('names the payout wallet on a swap into one of the user wallets', async function () {
     const run = makeScriptedPlugin({
-      nativeAddress: '',
       quotes: [privateQuote]
     })
     await quoteSonicToStellar(run)
@@ -1707,7 +1667,6 @@ describe('houdini offline behaviors', function () {
     // The status page is served by the app host and reads the order id from a
     // query parameter. The marketing site has no order route.
     const run = makeScriptedPlugin({
-      nativeAddress: '',
       quotes: [privateQuote]
     })
     await quoteSonicToStellar(run)
@@ -1723,7 +1682,6 @@ describe('houdini offline behaviors', function () {
     // name the flow: only the request's demand does.
     for (const privacy of [undefined, 'required'] as const) {
       const run = makeScriptedPlugin({
-        nativeAddress: '',
         quotes: [privateQuote]
       })
       await quoteSonicToStellar(run, ({
@@ -1749,7 +1707,6 @@ describe('houdini offline behaviors', function () {
 
     for (const privacy of [undefined, 'required'] as const) {
       const run = makeScriptedPlugin({
-        nativeAddress: '',
         quotes: [privateQuote]
       })
       await quoteSonicToStellar(run, ({
@@ -1766,7 +1723,6 @@ describe('houdini offline behaviors', function () {
 
   it('retries a rate-limited call behind the window the API reports', async function () {
     const run = makeScriptedPlugin({
-      nativeAddress: '',
       quotes: [privateQuote],
       quoteStatuses: [429, 200],
       retryAfter: 1
@@ -1783,7 +1739,6 @@ describe('houdini offline behaviors', function () {
     // fine, the caller was too fast, and the two failures want different
     // handling from both the user and the send scene pair-capability cache.
     const run = makeScriptedPlugin({
-      nativeAddress: '',
       quotes: [privateQuote],
       quoteStatuses: [429],
       retryAfter: 0
