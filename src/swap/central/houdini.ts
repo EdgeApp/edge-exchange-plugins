@@ -53,6 +53,7 @@ import {
   getAddress,
   memoType,
   nativeToDenomination,
+  promiseWithTimeout,
   snooze
 } from '../../util/utils'
 import { getUnifiedTransparentAddress } from '../../util/zcashUnifiedAddress'
@@ -77,7 +78,11 @@ export const swapInfo: EdgeSwapInfo = {
 // (no `Bearer`); every endpoint returns 402 without it.
 const asInitOptions = asObject({
   apiKey: asString,
-  apiSecret: asString
+  apiSecret: asString,
+  // The edge-autobot-server that takes dex reports and confirms them with
+  // Houdini on its own schedule, which outlives an app closed right after the
+  // broadcast. Without it, dex reports go to Houdini directly.
+  autobotUrl: asOptional(asString)
 })
 
 // The order status page is on the app host, keyed by a query parameter. The
@@ -311,6 +316,9 @@ const RATE_LIMIT_MESSAGE =
 const DEX_CONFIRM_MAX_ATTEMPTS = 3
 const DEX_CONFIRM_RETRY_DELAY_MS = 1000
 
+// How long a dex report waits on autobot before confirming directly.
+const AUTOBOT_REPORT_TIMEOUT_MS = 10000
+
 /**
  * How long to wait before retrying a 429, given the attempt number and the
  * `retryAfter` seconds the API reported (if any).
@@ -467,7 +475,7 @@ function floatToNativeAmount(
 export function makeHoudiniPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
   const { io, log } = opts
   const { fetchCors = io.fetch } = io
-  const { apiKey, apiSecret } = asInitOptions(opts.initOptions)
+  const { apiKey, apiSecret, autobotUrl } = asInitOptions(opts.initOptions)
 
   const headers = {
     'Content-Type': 'application/json',
@@ -647,10 +655,10 @@ export function makeHoudiniPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
   }
 
   /**
-   * Tells Houdini a dex order's transaction is on chain, which is what starts
-   * the order on its side. The funds have already left the wallet by then, so
-   * a failure here is logged for support rather than reported as a failed
-   * send.
+   * Tells Houdini directly that a dex order's transaction is on chain, the
+   * fallback for a report autobot could not take. The funds have already left
+   * the wallet by then, so a failure here is logged for support rather than
+   * reported as a failed send.
    *
    * The broadcast cannot be repeated and this report is the only thing tying
    * the transaction to the order on Houdini's side, so a dropped call or a 5xx
@@ -681,6 +689,40 @@ export function makeHoudiniPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
       if (!retryable || attempt === DEX_CONFIRM_MAX_ATTEMPTS) return
       await snooze(DEX_CONFIRM_RETRY_DELAY_MS * attempt)
     }
+  }
+
+  /**
+   * Hands a dex order's transaction to autobot, which confirms it with Houdini
+   * and keeps trying until Houdini accepts or refuses it. A dex order starts
+   * on Houdini's side only once this report lands, and an app closed right
+   * after the broadcast would drop a report made from here. Without an
+   * autobot configured, or when autobot does not take the report within
+   * `AUTOBOT_REPORT_TIMEOUT_MS`, the report goes to Houdini directly instead.
+   */
+  async function reportDexTx(orderId: string, txHash: string): Promise<void> {
+    if (autobotUrl == null) {
+      await confirmDexTx(orderId, txHash)
+      return
+    }
+    let failure: string
+    try {
+      const response = await promiseWithTimeout(
+        io.fetch(new URL('/api/houdini', autobotUrl).toString(), {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ orderId, txHash })
+        }),
+        AUTOBOT_REPORT_TIMEOUT_MS
+      )
+      if (response.ok) return
+      failure = `${response.status} ${await response.text()}`
+    } catch (error: unknown) {
+      failure = String(error)
+    }
+    log.warn(
+      `Autobot did not take the report for Houdini order ${orderId}, tx ${txHash}, confirming directly: ${failure}`
+    )
+    await confirmDexTx(orderId, txHash)
   }
 
   const fetchSwapQuoteInner = async (
@@ -1368,7 +1410,7 @@ export function makeHoudiniPlugin(opts: EdgeCorePluginOptions): EdgeSwapPlugin {
         ...quote,
         async approve(opts?: EdgeSwapApproveOptions): Promise<EdgeSwapResult> {
           const result = await quote.approve(opts)
-          await confirmDexTx(dexOrderId, result.transaction.txid)
+          await reportDexTx(dexOrderId, result.transaction.txid)
           return result
         }
       }
