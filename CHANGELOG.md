@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 2.63.0 (2026-11-16)
+
 - changed: (Houdini) DEX-route swaps confirm through edge-autobot-server even after the app closes
 
 ## 2.62.1 (2026-11-14)
