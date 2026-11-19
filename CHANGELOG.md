@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 2.64.0 (2026-11-19)
+
 - changed: (SideShift) The affiliateId init option is required, and the plugin fails to load without it
 - removed: (SideShift) privateKey init option, so requests no longer send the x-sideshift-secret header
 
