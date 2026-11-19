@@ -61,6 +61,10 @@ export const swapInfo: EdgeSwapInfo = {
 }
 const ORDER_STATUS_URL = 'https://sideshift.ai/orders/'
 
+const asInitOptions = asObject({
+  affiliateId: asString
+})
+
 async function checkQuoteError(
   rate: Rate,
   request: EdgeSwapRequestPlugin,
@@ -115,6 +119,9 @@ const createSideshiftApi = (
   ): Promise<R> {
     const url = `${baseUrl}${path}`
 
+    // SideShift confirmed that the affiliateId alone authorizes our quotes
+    // and shifts. Never send the x-sideshift-secret header or a signing key
+    // from the client, since anything shipped in the app is public.
     const headers: StringMap = {
       'Content-Type': 'application/json'
     }
@@ -381,13 +388,10 @@ const createFetchSwapQuote = (
 export function makeSideshiftPlugin(
   opts: EdgeCorePluginOptions
 ): EdgeSwapPlugin {
-  const { io, initOptions } = opts
+  const { io } = opts
+  const { affiliateId } = asInitOptions(opts.initOptions)
   const api = createSideshiftApi(SIDESHIFT_BASE_URL, io.fetchCors ?? io.fetch)
-  const fetchSwapQuote = createFetchSwapQuote(
-    api,
-    initOptions.affiliateId,
-    opts.log
-  )
+  const fetchSwapQuote = createFetchSwapQuote(api, affiliateId, opts.log)
 
   return {
     swapInfo,
