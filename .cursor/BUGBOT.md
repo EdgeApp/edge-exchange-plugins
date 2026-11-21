@@ -160,12 +160,6 @@ A provider that returns amounts as either number or string usually does the same
 with error codes. `asNumberString` normalizes both, so classification does not
 depend on which shape arrived.
 
-### `asOptional` Already Treats Null as Absent (`asoptional-handles-null`)
-
-In this repo's `cleaners` version, `asOptional(asString)` maps a JSON `null` to
-`undefined` rather than throwing. `asEither(asString, asNull)` is only needed
-when `null` and absent must stay distinguishable.
-
 ## Plugin Structure
 
 ### Call `checkInvalidTokenIds` (`call-check-invalid-token-ids`)
