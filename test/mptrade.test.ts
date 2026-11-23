@@ -11,6 +11,7 @@ import {
 import { describe, it } from 'mocha'
 
 import {
+  isMpTradeFixedRoute,
   makeMpTradePlugin,
   makeMpTradeSpendInfo,
   MpTradeAction,
@@ -186,7 +187,12 @@ describe('mptrade makeMpTradeSpendInfo route models', function () {
     // contract with `data: '0x'`. An empty hex memo would be meaningless.
     const spendInfo = makeMpTradeSpendInfo({
       action: makeAction({
-        tx: { to: ROUTER, data: '0x', value: '5000000000000000', chainId: 8453 }
+        tx: {
+          to: ROUTER,
+          data: '0x',
+          value: '5000000000000000',
+          chainId: 8453
+        }
       }),
       swapInfo: mpTradeSwapInfo,
       fromPluginId: 'base',
@@ -1228,7 +1234,44 @@ describe('mptrade fetchSwapQuote success', function () {
     )
 
     assert.equal(quote.fromNativeAmount, '100000000')
-    assert.equal(quote.toNativeAmount, '44294610')
+    // A deposit-address route settles off the user's transaction, so nothing
+    // enforces the floor: quote the expected payout as an estimate, with the
+    // floor as the advertised minimum.
+    assert.equal(quote.isEstimate, true)
+    assert.equal(quote.toNativeAmount, '44742031')
+    assert.equal(quote.minReceiveAmount, '44294610')
+  })
+
+  it('quotes a cross-chain EVM source into Monero as an estimate', async function () {
+    // The reported case: an ETH-to-XMR order whose payout landed below
+    // `amountOutMin`. The EVM leg is the user's transaction, but delivery
+    // happens off it, so the quote must not read as fixed.
+    const quote = await makePlugin(
+      okAction({
+        tx: { to: ROUTER, data: '0x', value: '10000000000000000', chainId: 1 },
+        amountOut: makeAmount('35181434000', '0x0', true),
+        amountOutMin: makeAmount('34829619660', '0x0', true),
+        requiresRegisterTransaction: true
+      }),
+      openPaths({
+        paths: [{ chainId: 999000343, supportsExactAmountIn: true }]
+      })
+    ).fetchSwapQuote(
+      usdcRequest({
+        toWallet: makeFakeWallet({
+          pluginId: 'monero',
+          currencyCode: 'XMR',
+          address: '48xmrexample'
+        }),
+        toTokenId: null
+      }),
+      undefined,
+      { infoPayload: {} }
+    )
+
+    assert.equal(quote.isEstimate, true)
+    assert.equal(quote.toNativeAmount, '35181434000')
+    assert.equal(quote.minReceiveAmount, '34829619660')
   })
 
   it('registers the broadcast hash when the route requires it', async function () {
@@ -1446,6 +1489,19 @@ const solanaPaths = (): FakeResponse =>
     srcToken: { decimals: 9 },
     paths: [{ chainId: SOLANA_CHAIN_ID, supportsExactAmountIn: true }]
   })
+
+describe('mptrade isMpTradeFixedRoute', function () {
+  it('is fixed only where the route settles in the user transaction', function () {
+    assert.isTrue(isMpTradeFixedRoute('ethereum', 'ethereum', 'evm'))
+    assert.isTrue(isMpTradeFixedRoute('solana', 'solana', 'solana'))
+    // Cross-chain: delivery runs through a bridge after the user's tx.
+    assert.isFalse(isMpTradeFixedRoute('ethereum', 'monero', 'evm'))
+    assert.isFalse(isMpTradeFixedRoute('ethereum', 'base', 'evm'))
+    assert.isFalse(isMpTradeFixedRoute('solana', 'ethereum', 'solana'))
+    // Same chain, but paid through a provider deposit address.
+    assert.isFalse(isMpTradeFixedRoute('sonic', 'sonic', 'alt-vm'))
+  })
+})
 
 describe('mptrade venue split', function () {
   it('publishes a centralized and a DEX swapInfo under distinct ids', function () {
