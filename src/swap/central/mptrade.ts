@@ -104,9 +104,9 @@ const NATIVE_TOKEN_ADDRESS = '0x0000000000000000000000000000000000000000'
 const EXPIRATION_MS = 1000 * 60
 // Slippage tiers in basis points, per MoonPay Trade's own guidance: stables
 // need no more than 10, major assets 50, and the long tail 100. The band is not
-// a display nicety here. The quote publishes `amountOutMin`, which IS the
+// a display nicety here. A fixed quote publishes `amountOutMin`, which IS the
 // amount Edge commits to, so a tighter band directly raises the number the user
-// is guaranteed to receive.
+// is guaranteed to receive (see `isMpTradeFixedRoute`).
 const SLIPPAGE_BPS_STABLE = 10
 const SLIPPAGE_BPS_MAJOR = 50
 const SLIPPAGE_BPS_DEFAULT = 100
@@ -317,6 +317,26 @@ export const resolveSlippageBps = (
     currencyTierBps(request.toCurrencyCode, tiers)
   )
 
+/**
+ * Whether a route's `amountOutMin` is enforced on chain, which is the only case
+ * Edge may present the quote as fixed.
+ *
+ * The API makes no rate guarantee of its own: `amountOut` is the "expected"
+ * payout and `amountOutMin` only the slippage floor, and there is no parameter
+ * that selects a fixed-rate flow. A same-chain EVM or Solana route enforces
+ * that floor itself, because the swap settles inside the user's own
+ * transaction and reverts if it would pay less. Every other route settles
+ * after the user's transaction, through a bridge or a deposit address the
+ * provider operates, and its payout can land below the floor. An ETH-to-XMR
+ * order quoted at a 7.8984257 XMR floor paid 7.87781621 XMR.
+ */
+export const isMpTradeFixedRoute = (
+  fromPluginId: string,
+  toPluginId: string,
+  vmId: string
+): boolean =>
+  fromPluginId === toPluginId && (vmId === 'evm' || vmId === 'solana')
+
 export type MpTradeAction = ReturnType<typeof asMpTradeAction>
 type MpTradeError = ReturnType<typeof asMpTradeError>
 
@@ -387,7 +407,8 @@ export const makeMpTradeSpendInfo = (
     toAddress,
     toWalletId
   } = context
-  const { txId, amountIn, amountOutMin, vmId } = action
+  const { txId, amountIn, amountOut, amountOutMin, vmId } = action
+  const isFixed = isMpTradeFixedRoute(fromPluginId, toPluginId, vmId)
 
   let fromNativeAmount: string
   let publicAddress: string
@@ -448,16 +469,15 @@ export const makeMpTradeSpendInfo = (
       swapInfo,
       orderId: txId,
       orderUri: ORDER_URI + txId,
-      // MoonPay Trade commits to `amountOutMin`: the route's on-chain floor,
-      // which the user receives or the swap does not settle. Quoting that floor
-      // rather than the expected `amountOut` is what makes this a FIXED quote,
-      // on MoonPay Trade's own recommendation. The user may receive more; they
-      // can never receive less, which is exactly what a fixed quote promises.
-      isEstimate: false,
+      // A fixed route quotes `amountOutMin`, the floor its own transaction
+      // enforces: the user may receive more and can never receive less. Any
+      // other route quotes the expected `amountOut` as an estimate, since
+      // nothing on chain holds its payout to the floor.
+      isEstimate: !isFixed,
       toAsset: {
         pluginId: toPluginId,
         tokenId: toTokenId,
-        nativeAmount: amountOutMin.amount
+        nativeAmount: isFixed ? amountOutMin.amount : amountOut.amount
       },
       fromAsset: {
         pluginId: fromPluginId,
@@ -922,10 +942,21 @@ export function makeMpTradeBasedPlugin(
       toWalletId: toWallet.id
     })
 
+    // A variable quote shows the expected payout, so the slippage floor is
+    // advertised beside it as the minimum. A fixed quote already IS the floor.
+    const minReceiveAmount = isMpTradeFixedRoute(
+      fromPluginId,
+      toPluginId,
+      action.vmId
+    )
+      ? undefined
+      : action.amountOutMin.amount
+
     return {
       action,
       expirationDate: new Date(Date.now() + EXPIRATION_MS),
       fromNativeAmount: swapAmount,
+      minReceiveAmount,
       preTxs,
       request,
       spendInfo,

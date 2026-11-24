@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- fixed: (MoonPay Trade) Quote cross-chain and deposit-address routes as variable estimates with a minimum, instead of as fixed
+
 ## 2.64.0 (2026-11-19)
 
 - changed: (SideShift) The affiliateId init option is required, and the plugin fails to load without it
